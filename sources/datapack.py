@@ -524,7 +524,7 @@ L += [f'function {NS}:cmd {{c:"gamerule sendCommandFeedback false"}}',
       f"data modify storage {NS}:cl v2 set value 1b",
       f"function {NS}:prefixe/equipes", "tag @a add metiers.maj",
       f"schedule function {NS}:loop 10t replace",
-      'tellraw @a ' + PREFIX + ',{"text":"Datapack v2 chargé. Tape ","color":"gray"},{"text":"/trigger metiers","color":"yellow"}]']
+      'tellraw @a ' + PREFIX + ',{"text":"Datapack v10 (9 métiers) chargé. Tape ","color":"gray"},{"text":"/trigger metiers","color":"yellow"}]']
 w(F + "load.mcfunction", "\n".join(L))
 
 w(F + "cmd.mcfunction", "$$(c)")
@@ -1125,6 +1125,7 @@ w(F + "prefixe/maj.mcfunction", "\n".join(MJ))
 # APPEL ISOLÉ (une fonction cassée ne casse pas le reste)
 # =====================================================================
 w(F + "appel.mcfunction", f"$function {NS}:$(f)")
+w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 10 : 9 métiers (avec Éleveur, Enchanteur, Explorateur, Marchand)","color":"gold"}')
 
 def tr(txt, col="gray"):
     return 'tellraw @s ' + PREFIX + f',{{"text":"{txt}","color":"{col}"}}]'
