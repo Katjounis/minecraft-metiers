@@ -1369,7 +1369,8 @@ for j, pool in DEFIS.items():
     BJ.append(f"$execute store result bossbar metiers:d$(id) value run scoreboard players get @s m.dp_{j}")
     w(F + f"defis/barre_{j}.mcfunction", "\n".join(BJ))
     w(F + f"defis/fini_{j}.mcfunction", "\n".join([
-        f"scoreboard players set @s m.dd_{j} 1", f"scoreboard players add @s m.{j}_bal 400",
+        f"scoreboard players set @s m.dd_{j} 1", f"scoreboard players operation @s m.tmp = @s m.{j}_need", f"scoreboard players operation @s m.tmp /= #2 m.const",
+        f"scoreboard players operation @s m.{j}_bal += @s m.tmp",
         "give @s minecraft:diamond 2", "give @s minecraft:experience_bottle 16",
         'tellraw @a ' + PREFIX + f',{{"selector":"@s","color":"white"}},{{"text":" a réussi le défi du jour ","color":"gray"}},{{"text":"{d["icon"]} {d["name"]}","color":"{d["color"]}","bold":true}}]',
         "playsound minecraft:ui.toast.challenge_complete master @s ~ ~ ~ 1 1.2",
@@ -1405,7 +1406,7 @@ db = []
 for j, d in jobs.items():
     db.append(f'{{type:"minecraft:plain_message",width:320,contents:[{{text:"{d["icon"]} {d["name"]}  ",color:"{d["color"]}",bold:true}},'
               f'{{text:"$({j}_d)\\n",color:"white"}},{{text:"$({j}_p) / $({j}_t)",color:"yellow"}},{{text:"$({j}_ok)",color:"green",bold:true}}]}}')
-db.append('{type:"minecraft:plain_message",width:320,contents:[{text:"\\nChaque défi : 400 XP du métier, 2 diamants et 16 fioles d\'XP. Tous : une pomme de Notch et 2 fragments de netherite en plus.\\n",color:"gray"},{text:"Nouveaux défis dans $(left) h.",color:"aqua"}]}')
+db.append('{type:"minecraft:plain_message",width:320,contents:[{text:"\\nChaque défi : un demi-niveau d\'XP du métier, 2 diamants et 16 fioles d\'XP. Tous : une pomme de Notch et 2 fragments de netherite en plus.\\n",color:"gray"},{text:"Nouveaux défis dans $(left) h.",color:"aqua"}]}')
 w(F + "defis/menu_dialog.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Défis du jour",color:"aqua",bold:true},can_close_with_escape:true,pause:false,'
   'body:[' + ",".join(db) + '],actions:[{label:{text:"Afficher / masquer la barre",color:"white"},width:200,action:{type:"run_command",command:"trigger metiers set 7"}}],'
@@ -1593,10 +1594,10 @@ bossbar set metiers:boss visible false
 execute as @a at @s run playsound minecraft:ui.toast.challenge_complete master @s ~ ~ ~ 1 0.7
 """)
 w(F + "boss/recompense.mcfunction", "\n".join([
-    "scoreboard players add @s m.c_bal 1500",
+    "scoreboard players operation @s m.c_bal += @s m.c_need",
     "give @s minecraft:netherite_ingot 2", "give @s minecraft:enchanted_golden_apple 2",
     "give @s minecraft:diamond 8", "give @s minecraft:totem_of_undying 1",
-    tr("Récompense du Colosse : 1500 XP Chasseur, 2 lingots de netherite, 2 pommes de Notch, 8 diamants et un totem.", "gold"),
+    tr("Récompense du Colosse : un niveau de Chasseur, 2 lingots de netherite, 2 pommes de Notch, 8 diamants et un totem.", "gold"),
     "particle minecraft:totem_of_undying ~ ~1 ~ 0.5 1 0.5 0.4 80",
     "tag @s remove metiers.bossp"]))
 
