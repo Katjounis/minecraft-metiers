@@ -1131,7 +1131,7 @@ w(F + "prefixe/maj.mcfunction", "\n".join(MJ))
 # APPEL ISOLÉ (une fonction cassée ne casse pas le reste)
 # =====================================================================
 w(F + "appel.mcfunction", f"$function {NS}:$(f)")
-w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 11 : 9 métiers et Armure des Guildes (avec Éleveur, Enchanteur, Explorateur, Marchand)","color":"gold"}')
+w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 12 : 9 métiers, Armure des Guildes (heaume 3D) (avec Éleveur, Enchanteur, Explorateur, Marchand)","color":"gold"}')
 
 def tr(txt, col="gray"):
     return 'tellraw @s ' + PREFIX + f',{{"text":"{txt}","color":"{col}"}}]'
@@ -1643,8 +1643,9 @@ def piece_item(piece, slot, nom, t):
              f'minecraft:custom_name={{text:"{nom} {ARM_DE[t]}",color:"{ARM_COL[t]}",bold:true,italic:false}}',
              f'minecraft:lore=[{{text:"Armure des Guildes, palier {t}/5",color:"gray",italic:false}},{{text:"Set complet : {", ".join(ARM_BONUS[k] for k in range(1, t + 1))}",color:"gold",italic:false}}]',
              f"minecraft:custom_data={{metiers_armure:1b,palier:{t}}}",
-             f'minecraft:item_model="metiers:guilde_{piece}_{t}"',
-             f'minecraft:equippable={{slot:"{slot}",asset_id:"metiers:guilde_{t}",equip_sound:"minecraft:item.armor.equip_netherite"}}',
+             (f'minecraft:item_model="metiers:heaume_{t}"' if slot == "head" else f'minecraft:item_model="metiers:guilde_{piece}_{t}"'),
+             (f'minecraft:equippable={{slot:"head",equip_sound:"minecraft:item.armor.equip_netherite"}}' if slot == "head" else
+              f'minecraft:equippable={{slot:"{slot}",asset_id:"metiers:guilde_{t}",equip_sound:"minecraft:item.armor.equip_netherite"}}'),
              "minecraft:attribute_modifiers=[" + ",".join(mods) + "]",
              "minecraft:unbreakable={}", "minecraft:enchantment_glint_override=false",
              'minecraft:rarity="epic"', "minecraft:repair_cost=1000", "!minecraft:repairable"]
@@ -1661,7 +1662,9 @@ AD += ["playsound minecraft:item.armor.equip_netherite master @s ~ ~ ~ 1 0.8",
        "particle minecraft:totem_of_undying ~ ~1 ~ 0.4 1 0.4 0.3 60"]
 w(F + "armure/donner.mcfunction", "\n".join(AD))
 
-AC = ["scoreboard players add @s m.arm 0", "scoreboard players set @s m.tmp 0"]
+AC = ["scoreboard players add @s m.arm 0",
+      f'execute unless entity @s[tag=metiers.arm2] if score @s m.arm matches 1.. run function {NS}:appel {{f:"armure/donner"}}',
+      "tag @s add metiers.arm2", "scoreboard players set @s m.tmp 0"]
 AC += [f"execute if score @s m.total matches {ARM_SEUIL[t]}.. run scoreboard players set @s m.tmp {t}" for t in range(1, 6)]
 AC += ["execute if score @s m.tmp <= @s m.arm run return 0",
        "scoreboard players operation @s m.arm = @s m.tmp"]
