@@ -1246,21 +1246,25 @@ CM += [f"execute store result storage {NS}:tmp t int 1 run scoreboard players ge
        f"function {NS}:classement/ecrire with storage {NS}:tmp"]
 w(F + "classement/maj.mcfunction", "\n".join(CM))
 EC = [f"$execute unless data storage {NS}:cl joueurs[{{id:$(id)}}] run function {NS}:classement/nouveau {{id:$(id)}}",
+      f'function {NS}:appel {{f:"classement/nom"}}',
       f"$data modify storage {NS}:cl joueurs[{{id:$(id)}}].t set value $(t)"]
 for j in jobs:
     EC += [f"$data modify storage {NS}:cl joueurs[{{id:$(id)}}].{j} set value $({j})",
            f"$data modify storage {NS}:cl joueurs[{{id:$(id)}}].{j}l set value $({j}l)",
            f'$data modify storage {NS}:cl joueurs[{{id:$(id)}}].{j}st set value "$({j}st)"']
 w(F + "classement/ecrire.mcfunction", "\n".join(EC))
-w(F + "classement/nouveau.mcfunction", f"""
-tag @s add metiers.nom
-execute in minecraft:overworld run setblock 0 -64 0 minecraft:oak_sign
-execute in minecraft:overworld run data modify block 0 -64 0 front_text.messages[0] set value {{selector:"@a[tag=metiers.nom,limit=1]"}}
-$data modify storage {NS}:cl joueurs append value {{id:$(id)}}
-$execute in minecraft:overworld run data modify storage {NS}:cl joueurs[{{id:$(id)}}].nom set from block 0 -64 0 front_text.messages[0]
-execute in minecraft:overworld run setblock 0 -64 0 minecraft:bedrock
-tag @s remove metiers.nom
+w(F + "classement/nouveau.mcfunction", f"$data modify storage {NS}:cl joueurs append value {{id:$(id)}}")
+# nom du joueur : un item_display temporaire reçoit le pseudo résolu, puis on le copie
+w(F + "classement/nom.mcfunction", f"""
+data remove storage {NS}:tmp nom
+summon minecraft:item_display ~ ~-2 ~ {{Tags:["metiers.nomeur"],item:{{id:"minecraft:paper",count:1}}}}
+item modify entity @e[type=minecraft:item_display,tag=metiers.nomeur,limit=1] contents {{function:"minecraft:set_name",type:"minecraft:set_name",entity:"this",target:"custom_name",name:{{selector:"@s"}}}}
+data modify storage {NS}:tmp nom set from entity @e[type=minecraft:item_display,tag=metiers.nomeur,limit=1] item.components."minecraft:custom_name"
+kill @e[type=minecraft:item_display,tag=metiers.nomeur]
+execute if data storage {NS}:tmp nom run function {NS}:classement/nom_m with storage {NS}:tmp
 """)
+w(F + "classement/nom_m.mcfunction", f"$data modify storage {NS}:cl joueurs[{{id:$(id)}}].nom set from storage {NS}:tmp nom")
+
 w(F + "classement/top.mcfunction", f"""
 data modify storage {NS}:cl copie set from storage {NS}:cl joueurs
 data modify storage {NS}:cl res set value []
