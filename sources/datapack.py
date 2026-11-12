@@ -151,7 +151,7 @@ TOOL = {"b": ("axe", "Hache", "Hache du Dieu de la Forêt"), "m": ("pickaxe", "P
         "p": ("fishing_rod", "Canne", "Canne du Dieu des Mers")}
 MAT = [None, "diamond", "diamond", "diamond", "diamond", "netherite", "netherite", "netherite", "netherite", "netherite", "netherite"]
 MAIN = [None, 4, 5, 5, 5, 5, 6, 6, 6, 7, 8]
-UNB = [None, 2, 3, 4, 5, 6, 7, 8, 9, 10, None]
+UNB = [None, 2, 3, 4, 5, None, None, None, None, None, None]
 FORT = [None, 2, 3, 3, 3, 4, 4, 4, 5, 5, 6]
 LUCK = [None, 2, 3, 3, 3, 4, 4, 4, 5, 5, 6]
 EXTRAS = {
@@ -265,7 +265,7 @@ def rewards(j, k):
     if UNB[k]: ench["unbreaking"] = UNB[k]
     if k >= 2: ench["mending"] = 1
     name = dieu if k == 10 else f"{nom} {DE[k]}"
-    out = [mk_item(iid, ench, name, color, k == 10)]
+    out = [mk_item(iid, ench, name, color, k >= 5)]
     for s in EXTRAS[j][k]:
         out += special(s, color, k) if "{" in s else simple(s)
     return out
@@ -386,6 +386,7 @@ L.append("scoreboard objectives add m.quit minecraft.custom:minecraft.leave_game
 for o in ("m.id", "m.dshow", "m.dall", "m.defi", "m.heure", "m.boss", "m.total"):
     L.append(f"scoreboard objectives add {o} dummy")
 L.append("scoreboard objectives add m.dmg minecraft.custom:minecraft.damage_dealt")
+L.append("scoreboard objectives add m.dur dummy")
 for j, pool in DEFIS.items():
     for i, (desc, tgt, crits, div) in enumerate(pool, 1):
         for n, cr in enumerate(crits):
@@ -410,7 +411,26 @@ w(F + "cmd.mcfunction", "$$(c)")
 w(F + "tick.mcfunction", f"""
 execute as @a[scores={{metiers=1..}}] at @s run function {NS}:trigger
 execute as @a[tag=metiers.sk.b5] at @s run function {NS}:b/abattage/tick
+function {NS}:appel {{f:"outil/usure_tick"}}
 """)
+w(F + "outil/usure_tick.mcfunction", f"execute as @a at @s run function {NS}:outil/usure")
+w(F + "outil/usure.mcfunction", "\n".join([
+    'execute unless data entity @s SelectedItem.components."minecraft:custom_data".metiers_outil run return 0',
+    'execute if data entity @s SelectedItem.components."minecraft:custom_data".verrou run return run title @s actionbar {"text":"✖ Outil usé : il ne peut plus servir. Répare-le : G, ton métier, « Réparer mon outil » (5 niveaux d\'XP).","color":"red","bold":true}',
+    'execute if data entity @s SelectedItem.components."minecraft:unbreakable" run return 0',
+    'execute unless data entity @s SelectedItem.components."minecraft:custom_data".max run return 0',
+    'execute store result score @s m.tmp run data get entity @s SelectedItem.components."minecraft:custom_data".max',
+    'execute store result score @s m.dur run data get entity @s SelectedItem.components."minecraft:damage"',
+    "scoreboard players operation @s m.tmp -= @s m.dur",
+    f"execute if score @s m.tmp matches ..3 run function {NS}:outil/verrouiller"]))
+w(F + "outil/verrouiller.mcfunction", "\n".join([
+    f'data modify storage {NS}:tmp cd set from entity @s SelectedItem.components."minecraft:custom_data"',
+    f"data modify storage {NS}:tmp cd.verrou set value 1b",
+    'item modify entity @s weapon.mainhand {function:"minecraft:set_components",type:"minecraft:set_components",components:{"minecraft:unbreakable":{},"!minecraft:tool":{},"!minecraft:weapon":{}}}',
+    f"function {NS}:outil/verrou_m with storage {NS}:tmp",
+    "playsound minecraft:block.anvil.land master @s ~ ~ ~ 0.6 1.2",
+    'tellraw @s ' + PREFIX + ',{"text":"Ton outil est à bout : il est bloqué pour ne pas se casser. Répare-le avec G, ton métier, puis « Réparer mon outil » (5 niveaux d\'XP).","color":"red"}]']))
+w(F + "outil/verrou_m.mcfunction", '$item modify entity @s weapon.mainhand {function:"minecraft:set_custom_data",type:"minecraft:set_custom_data",tag:$(cd)}')
 
 w(F + "loop.mcfunction", f"""
 scoreboard players add #t m.timer 1
@@ -438,7 +458,8 @@ J = [f"execute unless entity @s[tag=metiers.v2] run function {NS}:migration",
      f"tag @s add metiers.v4",
      f"execute if score @s m.quit matches 1.. run function {NS}:connexion",
      f"execute unless score @s m.id matches 1.. run function {NS}:id",
-     f"execute unless entity @s[tag=metiers.v7] run function {NS}:migration6"]
+     f"execute unless entity @s[tag=metiers.v7] run function {NS}:migration6",
+     f'execute unless entity @s[tag=metiers.v8] run function {NS}:appel {{f:"migration8"}}']
 for j in jobs:
     J.append(f"execute if score @s m.{j}_cd matches 1.. run scoreboard players remove @s m.{j}_cd 1")
 J += [f'execute if score #quatre m.timer matches 0 run function {NS}:appel {{f:"outil/check"}}',
@@ -487,7 +508,8 @@ T = ["scoreboard players operation @s m.trig = @s metiers",
 for j, d in jobs.items():
     T += [f'execute if score @s m.trig matches {30 + d["idx"]} run function {NS}:appel {{f:"{j}/outil_recup"}}',
           f'execute if score @s m.trig matches {40 + d["idx"]} run function {NS}:appel {{f:"{j}/prestige_confirmer"}}',
-          f'execute if score @s m.trig matches {45 + d["idx"]} run function {NS}:appel {{f:"{j}/prestige"}}']
+          f'execute if score @s m.trig matches {45 + d["idx"]} run function {NS}:appel {{f:"{j}/prestige"}}',
+          f'execute if score @s m.trig matches {50 + d["idx"]} run function {NS}:appel {{f:"{j}/outil_reparer"}}']
 for j, d in jobs.items():
     T.append(f"execute if score @s m.trig matches {20 + d['idx']} run function {NS}:{j}/arbre")
     T.append(f"execute if score @s m.trig matches {200 + d['idx']} run function {NS}:{j}/reclamer")
@@ -644,6 +666,7 @@ scoreboard players operation @s m.tmp -= @s m.{j}_spent
         return f'{{label:{{text:"{t}",color:"dark_gray"}},width:130}}'
     liste = [btns[i].replace("width:130", "width:280") for i in (1, 2, 4, 3, 5, 6)]
     liste.append(f'{{label:{{text:"Récupérer mon outil",color:"aqua"}},width:280,tooltip:{{text:"Redonne ton outil de métier à son palier actuel (une fois toutes les 10 minutes)."}},action:{{type:"run_command",command:"trigger metiers set {30 + d["idx"]}"}}}}')
+    liste.append(f'{{label:{{text:"Réparer mon outil (5 niv. d\'XP)",color:"green"}},width:280,tooltip:{{text:"Remet ton outil de métier à neuf contre 5 niveaux d\'XP. Incassable à partir du niveau 50."}},action:{{type:"run_command",command:"trigger metiers set {50 + d["idx"]}"}}}}')
     liste.append(f'{{label:{{text:"★ Prestige",color:"gold"}},width:280,tooltip:{{text:"Au niveau 100 : repars au niveau 1 avec une étoile et +10 % d\'XP par étoile (5 max)."}},action:{{type:"run_command",command:"trigger metiers set {40 + d["idx"]}"}}}}')
     grille = [vide(), btns[1], vide(),
               vide("↙"), vide(), vide("↘"),
@@ -925,6 +948,7 @@ def tr(txt, col="gray"):
 # =====================================================================
 # OUTIL ÉVOLUTIF
 # =====================================================================
+MAXDUR = {"iron": 250, "diamond": 1561, "netherite": 2031, "golden": 32, "stone": 131, "wooden": 59}
 BASE_TOOL = {"b": "iron_axe", "m": "iron_pickaxe", "f": "iron_hoe", "c": "iron_sword", "p": "fishing_rod"}
 
 def outil_give(j, k):
@@ -940,7 +964,7 @@ def outil_give(j, k):
     comps = [f"minecraft:enchantments={{{e}}}",
              f'minecraft:custom_name={{text:"{name}",color:"{color}",bold:true,italic:false}}',
              f"minecraft:lore={lore}",
-             f'minecraft:custom_data={{metiers_outil:"{j}",palier:{k}}}',
+             f'minecraft:custom_data={{metiers_outil:"{j}",palier:{k},max:{MAXDUR[iid.split("_")[0]] if iid != "fishing_rod" else 64}}}',
              f'minecraft:item_model="metiers:{j}_{k}"',
              "minecraft:enchantment_glint_override=false",
              'minecraft:rarity="epic"']
@@ -971,6 +995,13 @@ for j, d in jobs.items():
       f'[{{text:"Niveau ",color:"gray",italic:false}},{{score:{{name:"@s",objective:"m.{j}_lvl"}},color:"yellow"}},{{text:" / 100",color:"gray"}}],'
       f'[{{text:"Palier ",color:"gray",italic:false}},{{score:{{name:"@s",objective:"m.{j}_out"}},color:"yellow"}},{{text:" / 10, il évolue tous les 10 niveaux",color:"gray"}}]]}}')
     CHK.append(f'execute if items entity @s weapon.mainhand {sel} run function {NS}:appel {{f:"{j}/outil_lore"}}')
+    w(F + f"{j}/outil_reparer.mcfunction", "\n".join([
+        f"execute unless items entity @s container.* {sel} unless items entity @s weapon.offhand {sel} run return run {tr('Tu dois avoir ton outil de ' + d['name'] + ' sur toi pour le réparer.', 'red')}",
+        f"execute if score @s m.{j}_out matches 5.. run return run {tr('Ton outil est déjà incassable.', 'green')}",
+        f"execute unless entity @s[level=5..] run return run {tr('Il te faut 5 niveaux d’XP pour réparer ton outil.', 'red')}",
+        "xp add @s -5 levels",
+        f"function {NS}:{j}/outil_donner",
+        tr(f"Ton outil de {d['name']} est comme neuf.", "green")]))
     w(F + f"{j}/outil_monte.mcfunction", "\n".join([
         f"scoreboard players operation @s m.tmp = @s m.{j}_lvl",
         f"scoreboard players operation @s m.tmp /= #10 m.const",
@@ -993,6 +1024,12 @@ for j in jobs:
            f'execute if score @s m.{j}_out matches 1.. run function {NS}:appel {{f:"{j}/outil_donner"}}']
 M6.append('tellraw @s ' + PREFIX + ',{"text":"Nouveau : chaque métier a son outil qui évolue avec toi ! Tu viens de recevoir ceux des métiers où tu es niveau 10 ou plus, au palier qui correspond à ton niveau. Pour les autres : touche G, le métier, puis « Récupérer mon outil ». Défis du jour, classement, prestige et boss de serveur sont aussi arrivés.","color":"yellow"}]')
 w(F + "migration6.mcfunction", "\n".join(M6))
+M8 = ["tag @s add metiers.v8"]
+for j in jobs:
+    sel = f'*[minecraft:custom_data~{{metiers_outil:"{j}"}}]'
+    M8.append(f"execute if items entity @s container.* {sel} run function {NS}:{j}/outil_donner")
+M8.append('tellraw @s ' + PREFIX + ',{"text":"Tes outils de métier sont maintenant incassables dès le niveau 50, et ne peuvent plus se briser avant : ils se bloquent à 1 de durabilité.","color":"yellow"}]')
+w(F + "migration8.mcfunction", "\n".join(M8))
 
 w(F + "id.mcfunction", f"""
 scoreboard players add #next m.id 1
