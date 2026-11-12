@@ -1,6 +1,6 @@
 # Métiers : datapack et resource pack
 
-Datapack vanilla de métiers (Bûcheron, Fermier, Mineur, Chasseur, Pêcheur) pour notre serveur, avec niveaux jusqu'à 100, arbres de compétences, outils qui évoluent, défis du jour, classement, prestige, heure du métier et boss de serveur.
+Datapack vanilla de métiers (Bûcheron, Fermier, Mineur, Chasseur, Pêcheur, Éleveur, Enchanteur, Explorateur, Marchand) pour notre serveur, avec niveaux jusqu'à 100, arbres de compétences, outils qui évoluent, défis du jour, classement, prestige, heure du métier et boss de serveur.
 
 ![Aperçu des outils](apercu/outils.png)
 
@@ -19,7 +19,7 @@ Dans `server.properties` :
 
 ```
 resource-pack=https://github.com/Katjounis/minecraft-metiers/raw/main/metiers_resourcepack.zip
-resource-pack-sha1=9a4b09766c92a57679ff27796c4873539381bcab
+resource-pack-sha1=8dc1d41490e086882732e2121ca3e10cb163d933
 require-resource-pack=true
 ```
 

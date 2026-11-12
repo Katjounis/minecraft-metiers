@@ -147,6 +147,33 @@ def shape(tool):
         stroke(head, line((27, 25), (27, 27.5)), lambda t: 0.6)
         stroke(head, lambda t: bez((27, 27.5), (25, 29.5), (24.5, 26), t), lambda t: 0.6)
         gem_c = (9, 21)
+    elif tool == "shears":
+        for (cx, cy) in ((7.5, 21.5), (11.5, 26.0)):
+            stroke(hand, lambda t, cx=cx, cy=cy: (cx + 4.2 * math.cos(2 * math.pi * t), cy + 4.2 * math.sin(2 * math.pi * t)), lambda t: 1.25, steps=200)
+        stroke(head, line((10.5, 18.5), (27.5, 3.5)), lambda t: 2.0 - 1.3 * t)
+        stroke(head, line((14.0, 22.0), (28.5, 7.5)), lambda t: 2.0 - 1.3 * t)
+        edge = near(head, [(13, 16.5), (27.5, 3.5)], 0.7) | near(head, [(16, 20), (28.5, 7.5)], 0.7)
+        INLAY[tool] = near(head, [(15, 15.5), (22, 9)], 0.45)
+        gem_c = (14, 18)
+    elif tool == "book":
+        poly(hand, [(5, 6), (9, 4.5), (11, 28.5), (7, 29.5)])
+        poly(head, [(9, 4.5), (26, 2.5), (28, 25.5), (11, 28.5)])
+        poly(rod_line, [(26, 2.5), (28.5, 4), (30, 25), (28, 25.5)])
+        INLAY[tool] = near(head, [(12, 7), (24, 5.5), (25.5, 23), (13, 25.5), (12, 7)], 0.5)
+        gem_c = (18, 15)
+    elif tool == "boots":
+        poly(head, [(9, 3), (19, 3), (19, 17), (27, 19), (28.5, 22), (27.5, 25), (9, 25)])
+        poly(hand, [(8.5, 25), (28.2, 25), (28, 28), (8.5, 28)])
+        INLAY[tool] = near(head, [(9.5, 6), (18.5, 6)], 0.6)
+        edge = near(head, [(19, 17), (27, 19), (28.5, 22)], 0.8)
+        gem_c = (14, 13)
+    elif tool == "bundle":
+        poly(head, [(16 + 10.5 * math.cos(a / 40 * 2 * math.pi), 19.5 + 8.5 * math.sin(a / 40 * 2 * math.pi)) for a in range(40)])
+        poly(head, [(12, 12.5), (20, 12.5), (21, 9), (11, 9)])
+        poly(head, [(10, 8.5), (12.5, 2.5), (16, 6.5), (19.5, 2.5), (22, 8.5)])
+        stroke(hand, line((10.5, 9.8), (21.5, 9.8)), lambda t: 1.1)
+        INLAY[tool] = near(head, [(7, 21), (25, 21)], 0.5)
+        gem_c = (16, 20)
     return head, edge, hand, gem_c, rod_line, None
 
 
@@ -260,7 +287,11 @@ def render(tool, tier, frame=0, nframes=1):
     for y in range(N):
         for x in range(N):
             if rod_line[y, x] and img[y, x, 3] == 0:
-                img[y, x, :3] = hx("#d8d8d8") if y % 2 else hx("#bdbdbd"); img[y, x, 3] = 255
+                if tool == "book":
+                    img[y, x, :3] = hx("#f3ead2") if (x + y) % 3 else hx("#d9cdb0")
+                else:
+                    img[y, x, :3] = hx("#d8d8d8") if y % 2 else hx("#bdbdbd")
+                img[y, x, 3] = 255
 
     # runes animées
     if T.get("rune"):
@@ -394,10 +425,11 @@ def render(tool, tier, frame=0, nframes=1):
                         img[y, x, :3] = sp[1] if (dx, dy) == (0, 0) else sp[0]; img[y, x, 3] = 255
     return Image.fromarray(np.clip(img, 0, 255).astype(np.uint8), "RGBA")
 
-JOBS = {"b": "axe", "m": "pickaxe", "f": "hoe", "c": "sword", "p": "fishing_rod"}
+JOBS = {"b": "axe", "m": "pickaxe", "f": "hoe", "c": "sword", "p": "fishing_rod",
+        "e": "shears", "n": "book", "x": "boots", "t": "bundle"}
 
 if __name__ == "__main__":
-    sheet = Image.new("RGBA", (11 * 34 * 4, 5 * 34 * 4), (40, 44, 52, 255))
+    sheet = Image.new("RGBA", (11 * 34 * 4, len(JOBS) * 34 * 4), (40, 44, 52, 255))
     for r, (j, tool) in enumerate(JOBS.items()):
         for tier in range(11):
             T = TIERS[tier]
