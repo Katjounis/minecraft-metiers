@@ -27,7 +27,7 @@ MAXLVL = 100
 # =====================================================================
 LOGS = ["oak_log", "spruce_log", "birch_log", "jungle_log", "acacia_log", "dark_oak_log",
         "mangrove_log", "cherry_log", "pale_oak_log", "crimson_stem", "warped_stem"]
-STONES = ["stone", "deepslate", "andesite", "diorite", "granite", "tuff", "netherrack", "blackstone"]
+STONES = ["stone", "deepslate", "andesite", "diorite", "granite", "tuff", "blackstone"]
 ORES = {"coal_ore": 3, "deepslate_coal_ore": 3, "copper_ore": 2, "deepslate_copper_ore": 2,
         "iron_ore": 5, "deepslate_iron_ore": 5, "gold_ore": 8, "deepslate_gold_ore": 8,
         "redstone_ore": 4, "deepslate_redstone_ore": 4, "lapis_ore": 6, "deepslate_lapis_ore": 6,
