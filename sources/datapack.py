@@ -385,6 +385,7 @@ L.append("scoreboard objectives add a.sneak minecraft.custom:minecraft.sneak_tim
 L.append("scoreboard objectives add m.quit minecraft.custom:minecraft.leave_game")
 for o in ("m.id", "m.dshow", "m.dall", "m.defi", "m.heure", "m.boss", "m.total"):
     L.append(f"scoreboard objectives add {o} dummy")
+L.append("scoreboard objectives add m.dmg minecraft.custom:minecraft.damage_dealt")
 for j, pool in DEFIS.items():
     for i, (desc, tgt, crits, div) in enumerate(pool, 1):
         for n, cr in enumerate(crits):
@@ -1263,15 +1264,6 @@ w(F + "classement/dialog.mcfunction",
 # =====================================================================
 # BOSS DE SERVEUR
 # =====================================================================
-wj(f"data/{NS}/advancement/boss/touche.json", {
-    "criteria": {"t": {"trigger": "minecraft:player_hurt_entity",
-                       "conditions": {"entity": {"type": "minecraft:zombie", "nbt": "{Tags:[\"metiers.boss\"]}"}}}},
-    "rewards": {"function": f"{NS}:boss/touche"}})
-wj(f"data/{NS}/advancement/boss/tue.json", {
-    "criteria": {"t": {"trigger": "minecraft:player_killed_entity",
-                       "conditions": {"entity": {"type": "minecraft:zombie", "nbt": "{Tags:[\"metiers.boss\"]}"}}}},
-    "rewards": {"function": f"{NS}:boss/victoire"}})
-w(F + "boss/touche.mcfunction", f"tag @s add metiers.bossp\nadvancement revoke @s only {NS}:boss/touche")
 w(F + "boss/tick.mcfunction", f"""
 scoreboard players add #cycle m.boss 1
 execute if score #actif m.boss matches 0 if score #compte m.boss matches 1.. run function {NS}:boss/compte
@@ -1297,6 +1289,8 @@ spreadplayers ~ ~ 6 14 false @e[type=minecraft:zombie,tag=metiers.boss,limit=1]
 scoreboard players set #actif m.boss 1
 scoreboard players set #temps m.boss 0
 scoreboard players set #enrage m.boss 0
+scoreboard players set #last m.boss 600
+scoreboard players set @a m.dmg 0
 bossbar set metiers:boss value 600
 bossbar set metiers:boss visible true
 bossbar set metiers:boss players @a
@@ -1310,6 +1304,10 @@ w(F + "boss/encours.mcfunction", f"""
 scoreboard players add #temps m.boss 1
 execute store result score #hp m.boss run data get entity @e[type=minecraft:zombie,tag=metiers.boss,limit=1] Health
 execute if score #hp m.boss matches 1.. store result bossbar metiers:boss value run scoreboard players get #hp m.boss
+execute if entity @e[type=minecraft:zombie,tag=metiers.boss] run scoreboard players operation #last m.boss = #hp m.boss
+execute as @a[scores={{m.dmg=1..}}] at @s if entity @e[type=minecraft:zombie,tag=metiers.boss,distance=..32] run tag @s add metiers.bossp
+scoreboard players set @a m.dmg 0
+execute unless entity @e[type=minecraft:zombie,tag=metiers.boss] if score #last m.boss matches ..90 run return run function {NS}:boss/victoire
 bossbar set metiers:boss players @a
 execute at @e[type=minecraft:zombie,tag=metiers.boss,limit=1] run particle minecraft:soul_fire_flame ~ ~2.5 ~ 0.8 1.6 0.8 0.02 8
 execute if score #enrage m.boss matches 0 if score #hp m.boss matches 1..300 run function {NS}:boss/enrage
@@ -1337,10 +1335,8 @@ tag @a remove metiers.bossp
 tellraw @a {PREFIX},{{"text":"Le Colosse s'est enfui... Il reviendra.","color":"gray"}}]
 """)
 w(F + "boss/victoire.mcfunction", f"""
-advancement revoke @s only {NS}:boss/tue
 execute unless score #actif m.boss matches 1 run return 0
-tag @s add metiers.bossp
-tellraw @a {PREFIX},{{"selector":"@s","color":"white"}},{{"text":" a terrassé le Colosse des Métiers ! ","color":"gold","bold":true}},{{"text":"Tous les participants sont récompensés.","color":"white"}}]
+tellraw @a {PREFIX},{{"text":"Le Colosse des Métiers est terrassé ! ","color":"gold","bold":true}},{{"text":"Tous ceux qui l'ont frappé sont récompensés : ","color":"white"}},{{"selector":"@a[tag=metiers.bossp]","color":"yellow"}}]
 execute as @a[tag=metiers.bossp] at @s run function {NS}:boss/recompense
 kill @e[tag=metiers.sbire]
 scoreboard players set #actif m.boss 0
@@ -1399,6 +1395,7 @@ for l in LOGS:
     U.append(f"scoreboard objectives remove a.{l}")
 U.append("scoreboard objectives remove a.sneak")
 U.append("scoreboard objectives remove m.quit")
+U.append("scoreboard objectives remove m.dmg")
 for o in ("m.id", "m.dshow", "m.dall", "m.defi", "m.heure", "m.boss", "m.total"):
     U.append(f"scoreboard objectives remove {o}")
 for j in jobs:
