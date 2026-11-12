@@ -520,6 +520,8 @@ for wgt in WEIGHTS:
     L.append(f"scoreboard players set #{wgt} m.const {wgt}")
 L += [f'function {NS}:cmd {{c:"gamerule sendCommandFeedback false"}}',
       f'function {NS}:cmd {{c:"gamerule send_command_feedback false"}}',
+      f"execute unless data storage {NS}:cl {{v2:1b}} run data remove storage {NS}:cl joueurs[].nom",
+      f"data modify storage {NS}:cl v2 set value 1b",
       f"function {NS}:prefixe/equipes", "tag @a add metiers.maj",
       f"schedule function {NS}:loop 10t replace",
       'tellraw @a ' + PREFIX + ',{"text":"Datapack v2 chargé. Tape ","color":"gray"},{"text":"/trigger metiers","color":"yellow"}]']
@@ -1479,6 +1481,7 @@ MEDAL = [("1er", "#FFD700"), ("2e", "#C8C8D0"), ("3e", "#CD7F32")]
 CC = [f"execute as @a run function {NS}:classement/maj", f'function {NS}:classement/top {{f:"t"}}']
 for r in range(3):
     CC += [f'data modify storage {NS}:podium p{r}n set value {{text:"personne",color:"dark_gray"}}',
+           f'execute if data storage {NS}:cl res[{r}] run data modify storage {NS}:podium p{r}n set value {{text:"joueur hors ligne",color:"gray"}}',
            f"data modify storage {NS}:podium p{r}n set from storage {NS}:cl res[{r}].nom",
            f"execute store result storage {NS}:podium p{r}v int 1 run data get storage {NS}:cl res[{r}].t",
            f"execute store result score #p{r} m.tmp run data get storage {NS}:cl res[{r}].t"]
@@ -1491,6 +1494,7 @@ for r in range(3):
 for j in jobs:
     CC += [f'function {NS}:classement/top {{f:"{j}"}}',
            f'data modify storage {NS}:podium c{j}n set value {{text:"personne",color:"dark_gray"}}',
+           f'execute if data storage {NS}:cl res[0] run data modify storage {NS}:podium c{j}n set value {{text:"joueur hors ligne",color:"gray"}}',
            f"data modify storage {NS}:podium c{j}n set from storage {NS}:cl res[0].nom",
            f"execute store result storage {NS}:podium c{j}l int 1 run data get storage {NS}:cl res[0].{j}l",
            f'data modify storage {NS}:podium c{j}s set value ""',
