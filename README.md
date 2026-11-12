@@ -19,7 +19,7 @@ Dans `server.properties` :
 
 ```
 resource-pack=https://github.com/Katjounis/minecraft-metiers/raw/main/metiers_resourcepack.zip
-resource-pack-sha1=8dc1d41490e086882732e2121ca3e10cb163d933
+resource-pack-sha1=ac917ae35dc67c5ee11cef20608b3c1bdff251d5
 require-resource-pack=true
 ```
 

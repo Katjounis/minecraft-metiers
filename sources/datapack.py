@@ -414,7 +414,7 @@ if WITH_G:
     hub = [hub_btn("Mes métiers", "gold", 1)]
     hub += [hub_btn(f"{d['icon']} {d['name']}", d["color"], 20 + d["idx"]) for d in jobs.values()]
     hub += [hub_btn("Mon titre", "yellow", 2), hub_btn("Récompenses", "light_purple", 3),
-            hub_btn("Défis du jour", "aqua", 4), hub_btn("Classement", "gold", 5)]
+            hub_btn("Défis du jour", "aqua", 4), hub_btn("Classement", "gold", 5), hub_btn("Armure des Guildes", "#F1CF4E", 6, 304)]
     wj(f"data/{NS}/dialog/ouvrir.json", {
         "type": "minecraft:multi_action",
         "title": {"text": "Métiers", "color": "gold", "bold": True},
@@ -503,6 +503,7 @@ for o in ("m.id", "m.dshow", "m.dall", "m.defi", "m.heure", "m.boss", "m.total")
 L.append("scoreboard objectives add m.dmg minecraft.custom:minecraft.damage_dealt")
 L.append("scoreboard objectives add m.dur dummy")
 L.append("scoreboard objectives add m.x_acc dummy")
+L += ["scoreboard objectives add m.arm dummy", "scoreboard objectives add m.acd dummy"]
 for st in XDIST:
     L.append(f"scoreboard objectives add s.x.{st} minecraft.custom:minecraft.{st}")
 for j, pool in DEFIS.items():
@@ -524,7 +525,7 @@ L += [f'function {NS}:cmd {{c:"gamerule sendCommandFeedback false"}}',
       f"data modify storage {NS}:cl v2 set value 1b",
       f"function {NS}:prefixe/equipes", "tag @a add metiers.maj",
       f"schedule function {NS}:loop 10t replace",
-      'tellraw @a ' + PREFIX + ',{"text":"Datapack v10 (9 métiers) chargé. Tape ","color":"gray"},{"text":"/trigger metiers","color":"yellow"}]']
+      'tellraw @a ' + PREFIX + ',{"text":"Datapack v11 chargé. Tape ","color":"gray"},{"text":"/trigger metiers","color":"yellow"}]']
 w(F + "load.mcfunction", "\n".join(L))
 
 w(F + "cmd.mcfunction", "$$(c)")
@@ -584,6 +585,8 @@ for j in jobs:
     J.append(f"execute if score @s m.{j}_cd matches 1.. run scoreboard players remove @s m.{j}_cd 1")
 J += [f'execute if score #quatre m.timer matches 0 run function {NS}:appel {{f:"outil/check"}}',
       f'execute if score #pair m.timer matches 0 run function {NS}:appel {{f:"defis/joueur"}}',
+      f'function {NS}:appel {{f:"armure/bonus"}}',
+      "execute if score @s m.acd matches 1.. run scoreboard players remove @s m.acd 1",
       f'execute if score #soixante m.timer matches 0 run function {NS}:appel {{f:"classement/maj"}}']
 for j in jobs:
     J.append(f"execute unless score @s m.{j}_lvl matches 1.. run function {NS}:{j}/init")
@@ -631,7 +634,9 @@ T = ["scoreboard players operation @s m.trig = @s metiers",
      f"execute if score @s m.trig matches 10..19 run function {NS}:prefixe/choisir",
      f'execute if score @s m.trig matches 4 run function {NS}:appel {{f:"defis/menu"}}',
      f'execute if score @s m.trig matches 5 run function {NS}:appel {{f:"classement/menu"}}',
-     f'execute if score @s m.trig matches 7 run function {NS}:appel {{f:"defis/basculer"}}']
+     f'execute if score @s m.trig matches 7 run function {NS}:appel {{f:"defis/basculer"}}',
+     f'execute if score @s m.trig matches 6 run function {NS}:appel {{f:"armure/menu"}}',
+     f'execute if score @s m.trig matches 8 run function {NS}:appel {{f:"armure/recup"}}']
 for j, d in jobs.items():
     T += [f'execute if score @s m.trig matches {300 + d["idx"]} run function {NS}:appel {{f:"{j}/outil_recup"}}',
           f'execute if score @s m.trig matches {310 + d["idx"]} run function {NS}:appel {{f:"{j}/prestige_confirmer"}}',
@@ -1079,6 +1084,7 @@ btns.append('{label:{text:"Choisir mon titre",color:"yellow"},width:200,action:{
 btns.append('{label:{text:"Récompenses de palier",color:"light_purple"},width:200,action:{type:"run_command",command:"trigger metiers set 3"}}')
 btns.append('{label:{text:"Défis du jour",color:"aqua"},width:200,action:{type:"run_command",command:"trigger metiers set 4"}}')
 btns.append('{label:{text:"Classement",color:"gold"},width:200,action:{type:"run_command",command:"trigger metiers set 5"}}')
+btns.append('{label:{text:"Armure des Guildes",color:"#F1CF4E"},width:200,action:{type:"run_command",command:"trigger metiers set 6"}}')
 w(F + "menu_dialog.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Mes métiers",color:"gold"},'
   'can_close_with_escape:true,pause:false,body:[' + ",".join(body) + '],'
@@ -1125,7 +1131,7 @@ w(F + "prefixe/maj.mcfunction", "\n".join(MJ))
 # APPEL ISOLÉ (une fonction cassée ne casse pas le reste)
 # =====================================================================
 w(F + "appel.mcfunction", f"$function {NS}:$(f)")
-w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 10 : 9 métiers (avec Éleveur, Enchanteur, Explorateur, Marchand)","color":"gold"}')
+w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 11 : 9 métiers et Armure des Guildes (avec Éleveur, Enchanteur, Explorateur, Marchand)","color":"gold"}')
 
 def tr(txt, col="gray"):
     return 'tellraw @s ' + PREFIX + f',{{"text":"{txt}","color":"{col}"}}]'
@@ -1430,6 +1436,7 @@ for j in jobs:
            f'data modify storage {NS}:tmp {j}st set value ""']
     CM += [f'execute if score @s m.{j}_pr matches {st} run data modify storage {NS}:tmp {j}st set value "{"★" * st}"' for st in range(1, 6)]
 CM += [f"execute store result storage {NS}:tmp t int 1 run scoreboard players get @s m.total",
+       f'function {NS}:appel {{f:"armure/check"}}',
        f"function {NS}:classement/ecrire with storage {NS}:tmp"]
 w(F + "classement/maj.mcfunction", "\n".join(CM))
 EC = [f"$execute unless data storage {NS}:cl joueurs[{{id:$(id)}}] run function {NS}:classement/nouveau {{id:$(id)}}",
@@ -1607,6 +1614,103 @@ w(F + "boss/recompense.mcfunction", "\n".join([
     "tag @s remove metiers.bossp"]))
 
 # =====================================================================
+# ARMURE DES GUILDES (5 paliers selon le score total)
+# =====================================================================
+ARM_NOM = {1: "Bronze guildien", 2: "Argent runique", 3: "Or royal", 4: "Obsidienne astrale", 5: "Céleste"}
+ARM_DE = {1: "de Bronze guildien", 2: "d'Argent runique", 3: "d'Or royal", 4: "d'Obsidienne astrale", 5: "Céleste"}
+ARM_COL = {1: "#D4945A", 2: "#9CC2FF", 3: "#F1CF4E", 4: "#22C9E6", 5: "#FFF4D2"}
+ARM_SEUIL = {1: 50, 2: 120, 3: 220, 4: 350, 5: 520}
+ARM_BONUS = {1: "Célérité I", 2: "Vitesse I", 3: "Résistance I", 4: "Régénération I", 5: "Force I"}
+PIECES = [("helmet", "head", "Heaume", 0), ("chestplate", "chest", "Cuirasse", 1), ("leggings", "legs", "Jambières", 2), ("boots", "feet", "Solerets", 3)]
+ARMOR = {"head": [3, 3, 3, 4, 4], "chest": [8, 8, 9, 9, 10], "legs": [6, 6, 7, 7, 8], "feet": [3, 3, 3, 4, 4]}
+TOUGH = [2, 3, 3, 4, 5]
+KB = [0, 0.1, 0.1, 0.15, 0.2]
+VIE = [0, 0, 2, 4, 6]
+
+def piece_item(piece, slot, nom, t):
+    i = t - 1
+    mods = [f'{{type:"minecraft:armor",amount:{ARMOR[slot][i]},id:"metiers:g_{slot}_a",operation:"add_value",slot:"{slot}"}}',
+            f'{{type:"minecraft:armor_toughness",amount:{TOUGH[i]},id:"metiers:g_{slot}_t",operation:"add_value",slot:"{slot}"}}']
+    if KB[i]:
+        mods.append(f'{{type:"minecraft:knockback_resistance",amount:{KB[i]},id:"metiers:g_{slot}_k",operation:"add_value",slot:"{slot}"}}')
+    if slot == "chest" and VIE[i]:
+        mods.append(f'{{type:"minecraft:max_health",amount:{VIE[i]},id:"metiers:g_vie",operation:"add_value",slot:"chest"}}')
+    ench = {"protection": min(4, 1 + t), "unbreaking": 3}
+    if slot == "feet": ench["feather_falling"] = min(4, t)
+    if slot == "head": ench["respiration"] = min(3, t)
+    e = ",".join(f'"minecraft:{a}":{v}' for a, v in ench.items())
+    comps = [f"minecraft:enchantments={{{e}}}",
+             f'minecraft:custom_name={{text:"{nom} {ARM_DE[t]}",color:"{ARM_COL[t]}",bold:true,italic:false}}',
+             f'minecraft:lore=[{{text:"Armure des Guildes, palier {t}/5",color:"gray",italic:false}},{{text:"Set complet : {", ".join(ARM_BONUS[k] for k in range(1, t + 1))}",color:"gold",italic:false}}]',
+             f"minecraft:custom_data={{metiers_armure:1b,palier:{t}}}",
+             f'minecraft:item_model="metiers:guilde_{piece}_{t}"',
+             f'minecraft:equippable={{slot:"{slot}",asset_id:"metiers:guilde_{t}",equip_sound:"minecraft:item.armor.equip_netherite"}}',
+             "minecraft:attribute_modifiers=[" + ",".join(mods) + "]",
+             "minecraft:unbreakable={}", "minecraft:enchantment_glint_override=false",
+             'minecraft:rarity="epic"', "minecraft:repair_cost=1000", "!minecraft:repairable"]
+    return f"minecraft:netherite_{piece}[{','.join(comps)}]"
+
+ASEL = '*[minecraft:custom_data~{metiers_armure:1b}]'
+AD = [f"clear @s {ASEL}"]
+for t in range(1, 6):
+    for piece, slot, nom, _ in PIECES:
+        it = piece_item(piece, slot, nom, t)
+        AD.append(f"execute if score @s m.arm matches {t} unless items entity @s armor.{slot} * run item replace entity @s armor.{slot} with {it}")
+        AD.append(f"execute if score @s m.arm matches {t} if items entity @s armor.{slot} * unless items entity @s armor.{slot} {ASEL} run give @s {it}")
+AD += ["playsound minecraft:item.armor.equip_netherite master @s ~ ~ ~ 1 0.8",
+       "particle minecraft:totem_of_undying ~ ~1 ~ 0.4 1 0.4 0.3 60"]
+w(F + "armure/donner.mcfunction", "\n".join(AD))
+
+AC = ["scoreboard players add @s m.arm 0", "scoreboard players set @s m.tmp 0"]
+AC += [f"execute if score @s m.total matches {ARM_SEUIL[t]}.. run scoreboard players set @s m.tmp {t}" for t in range(1, 6)]
+AC += ["execute if score @s m.tmp <= @s m.arm run return 0",
+       "scoreboard players operation @s m.arm = @s m.tmp"]
+AC += [f'execute if score @s m.arm matches {t} run tellraw @a ' + PREFIX + f',{{"selector":"@s","color":"white"}},{{"text":" obtient l\'Armure des Guildes : ","color":"gray"}},{{"text":"{ARM_NOM[t]}","color":"{ARM_COL[t]}","bold":true}}]' for t in range(1, 6)]
+AC += [f'function {NS}:appel {{f:"armure/donner"}}', "execute as @a at @s run playsound minecraft:ui.toast.challenge_complete master @s ~ ~ ~ 0.6 1.3"]
+w(F + "armure/check.mcfunction", "\n".join(AC))
+
+w(F + "armure/recup.mcfunction", "\n".join([
+    "scoreboard players add @s m.arm 0",
+    f"execute if score @s m.arm matches 0 run return run {tr('Ton armure se débloque à 50 points de score (somme de tes niveaux).', 'red')}",
+    "scoreboard players operation @s m.tmp = @s m.acd", "scoreboard players operation @s m.tmp /= #60 m.const",
+    "scoreboard players operation @s m.tmp /= #2 m.const", "scoreboard players add @s m.tmp 1",
+    'execute if score @s m.acd matches 1.. run return run tellraw @s ' + PREFIX + ',{"text":"Patiente encore ","color":"red"},{"score":{"name":"@s","objective":"m.tmp"},"color":"yellow"},{"text":" min.","color":"red"}]',
+    "scoreboard players set @s m.acd 1200",
+    f'function {NS}:appel {{f:"armure/donner"}}',
+    tr("Ton Armure des Guildes est remise à neuf : les pièces libres sont équipées, les autres sont dans ton inventaire.", "green")]))
+
+AB = [f"execute unless items entity @s armor.{s} {ASEL} run return 0" for _, s, _, _ in PIECES]
+AB += ["execute if score @s m.arm matches 1.. run effect give @s minecraft:haste 2 0 true",
+       "execute if score @s m.arm matches 2.. run effect give @s minecraft:speed 2 0 true",
+       "execute if score @s m.arm matches 3.. run effect give @s minecraft:resistance 2 0 true",
+       "execute if score @s m.arm matches 4.. run effect give @s minecraft:regeneration 3 0 true",
+       "execute if score @s m.arm matches 5.. run effect give @s minecraft:strength 2 0 true",
+       "execute if score @s m.arm matches 4.. if score #huit m.timer matches 0 run particle minecraft:end_rod ~ ~1 ~ 0.35 0.6 0.35 0.01 6",
+       "execute if score @s m.arm matches 5.. run particle minecraft:wax_off ~ ~1.2 ~ 0.3 0.5 0.3 0 2"]
+w(F + "armure/bonus.mcfunction", "\n".join(AB))
+
+AMN = ["scoreboard players add @s m.arm 0",
+       f"execute store result storage {NS}:arm score int 1 run scoreboard players get @s m.total",
+       f'data modify storage {NS}:arm nom set value "Pas encore débloquée"', f'data modify storage {NS}:arm col set value "gray"',
+       f'data modify storage {NS}:arm next set value "Débloque-la à {ARM_SEUIL[1]} points"']
+for t in range(1, 6):
+    nxt = f"Prochain palier à {ARM_SEUIL[t + 1]} points" if t < 5 else "Palier maximum atteint"
+    AMN += [f'execute if score @s m.arm matches {t} run data modify storage {NS}:arm nom set value "{ARM_NOM[t]} (palier {t}/5)"',
+            f'execute if score @s m.arm matches {t} run data modify storage {NS}:arm col set value "{ARM_COL[t]}"',
+            f'execute if score @s m.arm matches {t} run data modify storage {NS}:arm next set value "{nxt}"']
+AMN.append(f"function {NS}:armure/menu_dialog with storage {NS}:arm")
+w(F + "armure/menu.mcfunction", "\n".join(AMN))
+paliers = "\\n".join(f"{t}. {ARM_NOM[t]} : {ARM_SEUIL[t]} pts, set complet + {ARM_BONUS[t]}" for t in range(1, 6))
+w(F + "armure/menu_dialog.mcfunction",
+  '$dialog show @s {type:"minecraft:multi_action",title:{text:"Armure des Guildes",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
+  'body:[{type:"minecraft:plain_message",width:320,contents:[{text:"$(nom)\\n",color:"$(col)",bold:true},'
+  '{text:"Ton score : $(score) points (somme de tes niveaux, +100 par prestige)\\n$(next)\\n\\n",color:"white",bold:false},'
+  f'{{text:"{paliers}\\n\\n",color:"gray"}},'
+  '{text:"Les bonus se cumulent quand tu portes les 4 pièces. Incassable, ne se répare pas, évolue toute seule.",color:"dark_gray"}]}],'
+  'actions:[{label:{text:"Récupérer mon armure",color:"green"},width:200,tooltip:{text:"Une fois toutes les 10 minutes."},action:{type:"run_command",command:"trigger metiers set 8"}}],'
+  'columns:1,exit_action:{label:"Retour",width:150,action:{type:"run_command",command:"trigger metiers set 1"}}}')
+
+# =====================================================================
 # ADMIN
 # =====================================================================
 CL = ["tag @s add metiers.req"]
@@ -1650,6 +1754,7 @@ for l in LOGS:
 U.append("scoreboard objectives remove a.sneak")
 U.append("scoreboard objectives remove m.quit")
 U.append("scoreboard objectives remove m.dmg")
+U += ["scoreboard objectives remove m.arm", "scoreboard objectives remove m.acd"]
 for o in ("m.id", "m.dshow", "m.dall", "m.defi", "m.heure", "m.boss", "m.total"):
     U.append(f"scoreboard objectives remove {o}")
 for j in jobs:
