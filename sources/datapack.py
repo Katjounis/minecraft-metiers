@@ -98,7 +98,7 @@ jobs["t"]["src"].append(("minecraft.custom:minecraft.traded_with_villager", 6, 1
 XDIST = ["walk_one_cm", "sprint_one_cm", "crouch_one_cm", "aviate_one_cm", "horse_one_cm", "climb_one_cm"]
 
 ALL_STATS = [s for j in jobs.values() for s in j["src"]]
-WEIGHTS = sorted({s[1] for s in ALL_STATS} | {2, 10, 20, 30, 40, 60, 100, 1000, 7200})
+WEIGHTS = sorted({s[1] for s in ALL_STATS} | {2, 10, 20, 30, 40, 60, 100, 1000, 7200, 20000})
 
 # =====================================================================
 # ARBRES DE COMPÉTENCES (1 point par niveau, 49 points au niveau 50 = tout l'arbre)
@@ -678,8 +678,10 @@ for j, d in jobs.items():
     if j == "x":
         for st in XDIST:
             S += [f"scoreboard players operation @s m.x_acc += @s s.x.{st}", f"scoreboard players set @s s.x.{st} 0"]
-        S += ["scoreboard players operation @s m.tmp = @s m.x_acc", "scoreboard players operation @s m.tmp /= #1000 m.const",
-              "scoreboard players operation @s m.x_bal += @s m.tmp", "scoreboard players operation @s m.x_acc %= #1000 m.const"]
+        # XP versée par tranche de 200 m (20 XP d'un coup) pour éviter un message tous les 10 m
+        S += ["scoreboard players operation @s m.tmp = @s m.x_acc", "scoreboard players operation @s m.tmp /= #20000 m.const",
+              "scoreboard players operation @s m.tmp *= #20 m.const",
+              "scoreboard players operation @s m.x_bal += @s m.tmp", "scoreboard players operation @s m.x_acc %= #20000 m.const"]
     S.append(f"execute if score @s m.{j}_bal matches 1.. run function {NS}:{j}/gain")
     w(F + f"{j}/stats.mcfunction", "\n".join(S))
 
@@ -1134,7 +1136,7 @@ w(F + "prefixe/maj.mcfunction", "\n".join(MJ))
 # APPEL ISOLÉ (une fonction cassée ne casse pas le reste)
 # =====================================================================
 w(F + "appel.mcfunction", f"$function {NS}:$(f)")
-w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 14 : 9 métiers, Armure des Guildes (heaume 3D) (avec Éleveur, Enchanteur, Explorateur, Marchand)","color":"gold"}')
+w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 15 : 9 métiers, Armure des Guildes (heaume 3D) (avec Éleveur, Enchanteur, Explorateur, Marchand)","color":"gold"}')
 
 def tr(txt, col="gray"):
     return 'tellraw @s ' + PREFIX + f',{{"text":"{txt}","color":"{col}"}}]'
