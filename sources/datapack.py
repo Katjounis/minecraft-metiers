@@ -1134,7 +1134,7 @@ w(F + "prefixe/maj.mcfunction", "\n".join(MJ))
 # APPEL ISOLÉ (une fonction cassée ne casse pas le reste)
 # =====================================================================
 w(F + "appel.mcfunction", f"$function {NS}:$(f)")
-w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 13 : 9 métiers, Armure des Guildes (heaume 3D) (avec Éleveur, Enchanteur, Explorateur, Marchand)","color":"gold"}')
+w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 14 : 9 métiers, Armure des Guildes (heaume 3D) (avec Éleveur, Enchanteur, Explorateur, Marchand)","color":"gold"}')
 
 def tr(txt, col="gray"):
     return 'tellraw @s ' + PREFIX + f',{{"text":"{txt}","color":"{col}"}}]'
@@ -1326,10 +1326,10 @@ tellraw @a {PREFIX},{{"text":"L'heure du métier est terminée. Prochaine dans 1
 # DÉFIS DU JOUR
 # =====================================================================
 w(F + "defis/tick.mcfunction", f"""
-scoreboard players add #jour m.defi 1
+execute if entity @a run scoreboard players add #jour m.defi 1
 execute unless score #d_b m.defi matches 1.. run function {NS}:defis/nouveaux
-execute if score #jour m.defi matches 172800.. run function {NS}:defis/nouveaux
-scoreboard players set #left m.defi 172800
+execute if score #jour m.defi matches 28800.. run function {NS}:defis/nouveaux
+scoreboard players set #left m.defi 28800
 scoreboard players operation #left m.defi -= #jour m.defi
 scoreboard players operation #left m.defi /= #7200 m.const
 scoreboard players add #left m.defi 1
