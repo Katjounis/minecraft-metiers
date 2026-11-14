@@ -503,7 +503,8 @@ for o in ("m.id", "m.dshow", "m.dall", "m.defi", "m.heure", "m.boss", "m.total")
 L.append("scoreboard objectives add m.dmg minecraft.custom:minecraft.damage_dealt")
 L.append("scoreboard objectives add m.dur dummy")
 L.append("scoreboard objectives add m.x_acc dummy")
-L += ["scoreboard objectives add m.arm dummy", "scoreboard objectives add m.acd dummy"]
+L += ["scoreboard objectives add m.arm dummy", "scoreboard objectives add m.acd dummy", "scoreboard objectives add m.aser dummy"]
+L += [f"scoreboard objectives add m.{j}_ser dummy" for j in jobs]
 for st in XDIST:
     L.append(f"scoreboard objectives add s.x.{st} minecraft.custom:minecraft.{st}")
 for j, pool in DEFIS.items():
@@ -580,12 +581,14 @@ J = [f"execute unless entity @s[tag=metiers.v2] run function {NS}:migration",
      f"execute if score @s m.quit matches 1.. run function {NS}:connexion",
      f"execute unless score @s m.id matches 1.. run function {NS}:id",
      f"execute unless entity @s[tag=metiers.v7] run function {NS}:migration6",
-     f'execute unless entity @s[tag=metiers.v9] run function {NS}:appel {{f:"migration8"}}']
+     f'execute unless entity @s[tag=metiers.v9] run function {NS}:appel {{f:"migration8"}}',
+     f'execute unless entity @s[tag=metiers.v13] run function {NS}:appel {{f:"migration13"}}']
 for j in jobs:
     J.append(f"execute if score @s m.{j}_cd matches 1.. run scoreboard players remove @s m.{j}_cd 1")
 J += [f'execute if score #quatre m.timer matches 0 run function {NS}:appel {{f:"outil/check"}}',
       f'execute if score #pair m.timer matches 0 run function {NS}:appel {{f:"defis/joueur"}}',
       f'function {NS}:appel {{f:"armure/bonus"}}',
+      f'execute if score #quatre m.timer matches 0 run function {NS}:appel {{f:"securite/check"}}',
       "execute if score @s m.acd matches 1.. run scoreboard players remove @s m.acd 1",
       f'execute if score #soixante m.timer matches 0 run function {NS}:appel {{f:"classement/maj"}}']
 for j in jobs:
@@ -1131,7 +1134,7 @@ w(F + "prefixe/maj.mcfunction", "\n".join(MJ))
 # APPEL ISOLÉ (une fonction cassée ne casse pas le reste)
 # =====================================================================
 w(F + "appel.mcfunction", f"$function {NS}:$(f)")
-w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 12 : 9 métiers, Armure des Guildes (heaume 3D) (avec Éleveur, Enchanteur, Explorateur, Marchand)","color":"gold"}')
+w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 13 : 9 métiers, Armure des Guildes (heaume 3D) (avec Éleveur, Enchanteur, Explorateur, Marchand)","color":"gold"}')
 
 def tr(txt, col="gray"):
     return 'tellraw @s ' + PREFIX + f',{{"text":"{txt}","color":"{col}"}}]'
@@ -1156,8 +1159,8 @@ def outil_give(j, k):
     comps = [f"minecraft:enchantments={{{e}}}",
              f'minecraft:custom_name={{text:"{name}",color:"{color}",bold:true,italic:false}}',
              f"minecraft:lore={lore}",
-             (f'minecraft:custom_data={{metiers_outil:"{j}",palier:{k}}}' if j in ("n", "t", "x") else
-              f'minecraft:custom_data={{metiers_outil:"{j}",palier:{k},max:{ {"fishing_rod": 64, "shears": 238}.get(iid, MAXDUR.get(iid.split("_")[0], 250))}}}'),
+             (f'minecraft:custom_data={{metiers_outil:"{j}",palier:{k},o:$(o),s:$(s)}}' if j in ("n", "t", "x") else
+              f'minecraft:custom_data={{metiers_outil:"{j}",palier:{k},max:{ {"fishing_rod": 64, "shears": 238}.get(iid, MAXDUR.get(iid.split("_")[0], 250))},o:$(o),s:$(s)}}'),
              f'minecraft:item_model="metiers:{j}_{k}"',
              "minecraft:enchantment_glint_override=false",
              "minecraft:repair_cost=1000", "!minecraft:repairable", "minecraft:max_stack_size=1",
@@ -1169,8 +1172,13 @@ def outil_give(j, k):
 CHK = []
 for j, d in jobs.items():
     sel = f'*[minecraft:custom_data~{{metiers_outil:"{j}"}}]'
-    OD = [f"clear @s {sel}"] + [f"execute if score @s m.{j}_out matches {k} run give @s {outil_give(j, k)}" for k in range(11)]
-    OD.append("playsound minecraft:block.anvil.use master @s ~ ~ ~ 0.6 1.4")
+    w(F + f"{j}/outil_donner_m.mcfunction", "\n".join(
+        f"$execute if score @s m.{j}_out matches {k} run give @s {outil_give(j, k)}" for k in range(11)))
+    OD = [f"clear @s {sel}", f"scoreboard players add @s m.{j}_ser 1",
+          f"execute store result storage {NS}:tmp o int 1 run scoreboard players get @s m.id",
+          f"execute store result storage {NS}:tmp s int 1 run scoreboard players get @s m.{j}_ser",
+          f"function {NS}:{j}/outil_donner_m with storage {NS}:tmp",
+          "playsound minecraft:block.anvil.use master @s ~ ~ ~ 0.6 1.4"]
     w(F + f"{j}/outil_donner.mcfunction", "\n".join(OD))
     w(F + f"{j}/outil_recup.mcfunction", "\n".join([
         f"execute if items entity @s container.* {sel} run return run {tr('Tu as déjà ton outil de ' + d['name'] + ' sur toi.')}",
@@ -1642,7 +1650,7 @@ def piece_item(piece, slot, nom, t):
     comps = [f"minecraft:enchantments={{{e}}}",
              f'minecraft:custom_name={{text:"{nom} {ARM_DE[t]}",color:"{ARM_COL[t]}",bold:true,italic:false}}',
              f'minecraft:lore=[{{text:"Armure des Guildes, palier {t}/5",color:"gray",italic:false}},{{text:"Set complet : {", ".join(ARM_BONUS[k] for k in range(1, t + 1))}",color:"gold",italic:false}}]',
-             f"minecraft:custom_data={{metiers_armure:1b,palier:{t}}}",
+             f"minecraft:custom_data={{metiers_armure:1b,palier:{t},o:$(o),s:$(s)}}",
              (f'minecraft:item_model="metiers:heaume_{t}"' if slot == "head" else f'minecraft:item_model="metiers:guilde_{piece}_{t}"'),
              (f'minecraft:equippable={{slot:"head",equip_sound:"minecraft:item.armor.equip_netherite"}}' if slot == "head" else
               f'minecraft:equippable={{slot:"{slot}",asset_id:"metiers:guilde_{t}",equip_sound:"minecraft:item.armor.equip_netherite"}}'),
@@ -1652,15 +1660,45 @@ def piece_item(piece, slot, nom, t):
     return f"minecraft:netherite_{piece}[{','.join(comps)}]"
 
 ASEL = '*[minecraft:custom_data~{metiers_armure:1b}]'
-AD = [f"clear @s {ASEL}"]
+AD = []
 for t in range(1, 6):
     for piece, slot, nom, _ in PIECES:
         it = piece_item(piece, slot, nom, t)
-        AD.append(f"execute if score @s m.arm matches {t} unless items entity @s armor.{slot} * run item replace entity @s armor.{slot} with {it}")
-        AD.append(f"execute if score @s m.arm matches {t} if items entity @s armor.{slot} * unless items entity @s armor.{slot} {ASEL} run give @s {it}")
-AD += ["playsound minecraft:item.armor.equip_netherite master @s ~ ~ ~ 1 0.8",
-       "particle minecraft:totem_of_undying ~ ~1 ~ 0.4 1 0.4 0.3 60"]
-w(F + "armure/donner.mcfunction", "\n".join(AD))
+        AD.append(f"$execute if score @s m.arm matches {t} unless items entity @s armor.{slot} * run item replace entity @s armor.{slot} with {it}")
+        AD.append(f"$execute if score @s m.arm matches {t} if items entity @s armor.{slot} * run give @s {it}")
+w(F + "armure/donner_m.mcfunction", "\n".join(AD))
+w(F + "armure/donner.mcfunction", "\n".join([
+    f"clear @s {ASEL}", "scoreboard players add @s m.aser 1",
+    f"execute store result storage {NS}:tmp o int 1 run scoreboard players get @s m.id",
+    f"execute store result storage {NS}:tmp s int 1 run scoreboard players get @s m.aser",
+    f"function {NS}:armure/donner_m with storage {NS}:tmp",
+    "playsound minecraft:item.armor.equip_netherite master @s ~ ~ ~ 1 0.8",
+    "particle minecraft:totem_of_undying ~ ~1 ~ 0.4 1 0.4 0.3 60"]))
+
+# contrôle anti-copie : un outil ou une pièce d'armure qui n'a pas le bon propriétaire ou le bon numéro de série disparaît
+SC = [f"execute store result storage {NS}:sec o int 1 run scoreboard players get @s m.id",
+      f"execute store result storage {NS}:sec sa int 1 run scoreboard players get @s m.aser"]
+SC += [f"execute store result storage {NS}:sec s{j} int 1 run scoreboard players get @s m.{j}_ser" for j in jobs]
+SC.append(f"function {NS}:securite/check_m with storage {NS}:sec")
+w(F + "securite/check.mcfunction", "\n".join(SC))
+CK = []
+for j in jobs:
+    for slot in ("weapon.mainhand", "weapon.offhand") + (("armor.feet",) if j == "x" else ()):
+        CK.append(f'$execute if items entity @s {slot} *[minecraft:custom_data~{{metiers_outil:"{j}"}}] unless items entity @s {slot} *[minecraft:custom_data~{{metiers_outil:"{j}",o:$(o),s:$(s{j})}}] run function {NS}:securite/invalide {{slot:"{slot}"}}')
+for _, slot, _, _ in PIECES:
+    CK.append(f'$execute if items entity @s armor.{slot} *[minecraft:custom_data~{{metiers_armure:1b}}] unless items entity @s armor.{slot} *[minecraft:custom_data~{{metiers_armure:1b,o:$(o),s:$(sa)}}] run function {NS}:securite/invalide {{slot:"armor.{slot}"}}')
+w(F + "securite/check_m.mcfunction", "\n".join(CK))
+w(F + "securite/invalide.mcfunction", "\n".join([
+    "$item replace entity @s $(slot) with minecraft:air",
+    "playsound minecraft:entity.item.break master @s ~ ~ ~ 1 0.8",
+    tr("Cet objet de métier n'est plus valide (copie, ancien exemplaire ou objet d'un autre joueur) : il disparaît. Le tien se récupère avec la touche G.", "red")]))
+M13 = ["tag @s add metiers.v13"]
+for j in jobs:
+    M13.append(f'execute if items entity @s container.* *[minecraft:custom_data~{{metiers_outil:"{j}"}}] run function {NS}:{j}/outil_donner')
+    M13.append(f'execute if items entity @s armor.* *[minecraft:custom_data~{{metiers_outil:"{j}"}}] run function {NS}:{j}/outil_donner')
+M13.append(f"execute if score @s m.arm matches 1.. run function {NS}:armure/donner")
+M13.append(tr("Tes outils et ton armure de métier ont reçu un numéro de série : les copies ne marchent plus.", "yellow"))
+w(F + "migration13.mcfunction", "\n".join(M13))
 
 AC = ["scoreboard players add @s m.arm 0",
       f'execute unless entity @s[tag=metiers.arm2] if score @s m.arm matches 1.. run function {NS}:appel {{f:"armure/donner"}}',
