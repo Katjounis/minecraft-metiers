@@ -3,7 +3,8 @@ import math, os, json, sys
 import numpy as np
 from PIL import Image
 
-N = 32
+N = 64
+SC = 2
 OUT = sys.argv[1] if len(sys.argv) > 1 else "/home/claude/rp_textures"
 os.makedirs(OUT, exist_ok=True)
 
@@ -56,7 +57,7 @@ def bez(p0, p1, p2, t):
 def stroke(mask, pts_fn, r_fn, tparam=None, steps=300):
     for i in range(steps + 1):
         t = i / steps
-        cx, cy = pts_fn(t); r = r_fn(t)
+        cx, cy = pts_fn(t); r = r_fn(t) * SC; cx *= SC; cy *= SC
         for y in range(max(0, int(cy - r - 1)), min(N, int(cy + r + 2))):
             for x in range(max(0, int(cx - r - 1)), min(N, int(cx + r + 2))):
                 if (x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2 <= r * r:
@@ -69,13 +70,14 @@ def line(a, b):
 
 def poly(mask, pts):
     from matplotlib.path import Path
-    p = Path(pts)
+    p = Path([(a * SC, b * SC) for a, b in pts])
     for y in range(N):
         for x in range(N):
             if p.contains_point((x + 0.5, y + 0.5)):
                 mask[y, x] = True
 
 def near(mask, pts, d):
+    pts = [(a * SC, b * SC) for a, b in pts]; d = d * SC
     m = blank()
     for y in range(N):
         for x in range(N):
@@ -89,6 +91,7 @@ def near(mask, pts, d):
     return m
 
 def handle_t(a, b):
+    a = (a[0] * SC, a[1] * SC); b = (b[0] * SC, b[1] * SC)
     t = np.zeros((N, N))
     vx, vy = b[0] - a[0], b[1] - a[1]; L2 = vx * vx + vy * vy
     for y in range(N):
@@ -142,8 +145,7 @@ def shape(tool):
         stroke(hand, lambda t: bez(P0, Q, P2, t * 0.32), lambda t: 1.35)
         stroke(head, lambda t: bez(P0, Q, P2, 0.3 + t * 0.7), lambda t: 1.05 - 0.45 * t)
         stroke(head, lambda t: (9.2, 21.0), lambda t: 2.4)  # moulinet
-        for yy in range(5, 25):
-            rod_line[yy, 27] = True
+        stroke(rod_line, line((27.25, 5), (27.25, 25)), lambda t: 0.3)
         stroke(head, line((27, 25), (27, 27.5)), lambda t: 0.6)
         stroke(head, lambda t: bez((27, 27.5), (25, 29.5), (24.5, 26), t), lambda t: 0.6)
         gem_c = (9, 21)
@@ -189,11 +191,11 @@ def top_pixels(head):
 def pick_studs(head, edge, n, hbv):
     cand = [(x, y) for y in range(N) for x in range(N)
             if head[y, x] and not edge[y, x] and hbv[y, x] in (2, 3)
-            and all(head[y + dy, x + dx] for dy in (-1, 0, 1) for dx in (-1, 0, 1) if 0 <= y + dy < N and 0 <= x + dx < N)]
+            and all(head[y + dy, x + dx] for dy in (-3, -2, -1, 0, 1, 2, 3) for dx in (-3, -2, -1, 0, 1, 2, 3) if 0 <= y + dy < N and 0 <= x + dx < N)]
     cand.sort(key=lambda p: (p[0] * 37 + p[1] * 101) % 97)
     out = []
     for c in cand:
-        if all(abs(c[0] - o[0]) + abs(c[1] - o[1]) >= 6 for o in out):
+        if all(abs(c[0] - o[0]) + abs(c[1] - o[1]) >= 6 * SC for o in out):
             out.append(c)
         if len(out) >= n:
             break
@@ -207,6 +209,31 @@ def hsh(*a):
 
 # ---------------------------------------------------------------- rendu
 def bevel(mask, ramp_idx):
+    """Biseau HD : distance au bord haut-gauche / bas-droite."""
+    out = np.zeros((N, N), dtype=int)
+    def m(y, x):
+        return 0 <= y < N and 0 <= x < N and mask[y, x]
+    for y in range(N):
+        for x in range(N):
+            if not mask[y, x]:
+                continue
+            dtl = next((k for k in range(1, 5) if not m(y - k, x) or not m(y, x - k) or not m(y - k + 1, x - k + 1 - 1)), 5)
+            dbr = next((k for k in range(1, 5) if not m(y + k, x) or not m(y, x + k)), 5)
+            if dtl == 1 and dbr > 1:
+                out[y, x] = 4
+            elif dbr == 1 and dtl > 1:
+                out[y, x] = 1
+            elif dtl == 1 and dbr == 1:
+                out[y, x] = 3
+            elif dtl <= 3 and dtl < dbr:
+                out[y, x] = 3
+            elif dbr == 2 and dtl > 2:
+                out[y, x] = 1 if (x + y) % 2 else 2
+            else:
+                out[y, x] = 2
+    return out
+
+def bevel_old(mask, ramp_idx):
     """1 = ombre, 2 = moyen, 3 = clair, 4 = reflet (lumière en haut à gauche)."""
     out = np.zeros((N, N), dtype=int)
     def m(y, x):
@@ -247,10 +274,16 @@ def render(tool, tier, frame=0, nframes=1):
                 continue
             lvl = hb[y, x]
             col = hd[min(3, max(1, lvl))] if lvl < 4 else hd[3]
-            if (x + 2 * y) % 5 == 0 and lvl == 2:
+            if (x + 2 * y) % 7 == 0 and lvl == 2:
                 col = hd[1]
+            if T.get("band") is not None and ht[y, x] < 0.46 and ht[y, x] > 0.06:
+                bp = [hx(c) for c in T["band"]]
+                k = (x + y) % 6
+                col = bp[2] if k == 0 else (bp[0] if k == 3 else bp[1])
+                if lvl == 1: col = bp[0]
+                if lvl == 4: col = bp[2]
             t = ht[y, x]
-            if T.get("band") is not None and any(a <= t <= a + 0.06 for a in (0.12, 0.24, 0.36)):
+            if False:
                 bp = [hx(c) for c in T["band"]]
                 col = bp[2] if lvl >= 3 else (bp[0] if lvl == 1 else bp[1])
             if T.get("trim") is not None and (t < 0.05 or 0.78 <= t <= 0.84):
@@ -278,7 +311,11 @@ def render(tool, tier, frame=0, nframes=1):
             elif inl is not None and inl[y, x] and not edge[y, x] and tier >= 1:
                 col = hp[1]
             if hbv[y, x] == 2 and ((x * 13 + y * 7) % 9 == 0):
-                col = col * 0.82 + hp[1] * 0.18
+                col = col * 0.85 + hp[1] * 0.15
+            if hbv[y, x] in (2, 3) and hsh(x, y, tier) % 41 == 0:
+                col = col * 0.6 + hp[4] * 0.4
+            if inl is not None and not inl[y, x] and y > 0 and x > 0 and inl[y - 1, x - 1] and not edge[y, x]:
+                col = col * 0.55 + hp[0] * 0.45
             if T.get("patina") and (x * 5 + y * 3) % 13 == 0 and hbv[y, x] == 2:
                 col = hx(T["patina"])
             img[y, x, :3] = col; img[y, x, 3] = 255
@@ -305,30 +342,40 @@ def render(tool, tier, frame=0, nframes=1):
     # gemme
     if T.get("gem") and gem_c:
         gp = [hx(c) for c in T["gem"]]
-        cx, cy = gem_c
-        big = tier >= 6
-        for dy in range(-2, 3):
-            for dx in range(-2, 3):
+        cx, cy = gem_c[0] * SC, gem_c[1] * SC
+        Rg = 4 if tier >= 6 else 3
+        tp = [hx(c) for c in (T["trim"] or T["head"][1:4])]
+        for dy in range(-Rg - 1, Rg + 2):
+            for dx in range(-Rg - 1, Rg + 2):
                 d = abs(dx) + abs(dy)
-                if d <= (2 if big else 1):
-                    x, y = cx + dx, cy + dy
-                    if 0 <= x < N and 0 <= y < N:
-                        c = gp[0] if d == (2 if big else 1) else gp[1]
-                        if (dx, dy) == (-1, -1) or (not big and (dx, dy) == (0, -1)):
-                            c = gp[2]
-                        if (dx, dy) == (0, 0):
-                            c = gp[1]
-                        img[y, x, :3] = c; img[y, x, 3] = 255
+                x, y = cx + dx, cy + dy
+                if not (0 <= x < N and 0 <= y < N):
+                    continue
+                if d == Rg + 1:
+                    c = tp[2] if (dx < 0 or dy < 0) else tp[0]
+                elif d <= Rg:
+                    if d == Rg:
+                        c = gp[0]
+                    elif dx <= 0 and dy <= 0:
+                        c = gp[2] if d <= 1 else gp[1]
+                    elif dx >= 0 and dy >= 0:
+                        c = gp[0] * 0.5 + gp[1] * 0.5
+                    else:
+                        c = gp[1]
+                else:
+                    continue
+                img[y, x, :3] = c; img[y, x, 3] = 255
+        img[cy - 1, cx - 1, :3] = hx("#ffffff"); img[cy - 2, cx - 1, :3] = gp[2]
 
     # reflet animé qui balaie l'outil
     if T.get("anim"):
-        pos = -6 + (N * 2 + 12) * frame / nframes
+        pos = -12 + (N * 2 + 24) * frame / nframes
         for y in range(N):
             for x in range(N):
                 if img[y, x, 3] > 0 and (head[y, x] or (guard is not None and guard[y, x])):
-                    d = abs((x - y + 16) - pos)
-                    if d < 2.2:
-                        k = 0.55 * (1 - d / 2.2)
+                    d = abs((x - y + 32) - pos)
+                    if d < 4.4:
+                        k = 0.5 * (1 - d / 4.4)
                         img[y, x, :3] = img[y, x, :3] * (1 - k) + 255 * k
 
     # contour
@@ -352,8 +399,12 @@ def render(tool, tier, frame=0, nframes=1):
     if T.get("studs"):
         gp = [hx(c) for c in T.get("studc", ["#14606e", "#7fe8ff", "#ffffff"])]
         for (sx, sy) in pick_studs(head, edge, min(3, T["studs"]), hbv):
-            for dx, dy, c in ((0, 0, 2), (-1, 0, 1), (0, -1, 1), (1, 0, 0), (0, 1, 0)):
-                img[sy + dy, sx + dx, :3] = gp[c]; img[sy + dy, sx + dx, 3] = 255
+            for dy in range(-2, 3):
+                for dx in range(-2, 3):
+                    d = abs(dx) + abs(dy)
+                    if d > 2: continue
+                    c = gp[0] if d == 2 and (dx > 0 or dy > 0) else (gp[2] if dx <= 0 and dy <= 0 and d <= 1 else gp[1])
+                    img[sy + dy, sx + dx, :3] = c; img[sy + dy, sx + dx, 3] = 255
             if T.get("glint") and (hsh(sx, sy) + frame) % nframes == 0:
                 img[sy, sx, :3] = hx("#ffffff")
 
@@ -361,13 +412,13 @@ def render(tool, tier, frame=0, nframes=1):
     if T.get("crystals"):
         cp = [hx(c) for c in T["crystals"]]
         tops = top_pixels(head)
-        for (x, y) in tops[2::5][:4]:
-            for k in range(1, 4):
+        for (x, y) in tops[4::10][:4]:
+            for k in range(1, 8):
                 yy = y - 1 - k
                 if yy < 0 or img[yy, x, 3] > 0:
                     break
-                img[yy, x, :3] = cp[2] if k == 3 else cp[1]; img[yy, x, 3] = 255
-                if x + 1 < N and k < 3 and img[yy, x + 1, 3] == 0:
+                img[yy, x, :3] = cp[2] if k >= 6 else cp[1]; img[yy, x, 3] = 255
+                if x + 1 < N and k < 6 and img[yy, x + 1, 3] == 0:
                     img[yy, x + 1, :3] = cp[0]; img[yy, x + 1, 3] = 255
 
     # halo divin
@@ -379,16 +430,16 @@ def render(tool, tier, frame=0, nframes=1):
             for x in range(N):
                 if filled[y, x]:
                     continue
-                if any(0 <= y + dy < N and 0 <= x + dx < N and filled[y + dy, x + dx] for dy in (-1, 0, 1) for dx in (-1, 0, 1)):
+                if any(0 <= y + dy < N and 0 <= x + dx < N and filled[y + dy, x + dx] for dy in (-2, -1, 0, 1, 2) for dx in (-2, -1, 0, 1, 2)):
                     img[y, x, :3] = gold; img[y, x, 3] = a
 
     # flammes animées le long du bord supérieur
     if T.get("flames"):
         fp = [hx(c) for c in T["flames"]]
         for (x, y) in top_pixels(head):
-            hgt = 1 + hsh(x, frame // 2) % 5
-            if hsh(x * 3, frame) % 3 == 0:
-                hgt = max(0, hgt - 2)
+            hgt = 2 + hsh(x // 2, frame // 2) % 9
+            if hsh(x // 2 * 3, frame) % 3 == 0:
+                hgt = max(0, hgt - 4)
             for k in range(1, hgt + 1):
                 yy = y - 1 - k
                 if yy < 0 or img[yy, x, 3] > 120:
@@ -396,7 +447,7 @@ def render(tool, tier, frame=0, nframes=1):
                 ci = min(3, (k - 1) * 4 // max(1, hgt))
                 img[yy, x, :3] = fp[ci]; img[yy, x, 3] = 255 if ci < 3 else 200
             if hgt >= 3 and hsh(x, frame, 7) % 4 == 0:
-                yy = y - hgt - 3
+                yy = y - hgt - 4
                 if 0 <= yy < N and img[yy, x, 3] < 100:
                     img[yy, x, :3] = fp[1]; img[yy, x, 3] = 230
 
@@ -414,12 +465,13 @@ def render(tool, tier, frame=0, nframes=1):
     # étincelles
     if T.get("sparkle"):
         sp = [hx(c) for c in T["sparkle"]]
-        spots = [(6, 22), (26, 27), (14, 13), (28, 11), (19, 25), (3, 15), (24, 2), (11, 29)]
+        spots = [(x * SC, y * SC) for (x, y) in [(6, 22), (26, 27), (14, 13), (28, 11), (19, 25), (3, 15), (24, 2), (11, 29)]]
         for i, (sx, sy) in enumerate(spots):
             ph = (frame + i * 3) % nframes
             if ph < 3:
                 size = [1, 2, 1][ph]
-                for dx, dy in [(0, 0), (1, 0), (-1, 0), (0, 1), (0, -1)][: 1 if size == 1 else 5]:
+                arms = [(0, 0), (1, 0), (-1, 0), (0, 1), (0, -1), (2, 0), (-2, 0), (0, 2), (0, -2)]
+                for dx, dy in arms[: 5 if size == 1 else 9]:
                     x, y = sx + dx, sy + dy
                     if 0 <= x < N and 0 <= y < N and img[y, x, 3] < 200:
                         img[y, x, :3] = sp[1] if (dx, dy) == (0, 0) else sp[0]; img[y, x, 3] = 255
