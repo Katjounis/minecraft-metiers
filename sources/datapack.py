@@ -28,19 +28,19 @@ MAXLVL = 100
 LOGS = ["oak_log", "spruce_log", "birch_log", "jungle_log", "acacia_log", "dark_oak_log",
         "mangrove_log", "cherry_log", "pale_oak_log", "crimson_stem", "warped_stem"]
 # Mineur : 4 points = 1 XP (pierre 1/4 XP, deepslate 1/2 XP, diamant 20 XP)
-STONES = {"stone": 1, "deepslate": 2, "andesite": 1, "diorite": 1, "granite": 1, "tuff": 1, "blackstone": 1}
+STONES = {"stone": 2, "deepslate": 3, "andesite": 2, "diorite": 2, "granite": 2, "tuff": 2, "blackstone": 2}
 ORES = {"coal_ore": 8, "deepslate_coal_ore": 10, "copper_ore": 6, "deepslate_copper_ore": 8,
         "iron_ore": 16, "deepslate_iron_ore": 20, "gold_ore": 24, "deepslate_gold_ore": 28,
         "redstone_ore": 12, "deepslate_redstone_ore": 14, "lapis_ore": 20, "deepslate_lapis_ore": 24,
         "diamond_ore": 80, "deepslate_diamond_ore": 90, "emerald_ore": 100, "deepslate_emerald_ore": 110,
         "nether_gold_ore": 6, "nether_quartz_ore": 6, "ancient_debris": 160}
-DIV = {"b": 2, "m": 4, "f": 3, "e": 2}
+DIV = {"m": 4, "f": 2, "e": 2}
 ORE_DROP = {"coal": "coal 1", "copper": "raw_copper 2", "iron": "raw_iron 1", "gold": "raw_gold 1",
             "redstone": "redstone 4", "lapis": "lapis_lazuli 4", "diamond": "diamond 1",
             "emerald": "emerald 1", "nether_gold": "gold_nugget 3", "nether_quartz": "quartz 1"}
 # Fermier : 3 points = 1 XP (un plant de blé = 1 XP, une carotte = 1/3 XP car un plant en donne 2 à 5)
 CROPS = {"wheat": 3, "carrot": 1, "potato": 1, "beetroot": 3, "melon_slice": 1, "pumpkin": 4,
-         "nether_wart": 1, "cocoa_beans": 2, "sweet_berries": 1, "sugar_cane": 1}
+         "nether_wart": 1, "cocoa_beans": 2, "sweet_berries": 1, "sugar_cane": 2}
 PLANTABLE = ["carrot", "potato", "nether_wart", "cocoa_beans", "sweet_berries", "pumpkin", "sugar_cane"]
 BOSSES = {"wither": 200, "ender_dragon": 300, "warden": 100, "elder_guardian": 45}
 
@@ -90,7 +90,7 @@ jobs["p"]["src"].append(("minecraft.custom:minecraft.fish_caught", 8, 1, "p.fish
                          [("p3", "chance_25", "loot give @s loot minecraft:gameplay/fishing/fish"),
                           ("p5", "chance_10", "loot give @s loot minecraft:gameplay/fishing/treasure")]))
 # Éleveur : 2 points = 1 XP ; naissance 6 XP, laine ramassée 1/2 XP (poser ou jeter la laine la retire)
-jobs["e"]["src"].append(("minecraft.custom:minecraft.animals_bred", 12, 1, "e.bred",
+jobs["e"]["src"].append(("minecraft.custom:minecraft.animals_bred", 16, 1, "e.bred",
                          [("e2", "chance_30", "give @s minecraft:leather 2")]))
 for wl in ("white", "black", "gray", "light_gray", "brown"):
     jobs["e"]["src"].append((f"minecraft.picked_up:minecraft.{wl}_wool", 1, 1, f"e.pu.{wl}",
@@ -103,7 +103,7 @@ jobs["n"]["src"].append(("minecraft.custom:minecraft.enchant_item", 0, 1, "n.enc
                           ("n2", None, "give @s minecraft:lapis_lazuli 4"),
                           ("n5", "chance_15", "loot give @s loot minecraft:chests/stronghold_library")]))
 jobs["n"]["src"].append(("minecraft.crafted:minecraft.bookshelf", 2, 1, "n.shelf", []))
-jobs["t"]["src"].append(("minecraft.custom:minecraft.traded_with_villager", 5, 1, "t.trade",
+jobs["t"]["src"].append(("minecraft.custom:minecraft.traded_with_villager", 6, 1, "t.trade",
                          [("t1", "chance_20", "give @s minecraft:emerald 1"), ("t3", "chance_10", "give @s minecraft:diamond 1"),
                           ("t6", "chance_05", "give @s minecraft:netherite_scrap 1")]))
 # Explorateur : distance parcourue, 1 XP tous les 10 m (traité à part)
@@ -707,7 +707,7 @@ for j, d in jobs.items():
     if j == "x":
         for st in XDIST:
             if st == "aviate_one_cm":
-                S += [f"scoreboard players operation @s s.x.{st} /= #4 m.const"]
+                S += [f"scoreboard players operation @s s.x.{st} /= #3 m.const"]
             if st == "horse_one_cm":
                 S += [f"scoreboard players operation @s s.x.{st} /= #2 m.const"]
             S += [f"scoreboard players operation @s m.x_acc += @s s.x.{st}", f"scoreboard players set @s s.x.{st} 0"]
@@ -964,7 +964,7 @@ scoreboard players operation @s m.tmp = @s m.n_prev
 scoreboard players operation @s m.tmp -= @s m.n_now
 execute if score @s m.tmp matches ..0 run scoreboard players set @s m.tmp 1
 execute if score @s m.tmp matches 4.. run scoreboard players set @s m.tmp 3
-scoreboard players operation @s m.tmp *= #15 m.const
+scoreboard players operation @s m.tmp *= #20 m.const
 scoreboard players operation @s m.n_bal += @s m.tmp
 """)
 w(F + "x/planeur.mcfunction", """
@@ -1021,7 +1021,7 @@ w(F + "b/abattage/demarrer.mcfunction", f"""
 scoreboard players set #n m.tmp 0
 function {NS}:b/abattage/bloc
 playsound minecraft:block.wood.break master @a ~ ~ ~ 1 0.7
-scoreboard players operation @s m.b_raw += #n m.tmp
+scoreboard players operation @s m.b_bal += #n m.tmp
 """)
 NB = ["~ ~1 ~", "~1 ~ ~", "~-1 ~ ~", "~ ~ ~1", "~ ~ ~-1", "~ ~-1 ~",
       "~1 ~1 ~", "~-1 ~1 ~", "~ ~1 ~1", "~ ~1 ~-1", "~1 ~1 ~1", "~1 ~1 ~-1", "~-1 ~1 ~1", "~-1 ~1 ~-1"]
@@ -1176,7 +1176,7 @@ w(F + "prefixe/maj.mcfunction", "\n".join(MJ))
 # APPEL ISOLÉ (une fonction cassée ne casse pas le reste)
 # =====================================================================
 w(F + "appel.mcfunction", f"$function {NS}:$(f)")
-w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 19 : 9 métiers, Armure des Guildes (heaume 3D) (avec Éleveur, Enchanteur, Explorateur, Marchand)","color":"gold"}')
+w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 20 : 9 métiers, Armure des Guildes (heaume 3D) (avec Éleveur, Enchanteur, Explorateur, Marchand)","color":"gold"}')
 
 def tr(txt, col="gray"):
     return 'tellraw @s ' + PREFIX + f',{{"text":"{txt}","color":"{col}"}}]'
