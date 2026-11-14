@@ -356,7 +356,7 @@ def rewards(j, k):
     elif j == "e":
         ench = {"efficiency": MAIN[k]}
     elif j == "p":
-        ench = {"luck_of_the_sea": LUCK[k], "lure": 2 if k == 1 else 3}
+        ench = {"luck_of_the_sea": LUCK[k], "lure": [0, 2, 3, 3, 4, 4, 4, 5, 5, 5, 5][k]}
     elif j == "c":
         ench = {"sharpness": MAIN[k], "looting": min(FORT[k], 3) + (k // 4)}
         if k >= 4: ench["sweeping_edge"] = 3
@@ -517,6 +517,8 @@ L.append("scoreboard objectives add m.dur dummy")
 L.append("scoreboard objectives add m.x_acc dummy")
 L += [f"scoreboard objectives add m.{j}_raw dummy" for j in DIV]
 L += ["scoreboard objectives add m.n_now dummy", "scoreboard objectives add m.n_prev dummy"]
+L += [f"scoreboard objectives add m.p_{o} dummy" for o in ("serie", "timer", "mul", "aff", "pluie", "nuit", "ocean", "legok")]
+L += [f"scoreboard objectives add m.p_l{i} dummy" for i in range(1, 11)]
 L += ["scoreboard objectives add m.arm dummy", "scoreboard objectives add m.acd dummy", "scoreboard objectives add m.aser dummy"]
 L += [f"scoreboard objectives add m.{j}_ser dummy" for j in jobs]
 for st in XDIST:
@@ -653,7 +655,8 @@ T = ["scoreboard players operation @s m.trig = @s metiers",
      f'execute if score @s m.trig matches 5 run function {NS}:appel {{f:"classement/menu"}}',
      f'execute if score @s m.trig matches 7 run function {NS}:appel {{f:"defis/basculer"}}',
      f'execute if score @s m.trig matches 6 run function {NS}:appel {{f:"armure/menu"}}',
-     f'execute if score @s m.trig matches 8 run function {NS}:appel {{f:"armure/recup"}}']
+     f'execute if score @s m.trig matches 8 run function {NS}:appel {{f:"armure/recup"}}',
+     f'execute if score @s m.trig matches 70 run function {NS}:appel {{f:"p/carnet"}}']
 for j, d in jobs.items():
     T += [f'execute if score @s m.trig matches {300 + d["idx"]} run function {NS}:appel {{f:"{j}/outil_recup"}}',
           f'execute if score @s m.trig matches {310 + d["idx"]} run function {NS}:appel {{f:"{j}/prestige_confirmer"}}',
@@ -698,6 +701,9 @@ for j, d in jobs.items():
               f"execute if score @s m.{j}_raw matches {DIV[j]}.. run scoreboard players operation @s m.{j}_bal += @s m.tmp",
               f"execute if score @s m.{j}_raw matches {DIV[j]}.. run scoreboard players operation @s m.tmp *= #{DIV[j]} m.const",
               f"execute if score @s m.{j}_raw matches {DIV[j]}.. run scoreboard players operation @s m.{j}_raw -= @s m.tmp"]
+    if j == "p":
+        S = (["scoreboard players add @s m.p_timer 1",
+              f'execute if score @s s.p.fish matches 1.. run function {NS}:appel {{f:"p/peche"}}'] + S)
     if j == "n":
         # XP selon les niveaux d'expérience dépensés à la table (1, 2 ou 3 niveaux => 15, 30 ou 45 XP)
         S = (["execute store result score @s m.n_now run experience query @s levels",
@@ -716,6 +722,8 @@ for j, d in jobs.items():
               "scoreboard players operation @s m.tmp *= #20 m.const",
               "scoreboard players operation @s m.x_bal += @s m.tmp", "scoreboard players operation @s m.x_acc %= #20000 m.const"]
     S.append(f"execute if score @s m.{j}_bal matches 1.. run function {NS}:{j}/gain")
+    if j == "p":
+        S.append(f'execute if score @s m.p_aff matches 1 run function {NS}:appel {{f:"p/affiche"}}')
     w(F + f"{j}/stats.mcfunction", "\n".join(S))
 
     w(F + f"{j}/gain.mcfunction", f"""
@@ -842,6 +850,8 @@ scoreboard players operation @s m.tmp -= @s m.{j}_spent
         return f'{{label:{{text:"{t}",color:"dark_gray"}},width:130}}'
     liste = [btns[i].replace("width:130", "width:280") for i in (1, 2, 4, 3, 5, 6)]
     liste.append(f'{{label:{{text:"Récupérer mon outil",color:"aqua"}},width:280,tooltip:{{text:"Redonne ton outil de métier à son palier actuel (une fois toutes les 10 minutes)."}},action:{{type:"run_command",command:"trigger metiers set {300 + d["idx"]}"}}}}')
+    if j == "p":
+        liste.append('{label:{text:"Carnet du pêcheur (légendes)",color:"aqua"},width:280,action:{type:"run_command",command:"trigger metiers set 70"}}')
     liste.append(f'{{label:{{text:"Récompenses du métier",color:"light_purple"}},width:280,tooltip:{{text:"Tout ce que tu gagnes à chaque palier de 10 niveaux."}},action:{{type:"run_command",command:"trigger metiers set {340 + d["idx"]}"}}}}')
     liste.append(f'{{label:{{text:"Réparer mon outil (5 niv. d\'XP)",color:"green"}},width:280,tooltip:{{text:"Seule façon de réparer ton outil de métier (enclume et Raccommodage bloqués). Coût : 5 niveaux d\'XP. Incassable à partir du niveau 50."}},action:{{type:"run_command",command:"trigger metiers set {330 + d["idx"]}"}}}}')
     liste.append(f'{{label:{{text:"★ Prestige",color:"gold"}},width:280,tooltip:{{text:"Au niveau 100 : repars au niveau 1 avec une étoile et +10 % d\'XP par étoile (5 max)."}},action:{{type:"run_command",command:"trigger metiers set {310 + d["idx"]}"}}}}')
@@ -1176,7 +1186,7 @@ w(F + "prefixe/maj.mcfunction", "\n".join(MJ))
 # APPEL ISOLÉ (une fonction cassée ne casse pas le reste)
 # =====================================================================
 w(F + "appel.mcfunction", f"$function {NS}:$(f)")
-w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 20 : 9 métiers, Armure des Guildes (heaume 3D) (avec Éleveur, Enchanteur, Explorateur, Marchand)","color":"gold"}')
+w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 21 : 9 métiers, Armure des Guildes (heaume 3D) (avec Éleveur, Enchanteur, Explorateur, Marchand)","color":"gold"}')
 
 def tr(txt, col="gray"):
     return 'tellraw @s ' + PREFIX + f',{{"text":"{txt}","color":"{col}"}}]'
@@ -1792,6 +1802,110 @@ w(F + "armure/menu_dialog.mcfunction",
   '{text:"Les bonus se cumulent quand tu portes les 4 pièces. Incassable, ne se répare pas, évolue toute seule.",color:"dark_gray"}]}],'
   'actions:[{label:{text:"Récupérer mon armure",color:"green"},width:200,tooltip:{text:"Une fois toutes les 10 minutes."},action:{type:"run_command",command:"trigger metiers set 8"}}],'
   'columns:1,exit_action:{label:"Retour",width:150,action:{type:"run_command",command:"trigger metiers set 1"}}}')
+
+# =====================================================================
+# PÊCHEUR : série, ambiance, poissons légendaires, trésors des profondeurs
+# =====================================================================
+LEGENDES = [("Carpe d'or", "salmon", "gold"), ("Brochet des abysses", "cod", "dark_aqua"), ("Saumon royal", "salmon", "red"),
+            ("Poisson-lune", "tropical_fish", "light_purple"), ("Anguille électrique", "cod", "yellow"),
+            ("Silure géant", "cod", "dark_green"), ("Raie fantôme", "tropical_fish", "aqua"),
+            ("Poisson-lanterne", "pufferfish", "gold"), ("Esturgeon millénaire", "salmon", "gray"), ("Kraken nain", "pufferfish", "dark_purple")]
+PK = [f"execute if score @s m.p_timer matches ..80 run scoreboard players operation @s m.p_serie += @s s.p.fish",
+      f"execute unless score @s m.p_timer matches ..80 run scoreboard players operation @s m.p_serie = @s s.p.fish",
+      "scoreboard players set @s m.p_timer 0",
+      "scoreboard players set @s m.p_mul 2",
+      "execute if score @s m.p_serie matches 3..4 run scoreboard players add @s m.p_mul 1",
+      "execute if score @s m.p_serie matches 5..7 run scoreboard players add @s m.p_mul 2",
+      "execute if score @s m.p_serie matches 8.. run scoreboard players add @s m.p_mul 4",
+      "scoreboard players set @s m.p_pluie 0", "scoreboard players set @s m.p_nuit 0", "scoreboard players set @s m.p_ocean 0",
+      f'function {NS}:appel {{f:"p/ambiance"}}',
+      "scoreboard players operation @s m.tmp = @s m.p_mul", "scoreboard players remove @s m.tmp 2",
+      "scoreboard players operation @s m.tmp *= @s s.p.fish", "scoreboard players operation @s m.tmp *= #4 m.const",
+      "scoreboard players operation @s m.p_bal += @s m.tmp",
+      "scoreboard players set @s m.p_aff 1",
+      "execute store result score #r m.tmp run random value 1..1000",
+      "scoreboard players operation #thr m.tmp = @s m.p_lvl", "scoreboard players add #thr m.tmp 20",
+      f"execute if score #r m.tmp <= #thr m.tmp run function {NS}:p/legende",
+      "execute store result score #r m.tmp run random value 1..1000",
+      "scoreboard players operation #thr m.tmp = @s m.p_lvl", "scoreboard players operation #thr m.tmp /= #2 m.const",
+      "scoreboard players add #thr m.tmp 10",
+      f"execute if score #r m.tmp <= #thr m.tmp run function {NS}:p/tresor"]
+w(F + "p/peche.mcfunction", "\n".join(PK))
+w(F + "p/ambiance.mcfunction", """
+execute if predicate {type:"minecraft:weather_check",raining:true} run scoreboard players set @s m.p_pluie 1
+execute if predicate {type:"minecraft:time_check",value:{min:13000,max:23000},period:24000} run scoreboard players set @s m.p_nuit 1
+execute if biome ~ ~ ~ #minecraft:is_ocean run scoreboard players set @s m.p_ocean 1
+execute if biome ~ ~ ~ #minecraft:is_deep_ocean run scoreboard players set @s m.p_ocean 1
+scoreboard players operation @s m.p_mul += @s m.p_pluie
+scoreboard players operation @s m.p_mul += @s m.p_nuit
+scoreboard players operation @s m.p_mul += @s m.p_ocean
+""")
+AF = []
+for m in range(2, 10):
+    txt = f"x{m // 2}" + (",5" if m % 2 else "")
+    AF.append(f'execute if score @s m.p_mul matches {m} run data modify storage {NS}:peche mul set value "{txt}"')
+AF += [f'data modify storage {NS}:peche amb set value ""',
+       f'execute if score @s m.p_pluie matches 1 run data modify storage {NS}:peche amb set value " · pluie"',
+       f'execute if score @s m.p_nuit matches 1 run data modify storage {NS}:peche amb2 set value " · nuit"',
+       f'execute unless score @s m.p_nuit matches 1 run data modify storage {NS}:peche amb2 set value ""',
+       f'execute if score @s m.p_ocean matches 1 run data modify storage {NS}:peche amb3 set value " · océan"',
+       f'execute unless score @s m.p_ocean matches 1 run data modify storage {NS}:peche amb3 set value ""',
+       f"execute store result storage {NS}:peche serie int 1 run scoreboard players get @s m.p_serie",
+       f"execute store result storage {NS}:peche gain int 1 run scoreboard players get @s m.gain",
+       f"function {NS}:p/affiche_m with storage {NS}:peche",
+       "scoreboard players set @s m.p_aff 0"]
+w(F + "p/affiche.mcfunction", "\n".join(AF))
+w(F + "p/affiche_m.mcfunction",
+  '$title @s actionbar [{"text":"+$(gain) XP Pêcheur  ","color":"aqua"},{"text":"Série $(serie) ","color":"yellow","bold":true},'
+  '{"text":"$(mul)","color":"gold","bold":true},{"text":"$(amb)$(amb2)$(amb3)","color":"gray"}]')
+LG = ["execute store result score #f m.tmp run random value 1..10"]
+for i, (nom, base, col) in enumerate(LEGENDES, 1):
+    item = (f'minecraft:{base}[minecraft:custom_name={{text:"{nom}",color:"{col}",bold:true,italic:false}},'
+            f'minecraft:lore=[{{text:"Prise légendaire {i}/10",color:"gray",italic:false}},{{text:"Trophée du Carnet du pêcheur",color:"dark_aqua",italic:false}}],'
+            f'minecraft:custom_data={{metiers_legende:{i}}},minecraft:rarity="epic",minecraft:enchantment_glint_override=true,minecraft:max_stack_size=1]')
+    w(F + f"p/leg_{i}.mcfunction", "\n".join([
+        f"give @s {item} 1",
+        "scoreboard players add @s m.p_bal 50",
+        f'tellraw @a ' + PREFIX + f',{{"selector":"@s","color":"white"}},{{"text":" a pêché une prise légendaire : ","color":"gray"}},{{"text":"{nom}","color":"{col}","bold":true}}]',
+        f'execute unless score @s m.p_l{i} matches 1 run tellraw @s ' + PREFIX + f',{{"text":"Nouvelle espèce dans ton Carnet du pêcheur !","color":"aqua","bold":true}}]',
+        f"scoreboard players set @s m.p_l{i} 1",
+        "playsound minecraft:ui.toast.challenge_complete master @s ~ ~ ~ 1 1.4",
+        "particle minecraft:bubble_column_up ~ ~0.5 ~ 0.6 0.4 0.6 0.1 60",
+        f"function {NS}:p/carnet_check"]))
+    LG.append(f"execute if score #f m.tmp matches {i} run function {NS}:p/leg_{i}")
+w(F + "p/legende.mcfunction", "\n".join(LG))
+CK = ["scoreboard players set @s m.tmp 0"] + [f"execute if score @s m.p_l{i} matches 1 run scoreboard players add @s m.tmp 1" for i in range(1, 11)]
+CK += ["execute if score @s m.p_legok matches 1 run return 0",
+       "execute unless score @s m.tmp matches 10 run return 0",
+       "scoreboard players set @s m.p_legok 1",
+       "give @s minecraft:enchanted_golden_apple 5", "give @s minecraft:netherite_ingot 3", "give @s minecraft:heart_of_the_sea 1",
+       "scoreboard players add @s m.p_bal 500",
+       'tellraw @a ' + PREFIX + ',{"selector":"@s","color":"white"},{"text":" a complété le Carnet du pêcheur : les 10 légendes ! ","color":"aqua","bold":true}]',
+       "execute as @a at @s run playsound minecraft:ui.toast.challenge_complete master @s ~ ~ ~ 1 0.6"]
+w(F + "p/carnet_check.mcfunction", "\n".join(CK))
+TRES = ["shipwreck_treasure", "buried_treasure", "ancient_city", "ruined_portal", "underwater_ruin_big", "desert_pyramid"]
+TR = ["execute store result score #f m.tmp run random value 1..6"]
+TR += [f"execute if score #f m.tmp matches {i} run loot give @s loot minecraft:chests/{t}" for i, t in enumerate(TRES, 1)]
+TR += ['tellraw @a ' + PREFIX + ',{"selector":"@s","color":"white"},{"text":" remonte un coffre des profondeurs !","color":"dark_aqua","bold":true}]',
+       "playsound minecraft:block.chest.open master @s ~ ~ ~ 1 0.8",
+       "particle minecraft:bubble ~ ~0.5 ~ 0.6 0.4 0.6 0.1 40"]
+w(F + "p/tresor.mcfunction", "\n".join(TR))
+CA = []
+for i, (nom, base, col) in enumerate(LEGENDES, 1):
+    CA += [f'data modify storage {NS}:carnet n{i} set value "???"', f'data modify storage {NS}:carnet c{i} set value "dark_gray"',
+           f'execute if score @s m.p_l{i} matches 1 run data modify storage {NS}:carnet n{i} set value "✔ {nom}"',
+           f'execute if score @s m.p_l{i} matches 1 run data modify storage {NS}:carnet c{i} set value "{col}"']
+CA += ["scoreboard players set @s m.tmp 0"] + [f"execute if score @s m.p_l{i} matches 1 run scoreboard players add @s m.tmp 1" for i in range(1, 11)]
+CA += [f"execute store result storage {NS}:carnet nb int 1 run scoreboard players get @s m.tmp",
+       f"function {NS}:p/carnet_dialog with storage {NS}:carnet"]
+w(F + "p/carnet.mcfunction", "\n".join(CA))
+lignes = ",".join(f'{{text:"$(n{i})\\n",color:"$(c{i})",bold:true}}' for i in range(1, 11))
+w(F + "p/carnet_dialog.mcfunction",
+  '$dialog show @s {type:"minecraft:notice",title:{text:"Carnet du pêcheur",color:"aqua",bold:true},can_close_with_escape:true,pause:false,'
+  'body:[{type:"minecraft:plain_message",width:300,contents:[{text:"Légendes trouvées : $(nb)/10\\n\\n",color:"yellow"},' + lignes + ']},'
+  '{type:"minecraft:plain_message",width:300,contents:{text:"Chaque prise a une chance d\'être légendaire (2 % au niveau 1, 12 % au niveau 100). '
+  'Collection complète : 5 pommes de Notch, 3 lingots de netherite, un cœur de la mer et 500 XP Pêcheur.",color:"gray"}}],'
+  'action:{label:"Retour",width:150,action:{type:"run_command",command:"trigger metiers set 25"}}}')
 
 # =====================================================================
 # ADMIN
