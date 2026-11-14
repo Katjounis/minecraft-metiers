@@ -598,7 +598,8 @@ J = [f"execute unless entity @s[tag=metiers.v2] run function {NS}:migration",
      f"execute unless score @s m.id matches 1.. run function {NS}:id",
      f"execute unless entity @s[tag=metiers.v7] run function {NS}:migration6",
      f'execute unless entity @s[tag=metiers.v9] run function {NS}:appel {{f:"migration8"}}',
-     f'execute unless entity @s[tag=metiers.v13] run function {NS}:appel {{f:"migration13"}}']
+     f'execute unless entity @s[tag=metiers.v13] run function {NS}:appel {{f:"migration13"}}',
+     f'execute unless entity @s[tag=metiers.v22] run function {NS}:appel {{f:"migration22"}}']
 for j in jobs:
     J.append(f"execute if score @s m.{j}_cd matches 1.. run scoreboard players remove @s m.{j}_cd 1")
 J += [f'execute if score #quatre m.timer matches 0 run function {NS}:appel {{f:"outil/check"}}',
@@ -1186,7 +1187,7 @@ w(F + "prefixe/maj.mcfunction", "\n".join(MJ))
 # APPEL ISOLÉ (une fonction cassée ne casse pas le reste)
 # =====================================================================
 w(F + "appel.mcfunction", f"$function {NS}:$(f)")
-w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 21 : 9 métiers, Armure des Guildes (heaume 3D) (avec Éleveur, Enchanteur, Explorateur, Marchand)","color":"gold"}')
+w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 22 : 9 métiers, Armure des Guildes (heaume 3D) (avec Éleveur, Enchanteur, Explorateur, Marchand)","color":"gold"}')
 
 def tr(txt, col="gray"):
     return 'tellraw @s ' + PREFIX + f',{{"text":"{txt}","color":"{col}"}}]'
@@ -1226,7 +1227,9 @@ for j, d in jobs.items():
     sel = f'*[minecraft:custom_data~{{metiers_outil:"{j}"}}]'
     w(F + f"{j}/outil_donner_m.mcfunction", "\n".join(
         f"$execute if score @s m.{j}_out matches {k} run give @s {outil_give(j, k)}" for k in range(11)))
-    OD = [f"clear @s {sel}", f"scoreboard players add @s m.{j}_ser 1",
+    OD = [f"execute if items entity @s weapon.offhand {sel} run item replace entity @s weapon.offhand with minecraft:air",
+          f"execute if items entity @s armor.feet {sel} run item replace entity @s armor.feet with minecraft:air",
+          f"clear @s {sel}", f"scoreboard players add @s m.{j}_ser 1",
           f"execute store result storage {NS}:tmp o int 1 run scoreboard players get @s m.id",
           f"execute store result storage {NS}:tmp s int 1 run scoreboard players get @s m.{j}_ser",
           f"function {NS}:{j}/outil_donner_m with storage {NS}:tmp",
@@ -1716,8 +1719,11 @@ AD = []
 for t in range(1, 6):
     for piece, slot, nom, _ in PIECES:
         it = piece_item(piece, slot, nom, t)
+        # ordre important : on donne d'abord dans l'inventaire si l'emplacement porte une autre armure,
+        # puis on équipe si l'emplacement est vide (sinon la 2e ligne voyait la pièce qu'on venait d'équiper)
+        AD.append(f"$execute if score @s m.arm matches {t} if items entity @s armor.{slot} * unless items entity @s armor.{slot} {ASEL} run give @s {it}")
+        AD.append(f"$execute if score @s m.arm matches {t} if items entity @s armor.{slot} {ASEL} run item replace entity @s armor.{slot} with {it}")
         AD.append(f"$execute if score @s m.arm matches {t} unless items entity @s armor.{slot} * run item replace entity @s armor.{slot} with {it}")
-        AD.append(f"$execute if score @s m.arm matches {t} if items entity @s armor.{slot} * run give @s {it}")
 w(F + "armure/donner_m.mcfunction", "\n".join(AD))
 w(F + "armure/donner.mcfunction", "\n".join([
     f"clear @s {ASEL}", "scoreboard players add @s m.aser 1",
@@ -1751,6 +1757,8 @@ for j in jobs:
 M13.append(f"execute if score @s m.arm matches 1.. run function {NS}:armure/donner")
 M13.append(tr("Tes outils et ton armure de métier ont reçu un numéro de série : les copies ne marchent plus.", "yellow"))
 w(F + "migration13.mcfunction", "\n".join(M13))
+w(F + "migration22.mcfunction", "\n".join(["tag @s add metiers.v22",
+    f"execute if score @s m.arm matches 1.. run function {NS}:armure/donner"]))
 
 AC = ["scoreboard players add @s m.arm 0",
       f'execute unless entity @s[tag=metiers.arm2] if score @s m.arm matches 1.. run function {NS}:appel {{f:"armure/donner"}}',
