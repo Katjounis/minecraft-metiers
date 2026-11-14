@@ -75,7 +75,18 @@ for c, x in CROPS.items():
     jobs["f"]["src"].append((f"minecraft.dropped:minecraft.{c}", x, -1, f"f.dr.{c}", []))
     if c in PLANTABLE:
         jobs["f"]["src"].append((f"minecraft.used:minecraft.{c}", x, -1, f"f.us.{c}", []))
-jobs["c"]["src"].append(("minecraft.custom:minecraft.mob_kills", 2, 1, "c.kills",
+# XP selon la créature tuée (mob_kills ne sert plus qu'à la compétence Soif de sang)
+MOBS = {"chicken": 1, "cow": 1, "pig": 1, "sheep": 1, "rabbit": 1, "goat": 1, "mooshroom": 1,
+        "silverfish": 2, "slime": 2, "endermite": 3, "magma_cube": 3,
+        "zombie": 4, "husk": 4, "zombie_villager": 4, "spider": 4, "piglin": 4, "zombified_piglin": 4,
+        "drowned": 5, "skeleton": 5, "cave_spider": 5, "vex": 5,
+        "stray": 6, "bogged": 6, "creeper": 6, "phantom": 7, "pillager": 8,
+        "witch": 10, "enderman": 10, "blaze": 10, "guardian": 10, "hoglin": 10, "creaking": 10,
+        "vindicator": 12, "shulker": 12, "zoglin": 12, "ghast": 15, "wither_skeleton": 15, "breeze": 15,
+        "iron_golem": 15, "piglin_brute": 18, "evoker": 20, "ravager": 30}
+for mob, x in MOBS.items():
+    jobs["c"]["src"].append((f"minecraft.killed:minecraft.{mob}", x, 1, f"c.k.{mob}", []))
+jobs["c"]["src"].append(("minecraft.custom:minecraft.mob_kills", 0, 1, "c.kills",
                          [("c3", None, "effect give @s minecraft:regeneration 3 1 true")]))
 for b, x in BOSSES.items():
     jobs["c"]["src"].append((f"minecraft.killed:minecraft.{b}", x, 1, f"c.k.{b}", []))
@@ -1136,7 +1147,7 @@ w(F + "prefixe/maj.mcfunction", "\n".join(MJ))
 # APPEL ISOLÉ (une fonction cassée ne casse pas le reste)
 # =====================================================================
 w(F + "appel.mcfunction", f"$function {NS}:$(f)")
-w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 15 : 9 métiers, Armure des Guildes (heaume 3D) (avec Éleveur, Enchanteur, Explorateur, Marchand)","color":"gold"}')
+w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 16 : 9 métiers, Armure des Guildes (heaume 3D) (avec Éleveur, Enchanteur, Explorateur, Marchand)","color":"gold"}')
 
 def tr(txt, col="gray"):
     return 'tellraw @s ' + PREFIX + f',{{"text":"{txt}","color":"{col}"}}]'
