@@ -1187,7 +1187,7 @@ w(F + "prefixe/maj.mcfunction", "\n".join(MJ))
 # APPEL ISOLÉ (une fonction cassée ne casse pas le reste)
 # =====================================================================
 w(F + "appel.mcfunction", f"$function {NS}:$(f)")
-w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 22 : 9 métiers, Armure des Guildes (heaume 3D) (avec Éleveur, Enchanteur, Explorateur, Marchand)","color":"gold"}')
+w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 23 : 9 métiers, Armure des Guildes (heaume 3D) (avec Éleveur, Enchanteur, Explorateur, Marchand)","color":"gold"}')
 
 def tr(txt, col="gray"):
     return 'tellraw @s ' + PREFIX + f',{{"text":"{txt}","color":"{col}"}}]'
@@ -1225,14 +1225,25 @@ def outil_give(j, k):
 CHK = []
 for j, d in jobs.items():
     sel = f'*[minecraft:custom_data~{{metiers_outil:"{j}"}}]'
-    w(F + f"{j}/outil_donner_m.mcfunction", "\n".join(
-        f"$execute if score @s m.{j}_out matches {k} run give @s {outil_give(j, k)}" for k in range(11)))
-    OD = [f"execute if items entity @s weapon.offhand {sel} run item replace entity @s weapon.offhand with minecraft:air",
+    ODM = []
+    for k in range(11):
+        it = outil_give(j, k)
+        ODM += [f"$execute if score @s m.{j}_out matches {k} if entity @s[tag=metiers.o_main] run item replace entity @s weapon.mainhand with {it}",
+                f"$execute if score @s m.{j}_out matches {k} if entity @s[tag=metiers.o_off] run item replace entity @s weapon.offhand with {it}",
+                f"$execute if score @s m.{j}_out matches {k} if entity @s[tag=metiers.o_feet] run item replace entity @s armor.feet with {it}",
+                f"$execute if score @s m.{j}_out matches {k} if entity @s[tag=!metiers.o_main,tag=!metiers.o_off,tag=!metiers.o_feet] run give @s {it}"]
+    w(F + f"{j}/outil_donner_m.mcfunction", "\n".join(ODM))
+    OD = ["tag @s remove metiers.o_main", "tag @s remove metiers.o_off", "tag @s remove metiers.o_feet",
+          f"execute if items entity @s weapon.mainhand {sel} run tag @s add metiers.o_main",
+          f"execute if items entity @s weapon.offhand {sel} run tag @s add metiers.o_off",
+          f"execute if items entity @s armor.feet {sel} run tag @s add metiers.o_feet",
+          f"execute if items entity @s weapon.offhand {sel} run item replace entity @s weapon.offhand with minecraft:air",
           f"execute if items entity @s armor.feet {sel} run item replace entity @s armor.feet with minecraft:air",
           f"clear @s {sel}", f"scoreboard players add @s m.{j}_ser 1",
           f"execute store result storage {NS}:tmp o int 1 run scoreboard players get @s m.id",
           f"execute store result storage {NS}:tmp s int 1 run scoreboard players get @s m.{j}_ser",
           f"function {NS}:{j}/outil_donner_m with storage {NS}:tmp",
+          "tag @s remove metiers.o_main", "tag @s remove metiers.o_off", "tag @s remove metiers.o_feet",
           "playsound minecraft:block.anvil.use master @s ~ ~ ~ 0.6 1.4"]
     w(F + f"{j}/outil_donner.mcfunction", "\n".join(OD))
     w(F + f"{j}/outil_recup.mcfunction", "\n".join([
@@ -1721,15 +1732,17 @@ for t in range(1, 6):
         it = piece_item(piece, slot, nom, t)
         # ordre important : on donne d'abord dans l'inventaire si l'emplacement porte une autre armure,
         # puis on équipe si l'emplacement est vide (sinon la 2e ligne voyait la pièce qu'on venait d'équiper)
-        AD.append(f"$execute if score @s m.arm matches {t} if items entity @s armor.{slot} * unless items entity @s armor.{slot} {ASEL} run give @s {it}")
-        AD.append(f"$execute if score @s m.arm matches {t} if items entity @s armor.{slot} {ASEL} run item replace entity @s armor.{slot} with {it}")
-        AD.append(f"$execute if score @s m.arm matches {t} unless items entity @s armor.{slot} * run item replace entity @s armor.{slot} with {it}")
+        AD.append(f"$execute if score @s m.arm matches {t} if entity @s[tag=metiers.a_{slot}] run item replace entity @s armor.{slot} with {it}")
+        AD.append(f"$execute if score @s m.arm matches {t} unless entity @s[tag=metiers.a_{slot}] run give @s {it}")
 w(F + "armure/donner_m.mcfunction", "\n".join(AD))
-w(F + "armure/donner.mcfunction", "\n".join([
+w(F + "armure/donner.mcfunction", "\n".join(
+    [f"tag @s remove metiers.a_{sl}" for _, sl, _, _ in PIECES] +
+    [f"execute if items entity @s armor.{sl} {ASEL} run tag @s add metiers.a_{sl}" for _, sl, _, _ in PIECES] +
+    [f"execute if items entity @s armor.{sl} {ASEL} run item replace entity @s armor.{sl} with minecraft:air" for _, sl, _, _ in PIECES] + [
     f"clear @s {ASEL}", "scoreboard players add @s m.aser 1",
     f"execute store result storage {NS}:tmp o int 1 run scoreboard players get @s m.id",
     f"execute store result storage {NS}:tmp s int 1 run scoreboard players get @s m.aser",
-    f"function {NS}:armure/donner_m with storage {NS}:tmp",
+    f"function {NS}:armure/donner_m with storage {NS}:tmp"] + [f"tag @s remove metiers.a_{sl}" for _, sl, _, _ in PIECES] + [
     "playsound minecraft:item.armor.equip_netherite master @s ~ ~ ~ 1 0.8",
     "particle minecraft:totem_of_undying ~ ~1 ~ 0.4 1 0.4 0.3 60"]))
 
@@ -1778,7 +1791,7 @@ w(F + "armure/recup.mcfunction", "\n".join([
     'execute if score @s m.acd matches 1.. run return run tellraw @s ' + PREFIX + ',{"text":"Patiente encore ","color":"red"},{"score":{"name":"@s","objective":"m.tmp"},"color":"yellow"},{"text":" min.","color":"red"}]',
     "scoreboard players set @s m.acd 1200",
     f'function {NS}:appel {{f:"armure/donner"}}',
-    tr("Ton Armure des Guildes est remise à neuf : les pièces libres sont équipées, les autres sont dans ton inventaire.", "green")]))
+    tr("Ton Armure des Guildes est remise à neuf : les pièces que tu portais sont remplacées, les autres sont dans ton inventaire.", "green")]))
 
 AB = [f"execute unless items entity @s armor.{s} {ASEL} run return 0" for _, s, _, _ in PIECES]
 AB += ["execute if score @s m.arm matches 1.. run effect give @s minecraft:haste 2 0 true",
