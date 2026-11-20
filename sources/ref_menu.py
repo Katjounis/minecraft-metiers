@@ -41,15 +41,16 @@ w(F + "menu.mcfunction", "\n".join(MN))
 acts = []
 for j, d in jobs.items():
     lab = f'[{gs("metier_" + j)},{txt(" " + d["name"] + " ", d["color"])},{txt("$(" + j + "_l) ", "yellow")},{{text:"$({j}_b)",font:"metiers:icones",color:"white"}},{txt("$(" + j + "_d)", "red")}]'
-    acts.append(btn(lab, 20 + d["idx"], 150, f"Ouvre la page {d['name']} : outil, compétences, récompenses, titre."))
-acts += [btn(txt("Défis du jour", "aqua"), 4), btn(txt("Classement", "gold"), 5), btn(txt("Armure des Guildes", "#F1CF4E"), 6)]
-forge_lab = f'[{gs("forge_marteau")},{txt("  Forge  ", "gold", True)},{gs("eclat")},{txt(" $(ecl) éclats de boss", "gray")}]'
+    acts.append(btn(lab, 20 + d["idx"], 200, f"Ouvre la page {d['name']} : outil, compétences, récompenses, titre."))
+forge_lab = f'[{gs("forge_marteau")},{txt("  Forge  ", "gold", True)},{gs("eclat")},{txt(" $(ecl) éclats", "gray")}]'
+acts += [btn(txt("Défis du jour", "aqua"), 4, 200), btn(txt("Classement", "gold"), 5, 200),
+         btn(txt("Armure des Guildes", "#F1CF4E"), 6, 200), btn(forge_lab, 400, 200, "Objets de métier, cristaux d'amélioration, skins et cadres de titre.")]
 w(F + "menu_dialog.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Mes métiers",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
   'body:[{type:"minecraft:plain_message",width:400,contents:[{text:"Score total ",color:"gray"},{text:"$(score)",color:"yellow"},'
   '{text:"   ·   Armure des Guildes : ",color:"gray"},{text:"$(arm)",color:"gold"},{text:"\\nUn point rouge : des points de compétence ou une récompense t\'attendent.",color:"dark_gray"}]}],'
-  f'actions:[{",".join(acts)}],columns:3,'
-  f'exit_action:{{label:{forge_lab},width:460,action:{{type:"run_command",command:"trigger metiers set 400"}}}}}}')
+  f'actions:[{",".join(acts)}],columns:2,'
+  f'exit_action:{{label:"Fermer",width:200}}}}')
 
 # ================================================================ page métier (remplace l'ancien écran de l'arbre)
 NEXTTXT = {}
