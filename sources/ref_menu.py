@@ -473,9 +473,9 @@ add_lines(F + "trigger.mcfunction", TRG)
 
 # menu de la touche G / Échap
 hub = [{"label": {"text": "Mes métiers", "color": "gold"}, "width": 150, "action": {"type": "run_command", "command": "trigger metiers set 1"}}]
-hub += [{"label": [gj(f"metier_{j}"), {"text": " " + d["name"], "color": d["color"]}], "width": 150,
+hub += [{"label": [{"text": ""}, gj(f"metier_{j}"), {"text": " " + d["name"], "color": d["color"]}], "width": 150,
          "action": {"type": "run_command", "command": f"trigger metiers set {20 + d['idx']}"}} for j, d in jobs.items()]
-hub += [{"label": [gj("forge_marteau"), {"text": " Forge", "color": "gold"}], "width": 150, "action": {"type": "run_command", "command": "trigger metiers set 400"}},
+hub += [{"label": [{"text": ""}, gj("forge_marteau"), {"text": " Forge", "color": "gold"}], "width": 150, "action": {"type": "run_command", "command": "trigger metiers set 400"}},
         {"label": {"text": "Défis du jour", "color": "aqua"}, "width": 150, "action": {"type": "run_command", "command": "trigger metiers set 4"}},
         {"label": {"text": "Classement", "color": "gold"}, "width": 150, "action": {"type": "run_command", "command": "trigger metiers set 5"}},
         {"label": {"text": "Armure des Guildes", "color": "#F1CF4E"}, "width": 150, "action": {"type": "run_command", "command": "trigger metiers set 6"}}]

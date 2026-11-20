@@ -2104,6 +2104,19 @@ playsound minecraft:ui.toast.in master @s ~ ~ ~ 0.6 1.4
 for _mod in ("ref_base.py", "ref_skills.py", "ref_menu.py", "ref_boss.py", "ref_defis.py"):
     exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), _mod), encoding="utf-8").read())
 
+# Un texte en liste hérite du style de son premier élément : si c'est une icône, tout passe dans la police d'icônes
+# (gros carrés). On met donc un parent vide devant chaque liste qui commence par une icône.
+import re as _re
+_ICO = _re.compile(r'\[(\{("?)text\2: ?"[\ue000-\uf8ff]+", ?"?font"?: ?"metiers:icones")')
+for _dp, _, _fs in os.walk(ROOT):
+    for _fn in _fs:
+        if _fn.endswith((".mcfunction", ".json")):
+            _p = os.path.join(_dp, _fn)
+            _t = open(_p, encoding="utf-8").read()
+            _n = _ICO.sub(lambda m: '[{"text":""},' + m.group(1) if m.group(2) else '[{text:""},' + m.group(1), _t)
+            if _n != _t:
+                open(_p, "w", encoding="utf-8").write(_n)
+
 zp = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "metiers.zip")
 if os.path.exists(zp):
     os.remove(zp)
