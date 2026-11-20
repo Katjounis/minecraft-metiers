@@ -81,8 +81,8 @@ execute if entity @s[tag=metiers.sk.t4] run effect give @s minecraft:hero_of_the
 execute if entity @s[tag=metiers.sk.t6] run effect give @s minecraft:hero_of_the_village 3 4 true
 execute if entity @s[tag=metiers.sk.t5] run function {NS}:t/colporteur
 """)
-wj(f"data/{NS}/predicate/nuit.json", {"condition": "minecraft:time_check", "value": {"min": 13000, "max": 23000}, "period": 24000})
-wj(f"data/{NS}/predicate/accroupi.json", {"condition": "minecraft:entity_properties", "entity": "this", "predicate": {"flags": {"is_sneaking": True}}})
+wj(f"data/{NS}/predicate/nuit.json", {"type": "minecraft:time_check", "clock": "minecraft:overworld", "value": {"min": 13000, "max": 23000}, "period": 24000})
+wj(f"data/{NS}/predicate/accroupi.json", {"type": "minecraft:entity_properties", "entity": "this", "predicate": {"flags": {"is_sneaking": True}}})
 
 # ---------------- Bûcheron : abattage (b2), replanteur (b3), effeuillage (b4), esprit de la forêt (b6)
 SAPLING = {"oak_log": "oak_sapling", "spruce_log": "spruce_sapling", "birch_log": "birch_sapling", "jungle_log": "jungle_sapling",
@@ -159,7 +159,7 @@ execute as @e[type=#{NS}:animaux,distance=..6] if score @s m.tmp matches 2.. sto
 
 # ---------------- Enchanteur
 w(F + "n/renouveau.mcfunction", "\n".join(
-    [f'execute if items entity @s {sl} *[minecraft:damage~{{damage:{{min:1}}}}] run item modify entity @s {sl} {{function:"minecraft:set_damage",damage:0.01,add:true}}'
+    [f'execute if items entity @s {sl} *[minecraft:damage~{{damage:{{min:1}}}}] run item modify entity @s {sl} {{function:"minecraft:set_damage",type:"minecraft:set_damage",damage:0.01,add:true}}'
      for sl in ("weapon.mainhand", "armor.head", "armor.chest", "armor.legs", "armor.feet")]))
 w(F + "n/bouclier.mcfunction", f"""
 execute if score @s m.bscd matches 1.. run return 0
@@ -213,9 +213,9 @@ SU = [f"execute unless entity @s[tag=metiers.sk.n6] run return run {tr('Il faut 
       f"execute if data entity @s SelectedItem.components.\"minecraft:custom_data\".metiers_outil run return run {tr('Impossible sur un objet de métier.', 'red')}",
       f"execute unless entity @s[level=30..] run return run {tr('Il faut 30 niveaux d’XP.', 'red')}",
       "xp add @s -30 levels"]
-SU += [f'execute if items entity @s weapon.mainhand *[minecraft:enchantments~[{{enchantments:"minecraft:{e}"}}]] run item modify entity @s weapon.mainhand {{function:"minecraft:set_enchantments",enchantments:{{"minecraft:{e}":1}},add:true}}'
+SU += [f'execute if items entity @s weapon.mainhand *[minecraft:enchantments~[{{enchantments:"minecraft:{e}"}}]] run item modify entity @s weapon.mainhand {{function:"minecraft:set_enchantments",type:"minecraft:set_enchantments",enchantments:{{"minecraft:{e}":1}},add:true}}'
        for e in SUR_ENCH]
-SU += ['item modify entity @s weapon.mainhand {function:"minecraft:set_custom_data",tag:{surpuissance:1b}}',
+SU += ['item modify entity @s weapon.mainhand {function:"minecraft:set_custom_data",type:"minecraft:set_custom_data",tag:{surpuissance:1b}}',
        "particle minecraft:enchant ~ ~1 ~ 0.5 1 0.5 1 200", "playsound minecraft:block.enchantment_table.use master @a ~ ~ ~ 1 0.6",
        tr("Surpuissance ! Tous les enchantements de l'objet montent d'un niveau.", "light_purple")]
 w(F + "n/surpuissance.mcfunction", "\n".join(SU))

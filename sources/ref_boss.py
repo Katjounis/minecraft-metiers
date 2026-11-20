@@ -94,7 +94,7 @@ w(F + "boss/disparu.mcfunction", "\n".join([
     f"execute if score #last m.boss <= #seuil m.boss run return run function {NS}:boss/victoire",
     f"function {NS}:boss/fuite"]))
 wj(f"data/{NS}/advancement/boss_tue.json", {
-    "criteria": {"tue": {"trigger": "minecraft:player_killed_entity", "conditions": {"entity": [{"condition": "minecraft:entity_properties", "entity": "this",
+    "criteria": {"tue": {"trigger": "minecraft:player_killed_entity", "conditions": {"entity": [{"type": "minecraft:entity_properties", "entity": "this",
         "predicate": {"nbt": "{Tags:[\"metiers.boss\"]}"}}]}}},
     "rewards": {"function": f"{NS}:boss/tue"}})
 w(F + "boss/tue.mcfunction", f"advancement revoke @s only {NS}:boss_tue\nscoreboard players set #tue m.boss 1\ntag @s add metiers.bossp")

@@ -355,7 +355,7 @@ execute if data entity @s equipment.offhand.components."minecraft:custom_data".m
 execute unless data entity @s equipment.offhand.components."minecraft:enchantments" run return run {tr("Cet objet n'a pas d'enchantement à transférer.", "red")}
 summon minecraft:item ~ ~ ~ {{Tags:["metiers.livre"],PickupDelay:32767s,Item:{{id:"minecraft:enchanted_book",count:1}}}}
 data modify entity @e[tag=metiers.livre,limit=1] Item.components."minecraft:stored_enchantments" set from entity @s equipment.offhand.components."minecraft:enchantments"
-item modify entity @s weapon.offhand {{function:"minecraft:set_components",components:{{"!minecraft:enchantments":{{}}}}}}
+item modify entity @s weapon.offhand {{function:"minecraft:set_components",type:"minecraft:set_components",components:{{"!minecraft:enchantments":{{}}}}}}
 item replace entity @s weapon.mainhand from entity @e[tag=metiers.livre,limit=1] contents
 kill @e[tag=metiers.livre]
 playsound minecraft:block.enchantment_table.use master @s ~ ~ ~ 1 1.4
@@ -376,7 +376,7 @@ HU += [f"function {NS}:e/houlette_boucle",
        f'tellraw @s {PREFIX},{{"score":{{"name":"#n","objective":"m.tmp"}},"color":"yellow"}},{{"text":" animaux te suivent. Clic droit à nouveau pour les libérer.","color":"light_purple"}}]',
        "playsound minecraft:block.note_block.bell master @a ~ ~ ~ 0.8 1.6"]
 w(F + "e/houlette.mcfunction", "\n".join(HU))
-wj(f"data/{NS}/predicate/suit_moi.json", {"condition": "minecraft:entity_scores", "entity": "this", "scores": {"m.own": {"min": 1}}})
+wj(f"data/{NS}/predicate/suit_moi.json", {"type": "minecraft:entity_scores", "entity": "this", "scores": {"m.own": {"min": 1}}})
 w(F + "e/houlette_boucle.mcfunction", "\n".join([
     "execute if score #n m.tmp >= #max m.tmp run return 0",
     f"execute unless entity @e[type=#{NS}:animaux,distance=..10,predicate=!{NS}:suit_moi] run return 0",

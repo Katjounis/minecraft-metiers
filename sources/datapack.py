@@ -1940,7 +1940,7 @@ PK = [f"execute if score @s m.p_timer matches ..80 run scoreboard players operat
 w(F + "p/peche.mcfunction", "\n".join(PK))
 w(F + "p/ambiance.mcfunction", """
 execute if predicate {type:"minecraft:weather_check",raining:true} run scoreboard players set @s m.p_pluie 1
-execute if predicate {type:"minecraft:time_check",value:{min:13000,max:23000},period:24000} run scoreboard players set @s m.p_nuit 1
+execute if predicate {type:"minecraft:time_check",clock:"minecraft:overworld",value:{min:13000,max:23000},period:24000} run scoreboard players set @s m.p_nuit 1
 execute if biome ~ ~ ~ #minecraft:is_ocean run scoreboard players set @s m.p_ocean 1
 execute if biome ~ ~ ~ #minecraft:is_deep_ocean run scoreboard players set @s m.p_ocean 1
 scoreboard players operation @s m.p_mul += @s m.p_pluie
@@ -2092,7 +2092,7 @@ STRUCTS = ["village_plains", "village_desert", "village_savanna", "village_snowy
 for kind, lst, xp, cond in (("biome", BIOMES, 40, "biomes"), ("structure", STRUCTS, 60, "structures")):
     for b in lst:
         wj(f"data/{NS}/advancement/decouverte/{kind}_{b}.json", {
-            "criteria": {"vu": {"trigger": "minecraft:location", "conditions": {"player": [{"condition": "minecraft:entity_properties", "entity": "this",
+            "criteria": {"vu": {"trigger": "minecraft:location", "conditions": {"player": [{"type": "minecraft:entity_properties", "entity": "this",
                 "predicate": {"location": {cond: f"minecraft:{b}"}}}]}}},
             "rewards": {"function": f"{NS}:x/decouverte_{kind}"}})
     w(F + f"x/decouverte_{kind}.mcfunction", f"""
