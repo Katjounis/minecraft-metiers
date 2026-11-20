@@ -198,7 +198,7 @@ execute positioned ^ ^ ^2 as @e[type=#{NS}:hostiles,distance=..4,sort=nearest,li
 w(F + "n/foudre_frappe.mcfunction", """
 damage @s 8 minecraft:lightning_bolt by @p
 particle minecraft:electric_spark ~ ~1 ~ 0.3 1 0.3 0.4 60
-particle minecraft:flash ~ ~1 ~ 0 0 0 0 1
+particle minecraft:flash{color:-1} ~ ~1 ~ 0 0 0 0 1
 playsound minecraft:entity.lightning_bolt.thunder master @a ~ ~ ~ 0.5 1.6
 scoreboard players set @p m.fdcd 60
 """)

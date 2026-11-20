@@ -494,7 +494,7 @@ for k in range(11):
 GR += [f"execute store result storage {NS}:tp b.cd int 0.5 run scoreboard players get @s m.tpcd",
        f"function {NS}:tp/menu with storage {NS}:tp b"]
 w(F + "tp/ouvrir.mcfunction", "\n".join(GR))
-LI = [f'$data modify storage {NS}:tp b.l{i} set value "— emplacement libre —"' for i in range(1, 11)]
+LI = [f'data modify storage {NS}:tp b.l{i} set value "— emplacement libre —"' for i in range(1, 11)]
 LI += [f"$execute if data storage {NS}:tp j$(id)[{i - 1}] run function {NS}:tp/etiquette with storage {NS}:tp j$(id)[{i - 1}]" for i in range(1, 11)]
 w(F + "tp/lister.mcfunction", "\n".join(LI))
 w(F + "tp/etiquette.mcfunction", f'$data modify storage {NS}:tp b.l$(n) set value "$(n). $(nom) : $(x) $(y) $(z)"')
