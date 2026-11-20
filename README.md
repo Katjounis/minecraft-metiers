@@ -1,34 +1,30 @@
-# Métiers : datapack et resource pack
+# Usine à datapacks Minecraft
 
-Datapack vanilla de métiers (Bûcheron, Fermier, Mineur, Chasseur, Pêcheur, Éleveur, Enchanteur, Explorateur, Marchand) pour notre serveur, avec niveaux jusqu'à 100, arbres de compétences, outils et armure sur 11 paliers, Forge (cristaux et éclats), skins et cadres de titre, défis du jour, de la semaine et collectifs, classement, prestige, heure du métier et 5 boss de serveur en rotation.
+Ce dépôt sert à fabriquer des datapacks pour Minecraft Java 26.x (vanilla, sans mod ni plugin). Il réunit les sources de chaque pack et un **labo**, c'est-à-dire un serveur local de test.
 
-![Aperçu des outils](apercu/outils.png)
+## Organisation
 
-## Contenu
-
-| Fichier | Rôle |
+| Dossier | Contenu |
 |---|---|
-| `metiers.zip` | Datapack, à mettre dans `world/datapacks/` |
-| `metiers_resourcepack.zip` | Resource pack v24 : modèles 3D des outils et de l'armure (11 paliers, 6 skins), objets de la Forge, icônes, barres de boss |
-| `sources/datapack.py` | Générateur du datapack (exécute ensuite `ref_base.py`, `ref_skills.py`, `ref_menu.py`, `ref_boss.py`, `ref_defis.py`) |
-| `sources/glyphes.json` | Correspondance des icônes de la police `metiers:icones` |
-| `sources/resourcepack/` | Scripts de génération du resource pack v24 |
-| `sources/textures.py`, `armure.py`... | Anciens générateurs (v23), gardés pour l'historique |
+| `datapacks/<nom>/` | Un pack : ses sources, sa doc et le zip à installer |
+| `datapacks/metiers/` | **Métiers** : niveaux, compétences, menus, défis, boss. Voir son [README](datapacks/metiers/README.md) |
+| `metiers_resourcepack.zip` | Resource pack de Métiers. Il reste à la racine parce que son URL est utilisée par le serveur. |
+| `labo/` | Scripts du serveur de test. Voir [labo/LISEZMOI.md](labo/LISEZMOI.md) |
 
-## Installation sur le serveur
+## Ajouter un pack
 
-Dans `server.properties` :
+Créer `datapacks/<nom>/` avec l'une de ces deux formes :
+
+- **Pack écrit à la main** : `datapacks/<nom>/datapack/` contient `pack.mcmeta` et `data/`. Le labo le zippe au déploiement en `<nom>.zip`.
+- **Pack généré par script** : `datapacks/<nom>/sources/datapack.py` écrit le pack décompressé dans `datapacks/<nom>/build/<nom>_datapack/` et le zip dans `datapacks/<nom>/<nom>.zip`. C'est le cas de Métiers.
+
+Le labo détecte les packs tout seul (`python labo\outils\labo.py packs`). Il les branche dans son monde par des jonctions : une modification des sources est visible après `lab-reload.bat`, sans zip à refaire.
+
+## Démarrage rapide
 
 ```
-resource-pack=https://github.com/Katjounis/minecraft-metiers/raw/main/metiers_resourcepack.zip
-resource-pack-sha1=3ef0c978b28f6d2522ea118f2aac7b7fd8d8739a
-require-resource-pack=true
+copy labo\local.exemple.cmd labo\local.cmd    (puis adapter les chemins)
+labo\installer.bat
+labo\lab-start.bat                            (serveur sur localhost:25566)
+labo\lab-reload.bat                           (après chaque modification)
 ```
-
-Le SHA-1 doit être recalculé à chaque nouvelle version du resource pack.
-
-## En jeu
-
-Touche G (ou menu Échap) pour ouvrir le menu des métiers, ou `/trigger metiers`.
-
-Commandes admin : `/function metiers:boss/alerte` (boss suivant de la rotation dans 2 min), `/function metiers:heure/lancer`, `/function metiers:defis/nouveaux`, `/function metiers:defis/semaine`.

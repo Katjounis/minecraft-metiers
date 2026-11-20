@@ -1,2 +1,5 @@
 build/
 __pycache__/
+# Labo : serveur, monde et reglages propres a chaque PC
+labo/serveur/
+labo/local.cmd

@@ -108,8 +108,8 @@ Les nouvelles fonctionnalités passent par des appels isolés : si l'une plante,
 
 ## 6. Modifier le pack
 
-Les sources sont dans `sources/` du dépôt :
+Les sources sont dans `datapacks/metiers/sources/` du dépôt :
 - `datapack.py` génère tout le datapack (valeurs d'XP, compétences, récompenses, défis, etc. sont des tableaux en haut du fichier) ;
 - `textures.py` génère les textures des outils, `armure.py` celles de l'armure.
 
-Après modification : relancer le script, refaire les zips, mettre à jour l'empreinte SHA-1 si le resource pack change. Le plus simple reste de me demander la modification.
+Après modification : tester dans le labo (`labo\lab-reload.bat`, voir `labo/LISEZMOI.md`), refaire les zips, mettre à jour l'empreinte SHA-1 si le resource pack change. Le plus simple reste de me demander la modification.
