@@ -11,14 +11,14 @@ Dépôt : https://github.com/Katjounis/minecraft-metiers
 | `metiers.zip` | `world/datapacks/` sur le serveur | Toute la logique : métiers, niveaux, menus, défis, boss, etc. |
 | `metiers_resourcepack.zip` | Hébergé sur le GitHub, imposé par `server.properties` | Textures des outils évolutifs (64x64 animées), de l'armure (portée et icônes) et modèle 3D du heaume |
 
-Version actuelle du datapack : **23**. Pour vérifier en jeu : `/function metiers:version`.
+Version actuelle du datapack : **24** (refonte : outils et armure sur 11 paliers, Forge, skins, 5 boss, défis de la semaine et collectifs). Pour vérifier en jeu : `/function metiers:version`.
 
 ### Réglages dans `server.properties`
 
 ```
 require-resource-pack=true
 resource-pack=https://github.com/Katjounis/minecraft-metiers/raw/main/metiers_resourcepack.zip
-resource-pack-sha1=97be141ea52348cf5a484ebbfa5122954fec1388
+resource-pack-sha1=3ef0c978b28f6d2522ea118f2aac7b7fd8d8739a
 ```
 
 Ces lignes existent déjà dans le fichier, il faut les modifier à leur place et pas les ajouter en double. Le serveur peut réécrire le lien en `https\://...`, c'est normal.
@@ -43,7 +43,8 @@ Le `require` est important : un joueur sans le pack voit les outils et l'armure 
 | Commande | Effet |
 |---|---|
 | `/function metiers:version` | Affiche la version chargée |
-| `/function metiers:boss/invoquer` | Fait apparaître le Colosse tout de suite |
+| `/function metiers:boss/alerte` | Annonce le boss suivant de la rotation, il apparaît 2 minutes après (il faut au moins 2 joueurs) |
+| `/function metiers:defis/semaine` | Relance le défi de la semaine et le défi collectif |
 | `/function metiers:heure/lancer` | Lance une heure du métier (XP x2 sur un métier tiré au sort) |
 | `/function metiers:defis/nouveaux` | Tire de nouveaux défis du jour |
 | `/function metiers:classement` | Niveaux de tous les joueurs connectés dans le chat |

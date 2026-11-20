@@ -1,6 +1,6 @@
 import os, json, shutil, zipfile
 
-ROOT = "/home/claude/metiers_datapack"
+ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "build", "metiers_datapack")
 NS = "metiers"
 if os.path.exists(ROOT):
     shutil.rmtree(ROOT)
@@ -28,8 +28,10 @@ MAXLVL = 100
 LOGS = ["oak_log", "spruce_log", "birch_log", "jungle_log", "acacia_log", "dark_oak_log",
         "mangrove_log", "cherry_log", "pale_oak_log", "crimson_stem", "warped_stem"]
 # Mineur : 4 points = 1 XP (pierre 1/4 XP, deepslate 1/2 XP, diamant 20 XP)
-STONES = {"stone": 2, "deepslate": 3, "andesite": 2, "diorite": 2, "granite": 2, "tuff": 2, "blackstone": 2}
-ORES = {"coal_ore": 8, "deepslate_coal_ore": 10, "copper_ore": 6, "deepslate_copper_ore": 8,
+STONES = {"stone": 2, "deepslate": 3, "andesite": 2, "diorite": 2, "granite": 2, "tuff": 2, "blackstone": 2,
+          "netherrack": 1, "basalt": 2, "smooth_basalt": 2, "calcite": 2, "dripstone_block": 2, "end_stone": 3,
+          "sandstone": 1, "red_sandstone": 1, "obsidian": 4, "crying_obsidian": 4}
+ORES = {"coal_ore": 8, "deepslate_coal_ore": 10, "copper_ore": 8, "deepslate_copper_ore": 10,
         "iron_ore": 16, "deepslate_iron_ore": 20, "gold_ore": 24, "deepslate_gold_ore": 28,
         "redstone_ore": 12, "deepslate_redstone_ore": 14, "lapis_ore": 20, "deepslate_lapis_ore": 24,
         "diamond_ore": 80, "deepslate_diamond_ore": 90, "emerald_ore": 100, "deepslate_emerald_ore": 110,
@@ -39,9 +41,12 @@ ORE_DROP = {"coal": "coal 1", "copper": "raw_copper 2", "iron": "raw_iron 1", "g
             "redstone": "redstone 4", "lapis": "lapis_lazuli 4", "diamond": "diamond 1",
             "emerald": "emerald 1", "nether_gold": "gold_nugget 3", "nether_quartz": "quartz 1"}
 # Fermier : 3 points = 1 XP (un plant de blé = 1 XP, une carotte = 1/3 XP car un plant en donne 2 à 5)
-CROPS = {"wheat": 3, "carrot": 1, "potato": 1, "beetroot": 3, "melon_slice": 1, "pumpkin": 4,
-         "nether_wart": 1, "cocoa_beans": 2, "sweet_berries": 1, "sugar_cane": 2}
-PLANTABLE = ["carrot", "potato", "nether_wart", "cocoa_beans", "sweet_berries", "pumpkin", "sugar_cane"]
+CROPS = {"wheat": 3, "carrot": 1, "potato": 1, "beetroot": 3, "nether_wart": 1, "sweet_berries": 1, "glow_berries": 1}
+PLANTABLE = ["carrot", "potato", "nether_wart", "sweet_berries", "glow_berries"]
+# bloc cassé : (points, objet posé qui annule le gain, objet donné par Main verte)
+CROP_BLOCKS = {"melon": (4, "melon", "melon_slice"), "pumpkin": (4, "pumpkin", "pumpkin"),
+               "sugar_cane": (2, "sugar_cane", "sugar_cane"), "cocoa": (2, "cocoa_beans", "cocoa_beans"),
+               "cactus": (1, "cactus", "cactus")}
 BOSSES = {"wither": 200, "ender_dragon": 300, "warden": 100, "elder_guardian": 45}
 
 jobs = {
@@ -56,10 +61,16 @@ jobs = {
     "t": {"name": "Marchand", "color": "dark_green", "idx": 9, "icon": "⚖", "src": []},
 }
 # source : (critère, poids, signe, objectif, hooks)  ; hooks = [(compétence, prédicat chance, commande)]
+# Tout ce qui sort d'un tronc rapporte : bûche, bûche écorcée, bois, bois écorcé, tiges et hyphes du Nether
+WOOD_ALL = []
 for l in LOGS:
+    base = l[:-4] if l.endswith("_log") else l[:-5]
+    wood = f"{base}_wood" if l.endswith("_log") else f"{base}_hyphae"
+    WOOD_ALL += [l, f"stripped_{l}", wood, f"stripped_{wood}"]
+for l in WOOD_ALL:
     jobs["b"]["src"].append((f"minecraft.mined:minecraft.{l}", 1, 1, f"b.mi.{l}",
-                             [("b2", "chance_10", "give @s minecraft:apple 1"),
-                              ("b3", "chance_25", f"give @s minecraft:{l} 1")]))
+                             [("b1", "chance_20", f"give @s minecraft:{l} 1"),
+                              ("b5", "chance_10", "give @s minecraft:charcoal 1")]))
     jobs["b"]["src"].append((f"minecraft.used:minecraft.{l}", 1, -1, f"b.us.{l}", []))
 for s, x in STONES.items():
     jobs["m"]["src"].append((f"minecraft.mined:minecraft.{s}", x, 1, f"m.mi.{s}", []))
@@ -68,127 +79,139 @@ for o, x in ORES.items():
     hooks = []
     base = o.replace("deepslate_", "").replace("_ore", "")
     if base in ORE_DROP:
-        hooks = [("m3", "chance_25", f"give @s minecraft:{ORE_DROP[base]}")]
+        hooks = [("m4", "chance_20", f"give @s minecraft:{ORE_DROP[base]}")]
     jobs["m"]["src"].append((f"minecraft.mined:minecraft.{o}", x, 1, f"m.mi.{o}", hooks))
     jobs["m"]["src"].append((f"minecraft.used:minecraft.{o}", x, -1, f"m.us.{o}", []))
 for c, x in CROPS.items():
     jobs["f"]["src"].append((f"minecraft.picked_up:minecraft.{c}", x, 1, f"f.pu.{c}",
-                             [("f2", "chance_25", f"give @s minecraft:{c} 2"),
-                              ("f4", "chance_03", "give @s minecraft:golden_apple 1")]))
+                             [("f1", "chance_25", f"give @s minecraft:{c} 2"),
+                              ("f5", "chance_02", "give @s minecraft:golden_carrot 1")]))
     jobs["f"]["src"].append((f"minecraft.dropped:minecraft.{c}", x, -1, f"f.dr.{c}", []))
     if c in PLANTABLE:
         jobs["f"]["src"].append((f"minecraft.used:minecraft.{c}", x, -1, f"f.us.{c}", []))
+for c, (x, placed, drop) in CROP_BLOCKS.items():
+    jobs["f"]["src"].append((f"minecraft.mined:minecraft.{c}", x, 1, f"f.mi.{c}",
+                             [("f1", "chance_25", f"give @s minecraft:{drop} 2"),
+                              ("f5", "chance_02", "give @s minecraft:glistering_melon_slice 1")]))
+    jobs["f"]["src"].append((f"minecraft.used:minecraft.{placed}", x, -1, f"f.up.{c}", []))
 # XP selon la créature tuée (mob_kills ne sert plus qu'à la compétence Soif de sang)
-MOBS = {'chicken': 1, 'cow': 1, 'pig': 1, 'sheep': 1, 'rabbit': 1, 'goat': 1, 'mooshroom': 1, 'silverfish': 2, 'slime': 2, 'endermite': 2, 'magma_cube': 2, 'zombie': 3, 'husk': 3, 'zombie_villager': 3, 'spider': 3, 'piglin': 3, 'zombified_piglin': 2, 'drowned': 4, 'skeleton': 4, 'cave_spider': 4, 'vex': 4, 'stray': 5, 'bogged': 5, 'creeper': 5, 'phantom': 6, 'pillager': 6, 'witch': 8, 'enderman': 6, 'blaze': 7, 'guardian': 6, 'hoglin': 7, 'creaking': 8, 'vindicator': 9, 'shulker': 9, 'zoglin': 9, 'ghast': 11, 'wither_skeleton': 11, 'breeze': 11, 'iron_golem': 3, 'piglin_brute': 13, 'evoker': 15, 'ravager': 21}
+MOBS = {'chicken': 1, 'cow': 1, 'pig': 1, 'sheep': 1, 'rabbit': 1, 'goat': 1, 'mooshroom': 1, 'silverfish': 1, 'slime': 1, 'magma_cube': 1, 'zombie': 3, 'husk': 3, 'zombie_villager': 3, 'spider': 3, 'piglin': 3, 'zombified_piglin': 1, 'drowned': 3, 'skeleton': 4, 'cave_spider': 4, 'vex': 4, 'stray': 5, 'bogged': 5, 'creeper': 5, 'phantom': 6, 'pillager': 6, 'witch': 5, 'enderman': 3, 'blaze': 5, 'guardian': 3, 'hoglin': 7, 'creaking': 8, 'vindicator': 9, 'shulker': 9, 'zoglin': 9, 'ghast': 11, 'wither_skeleton': 11, 'breeze': 11, 'piglin_brute': 13, 'evoker': 15, 'ravager': 21}
 for mob, x in MOBS.items():
-    jobs["c"]["src"].append((f"minecraft.killed:minecraft.{mob}", x, 1, f"c.k.{mob}", []))
+    HEAD = {"zombie": "zombie_head", "skeleton": "skeleton_skull", "creeper": "creeper_head", "piglin": "piglin_head"}
+    hk = [("c3", "chance_25", f"loot give @s loot minecraft:entities/{mob}"), ("c6", None, "effect give @s minecraft:instant_health 1 0 true")]
+    if mob in HEAD: hk.append(("c5", "chance_03", f"give @s minecraft:{HEAD[mob]} 1"))
+    jobs["c"]["src"].append((f"minecraft.killed:minecraft.{mob}", x, 1, f"c.k.{mob}", hk))
 jobs["c"]["src"].append(("minecraft.custom:minecraft.mob_kills", 0, 1, "c.kills",
-                         [("c3", None, "effect give @s minecraft:regeneration 3 1 true")]))
+                         []))
 for b, x in BOSSES.items():
     jobs["c"]["src"].append((f"minecraft.killed:minecraft.{b}", x, 1, f"c.k.{b}", []))
 jobs["p"]["src"].append(("minecraft.custom:minecraft.fish_caught", 8, 1, "p.fish",
-                         [("p3", "chance_25", "loot give @s loot minecraft:gameplay/fishing/fish"),
-                          ("p5", "chance_10", "loot give @s loot minecraft:gameplay/fishing/treasure")]))
+                         [("p3", "chance_20", "loot give @s loot minecraft:gameplay/fishing/fish"),
+                          ("p5", "chance_08", "loot give @s loot minecraft:gameplay/fishing/treasure")]))
 # Éleveur : 2 points = 1 XP ; naissance 6 XP, laine ramassée 1/2 XP (poser ou jeter la laine la retire)
 jobs["e"]["src"].append(("minecraft.custom:minecraft.animals_bred", 16, 1, "e.bred",
-                         [("e2", "chance_30", "give @s minecraft:leather 2")]))
-for wl in ("white", "black", "gray", "light_gray", "brown"):
+                         [("e3", "chance_30", "give @s minecraft:leather 2")]))
+for wl in ("white", "black", "gray", "light_gray", "brown", "red", "orange", "yellow", "lime", "green", "cyan",
+           "light_blue", "blue", "purple", "magenta", "pink"):
     jobs["e"]["src"].append((f"minecraft.picked_up:minecraft.{wl}_wool", 1, 1, f"e.pu.{wl}",
                              [("e1", "chance_25", f"give @s minecraft:{wl}_wool 2")]))
     jobs["e"]["src"].append((f"minecraft.dropped:minecraft.{wl}_wool", 1, -1, f"e.dr.{wl}", []))
     jobs["e"]["src"].append((f"minecraft.used:minecraft.{wl}_wool", 1, -1, f"e.us.{wl}", []))
 # Enchanteur : l'XP vient des niveaux dépensés (calcul à part), ce critère ne sert qu'aux compétences
 jobs["n"]["src"].append(("minecraft.custom:minecraft.enchant_item", 0, 1, "n.ench",
-                         [("n1", None, "xp add @s 1 levels"), ("n4", None, "xp add @s 1 levels"),
-                          ("n2", None, "give @s minecraft:lapis_lazuli 4"),
-                          ("n5", "chance_15", "loot give @s loot minecraft:chests/stronghold_library")]))
+                         [("n1", "chance_15", "loot give @s loot minecraft:chests/stronghold_library")]))
 jobs["n"]["src"].append(("minecraft.crafted:minecraft.bookshelf", 2, 1, "n.shelf", []))
+jobs["n"]["src"].append(("minecraft.mined:minecraft.bookshelf", 2, -1, "n.shelfmi", []))
 jobs["t"]["src"].append(("minecraft.custom:minecraft.traded_with_villager", 6, 1, "t.trade",
-                         [("t1", "chance_20", "give @s minecraft:emerald 1"), ("t3", "chance_10", "give @s minecraft:diamond 1"),
-                          ("t6", "chance_05", "give @s minecraft:netherite_scrap 1")]))
+                         [("t1", "chance_15", "give @s minecraft:emerald 1"), ("t3", "chance_03", "give @s minecraft:diamond 1"),
+                          ("t6", "chance_01", "give @s minecraft:netherite_scrap 1")]))
 # Explorateur : distance parcourue, 1 XP tous les 10 m (traité à part)
-XDIST = ["walk_one_cm", "sprint_one_cm", "crouch_one_cm", "aviate_one_cm", "horse_one_cm", "climb_one_cm"]
+XDIST = ["walk_one_cm", "sprint_one_cm", "crouch_one_cm", "aviate_one_cm", "horse_one_cm", "climb_one_cm",
+         "swim_one_cm", "boat_one_cm"]
+XDIV = {"crouch_one_cm": 2, "aviate_one_cm": 6, "horse_one_cm": 3, "swim_one_cm": 2, "boat_one_cm": 4}
+XMUL = {"sprint_one_cm": 2}
 
 ALL_STATS = [s for j in jobs.values() for s in j["src"]]
-WEIGHTS = sorted({s[1] for s in ALL_STATS} | {2, 3, 4, 10, 15, 20, 30, 40, 60, 100, 1000, 7200, 20000})
+WEIGHTS = sorted({s[1] for s in ALL_STATS} | {2, 3, 4, 6, 10, 15, 20, 30, 40, 60, 100, 1000, 2000, 7200, 20000})
 
 # =====================================================================
 # ARBRES DE COMPÉTENCES (1 point par niveau, 49 points au niveau 50 = tout l'arbre)
 # =====================================================================
 SKILLS = {
     "b": [
-        ("Poigne ferme", 3, [], "Haste I avec une hache en main."),
-        ("Cueilleur", 4, [1], "10 % de chance d'obtenir une pomme en coupant du bois."),
-        ("Double coupe", 6, [1], "25 % de chance de récupérer une bûche en plus."),
-        ("Bras de fer", 8, [2], "Haste II avec une hache en main."),
-        ("Abattage", 12, [3], "Accroupi avec une hache : casser une bûche abat tout l'arbre."),
-        ("Esprit de la forêt", 16, [4, 5], "Force I et Résistance I avec une hache en main."),
+        ("Double coupe", 3, [], "20 % de chance d'une bûche en plus."),
+        ("Abattage", 4, [1], "Accroupi avec une hache : casser une bûche abat tout l'arbre."),
+        ("Replanteur", 6, [1], "Casser la bûche du pied d'un arbre replante une pousse du même bois."),
+        ("Effeuillage", 8, [2], "Après un abattage, les feuilles de l'arbre tombent d'un coup."),
+        ("Charbonnier", 12, [3], "10 % des bûches cassées donnent aussi du charbon de bois."),
+        ("Esprit de la forêt", 16, [4, 5], "Abattre un arbre entier donne Force II et Hâte II pendant 20 s."),
     ],
     "f": [
-        ("Pas léger", 3, [], "Vitesse I avec une houe en main."),
-        ("Main verte", 4, [1], "25 % de chance de récolte doublée."),
+        ("Main verte", 3, [], "25 % de chance de récolte doublée."),
+        ("Semeur", 4, [1], "Planter une graine plante aussi la terre labourée libre en 3x3 autour."),
         ("Estomac solide", 6, [1], "Rassasiement toutes les 60 secondes."),
-        ("Main d'or", 8, [2], "3 % de chance d'obtenir une pomme dorée en récoltant."),
-        ("Aura de croissance", 12, [3], "Toutes les 60 s, les cultures autour de toi (4 blocs) arrivent à maturité."),
-        ("Mère Nature", 16, [4, 5], "Régénération I avec une houe en main."),
+        ("Engrais naturel", 8, [2], "Toutes les 30 s, les cultures à 4 blocs avancent d'un stade."),
+        ("Récolte dorée", 12, [3], "2 % de chance de carotte dorée ou de pastèque scintillante en récoltant."),
+        ("Saison des moissons", 16, [4, 5], "Une fois par jour, depuis le menu : toutes les cultures à 12 blocs mûrissent."),
     ],
     "m": [
-        ("Coup de pioche", 3, [], "Haste I avec une pioche en main."),
-        ("Œil de lynx", 4, [1], "Vision nocturne sous la couche 40."),
-        ("Filon chanceux", 6, [1], "25 % de chance de minerai en double."),
-        ("Bras de fer", 8, [2], "Haste II avec une pioche en main."),
+        ("Coup de pioche", 3, [], "Célérité I avec une pioche en main."),
+        ("Bras de fer", 4, [1], "Célérité II avec une pioche en main."),
+        ("Nyctalope", 6, [1], "Vision nocturne en permanence."),
+        ("Filon chanceux", 8, [2], "20 % de chance de minerai en double."),
         ("Fonte automatique", 12, [3], "Le fer, l'or et le cuivre bruts se transforment en lingots dans ton inventaire."),
-        ("Cœur de la montagne", 16, [4, 5], "Haste III avec une pioche et Résistance I sous la couche 40."),
+        ("Cœur de la montagne", 16, [4, 5], "Célérité III avec une pioche et Résistance I sous la couche 0."),
     ],
     "c": [
         ("Lame affûtée", 3, [], "+1 point de dégâts en mêlée."),
         ("Pisteur", 4, [1], "Épée en main : les monstres à 16 blocs deviennent lumineux."),
-        ("Soif de sang", 6, [1], "Chaque mob tué donne Régénération II pendant 3 s."),
-        ("Cuir épais", 8, [2], "Résistance I en permanence."),
-        ("Bourreau", 12, [3], "+2 points de dégâts supplémentaires."),
-        ("Prédateur", 16, [4, 5], "Force I et Vitesse I quand un monstre est à moins de 8 blocs."),
+        ("Dépeceur", 6, [1], "25 % de chance de butin en double sur les monstres tués."),
+        ("Chasse nocturne", 8, [2], "Force I et Vitesse I la nuit."),
+        ("Trophées", 12, [3], "3 % de chance qu'un zombie, squelette, creeper ou piglin lâche sa tête."),
+        ("Prédateur", 16, [4, 5], "Force I et Vitesse I près d'un monstre, chaque monstre tué rend 2 cœurs."),
     ],
     "p": [
         ("Patience", 3, [], "Chance +2 (meilleur butin de pêche)."),
-        ("Poumons d'acier", 4, [1], "Respiration aquatique dans l'eau."),
-        ("Prise double", 6, [1], "25 % de chance d'attraper un poisson en plus."),
+        ("Plongeur", 4, [1], "Respiration aquatique dans l'eau."),
+        ("Prise double", 6, [1], "20 % de chance d'attraper un poisson en plus."),
         ("Nageur", 8, [2], "Grâce du dauphin dans l'eau."),
-        ("Chasseur de trésors", 12, [3], "10 % de chance de pêcher un trésor en plus."),
-        ("Seigneur des mers", 16, [4, 5], "Puissance de conduit dans l'eau et Chance +3."),
+        ("Chasseur de trésors", 12, [3], "8 % de chance de pêcher un trésor en plus."),
+        ("Seigneur des mers", 16, [4, 5], "Puissance de conduit, Chance +3 et poissons légendaires deux fois plus fréquents."),
     ],
     "e": [
         ("Berger", 3, [], "25 % de chance de 2 laines en plus quand tu ramasses de la laine."),
-        ("Tanneur", 4, [1], "30 % de chance de 2 cuirs à chaque naissance."),
-        ("Ami des bêtes", 6, [1], "Les animaux à 6 blocs de toi se régénèrent."),
-        ("Vitalité", 8, [2], "Absorption I toutes les 60 secondes."),
-        ("Croissance rapide", 12, [3], "Toutes les 60 s, les bébés animaux autour de toi deviennent adultes."),
+        ("Soigneur", 4, [1], "Les animaux à 6 blocs de toi se régénèrent."),
+        ("Tanneur", 6, [1], "30 % de chance de 2 cuirs à chaque naissance."),
+        ("Croissance rapide", 8, [2], "Toutes les 60 s, les bébés animaux autour de toi deviennent adultes."),
+        ("Fertilité", 12, [3], "Les animaux autour de toi peuvent se reproduire deux fois plus vite."),
         ("Cavalier légendaire", 16, [4, 5], "Ta monture reçoit Vitesse II et Saut amélioré II."),
     ],
     "n": [
-        ("Érudit", 3, [], "Chaque enchantement te rend 1 niveau d'XP."),
-        ("Lapidaire", 4, [1], "Chaque enchantement te donne 4 lapis-lazuli."),
-        ("Lapis éternel", 6, [1], "Toutes les 60 s, 8 lapis si tu en as moins de 16."),
-        ("Économe", 8, [2], "Chaque enchantement te rend 1 niveau de plus."),
-        ("Grimoire perdu", 12, [3], "15 % de chance de trouver un butin de bibliothèque en enchantant."),
-        ("Archimage", 16, [4, 5], "Régénération I, Résistance I et Vision nocturne en permanence."),
+        ("Grimoire perdu", 3, [], "15 % de chance de trouver un butin de bibliothèque en enchantant."),
+        ("Renouveau", 4, [1], "Ton équipement porté et en main se répare lentement, sans XP."),
+        ("Bouclier runique", 6, [1], "Sous 4 cœurs : 4 cœurs d'absorption (recharge 2 min)."),
+        ("Clignement", 8, [2], "Grimoire en main, accroupi puis saut : téléportation de 8 blocs devant (recharge 30 s)."),
+        ("Foudre arcanique", 12, [3], "Toutes les 30 s, ton prochain coup foudroie le monstre le plus proche devant toi."),
+        ("Surpuissance", 16, [4, 5], "Depuis le menu, une fois par objet : +1 niveau à tous ses enchantements (30 niveaux d'XP)."),
     ],
     "x": [
-        ("Pas léger", 3, [], "Vitesse I en permanence."),
-        ("Bon pied", 4, [1], "Saut amélioré I en permanence."),
-        ("Nyctalope", 6, [1], "Vision nocturne en permanence."),
-        ("Coureur des bois", 8, [2], "Vitesse II en permanence."),
-        ("Planeur", 12, [3], "Chute lente automatique quand tu tombes de haut."),
+        ("Grand pas", 3, [], "Tu montes les blocs sans sauter."),
+        ("Coureur des bois", 4, [1], "Vitesse I en permanence."),
+        ("Bon pied", 6, [1], "Saut amélioré I et dégâts de chute divisés par deux."),
+        ("Foulée du vent", 8, [2], "Vitesse II en permanence."),
+        ("Instinct", 12, [3], "Accroupi : tes coordonnées et celles de ta dernière mort s'affichent."),
         ("Grand voyageur", 16, [4, 5], "Résistance au feu et Respiration aquatique en permanence."),
     ],
     "t": [
-        ("Pourboire", 3, [], "20 % de chance d'une émeraude en plus par échange."),
+        ("Pourboire", 3, [], "15 % de chance d'une émeraude en plus par échange."),
         ("Réputation", 4, [1], "Héros du village I en permanence."),
-        ("Marché noir", 6, [1], "10 % de chance d'un diamant par échange."),
+        ("Marché noir", 6, [1], "3 % de chance d'un diamant par échange."),
         ("Notable", 8, [2], "Héros du village III en permanence."),
-        ("Caravane", 12, [3], "Vitesse I et Chance II près des villageois."),
-        ("Magnat", 16, [4, 5], "Héros du village V et 5 % de chance d'un fragment de netherite par échange."),
+        ("Colporteur", 12, [3], "Un marchand ambulant apparaît près de toi toutes les 40 minutes de jeu."),
+        ("Magnat", 16, [4, 5], "Héros du village V et 1 % de chance d'un fragment de netherite par échange."),
     ],
 }
+SKILL_LVL = [5, 20, 20, 45, 45, 70]
 
 # niveau 100 : 99 points, coûts doublés pour finir l'arbre au niveau max
 SKILLS = {j: [(n, c * 2, r, d) for (n, c, r, d) in v] for j, v in SKILLS.items()}
@@ -215,14 +238,14 @@ def tier_style(j, t):
 # =====================================================================
 TOOL = {"b": ("axe", "Hache", "Hache du Dieu de la Forêt"), "m": ("pickaxe", "Pioche", "Pioche du Dieu de la Mine"),
         "f": ("hoe", "Houe", "Faux du Dieu des Moissons"), "c": ("sword", "Lame", "Lame du Dieu de la Chasse"),
-        "p": ("fishing_rod", "Canne", "Canne du Dieu des Mers"), "e": ("shears", "Cisailles", "Cisailles du Dieu des Troupeaux"),
-        "n": ("book", "Grimoire", "Grimoire du Dieu des Arcanes"), "x": ("boots", "Bottes", "Bottes du Dieu Voyageur"),
+        "p": ("fishing_rod", "Canne", "Canne du Dieu des Mers"), "e": ("carrot_on_a_stick", "Houlette", "Houlette du Dieu des Troupeaux"),
+        "n": ("carrot_on_a_stick", "Grimoire", "Grimoire du Dieu des Arcanes"), "x": ("shovel", "Pelle", "Pelle du Dieu Voyageur"),
         "t": ("bundle", "Bourse", "Bourse du Dieu du Commerce")}
-MAT = [None, "diamond", "diamond", "diamond", "diamond", "netherite", "netherite", "netherite", "netherite", "netherite", "netherite"]
-MAIN = [None, 4, 5, 5, 5, 5, 6, 6, 6, 7, 8]
-UNB = [None, 2, 3, 4, 5, None, None, None, None, None, None]
-FORT = [None, 2, 3, 3, 3, 4, 4, 4, 5, 5, 6]
-LUCK = [None, 2, 3, 3, 3, 4, 4, 4, 5, 5, 6]
+MAT = ["diamond", "diamond", "netherite", "netherite", "netherite", "netherite", "netherite", "netherite", "netherite", "netherite", "netherite"]
+MAIN = [2, 3, 4, 4, 4, 5, 5, 5, 5, 5, 5]
+UNB = [1, 2, 3, 3, 3, None, None, None, None, None, None]
+FORT = [0, 1, 2, 2, 3, 3, 3, 4, 4, 4, 5]
+LUCK = [1, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5]
 EXTRAS = {
     "m": {1: ["iron_ingot 16", "coal 32"], 2: ["gold_ingot 16", "lapis_lazuli 32"], 3: ["diamond 5", "emerald 8"],
           4: ["iron_block 8", "redstone_block 8"], 5: ["diamond 12", "ancient_debris 2"],
@@ -343,34 +366,40 @@ def special(spec, color, tier=None):
         ench["unbreaking"] = UNB[tier]
     return [mk_item(iid, ench, name, color, unb)]
 
+EFF_J = ("b", "m", "f", "x")
+FORT_KEY = {"m": "fortune", "f": "fortune", "c": "looting", "p": "luck_of_the_sea"}
+
+def tool_ench(j, k):
+    """Enchantements de base de l'outil au palier k (efficacité et fortune sont ajustées par les cristaux de la Forge)."""
+    if j in ("n", "t", "e"):
+        return {}
+    ench = {}
+    if j in EFF_J:
+        ench["efficiency"] = MAIN[k]
+    if j == "m" or j == "f":
+        ench["fortune"] = FORT[k]
+    if j == "c":
+        ench["sharpness"] = MAIN[k]
+        ench["looting"] = min(3, 1 + k // 4)
+        if k >= 4: ench["sweeping_edge"] = 3
+        if k >= 5: ench["fire_aspect"] = 2
+    if j == "p":
+        ench["luck_of_the_sea"] = LUCK[k]; ench["lure"] = [1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3][k]
+    if j == "b" and k >= 5: ench["sharpness"] = 5
+    if UNB[k]: ench["unbreaking"] = UNB[k]
+    return ench
+
+def tool_iid(j, k):
+    tool = TOOL[j][0]
+    return f"{MAT[k]}_{tool}" if j in ("b", "m", "f", "c", "x") else tool
+
+CRIST = [0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30]   # cristaux du métier gagnés à chaque palier
+
 def rewards(j, k):
     tool, nom, dieu = TOOL[j]
     color = tier_style(j, k)["color"]
-    iid = f"{MAT[k]}_{tool}" if j in ("b", "m", "f", "c", "x") else tool
-    if j in ("n", "t"):
-        ench = {}
-    elif j == "x":
-        ench = {"feather_falling": min(4, 1 + k // 2), "protection": min(4, 1 + k // 3)}
-        if k >= 3: ench["depth_strider"] = min(3, k // 3)
-        if k >= 6: ench["soul_speed"] = 3
-    elif j == "e":
-        ench = {"efficiency": MAIN[k]}
-    elif j == "p":
-        ench = {"luck_of_the_sea": LUCK[k], "lure": [0, 2, 3, 3, 4, 4, 4, 5, 5, 5, 5][k]}
-    elif j == "c":
-        ench = {"sharpness": MAIN[k], "looting": min(FORT[k], 3) + (k // 4)}
-        if k >= 4: ench["sweeping_edge"] = 3
-        if k >= 5: ench["fire_aspect"] = 2
-    else:
-        ench = {"efficiency": MAIN[k]}
-        if j in ("m", "f"): ench["fortune"] = FORT[k]
-        if j == "b" and k >= 5: ench["sharpness"] = 5
-    if UNB[k]: ench["unbreaking"] = UNB[k]
     name = dieu if k == 10 else f"{nom} {DE[k]}"
-    out = [mk_item(iid, ench, name, color, k >= 5 or j == "x")]
-    for s in EXTRAS[j][k]:
-        out += special(s, color, k) if "{" in s else simple(s)
-    return out
+    return [mk_item(tool_iid(j, k), tool_ench(j, k), name, color, k >= 5 or j in ("e", "n", "t"))]
 
 R = {j: {k: rewards(j, k) for k in range(1, 11)} for j in jobs}
 
@@ -399,7 +428,7 @@ PREFIX = "[{\"text\":\"[Métiers] \",\"color\":\"gold\"}"
 # =====================================================================
 wj("pack.mcmeta", {"pack": {"description": "Métiers v2 : niveaux, compétences, titres",
                             "min_format": 84, "max_format": 200}})
-wj("data/minecraft/tags/function/load.json", {"values": [f"{NS}:load"]})
+wj("data/minecraft/tags/function/load.json", {"values": [f"{NS}:load", f"{NS}:refonte/load"]})
 wj("data/minecraft/tags/function/tick.json", {"values": [f"{NS}:tick"]})
 
 
@@ -445,49 +474,66 @@ if WITH_G:
 DEFIS = {
     "b": [("Coupe 128 bûches de chêne", 128, ["minecraft.mined:minecraft.oak_log"], 1),
           ("Coupe 128 bûches de sapin", 128, ["minecraft.mined:minecraft.spruce_log"], 1),
-          ("Coupe 128 bûches de bouleau", 128, ["minecraft.mined:minecraft.birch_log"], 1),
+          ("Coupe 96 bûches de bouleau", 96, ["minecraft.mined:minecraft.birch_log"], 1),
           ("Coupe 96 bûches de chêne noir", 96, ["minecraft.mined:minecraft.dark_oak_log"], 1),
+          ("Coupe 64 bûches de cerisier", 64, ["minecraft.mined:minecraft.cherry_log"], 1),
+          ("Coupe 96 tiges du Nether", 96, ["minecraft.mined:minecraft.crimson_stem", "minecraft.mined:minecraft.warped_stem"], 1),
+          ("Ramasse 12 pommes", 12, ["minecraft.picked_up:minecraft.apple"], 1),
           ("Coupe 256 bûches, toutes essences", 256, [f"minecraft.mined:minecraft.{l}" for l in LOGS], 1)],
     "f": [("Récolte 192 blés", 192, ["minecraft.picked_up:minecraft.wheat"], 1),
           ("Récolte 160 carottes", 160, ["minecraft.picked_up:minecraft.carrot"], 1),
           ("Récolte 160 pommes de terre", 160, ["minecraft.picked_up:minecraft.potato"], 1),
+          ("Récolte 96 betteraves", 96, ["minecraft.picked_up:minecraft.beetroot"], 1),
           ("Récolte 96 cannes à sucre", 96, ["minecraft.picked_up:minecraft.sugar_cane"], 1),
-          ("Fais naître 12 animaux", 12, ["minecraft.custom:minecraft.animals_bred"], 1)],
+          ("Récolte 48 melons", 48, ["minecraft.mined:minecraft.melon"], 1),
+          ("Récolte 32 citrouilles", 32, ["minecraft.mined:minecraft.pumpkin"], 1),
+          ("Cuis 32 pains", 32, ["minecraft.crafted:minecraft.bread"], 1)],
     "m": [("Mine 512 blocs de pierre", 512, ["minecraft.mined:minecraft.stone"], 1),
           ("Mine 256 blocs de deepslate", 256, ["minecraft.mined:minecraft.deepslate"], 1),
           ("Mine 24 minerais de fer", 24, ["minecraft.mined:minecraft.iron_ore", "minecraft.mined:minecraft.deepslate_iron_ore"], 1),
           ("Mine 48 minerais de charbon", 48, ["minecraft.mined:minecraft.coal_ore", "minecraft.mined:minecraft.deepslate_coal_ore"], 1),
-          ("Mine 4 minerais de diamant", 4, ["minecraft.mined:minecraft.diamond_ore", "minecraft.mined:minecraft.deepslate_diamond_ore"], 1)],
+          ("Mine 32 minerais de cuivre", 32, ["minecraft.mined:minecraft.copper_ore", "minecraft.mined:minecraft.deepslate_copper_ore"], 1),
+          ("Mine 12 minerais de redstone", 12, ["minecraft.mined:minecraft.redstone_ore", "minecraft.mined:minecraft.deepslate_redstone_ore"], 1),
+          ("Mine 24 quartz du Nether", 24, ["minecraft.mined:minecraft.nether_quartz_ore"], 1),
+          ("Mine 4 minerais de diamant", 4, ["minecraft.mined:minecraft.diamond_ore", "minecraft.mined:minecraft.deepslate_diamond_ore"], 1),
+          ("Mine 2 débris antiques", 2, ["minecraft.mined:minecraft.ancient_debris"], 1)],
     "c": [("Élimine 60 créatures", 60, ["minecraft.custom:minecraft.mob_kills"], 1),
           ("Élimine 25 zombies", 25, ["minecraft.killed:minecraft.zombie"], 1),
           ("Élimine 25 squelettes", 25, ["minecraft.killed:minecraft.skeleton"], 1),
           ("Élimine 12 creepers", 12, ["minecraft.killed:minecraft.creeper"], 1),
-          ("Élimine 10 endermen", 10, ["minecraft.killed:minecraft.enderman"], 1)],
-    "p": [("Pêche 20 poissons", 20, ["minecraft.custom:minecraft.fish_caught"], 1),
-          ("Pêche 35 poissons", 35, ["minecraft.custom:minecraft.fish_caught"], 1),
+          ("Élimine 15 araignées", 15, ["minecraft.killed:minecraft.spider"], 1),
+          ("Élimine 10 endermen", 10, ["minecraft.killed:minecraft.enderman"], 1),
+          ("Élimine 6 sorcières", 6, ["minecraft.killed:minecraft.witch"], 1),
+          ("Élimine 8 blazes", 8, ["minecraft.killed:minecraft.blaze"], 1),
+          ("Élimine 15 noyés", 15, ["minecraft.killed:minecraft.drowned"], 1)],
+    "p": [("Pêche 25 poissons", 25, ["minecraft.custom:minecraft.fish_caught"], 1),
+          ("Pêche 40 poissons", 40, ["minecraft.custom:minecraft.fish_caught"], 1),
+          ("Pêche 12 saumons", 12, ["minecraft.picked_up:minecraft.salmon"], 1),
+          ("Pêche 6 poissons-globes", 6, ["minecraft.picked_up:minecraft.pufferfish"], 1),
           ("Parcours 1000 m en bateau", 1000, ["minecraft.custom:minecraft.boat_one_cm"], 100),
-          ("Nage 500 m", 500, ["minecraft.custom:minecraft.swim_one_cm"], 100),
-          ("Pêche 50 poissons", 50, ["minecraft.custom:minecraft.fish_caught"], 1)],
-    "e": [("Fais naître 10 animaux", 10, ["minecraft.custom:minecraft.animals_bred"], 1),
-          ("Fais naître 20 animaux", 20, ["minecraft.custom:minecraft.animals_bred"], 1),
-          ("Récolte 32 laines blanches", 32, ["minecraft.picked_up:minecraft.white_wool"], 1),
-          ("Fais naître 30 animaux", 30, ["minecraft.custom:minecraft.animals_bred"], 1),
-          ("Récolte 64 laines blanches", 64, ["minecraft.picked_up:minecraft.white_wool"], 1)],
+          ("Nage 500 m", 500, ["minecraft.custom:minecraft.swim_one_cm"], 100)],
+    "e": [("Fais naître 12 animaux", 12, ["minecraft.custom:minecraft.animals_bred"], 1),
+          ("Fais naître 24 animaux", 24, ["minecraft.custom:minecraft.animals_bred"], 1),
+          ("Tonds 32 laines blanches", 32, ["minecraft.picked_up:minecraft.white_wool"], 1),
+          ("Ramasse 32 œufs", 32, ["minecraft.picked_up:minecraft.egg"], 1),
+          ("Ramasse 16 cuirs", 16, ["minecraft.picked_up:minecraft.leather"], 1),
+          ("Ramasse 32 plumes", 32, ["minecraft.picked_up:minecraft.feather"], 1)],
     "n": [("Enchante 3 objets", 3, ["minecraft.custom:minecraft.enchant_item"], 1),
-          ("Enchante 4 objets", 4, ["minecraft.custom:minecraft.enchant_item"], 1),
           ("Enchante 5 objets", 5, ["minecraft.custom:minecraft.enchant_item"], 1),
-          ("Enchante 6 objets", 6, ["minecraft.custom:minecraft.enchant_item"], 1),
-          ("Enchante 8 objets", 8, ["minecraft.custom:minecraft.enchant_item"], 1)],
+          ("Enchante 8 objets", 8, ["minecraft.custom:minecraft.enchant_item"], 1),
+          ("Fabrique 24 livres", 24, ["minecraft.crafted:minecraft.book"], 1),
+          ("Fabrique 8 bibliothèques", 8, ["minecraft.crafted:minecraft.bookshelf"], 1)],
     "x": [("Marche 3000 m", 3000, ["minecraft.custom:minecraft.walk_one_cm"], 100),
           ("Sprinte 2000 m", 2000, ["minecraft.custom:minecraft.sprint_one_cm"], 100),
           ("Parcours 5000 m à pied", 5000, ["minecraft.custom:minecraft.walk_one_cm", "minecraft.custom:minecraft.sprint_one_cm"], 100),
           ("Vole 5000 m en élytres", 5000, ["minecraft.custom:minecraft.aviate_one_cm"], 100),
-          ("Parcours 3000 m à cheval", 3000, ["minecraft.custom:minecraft.horse_one_cm"], 100)],
-    "t": [("Fais 10 échanges", 10, ["minecraft.custom:minecraft.traded_with_villager"], 1),
-          ("Fais 15 échanges", 15, ["minecraft.custom:minecraft.traded_with_villager"], 1),
-          ("Fais 20 échanges", 20, ["minecraft.custom:minecraft.traded_with_villager"], 1),
-          ("Fais 25 échanges", 25, ["minecraft.custom:minecraft.traded_with_villager"], 1),
-          ("Fais 30 échanges", 30, ["minecraft.custom:minecraft.traded_with_villager"], 1)],
+          ("Parcours 3000 m à cheval", 3000, ["minecraft.custom:minecraft.horse_one_cm"], 100),
+          ("Grimpe 150 m", 150, ["minecraft.custom:minecraft.climb_one_cm"], 100),
+          ("Marche 300 m sous l'eau", 300, ["minecraft.custom:minecraft.walk_under_water_one_cm"], 100)],
+    "t": [("Fais 8 échanges", 8, ["minecraft.custom:minecraft.traded_with_villager"], 1),
+          ("Fais 16 échanges", 16, ["minecraft.custom:minecraft.traded_with_villager"], 1),
+          ("Fais 24 échanges", 24, ["minecraft.custom:minecraft.traded_with_villager"], 1),
+          ("Parle à 15 villageois", 15, ["minecraft.custom:minecraft.talked_to_villager"], 1)],
 }
 BARCOL = {"b": "yellow", "f": "green", "m": "white", "c": "red", "p": "blue", "e": "pink", "n": "purple", "x": "blue", "t": "green"}
 NJ = len(jobs)
@@ -519,6 +565,8 @@ L += [f"scoreboard objectives add m.{j}_raw dummy" for j in DIV]
 L += ["scoreboard objectives add m.n_now dummy", "scoreboard objectives add m.n_prev dummy"]
 L += [f"scoreboard objectives add m.p_{o} dummy" for o in ("serie", "timer", "mul", "aff", "pluie", "nuit", "ocean", "legok")]
 L += [f"scoreboard objectives add m.p_l{i} dummy" for i in range(1, 11)]
+L += ["scoreboard objectives add m.b0 dummy", "scoreboard objectives add m.afk dummy", "scoreboard objectives add m.yaw dummy",
+      "scoreboard objectives add m.yawp dummy", "scoreboard players set #2000 m.const 2000"]
 L += ["scoreboard objectives add m.arm dummy", "scoreboard objectives add m.acd dummy", "scoreboard objectives add m.aser dummy"]
 L += [f"scoreboard objectives add m.{j}_ser dummy" for j in jobs]
 for st in XDIST:
@@ -548,7 +596,8 @@ w(F + "load.mcfunction", "\n".join(L))
 w(F + "cmd.mcfunction", "$$(c)")
 w(F + "tick.mcfunction", f"""
 execute as @a[scores={{metiers=1..}}] at @s run function {NS}:trigger
-execute as @a[tag=metiers.sk.b5] at @s run function {NS}:b/abattage/tick
+execute as @a[tag=metiers.sk.b2] at @s run function {NS}:b/abattage/tick
+function {NS}:refonte/tick
 function {NS}:appel {{f:"outil/usure_tick"}}
 """)
 w(F + "outil/usure_tick.mcfunction", f"execute as @a at @s run function {NS}:outil/usure")
@@ -589,7 +638,14 @@ execute if score #t m.timer matches 120.. run scoreboard players set #t m.timer 
 schedule function {NS}:loop 10t replace
 """)
 
-J = [f"execute unless entity @s[tag=metiers.v2] run function {NS}:migration",
+J = ["execute store result score @s m.yaw run data get entity @s Rotation[0] 10",
+     "execute store result score @s m.tmp run data get entity @s Rotation[1] 10",
+     "scoreboard players operation @s m.yaw *= #2000 m.const",
+     "scoreboard players operation @s m.yaw += @s m.tmp",
+     "execute if score @s m.yaw = @s m.yawp run scoreboard players add @s m.afk 1",
+     "execute unless score @s m.yaw = @s m.yawp run scoreboard players set @s m.afk 0",
+     "scoreboard players operation @s m.yawp = @s m.yaw",
+     f"execute unless entity @s[tag=metiers.v2] run function {NS}:migration",
      f"execute unless entity @s[tag=metiers.v3] run function {NS}:succes_sync",
      f"execute unless entity @s[tag=metiers.v5] run function {NS}:relance_paliers",
      f"execute unless entity @s[tag=metiers.v4] run function {NS}:connexion",
@@ -677,7 +733,8 @@ POS = {1: "Base", 2: "Branche A", 3: "Branche B", 4: "Branche A", 5: "Branche B"
 # PAR MÉTIER : stats, gain, niveau, paliers, arbre
 # =====================================================================
 for j, d in jobs.items():
-    S = ["# Anti-triche : poser ou jeter l'objet retire l'XP gagnée"]
+    S = ["# Anti-triche : poser ou jeter l'objet retire l'XP gagnée",
+         f"scoreboard players operation @s m.b0 = @s m.{j}_bal"]
     for _, wgt, sign, obj, hooks in d["src"]:
         for sk, pred, cmd in hooks:
             cond = f"execute if entity @s[tag=metiers.sk.{sk}] if score @s s.{obj} matches 1.."
@@ -713,15 +770,22 @@ for j, d in jobs.items():
              ["execute store result score @s m.n_prev run experience query @s levels"])
     if j == "x":
         for st in XDIST:
-            if st == "aviate_one_cm":
-                S += [f"scoreboard players operation @s s.x.{st} /= #3 m.const"]
-            if st == "horse_one_cm":
-                S += [f"scoreboard players operation @s s.x.{st} /= #2 m.const"]
+            if st in XDIV:
+                S += [f"scoreboard players operation @s s.x.{st} /= #{XDIV[st]} m.const"]
+            if st in XMUL:
+                S += [f"scoreboard players operation @s s.x.{st} *= #{XMUL[st]} m.const"]
             S += [f"scoreboard players operation @s m.x_acc += @s s.x.{st}", f"scoreboard players set @s s.x.{st} 0"]
         # XP versée par tranche de 200 m (20 XP d'un coup) pour éviter un message tous les 10 m
         S += ["scoreboard players operation @s m.tmp = @s m.x_acc", "scoreboard players operation @s m.tmp /= #20000 m.const",
-              "scoreboard players operation @s m.tmp *= #20 m.const",
+              "scoreboard players operation @s m.tmp *= #10 m.const",
               "scoreboard players operation @s m.x_bal += @s m.tmp", "scoreboard players operation @s m.x_acc %= #20000 m.const"]
+    # anti-ferme : pas d'XP de Pêcheur ni de Chasseur quand le joueur est AFK
+    b0 = f"scoreboard players operation @s m.b0 = @s m.{j}_bal"
+    S.remove(b0); S.insert(0, b0)
+    S += [f"scoreboard players operation @s m.tmp = @s m.{j}_bal", "scoreboard players operation @s m.tmp -= @s m.b0"]
+    if j in ("p", "c"):
+        S += [f"execute if score @s m.afk matches 240.. if score @s m.tmp matches 1.. run scoreboard players operation @s m.{j}_bal = @s m.b0",
+              "execute if score @s m.afk matches 240.. run scoreboard players set @s m.tmp 0"]
     S.append(f"execute if score @s m.{j}_bal matches 1.. run function {NS}:{j}/gain")
     if j == "p":
         S.append(f'execute if score @s m.p_aff matches 1 run function {NS}:appel {{f:"p/affiche"}}')
@@ -750,7 +814,7 @@ execute if score @s m.{j}_lvl matches ..{MAXLVL-1} if score @s m.{j}_xp >= @s m.
 
     LV = [f"scoreboard players operation @s m.{j}_xp -= @s m.{j}_need",
           f"scoreboard players add @s m.{j}_lvl 1",
-          "xp add @s 2 levels",
+          "xp add @s 30 points",
           "playsound minecraft:entity.player.levelup master @s ~ ~ ~ 1 1",
           f'tellraw @a [{{"selector":"@s","color":"white"}},{{"text":" passe ","color":"gray"}},{{"text":"{d["name"]}","color":"{d["color"]}"}},{{"text":" niveau ","color":"gray"}},{{"score":{{"name":"@s","objective":"m.{j}_lvl"}},"color":"yellow"}}]',
           f'tellraw @s ' + PREFIX + f',{{"text":"+1 point de compétence {d["name"]}.","color":"yellow"}}]']
@@ -792,8 +856,8 @@ execute if score @s m.{j}_lvl matches ..{MAXLVL-1} if score @s m.{j}_xp >= @s m.
                 lignes.append(f'{{text:"\\n• {pre}{it["name"]}",color:"{it["color"]}",bold:true}},{{text:"\\n   {ench_txt(it)}",color:"dark_aqua",bold:false}}')
             else:
                 lignes.append(f'{{text:"\\n• {it["label"]}",color:"white",bold:false}}')
+        lignes.append(f'{{text:"\\n• {CRIST[k]} cristaux de {d["name"]} ",color:"aqua",bold:true}},{{text:"(à dépenser à la Forge)",color:"gray",bold:false}}')
         body.append('{type:"minecraft:plain_message",width:320,contents:[{text:""},' + ",".join(lignes) + ']}')
-        body.append(f'{{type:"minecraft:plain_message",width:300,contents:{{text:"Il te faut {n} emplacement{"s" if n > 1 else ""} libre{"s" if n > 1 else ""} dans ton inventaire.",color:"gray"}}}}')
         dlg = (f'dialog show @s {{type:"minecraft:confirmation",title:{{text:"Palier {lv} : {TIERS[k][0]} {d["name"]}",color:"gold",bold:true}},'
                f'can_close_with_escape:true,pause:false,body:[{",".join(body)}],'
                f'yes:{{label:{{text:"Récupérer",color:"green",bold:true}},width:150,action:{{type:"run_command",command:"trigger metiers set {trig}"}}}},'
@@ -806,7 +870,8 @@ execute if score @s m.{j}_lvl matches ..{MAXLVL-1} if score @s m.{j}_xp >= @s m.
              f'execute if score @s m.tmp matches ..{n-1} run tellraw @s ' + PREFIX + f',{{"text":"Inventaire plein ! Libère {n} emplacement{"s" if n > 1 else ""} puis réessaie (/trigger metiers > Récompenses).","color":"red"}}]',
              f"execute if score @s m.tmp matches ..{n-1} run playsound minecraft:entity.villager.no master @s ~ ~ ~ 1 1",
              f"execute if score @s m.tmp matches ..{n-1} run return 0",
-             f"scoreboard players set @s m.{j}_pal {k}"]
+             f"scoreboard players set @s m.{j}_pal {k}",
+             f"scoreboard players add @s m.cr_{j} {CRIST[k]}"]
         G += [f"give @s {it['give']}" for it in items[1:]]
         G += [f'tellraw @a ' + PREFIX + f',{{"selector":"@s","color":"white"}},{{"text":" récupère sa récompense","color":"gray"}},{{"text":" (palier {lv} {d["name"]})","color":"gray"}}]',
               "playsound minecraft:entity.player.levelup master @s ~ ~ ~ 1 0.6",
@@ -873,6 +938,8 @@ scoreboard players operation @s m.tmp -= @s m.{j}_spent
 
     for k, (name, cost, req, desc) in enumerate(sk, 1):
         B = [f"execute if entity @s[tag=metiers.sk.{j}{k}] run return run function {NS}:{j}/arbre",
+             f'execute unless score @s m.{j}_lvl matches {SKILL_LVL[k-1]}.. run tellraw @s ' + PREFIX + f',{{"text":"Il faut être niveau {SKILL_LVL[k-1]} en {d["name"]}.","color":"red"}}]',
+             f"execute unless score @s m.{j}_lvl matches {SKILL_LVL[k-1]}.. run return run function {NS}:{j}/arbre",
              f"function {NS}:{j}/points"]
         if req:
             B += [f'execute unless entity @s[{reqsel(req)}] run tellraw @s ' + PREFIX + f',{{"text":"Il faut d\'abord débloquer : {" + ".join(sk[r-1][0] for r in req)}.","color":"red"}}]',
@@ -884,7 +951,7 @@ scoreboard players operation @s m.tmp -= @s m.{j}_spent
               f"advancement grant @s only {NS}:{j}/competence_{k}",
               f'tellraw @a ' + PREFIX + f',{{"selector":"@s","color":"white"}},{{"text":" débloque la compétence ","color":"gray"}},{{"text":"{name}","color":"{d["color"]}","bold":true}}]',
               "playsound minecraft:block.enchantment_table.use master @s ~ ~ ~ 1 1"]
-        if j == "b" and k == 5:
+        if j == "b" and k == 2:
             B += [f"scoreboard players set @s a.{l} 0" for l in LOGS]
         B.append(f"function {NS}:{j}/arbre")
         w(F + f"{j}/acheter_{k}.mcfunction", "\n".join(B))
@@ -1195,26 +1262,30 @@ def tr(txt, col="gray"):
 # =====================================================================
 # OUTIL ÉVOLUTIF
 # =====================================================================
+SKIN_IDS = ["givre", "corail", "or_royal", "ossements", "magma", "ombre"]
+SKIN_NOM = ["Givre", "Corail", "Or royal", "Ossements", "Magma", "Ombre"]
 MAXDUR = {"iron": 250, "diamond": 1561, "netherite": 2031, "golden": 32, "stone": 131, "wooden": 59}
-BASE_TOOL = {"b": "iron_axe", "m": "iron_pickaxe", "f": "iron_hoe", "c": "iron_sword", "p": "fishing_rod",
-             "e": "shears", "n": "book", "x": "iron_boots", "t": "bundle"}
+BASE_TOOL = {j: tool_iid(j, 0) for j in jobs}
 
 def outil_give(j, k):
     d = jobs[j]
     if k == 0:
-        iid, ench, name, color, unb = BASE_TOOL[j], ({} if j in ("n", "t") else {"unbreaking": 1}), f"{TOOL[j][1]} {DE[0]}", "gray", j == "x"
+        iid, ench, name, color, unb = BASE_TOOL[j], tool_ench(j, 0), f"{TOOL[j][1]} {DE[0]}", "gray", j in ("e", "n", "t")
     else:
         it = R[j][k][0]
         iid, ench, name, color, unb = it["iid"], dict(it["ench"]), it["name"], it["color"], it["unb"]
+    if "efficiency" in ench: ench["efficiency"] = "$(eff)"
+    if j in FORT_KEY: ench[FORT_KEY[j]] = "$(fort)"
     e = ",".join(f'"minecraft:{a}":{v}' for a, v in ench.items())
     lore = (f'[{{text:"Outil de {d["name"]}",color:"{d["color"]}",italic:false}},'
             f'{{text:"Palier {k}/10, il évolue tous les 10 niveaux",color:"gray",italic:false}}]')
     comps = [f"minecraft:enchantments={{{e}}}",
              f'minecraft:custom_name={{text:"{name}",color:"{color}",bold:true,italic:false}}',
              f"minecraft:lore={lore}",
-             (f'minecraft:custom_data={{metiers_outil:"{j}",palier:{k},o:$(o),s:$(s)}}' if j in ("n", "t", "x") else
-              f'minecraft:custom_data={{metiers_outil:"{j}",palier:{k},max:{ {"fishing_rod": 64, "shears": 238}.get(iid, MAXDUR.get(iid.split("_")[0], 250))},o:$(o),s:$(s)}}'),
+             (f'minecraft:custom_data={{metiers_outil:"{j}",palier:{k},o:$(o),s:$(s)}}' if j in ("n", "t", "e") else
+              f'minecraft:custom_data={{metiers_outil:"{j}",palier:{k},max:{ {"fishing_rod": 64, "carrot_on_a_stick": 25}.get(iid, MAXDUR.get(iid.split("_")[0], 250))},o:$(o),s:$(s)}}'),
              f'minecraft:item_model="metiers:{j}_{k}"',
+             'minecraft:custom_model_data={strings:["$(skin)"]}',
              "minecraft:enchantment_glint_override=false",
              "minecraft:repair_cost=1000", "!minecraft:repairable", "minecraft:max_stack_size=1",
              'minecraft:rarity="epic"']
@@ -1242,10 +1313,24 @@ for j, d in jobs.items():
           f"clear @s {sel}", f"scoreboard players add @s m.{j}_ser 1",
           f"execute store result storage {NS}:tmp o int 1 run scoreboard players get @s m.id",
           f"execute store result storage {NS}:tmp s int 1 run scoreboard players get @s m.{j}_ser",
+          f"function {NS}:{j}/outil_params",
           f"function {NS}:{j}/outil_donner_m with storage {NS}:tmp",
           "tag @s remove metiers.o_main", "tag @s remove metiers.o_off", "tag @s remove metiers.o_feet",
           "playsound minecraft:block.anvil.use master @s ~ ~ ~ 0.6 1.4"]
     w(F + f"{j}/outil_donner.mcfunction", "\n".join(OD))
+    OP = [f"scoreboard players add @s m.ceff_{j} 0", f"scoreboard players add @s m.cfor_{j} 0", f"scoreboard players add @s m.skin_{j} 0"]
+    for k in range(11):
+        be = tool_ench(j, k).get("efficiency", 0)
+        bf = tool_ench(j, k).get(FORT_KEY.get(j, ""), 0)
+        OP += [f"execute if score @s m.{j}_out matches {k} run scoreboard players set #be m.tmp {be}",
+               f"execute if score @s m.{j}_out matches {k} run scoreboard players set #bf m.tmp {bf}"]
+    OP += [f"scoreboard players operation #be m.tmp > @s m.ceff_{j}",
+           f"scoreboard players operation #bf m.tmp += @s m.cfor_{j}",
+           f"execute store result storage {NS}:tmp eff int 1 run scoreboard players get #be m.tmp",
+           f"execute store result storage {NS}:tmp fort int 1 run scoreboard players get #bf m.tmp",
+           f'data modify storage {NS}:tmp skin set value ""']
+    OP += [f'execute if score @s m.skin_{j} matches {i} run data modify storage {NS}:tmp skin set value "{sk}"' for i, sk in enumerate(SKIN_IDS, 1)]
+    w(F + f"{j}/outil_params.mcfunction", "\n".join(OP))
     w(F + f"{j}/outil_recup.mcfunction", "\n".join([
         f"execute if items entity @s container.* {sel} run return run {tr('Tu as déjà ton outil de ' + d['name'] + ' sur toi.')}",
         f"execute if items entity @s weapon.offhand {sel} run return run {tr('Tu as déjà ton outil de ' + d['name'] + ' sur toi.')}",
@@ -1277,7 +1362,7 @@ for j, d in jobs.items():
     for k in range(1, 11):
         its = R[j][k]
         tool = its[0]
-        extras = ", ".join((it["name"] or it["label"]) for it in its[1:])
+        extras = f"{CRIST[k]} cristaux de {d['name']}"
         rb.append(f'{{type:"minecraft:plain_message",width:330,contents:[{{text:"Palier {k} · niveau {10 * k}   ",color:"gold",bold:true}},'
                   f'{{text:"$(s{k})",color:"$(c{k})",bold:false}},'
                   f'{{text:"\\nOutil : ",color:"gray",bold:false}},{{text:"{tool["name"]}",color:"{tool["color"]}",bold:true}},'
@@ -1681,6 +1766,7 @@ execute as @a at @s run playsound minecraft:ui.toast.challenge_complete master @
 """)
 w(F + "boss/recompense.mcfunction", "\n".join([
     "scoreboard players operation @s m.c_bal += @s m.c_need",
+    f"function {NS}:c/gain",
     "give @s minecraft:netherite_ingot 2", "give @s minecraft:enchanted_golden_apple 2",
     "give @s minecraft:diamond 8", "give @s minecraft:totem_of_undying 1",
     tr("Récompense du Colosse : un niveau de Chasseur, 2 lingots de netherite, 2 pommes de Notch, 8 diamants et un totem.", "gold"),
@@ -1991,7 +2077,35 @@ U.append('tellraw @s {"text":"[Métiers] Désinstallé. Retire le zip du dossier
 w(F + "desinstaller.mcfunction", "\n".join(U))
 
 # =====================================================================
-zp = "/home/claude/metiers.zip"
+BIOMES = ["plains", "sunflower_plains", "snowy_plains", "ice_spikes", "desert", "swamp", "mangrove_swamp", "forest", "flower_forest",
+          "birch_forest", "dark_forest", "pale_garden", "old_growth_birch_forest", "old_growth_pine_taiga", "old_growth_spruce_taiga",
+          "taiga", "snowy_taiga", "savanna", "savanna_plateau", "windswept_hills", "windswept_gravelly_hills", "windswept_forest",
+          "windswept_savanna", "jungle", "sparse_jungle", "bamboo_jungle", "badlands", "eroded_badlands", "wooded_badlands", "meadow",
+          "cherry_grove", "grove", "snowy_slopes", "frozen_peaks", "jagged_peaks", "stony_peaks", "river", "frozen_river", "beach",
+          "snowy_beach", "stony_shore", "warm_ocean", "lukewarm_ocean", "deep_lukewarm_ocean", "ocean", "deep_ocean", "cold_ocean",
+          "deep_cold_ocean", "frozen_ocean", "deep_frozen_ocean", "mushroom_fields", "dripstone_caves", "lush_caves", "deep_dark",
+          "nether_wastes", "warped_forest", "crimson_forest", "soul_sand_valley", "basalt_deltas", "the_end", "end_highlands",
+          "end_midlands", "small_end_islands", "end_barrens"]
+STRUCTS = ["village_plains", "village_desert", "village_savanna", "village_snowy", "village_taiga", "desert_pyramid", "jungle_pyramid",
+           "swamp_hut", "igloo", "pillager_outpost", "mansion", "monument", "stronghold", "ancient_city", "trail_ruins", "trial_chambers",
+           "fortress", "bastion_remnant", "end_city", "shipwreck", "ocean_ruin_cold", "ocean_ruin_warm", "mineshaft", "ruined_portal"]
+for kind, lst, xp, cond in (("biome", BIOMES, 40, "biomes"), ("structure", STRUCTS, 60, "structures")):
+    for b in lst:
+        wj(f"data/{NS}/advancement/decouverte/{kind}_{b}.json", {
+            "criteria": {"vu": {"trigger": "minecraft:location", "conditions": {"player": [{"condition": "minecraft:entity_properties", "entity": "this",
+                "predicate": {"location": {cond: f"minecraft:{b}"}}}]}}},
+            "rewards": {"function": f"{NS}:x/decouverte_{kind}"}})
+    w(F + f"x/decouverte_{kind}.mcfunction", f"""
+scoreboard players add @s m.x_bal {xp}
+title @s actionbar {{"text":"Nouvelle découverte : +{xp} XP Explorateur","color":"blue"}}
+playsound minecraft:ui.toast.in master @s ~ ~ ~ 0.6 1.4
+""")
+
+# REFONTE (v24) : objets, armure 11 paliers, compétences, menus, Forge, skins, boss, défis
+for _mod in ("ref_base.py", "ref_skills.py", "ref_menu.py", "ref_boss.py", "ref_defis.py"):
+    exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), _mod), encoding="utf-8").read())
+
+zp = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "metiers.zip")
 if os.path.exists(zp):
     os.remove(zp)
 with zipfile.ZipFile(zp, "w", zipfile.ZIP_DEFLATED) as z:
