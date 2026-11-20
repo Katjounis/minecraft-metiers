@@ -82,7 +82,7 @@ execute if entity @s[tag=metiers.sk.t6] run effect give @s minecraft:hero_of_the
 execute if entity @s[tag=metiers.sk.t5] run function {NS}:t/colporteur
 """)
 wj(f"data/{NS}/predicate/nuit.json", {"type": "minecraft:time_check", "clock": "minecraft:overworld", "value": {"min": 13000, "max": 23000}, "period": 24000})
-wj(f"data/{NS}/predicate/accroupi.json", {"type": "minecraft:entity_properties", "entity": "this", "predicate": {"flags": {"is_sneaking": True}}})
+wj(f"data/{NS}/predicate/accroupi.json", {"type": "minecraft:entity_properties", "entity": "this", "predicate": {"minecraft:flags": {"is_sneaking": True}}})
 
 # ---------------- Bûcheron : abattage (b2), replanteur (b3), effeuillage (b4), esprit de la forêt (b6)
 SAPLING = {"oak_log": "oak_sapling", "spruce_log": "spruce_sapling", "birch_log": "birch_sapling", "jungle_log": "jungle_sapling",
