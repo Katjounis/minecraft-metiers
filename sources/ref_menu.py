@@ -29,6 +29,7 @@ for j, d in jobs.items():
            f"scoreboard players operation @s m.tmp = @s m.{j}_xp", "scoreboard players operation @s m.tmp *= #10 m.const",
            f"scoreboard players operation @s m.tmp /= @s m.{j}_need",
            f"execute if score @s m.{j}_lvl matches {MAXLVL}.. run scoreboard players set @s m.tmp 10"]
+    MN += ["execute if score @s m.tmp matches 11.. run scoreboard players set @s m.tmp 10", "execute if score @s m.tmp matches ..-1 run scoreboard players set @s m.tmp 0"] + [f'data modify storage {NS}:mn {j}_b set value "{GLY["barre_0"]}"']
     MN += [f'execute if score @s m.tmp matches {k} run data modify storage {NS}:mn {j}_b set value "{GLY["barre_" + str(k)]}"' for k in range(11)]
     MN += [f'data modify storage {NS}:mn {j}_d set value ""',
            f"function {NS}:{j}/points",
@@ -78,12 +79,14 @@ for j, d in jobs.items():
          f"data modify storage {NS}:pg skin set from storage {NS}:tmp skin"]
     for t, (nom, rng) in enumerate(TIERS):
         P.append(f'execute if score @s m.{j}_lvl matches {rng} run data modify storage {NS}:pg titre set value "{nom}"')
+    P.append(f'data modify storage {NS}:pg model set value "{j}_0"')
     for k in range(11):
         P.append(f'execute if score @s m.{j}_out matches {k} run data modify storage {NS}:pg model set value "{j}_{k}"')
         if k < 10:
             P.append(f'execute if score @s m.{j}_out matches {k} run data modify storage {NS}:pg next set value "{NEXTTXT[(j, k)]}"')
     P += [f"scoreboard players operation @s m.tmp = @s m.{j}_xp", "scoreboard players operation @s m.tmp *= #10 m.const",
           f"scoreboard players operation @s m.tmp /= @s m.{j}_need", f"execute if score @s m.{j}_lvl matches {MAXLVL}.. run scoreboard players set @s m.tmp 10"]
+    P += ["execute if score @s m.tmp matches 11.. run scoreboard players set @s m.tmp 10", "execute if score @s m.tmp matches ..-1 run scoreboard players set @s m.tmp 0"] + [f'data modify storage {NS}:pg bar set value "{GLY["barre_0"]}"']
     P += [f'execute if score @s m.tmp matches {k} run data modify storage {NS}:pg bar set value "{GLY["barre_" + str(k)]}"' for k in range(11)]
     def reqsel2(req):
         return ",".join(f"tag=metiers.sk.{j}{r}" for r in req)
@@ -116,14 +119,14 @@ for j, d in jobs.items():
     for k, (name, cost, req, desc) in enumerate(sk, 1):
         rq = " + ".join(sk[r - 1][0] for r in req) if req else "rien"
         tip = f"{desc}\\nCoût : {cost} points · niveau {SKILL_LVL[k - 1]} · requiert : {rq}"
-        sbtn.append(f'{{label:{{text:"$(l{k})",color:"$(c{k})"}},width:150,tooltip:{{text:"{tip}"}},action:{{type:"run_command",command:"trigger metiers set {100 + 10 * d["idx"] + k}"}}}}')
+        sbtn.append(f'{{label:{{text:"$(l{k})",color:"$(c{k})"}},width:200,tooltip:{{text:"{tip}"}},action:{{type:"run_command",command:"trigger metiers set {100 + 10 * d["idx"] + k}"}}}}')
     sp = SPECIAL[j]
-    abtn = [btn(txt("Récupérer l'outil", "aqua"), 300 + d["idx"], 150, "Redonne ton outil à son palier (une fois toutes les 10 minutes)."),
-            btn(txt("Réparer · 5 niv.", "green"), 330 + d["idx"], 150, "Seule façon de réparer ton outil de métier. Incassable dès le palier 5."),
-            f'{{label:{{text:"$(rl)",color:"$(rc)"}},width:150,action:{{type:"run_command",command:"trigger metiers set {200 + d["idx"]}"}}}}',
-            f'{{label:{{text:"$(tl)",color:"$(tc)"}},width:150,tooltip:{{text:"Affiche ton titre de {d["name"]} devant ton pseudo. Le cadre se choisit à la Forge."}},action:{{type:"run_command",command:"trigger metiers set {600 + d["idx"]}"}}}}',
-            btn(txt(sp[1], sp[2]), sp[0], 150, sp[3]),
-            f'{{label:{{text:"$(pl)",color:"$(pc)"}},width:150,tooltip:{{text:"Au niveau 100 : repars au niveau 1 avec une étoile et +10 % d’XP par étoile (5 max)."}},action:{{type:"run_command",command:"trigger metiers set {310 + d["idx"]}"}}}}']
+    abtn = [btn(txt("Récupérer l'outil", "aqua"), 300 + d["idx"], 200, "Redonne ton outil à son palier (une fois toutes les 10 minutes)."),
+            btn(txt("Réparer · 5 niv.", "green"), 330 + d["idx"], 200, "Seule façon de réparer ton outil de métier. Incassable dès le palier 5."),
+            f'{{label:{{text:"$(rl)",color:"$(rc)"}},width:200,action:{{type:"run_command",command:"trigger metiers set {200 + d["idx"]}"}}}}',
+            f'{{label:{{text:"$(tl)",color:"$(tc)"}},width:200,tooltip:{{text:"Affiche ton titre de {d["name"]} devant ton pseudo. Le cadre se choisit à la Forge."}},action:{{type:"run_command",command:"trigger metiers set {600 + d["idx"]}"}}}}',
+            btn(txt(sp[1], sp[2]), sp[0], 200, sp[3]),
+            f'{{label:{{text:"$(pl)",color:"$(pc)"}},width:200,tooltip:{{text:"Au niveau 100 : repars au niveau 1 avec une étoile et +10 % d’XP par étoile (5 max)."}},action:{{type:"run_command",command:"trigger metiers set {310 + d["idx"]}"}}}}']
     body = ('[{type:"minecraft:item",item:{id:"minecraft:paper",components:{"minecraft:item_model":"metiers:$(model)","minecraft:custom_model_data":{strings:["$(skin)"]}}},'
             'show_decorations:false,show_tooltip:false,description:{width:260,contents:['
             f'{{text:"$(titre) {d["name"]}\\n",color:"{d["color"]}",bold:true}},{{text:"Niveau $(lvl)   ",color:"yellow",bold:false}},'
@@ -134,8 +137,8 @@ for j, d in jobs.items():
             '{text:"Survole une compétence pour voir son effet.",color:"dark_gray"}]}]')
     w(F + f"{j}/page_dialog.mcfunction",
       f'$dialog show @s {{type:"minecraft:multi_action",title:[{gs("metier_" + j)},{{text:" {d["name"]}",color:"{d["color"]}",bold:true}}],'
-      f'can_close_with_escape:true,pause:false,after_action:"none",body:{body},actions:[{",".join(sbtn + abtn)}],columns:3,'
-      f'exit_action:{{label:"Retour",width:150,action:{{type:"run_command",command:"trigger metiers set 1"}}}}}}')
+      f'can_close_with_escape:true,pause:false,body:{body},actions:[{",".join(sbtn + abtn)}],columns:2,'
+      f'exit_action:{{label:"Retour",width:200,action:{{type:"run_command",command:"trigger metiers set 1"}}}}}}')
     # bascule du titre de ce métier
     w(F + f"{j}/titre.mcfunction", "\n".join([
         f"execute if score @s m.pref matches {d['idx']} run scoreboard players set @s m.trig 10",
@@ -186,7 +189,7 @@ for key, (j, p, e, lv) in CRP.items():
 for key, e in COMMUN.items():
     FG += [f'data modify storage {NS}:fg c_{key} set value "red"', f'execute if score @s m.ecl matches {e}.. run data modify storage {NS}:fg c_{key} set value "yellow"']
 # outil tenu en main pour les cristaux d'amélioration
-FG += ["scoreboard players set #hj m.tmp 0", f'data modify storage {NS}:fg outil set value "Tiens ton outil de métier en main pour sertir un cristal."']
+FG += [f'data modify storage {NS}:fg g set value ""', f"data modify storage {NS}:fg sl set value 0", f"data modify storage {NS}:fg us set value 0", "scoreboard players set #hj m.tmp 0", f'data modify storage {NS}:fg outil set value "Tiens ton outil de métier en main pour sertir un cristal."']
 for j, d in jobs.items():
     FG.append(f"execute if items entity @s weapon.mainhand {SEL(j)} run scoreboard players set #hj m.tmp {d['idx']}")
 FG += [f'data modify storage {NS}:fg {c} set value "—"' for c in ("l_sag", "l_for", "l_eco", "l_eff")]
@@ -254,7 +257,7 @@ for i, (kk, ic, tipc) in enumerate((("sag", "forge_cristal_sagesse", "+10 % d’
 fb.append(btn(txt("Retirer le dernier cristal serti", "aqua"), 415, 320, "Libère un emplacement. Le cristal retiré est perdu."))
 crline = ",".join(f'{gs("cristal_" + j)},{{text:" $(cr_{j})   ",color:"white"}}' for j in JL)
 w(F + "forge/menu_dialog.mcfunction",
-  '$dialog show @s {type:"minecraft:multi_action",title:{text:"Forge",color:"gold",bold:true},can_close_with_escape:true,pause:false,after_action:"none",'
+  '$dialog show @s {type:"minecraft:multi_action",title:{text:"Forge",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
   f'body:[{{type:"minecraft:plain_message",width:420,contents:[{crline},{{text:"\\n"}},{gs("eclat")},{{text:" $(ecl) éclats de boss",color:"light_purple"}}]}},'
   '{type:"minecraft:plain_message",width:380,contents:[{text:"$(outil)",color:"gray"},{text:"$(us) / $(sl)",color:"yellow"}]}],'
   f'actions:[{",".join(fb)}],columns:1,'
@@ -347,7 +350,7 @@ for ci, cn in enumerate(CADRE_NOM, 1):
 SK.append(f"function {NS}:skins/menu_dialog with storage {NS}:sk")
 w(F + "skins/menu.mcfunction", "\n".join(SK))
 for ti, (t, nom) in enumerate(TGT):
-    I = [f'data modify storage {NS}:sk skin set value ""']
+    I = [f'data modify storage {NS}:sk skin set value ""', f'data modify storage {NS}:sk model set value "{t}_0"' if t != "a" else f'data modify storage {NS}:sk model set value "heaume_0"']
     if t == "a":
         I += [f'data modify storage {NS}:sk model set value "heaume_0"']
         I += [f'execute if score @s m.arm matches {p + 1} run data modify storage {NS}:sk model set value "heaume_{p}"' for p in range(11)]
@@ -391,7 +394,7 @@ SKD += [f'{{label:[{gs("cadre_" + CADRES[ci - 1] + "_g")},{{text:"{cn}",color:"$
         for ci, (cn, tip) in enumerate(zip(CADRE_NOM, ["Offert.", "3 éclats de boss.", "6 éclats de boss.", "10 éclats de boss.",
                                                        "Trophée : vaincre 5 fois le Brasier ancestral.", "3 prestiges au total."]), 1)]
 w(F + "skins/menu_dialog.mcfunction",
-  '$dialog show @s {type:"minecraft:multi_action",title:{text:"Skins et cadres de titre",color:"light_purple",bold:true},can_close_with_escape:true,pause:false,after_action:"none",'
+  '$dialog show @s {type:"minecraft:multi_action",title:{text:"Skins et cadres de titre",color:"light_purple",bold:true},can_close_with_escape:true,pause:false,'
   'body:[{type:"minecraft:item",item:{id:"minecraft:paper",components:{"minecraft:item_model":"metiers:$(model)","minecraft:custom_model_data":{strings:["$(skin)"]}}},'
   'show_decorations:false,show_tooltip:false,description:{width:240,contents:[{text:"$(cible)\\n",color:"aqua",bold:true},'
   f'{{text:"Le skin change les matériaux, pas la forme du palier, et suit l’objet quand il évolue.\\n",color:"gray",bold:false}},{gs("eclat")},{{text:" $(ecl) éclats",color:"light_purple"}}]}}}}],'

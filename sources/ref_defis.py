@@ -79,7 +79,10 @@ add_lines(F + "defis/tick.mcfunction", [
     f"execute if score #semaine m.defi matches 201600.. run function {NS}:defis/semaine",
     "scoreboard players set #sleft m.defi 201600", "scoreboard players operation #sleft m.defi -= #semaine m.defi",
     "scoreboard players operation #sleft m.defi /= #7200 m.const", "scoreboard players add #sleft m.defi 1",
-    f"execute if score #quatre m.timer matches 0 run function {NS}:defis/collectif_total"])
+    f"execute if score #quatre m.timer matches 0 run function {NS}:defis/collectif_total"] +
+    [f"execute unless score #d_{j} m.defi matches 1..{len(pool)} run function {NS}:defis/nouveaux" for j, pool in DEFIS.items()] +
+    [f"execute unless score #s_def m.defi matches 1..{len(SEM)} run function {NS}:defis/semaine",
+     f"execute unless score #c_def m.defi matches 1..{len(COLL)} run function {NS}:defis/semaine"])
 CT = ["scoreboard players set #c_tot m.defi 0"]
 for i, (_, tgt, crits) in enumerate(COLL, 1):
     CT += [f"execute if score #c_def m.defi matches {i} run scoreboard players operation #c_tot m.defi += * dc.{i}_{n}" for n in range(len(crits))]
@@ -111,7 +114,9 @@ w(F + "defis/collectif_gain.mcfunction", "\n".join([
     f'tellraw @s {PREFIX},{{"text":"Défi collectif : +1 ","color":"light_purple"}},{GJ("eclat")},{{"text":" éclat de boss.","color":"light_purple"}}]']))
 
 # ---------------------------------------------------------------- écran des défis
-DM = [f"function {NS}:defis/joueur", f"execute store result storage {NS}:defis left int 1 run scoreboard players get #left m.defi",
+DM = [f'data modify storage {NS}:defis {k} set value "aucun"' for k in ("wd", "cd")] + [f"data modify storage {NS}:defis {k} set value 0" for k in ("wt", "cg", "cm")] + \
+     [f'data modify storage {NS}:defis wj set value ""'] + [f'data modify storage {NS}:defis {j}_d set value "aucun"' for j in DEFIS] + [f"data modify storage {NS}:defis {j}_t set value 0" for j in DEFIS]
+DM += [f"function {NS}:defis/joueur", f"execute store result storage {NS}:defis left int 1 run scoreboard players get #left m.defi",
       f"execute store result storage {NS}:defis sleft int 1 run scoreboard players get #sleft m.defi",
       f"execute store result storage {NS}:defis wp int 1 run scoreboard players get @s m.wp",
       f"execute store result storage {NS}:defis cc int 1 run scoreboard players get @s m.cc",
