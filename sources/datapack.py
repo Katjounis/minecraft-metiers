@@ -2092,8 +2092,7 @@ STRUCTS = ["village_plains", "village_desert", "village_savanna", "village_snowy
 for kind, lst, xp, cond in (("biome", BIOMES, 40, "biomes"), ("structure", STRUCTS, 60, "structures")):
     for b in lst:
         wj(f"data/{NS}/advancement/decouverte/{kind}_{b}.json", {
-            "criteria": {"vu": {"trigger": "minecraft:location", "conditions": {"player": [{"type": "minecraft:entity_properties", "entity": "this",
-                "predicate": {"location": {cond: f"minecraft:{b}"}}}]}}},
+            "criteria": {"vu": {"trigger": "minecraft:location", "conditions": {"player": {"location": {cond: f"minecraft:{b}"}}}}},
             "rewards": {"function": f"{NS}:x/decouverte_{kind}"}})
     w(F + f"x/decouverte_{kind}.mcfunction", f"""
 scoreboard players add @s m.x_bal {xp}

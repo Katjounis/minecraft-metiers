@@ -110,7 +110,7 @@ w(F + "b/replante/poser.mcfunction", "$setblock ~ ~ ~ minecraft:$(pousse)\nparti
 _p = os.path.join(ROOT, F, "b/abattage/bloc.mcfunction")
 _t = open(_p, encoding="utf-8").read().replace(
     'setblock ~ ~ ~ minecraft:air destroy\n',
-    'setblock ~ ~ ~ minecraft:air destroy\nexecute if entity @s[tag=metiers.sk.b4] run fill ~-2 ~-2 ~-2 ~2 ~2 ~2 minecraft:air destroy replace #minecraft:leaves[persistent=false]\n', 1)
+    'setblock ~ ~ ~ minecraft:air destroy\nexecute if entity @s[tag=metiers.sk.b4] run fill ~-2 ~-2 ~-2 ~2 ~2 ~2 minecraft:air replace #minecraft:leaves[persistent=false] destroy\n', 1)
 open(_p, "w", encoding="utf-8").write(_t)
 add_lines(F + "b/abattage/demarrer.mcfunction", [
     "execute if entity @s[tag=metiers.sk.b6] if score #n m.tmp matches 4.. run effect give @s minecraft:strength 20 1 true",

@@ -90,13 +90,9 @@ w(F + "boss/particules.mcfunction", "\n".join(
     [f"execute if score #type m.boss matches {k} run particle {b['part']} ~ ~2.5 ~ 0.9 1.6 0.9 0.02 10" for k, b in BOSS.items()]))
 w(F + "boss/disparu.mcfunction", "\n".join([
     f"execute if score #tue m.boss matches 1 run return run function {NS}:boss/victoire",
-    "scoreboard players operation #seuil m.boss = #max m.boss", "scoreboard players operation #seuil m.boss /= #5 m.const",
+    "scoreboard players operation #seuil m.boss = #max m.boss", "scoreboard players operation #seuil m.boss /= #4 m.const",
     f"execute if score #last m.boss <= #seuil m.boss run return run function {NS}:boss/victoire",
     f"function {NS}:boss/fuite"]))
-wj(f"data/{NS}/advancement/boss_tue.json", {
-    "criteria": {"tue": {"trigger": "minecraft:player_killed_entity", "conditions": {"entity": [{"type": "minecraft:entity_properties", "entity": "this",
-        "predicate": {"nbt": "{Tags:[\"metiers.boss\"]}"}}]}}},
-    "rewards": {"function": f"{NS}:boss/tue"}})
 w(F + "boss/tue.mcfunction", f"advancement revoke @s only {NS}:boss_tue\nscoreboard players set #tue m.boss 1\ntag @s add metiers.bossp")
 
 # vagues à 66 % et 33 %
