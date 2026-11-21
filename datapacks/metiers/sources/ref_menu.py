@@ -16,6 +16,21 @@ EFFC = [40, 70, 110, 150, 200, 260, 330]
 EFFL = [10, 20, 30, 40, 50, 60, 80]
 CRIS = {"sagesse": (90, 20, "csag", None), "fortune": (160, 40, "cfor", tuple(FORT_KEY)), "echo": (240, 60, "ceco", None)}
 
+
+# ---------------------------------------------------------------- bandeau de séparation (fond dessiné par la police d'icônes)
+LARG = {**{c: 2 for c in "i!,.:;|"}, **{c: 3 for c in "l'`"}, **{c: 4 for c in "It[] "}, **{c: 5 for c in "fk<>(){}*\""}, **{c: 7 for c in "@~"}}
+def largeur(t, gras=True):
+    return sum(LARG.get(c, 6) + (1 if gras else 0) for c in t)
+def esp(n):
+    return chr(0xE300 + n + 256)
+def bandeau(texte, align="centre", col="gold"):
+    """Libellé de bouton : fond « bandeau » (195 px) puis texte placé dessus. Largeur totale 195 px, pour un bouton de 200."""
+    tw = largeur(texte); T = 195
+    x0 = {"centre": (T - tw) // 2, "droite": T - tw - 8, "gauche": 8}[align]
+    return (f'[{{text:""}},{{text:"{GLY["bandeau"]}",font:"metiers:icones",color:"white",shadow_color:0}},'
+            f'{{text:"{esp(x0 - T)}",font:"metiers:icones"}},{{text:"{texte}",color:"{col}",bold:true}},'
+            f'{{text:"{esp(T - x0 - tw)}",font:"metiers:icones"}}]')
+
 # ================================================================ accueil
 MN = [f"function {NS}:classement/maj" if False else "scoreboard players add @s m.total 0",
       f"execute store result storage {NS}:mn score int 1 run scoreboard players get @s m.total",
@@ -143,7 +158,7 @@ for j, d in jobs.items():
         tip = f"{desc}\\nCoût : {cost} points · niveau {SKILL_LVL[k - 1]} · requiert : {rq}"
         sbtn.append(f'{{label:{{text:"$(l{k})",color:"$(c{k})"}},width:200,tooltip:{{text:"{tip}"}},action:{{type:"run_command",command:"trigger metiers set {100 + 10 * d["idx"] + k}"}}}}')
     sp = SPECIAL[j]
-    sep = ['{label:{text:"━━━━━━━  OUTIL ET",color:"gold",bold:true},width:200}', '{label:{text:"MÉTIER  ━━━━━━━",color:"gold",bold:true},width:200}']
+    sep = [f'{{label:{bandeau("OUTIL ET", "droite")},width:200}}', f'{{label:{bandeau("MÉTIER", "gauche")},width:200}}']
     abtn = [btn(txt("Récupérer l'outil", "aqua"), 300 + d["idx"], 200, "Redonne ton outil à son palier (une fois toutes les 10 minutes)."),
             btn(txt("Réparer · 5 niv.", "green"), 330 + d["idx"], 200, "Seule façon de réparer ton outil de métier. Incassable dès le palier 5."),
             f'{{label:{{text:"$(rl)",color:"$(rc)"}},width:200,action:{{type:"run_command",command:"trigger metiers set {200 + d["idx"]}"}}}}',

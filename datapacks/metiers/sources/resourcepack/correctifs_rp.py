@@ -306,7 +306,20 @@ if "boutons" not in FAIT:
         files[f"assets/minecraft/textures/gui/sprites/widget/{nom}.png.mcmeta"] = meta
     stats["boutons"] = 3
 
-files[MARQ] = json.dumps(sorted(FAIT | {"arc5", "zfight", "ame4", "zfight2", "zfight3", "zfight4", "arcmiroir", "grandes_icones", "gemmes", "arcgui", "boutons"})).encode()
+# 14. bandeau de séparation pour les menus (dessiné par une « lettre » de la police d'icônes qui recouvre l'intérieur du bouton)
+#     + espaces de largeur fixe (-256..+256 px) pour placer le texte par-dessus
+if "bandeau" not in FAIT and FONT in files:
+    W, H = 194, 16; im = Image.new("RGBA", (W, H), (30, 25, 22, 255)); px = im.load()
+    for x in range(W):
+        px[x, 0] = (176, 136, 58, 255); px[x, H - 1] = (120, 92, 40, 255); px[x, 1] = (48, 40, 34, 255); px[x, H - 2] = (20, 16, 14, 255)
+    b5 = io.BytesIO(); im.save(b5, "PNG"); files["assets/metiers/textures/font/bandeau.png"] = b5.getvalue()
+    fo = json.loads(files[FONT])
+    fo["providers"].append({"type": "bitmap", "file": "metiers:font/bandeau.png", "height": 16, "ascent": 11, "chars": ["\ue220"]})
+    fo["providers"].append({"type": "space", "advances": {chr(0xE300 + a + 256): a for a in range(-256, 257)}})
+    files[FONT] = json.dumps(fo, ensure_ascii=False, indent=1).encode()
+    stats["bandeau"] = 1
+
+files[MARQ] = json.dumps(sorted(FAIT | {"arc5", "zfight", "ame4", "zfight2", "zfight3", "zfight4", "arcmiroir", "grandes_icones", "gemmes", "arcgui", "boutons", "bandeau"})).encode()
 out = io.BytesIO()
 with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
     for n in sorted(files):

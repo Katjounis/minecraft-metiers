@@ -26,7 +26,7 @@ Dans `server.properties` :
 
 ```
 resource-pack=https://github.com/Katjounis/minecraft-metiers/raw/main/metiers_resourcepack.zip
-resource-pack-sha1=88d272974b1a7f9594c059f180749707864dca7d
+resource-pack-sha1=ebde9eadb32c2c2d52090a47de5ac98476ffbb56
 require-resource-pack=true
 ```
 
@@ -37,3 +37,7 @@ Le SHA-1 doit être recalculé à chaque nouvelle version du resource pack.
 Touche G (ou menu Échap) pour ouvrir le menu des métiers, ou `/trigger metiers`.
 
 Commandes admin : `/function metiers:boss/alerte` (boss suivant de la rotation dans 2 min), `/function metiers:heure/lancer`, `/function metiers:defis/nouveaux`, `/function metiers:defis/semaine`.
+
+## Interface « Forge »
+
+Le resource pack recolore toute l'interface vanilla (inventaire, conteneurs, barre d'action, info-bulles, curseurs, boutons) au style de la Forge. Script : `sources/resourcepack/interface_forge.py <textures gui vanilla 26.x> metiers_resourcepack.zip`, puis `sources/resourcepack/correctifs_rp.py metiers_resourcepack.zip`.
