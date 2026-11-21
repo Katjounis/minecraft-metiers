@@ -39,7 +39,7 @@ def corners(e):
 stats = {"rot": 0, "bornes": 0, "gui": 0, "heaumes": 0, "arcs": 0, "zfight": 0}
 MARQ = "assets/metiers/correctifs.json"
 FAIT = set(json.loads(files[MARQ])) if MARQ in files else set()
-OUTIL = re.compile(r"assets/metiers/models/item/v2/([a-z]_\d+|arc_\d+|forge_[a-z0-9_]+)(_[a-z_]+)?\.json$")
+OUTIL = re.compile(r"assets/metiers/models/item/v2/([a-z]_\d+|forge_[a-z0-9_]+)(_[a-z_]+)?\.json$")
 HEAUME = re.compile(r"assets/metiers/models/item/v2/heaume_\d+(_[a-z_]+)?\.json$")
 files.pop("assets/metiers/textures/item/v2/doublure.png", None)
 
@@ -256,7 +256,57 @@ if "gemmes" not in FAIT:
         b3 = io.BytesIO(); gem(ancien.getpixel((5, 7))[:3]).save(b3, "PNG"); files[n] = b3.getvalue()
         stats["gemmes"] = stats.get("gemmes", 0) + 1
 
-files[MARQ] = json.dumps(sorted(FAIT | {"arc5", "zfight", "ame4", "zfight2", "zfight3", "zfight4", "arcmiroir", "grandes_icones", "gemmes"})).encode()
+# 12. arcs trop grands dans la barre d'objets (coupés) : échelle « gui » calculée sur l'arc au repos,
+#     et la même pour ses 3 états bandés, pour que l'icône ne saute pas
+if True:   # recalculé à chaque passage (idempotent)
+    for n in list(files):
+        m = re.search(r"(assets/metiers/models/item/v2/arc_\d+)\.json$", n)
+        if not m: continue
+        d = json.loads(files[n]); els = d["elements"]
+        pts = [p for e in els for p in corners(e)]
+        xy = rot_pts([(x - 8, y - 8) for x, y, z in pts], -45)
+        xs = [q[0] for q in xy]; ys = [q[1] for q in xy]
+        sc = round(15.0 / max(max(xs) - min(xs), max(ys) - min(ys)), 3)
+        g = {"rotation": [0, 0, -45], "translation": [round(-(max(xs) + min(xs)) / 2 * sc, 2), round(-(max(ys) + min(ys)) / 2 * sc, 2), 0], "scale": [sc, sc, sc]}
+        for k in ("", "_pulling_0", "_pulling_1", "_pulling_2"):
+            q = m.group(1) + k + ".json"
+            if q in files:
+                dq = json.loads(files[q]); dq.setdefault("display", {})["gui"] = g; files[q] = json.dumps(dq, separators=(",", ":")).encode()
+        stats["arcgui"] = stats.get("arcgui", 0) + 1
+
+# 13. boutons de tout le jeu au style de la Forge : pierre sombre, filet doré, rivets ; survol doré vif ; inactif éteint
+import random
+def bouton(etat):
+    W, H = 200, 20; im = Image.new("RGBA", (W, H)); px = im.load(); rnd = random.Random(7)
+    corps = {"normal": (58, 52, 49), "survol": (74, 64, 52), "inactif": (40, 37, 36)}[etat]
+    or_ = {"normal": (176, 136, 58), "survol": (255, 212, 96), "inactif": (70, 64, 60)}[etat]
+    for x in range(W):
+        for y in range(H):
+            n = rnd.randint(-5, 5) if etat != "inactif" else rnd.randint(-2, 2)
+            c = tuple(max(0, min(255, v + n)) for v in corps)
+            if y in (2,): c = tuple(min(255, v + 18) for v in c)           # reflet haut
+            if y in (H - 3,): c = tuple(max(0, v - 16) for v in c)         # ombre bas
+            px[x, y] = c + (255,)
+    for x in range(W):
+        for y in range(H):
+            bord = x == 0 or y == 0 or x == W - 1 or y == H - 1
+            filet = (x == 1 or y == 1 or x == W - 2 or y == H - 2) and not bord
+            if bord: px[x, y] = (16, 13, 12, 255)
+            elif filet: px[x, y] = or_ + (255,) if not (y == H - 2) else tuple(int(v * 0.7) for v in or_) + (255,)
+    if etat != "inactif":   # rivets dans les coins
+        for (x, y) in ((2, 2), (W - 3, 2), (2, H - 3), (W - 3, H - 3)):
+            px[x, y] = tuple(min(255, v + 50) for v in or_) + (255,)
+    return im
+
+if "boutons" not in FAIT:
+    meta = json.dumps({"gui": {"scaling": {"type": "nine_slice", "width": 200, "height": 20, "border": 3}}}).encode()
+    for nom, etat in (("button", "normal"), ("button_highlighted", "survol"), ("button_disabled", "inactif")):
+        b4 = io.BytesIO(); bouton(etat).save(b4, "PNG")
+        files[f"assets/minecraft/textures/gui/sprites/widget/{nom}.png"] = b4.getvalue()
+        files[f"assets/minecraft/textures/gui/sprites/widget/{nom}.png.mcmeta"] = meta
+    stats["boutons"] = 3
+
+files[MARQ] = json.dumps(sorted(FAIT | {"arc5", "zfight", "ame4", "zfight2", "zfight3", "zfight4", "arcmiroir", "grandes_icones", "gemmes", "arcgui", "boutons"})).encode()
 out = io.BytesIO()
 with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
     for n in sorted(files):

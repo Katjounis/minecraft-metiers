@@ -1278,7 +1278,9 @@ def outil_give(j, k):
     if j in FORT_KEY: ench[FORT_KEY[j]] = "$(fort)"
     e = ",".join(f'"minecraft:{a}":{v}' for a, v in ench.items())
     lore = (f'[{{text:"Outil de {d["name"]}",color:"{d["color"]}",italic:false}},'
-            f'{{text:"Palier {k}/10, il évolue tous les 10 niveaux",color:"gray",italic:false}}]')
+            f'{{text:"Palier {k}/10, il évolue tous les 10 niveaux",color:"gray",italic:false}}' +
+            {"e": ',{text:"Clic droit : les animaux proches te suivent",color:"light_purple",italic:false}',
+             "n": ',{text:"Clic droit : points de téléportation",color:"light_purple",italic:false}'}.get(j, "") + ']')
     comps = [f"minecraft:enchantments={{{e}}}",
              f'minecraft:custom_name={{text:"{name}",color:"{color}",bold:true,italic:false}}',
              f"minecraft:lore={lore}",

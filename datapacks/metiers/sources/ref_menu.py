@@ -43,9 +43,12 @@ for j, d in jobs.items():
     lab = f'[{gs("metier_" + j)},{txt(" " + d["name"] + " ", d["color"])},{txt("$(" + j + "_l) ", "yellow")},{{text:"$({j}_b)",font:"metiers:icones",color:"white"}},{txt("$(" + j + "_d)", "red")}]'
     acts.append(btn(lab, 20 + d["idx"], 200, f"Ouvre la page {d['name']} : outil, compétences, récompenses, titre."))
 forge_lab = f'[{gs("forge_marteau")},{txt("  Forge  ", "gold", True)},{gs("eclat")},{txt(" $(ecl) éclats", "gray")}]'
-acts += [btn(txt("Défis du jour", "aqua"), 4, 200), btn(txt("Classement", "gold"), 5, 200),
-         btn(txt("Armure des Guildes", "#F1CF4E"), 6, 200), btn(forge_lab, 400, 200, "Objets de métier, cristaux d'amélioration, skins et cadres de titre."),
-         btn(txt("Aide : cristaux, éclats, Forge", "white"), 460, 200, "Comment ça marche : cristaux, éclats de boss, Forge, défis, boss.")]
+acts += [btn(f'[{gs("forge_marteau")},{txt("  Forger l’outil en main", "gold", True)}]', 470, 200, "Sertis des cristaux dans l’outil de métier que tu tiens."),
+         btn(f'[{gs("forge_cape")},{txt("  Boutique de la Forge", "yellow", True)}]', 471, 200, "Marteau, faux, arc triple, lasso, parchemin, aimant, cape-planeur."),
+         btn(f'[{gs("forge_cristal_sagesse")},{txt("  Skins", "light_purple", True)}]', 420, 200, "Apparence de tes outils et de ton armure."),
+         btn(f'[{gs("cadre_dore_g")},{txt("Cadres de titre", "gold", True)},{gs("cadre_dore_d")}]', 472, 200, "Le cadre autour de ton titre."),
+         btn(txt("Défis du jour", "aqua", True), 4, 200), btn(txt("Armure des Guildes", "#F1CF4E", True), 6, 200),
+         btn(txt("Classement", "gold"), 5, 200), btn(txt("Aide", "white"), 460, 200, "Cristaux, éclats, Forge, défis, boss : comment ça marche.")]
 w(F + "menu_dialog.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Mes métiers",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
   'body:[{type:"minecraft:plain_message",width:400,contents:[{text:"Score total ",color:"gray"},{text:"$(score)",color:"yellow"},'
@@ -59,13 +62,30 @@ for j, d in jobs.items():
     for k in range(10):
         nt = R[j][k + 1][0]["name"]
         NEXTTXT[(j, k)] = f"Niveau {10 * (k + 1)} : {nt}, titre {TIERS[k + 1][0]}, {CRIST[k + 1]} cristaux"
+NOMF_J = {"m": "Marteau 3x3 : 260 cristaux + 4 éclats, niveau 50", "f": "Faux 5x5 : 220 cristaux + 3 éclats, niveau 50",
+          "c": "Arc à triple tir : 300 cristaux + 5 éclats, niveau 60", "e": "Lasso : 140 cristaux + 1 éclat, niveau 40",
+          "n": "Parchemin de transfert : 60 cristaux, niveau 40"}
+TDESC = {
+    "b": "Hache : Efficacité et Solidité montent à chaque palier. Les compétences ajoutent l’abattage d’arbre entier et la replantation.",
+    "f": "Houe : Fortune et Efficacité montent à chaque palier. Récolter des cultures mûres rapporte l’XP.",
+    "m": "Pioche : Efficacité et Fortune montent à chaque palier. Minerais et pierre rapportent l’XP.",
+    "c": "Épée du Chasseur, avec un arc qui évolue en même temps (bouton Récupérer mon arc).",
+    "p": "Canne : Chance de la mer et Appât montent à chaque palier. Chaque prise rapporte l’XP.",
+    "e": "Houlette : clic droit, les animaux à 10 blocs te suivent (2 au palier 0, 8 au palier 10). Clic droit à nouveau pour les libérer.",
+    "n": "Grimoire de téléportation : clic droit pour enregistrer un point ou t’y rendre (3 s sans bouger). 1 point au palier 0, 10 au palier 10, recharge de 10 min à 1 min.",
+    "x": "Pelle : Efficacité monte à chaque palier. Marcher, courir et découvrir biomes et structures rapporte l’XP.",
+    "t": "Bourse : un sac de rangement. Les échanges avec les villageois rapportent l’XP.",
+}
+FITEM = {"m": "marteau", "f": "faux", "c": "arc3", "e": "lasso", "n": "parchemin"}
 SPECIAL = {"f": (610, "Saison des moissons", "green", "Une fois par jour de jeu : toutes les cultures à 12 blocs mûrissent (compétence ultime)."),
            "n": (611, "Surpuissance", "light_purple", "Objet enchanté en main : +1 niveau à tous ses enchantements, 30 niveaux d’XP (compétence ultime)."),
            "x": (612, "Récupérer mon sac à dos", "blue", "Sac à dos : 18 cases au niveau 20, 27 au niveau 50, 2 pages au niveau 80."),
            "c": (613, "Récupérer mon arc", "red", "L’arc du Chasseur évolue en même temps que ton épée."),
            "p": (70, "Carnet du pêcheur", "aqua", "Tes poissons légendaires."),
-           "b": (400, "Ouvrir la Forge", "gold", "Dépense tes cristaux de métier."), "m": (400, "Ouvrir la Forge", "gold", "Dépense tes cristaux de métier."),
-           "e": (400, "Ouvrir la Forge", "gold", "Dépense tes cristaux de métier."), "t": (400, "Ouvrir la Forge", "gold", "Dépense tes cristaux de métier.")}
+           "b": (470, "Forger l’outil en main", "gold", "Sertis des cristaux dans ta hache tenue en main."),
+           "m": (401, "Forger : Marteau 3x3", "gold", "Creuse en 3x3. 260 cristaux de Mineur + 4 éclats, Mineur niveau 50."),
+           "e": (404, "Forger : Lasso", "gold", "Capture un animal dans un œuf. 140 cristaux d’Éleveur + 1 éclat, Éleveur niveau 40."),
+           "t": (470, "Forger l’outil en main", "gold", "Sertis des cristaux dans ta bourse tenue en main.")}
 for j, d in jobs.items():
     sk = SKILLS[j]
     P = [f"function {NS}:{j}/points", f"execute store result storage {NS}:pg pts int 1 run scoreboard players get @s m.tmp",
@@ -137,7 +157,10 @@ for j, d in jobs.items():
             f'{{text:"Outil au palier $(out) sur 10",color:"gray"}}]}}}},'
             '{type:"minecraft:plain_message",width:380,contents:[{text:"$(next)\\n",color:"gold"},'
             f'{{text:"Points de compétence : ",color:"gray"}},{{text:"$(pts)",color:"yellow"}},{{text:"   ·   ",color:"gray"}},{gs("cristal_" + j)},{{text:" $(cr) cristaux\\n",color:"aqua"}},'
-            '{text:"Survole une compétence pour voir son effet.",color:"dark_gray"}]}]')
+            '{text:"Survole une compétence pour voir son effet.",color:"dark_gray"}]},'
+            f'{{type:"minecraft:plain_message",width:380,contents:[{{text:"Ton outil  ",color:"{d["color"]}",bold:true}},{{text:"{TDESC[j]}\\n",color:"white",bold:false}}' +
+            (f',{{text:"Objet de Forge  ",color:"gold",bold:true}},{{text:"{NOMF_J[j]}\\n",color:"white",bold:false}}' if j in FITEM else "") +
+            ',{text:"✔ acquis   ",color:"green"},{text:"jaune : disponible   ",color:"yellow"},{text:"rouge : il manque des points   ",color:"red"},{text:"gris : niveau trop bas",color:"dark_gray"}]}]')
     w(F + f"{j}/page_dialog.mcfunction",
       f'$dialog show @s {{type:"minecraft:multi_action",title:[{gs("metier_" + j)},{{text:" {d["name"]}",color:"{d["color"]}",bold:true}}],'
       f'can_close_with_escape:true,pause:false,body:{body},actions:[{",".join(sbtn + sep + abtn)}],columns:2,'
@@ -266,10 +289,10 @@ def bourse(j):
 crline = ",".join(bourse(j) for j in JL)
 ECL = f'{{text:"",hover_event:{{action:"show_text",value:{{text:"Éclats de boss : contre les boss et avec les défis de la semaine",color:"light_purple"}}}},extra:[{gs("eclat")},{{text:" $(ecl) éclats de boss",color:"light_purple"}}]}}'
 BOURSE = f'{{type:"minecraft:plain_message",width:420,contents:[{crline},{{text:"\\n"}},{ECL}]}}'
-RET400 = 'exit_action:{label:"Retour à la Forge",width:200,action:{type:"run_command",command:"trigger metiers set 400"}}}'
+RET400 = 'exit_action:{label:"Retour",width:200,action:{type:"run_command",command:"trigger metiers set 1"}}}'
 w(F + "forge/boutique_dialog.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Boutique de la Forge",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
-  f'body:[{BOURSE},{{type:"minecraft:plain_message",width:380,contents:{{text:"Objets spéciaux de métier et objets communs. Survole un objet pour son effet et son prix.",color:"gray"}}}}],'
+  f'body:[{BOURSE},{{type:"minecraft:plain_message",width:380,contents:{{text:"Survole un objet pour son effet. Jaune : tu peux l’acheter. Rouge : pas assez de cristaux ou d’éclats. Gris : niveau de métier trop bas.",color:"gray"}}}}],'
   f'actions:[{",".join(fb)}],columns:1,' + RET400)
 w(F + "forge/outil_dialog.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Forger l’outil en main",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
@@ -420,14 +443,14 @@ w(F + "skins/cadres_dialog.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Cadres de titre",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
   f'body:{{type:"minecraft:plain_message",width:380,contents:[{{text:"Le cadre entoure ton titre de métier devant ton pseudo. Le titre affiché se choisit sur la page d’un métier.\\n",color:"gray"}},{gs("eclat")},{{text:" $(ecl) éclats",color:"light_purple"}}]}},'
   f'actions:[{",".join(CAD)}],columns:2,'
-  'exit_action:{label:"Retour à la Forge",width:200,action:{type:"run_command",command:"trigger metiers set 400"}}}')
+  'exit_action:{label:"Retour",width:200,action:{type:"run_command",command:"trigger metiers set 1"}}}')
 w(F + "skins/menu_dialog.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Skins d’outil et d’armure",color:"light_purple",bold:true},can_close_with_escape:true,pause:false,'
   'body:[{type:"minecraft:item",item:{id:"minecraft:paper",components:{"minecraft:item_model":"metiers:$(model)","minecraft:custom_model_data":{strings:["$(skin)"]}}},'
   'show_decorations:false,show_tooltip:false,description:{width:240,contents:[{text:"$(cible)\\n",color:"aqua",bold:true},'
   f'{{text:"Le skin change les matériaux, pas la forme du palier, et suit l’objet quand il évolue.\\n",color:"gray",bold:false}},{gs("eclat")},{{text:" $(ecl) éclats",color:"light_purple"}}]}}}}],'
   f'actions:[{",".join(SKD)}],columns:2,'
-  'exit_action:{label:"Retour à la Forge",width:200,action:{type:"run_command",command:"trigger metiers set 400"}}}')
+  'exit_action:{label:"Retour",width:200,action:{type:"run_command",command:"trigger metiers set 1"}}}')
 w(F + "skins/cycle.mcfunction", "scoreboard players add @s m.skt 1\nexecute if score @s m.skt matches 10.. run scoreboard players set @s m.skt 0\nfunction metiers:skins/menu")
 for ti, (t, nom) in enumerate(TGT):
     REG = (f"execute if score @s m.arm matches 1.. if items entity @s armor.* {ASEL} run function {NS}:armure/donner" if t == "a" else
