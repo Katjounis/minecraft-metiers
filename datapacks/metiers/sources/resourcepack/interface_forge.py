@@ -25,6 +25,62 @@ def recolore(im, table=None):
             elif r == g == b and table is None: px[x, y] = gris(r) + (a,)
     return im
 
+import random
+def stylise(src):
+    im = src.convert("RGBA"); W, H = im.size; o = im.load()
+    out = im.copy(); px = out.load(); rnd = random.Random(11)
+    def g(x, y):
+        if 0 <= x < W and 0 <= y < H:
+            r, gg, b, a = o[x, y]
+            if a and r == gg == b: return r
+        return None
+    ys = [y for y in range(H) for x in range(W) if g(x, y) == 198]
+    if not ys: return None
+    for x in range(W):
+        for y in range(H):
+            r, gg, b, a = o[x, y]
+            if not a or not (r == gg == b): continue
+            v = r; n = rnd.randint(-4, 4)
+            if v == 198:   # panneau : pierre chaude, appareillage de briques discret
+                c = [112 + n, 98 + n, 84 + n]
+                if y % 8 == 0 or (x + (8 if (y // 8) % 2 else 0)) % 16 == 0: c = [c[0] - 9, c[1] - 9, c[2] - 8]
+                elif y % 8 == 1: c = [c[0] + 5, c[1] + 5, c[2] + 4]
+                px[x, y] = tuple(max(0, min(255, k)) for k in c) + (a,)
+            elif v == 255:
+                voisin_case = any(g(x + dx, y + dy) == 139 for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))
+                px[x, y] = ((154, 118, 56) if voisin_case else (226, 184, 96)) + (a,)
+            elif v == 85: px[x, y] = (62, 50, 40, a)
+            elif v == 0: px[x, y] = (14, 11, 10, a)
+            elif v == 139:   # case : creux sombre, ombre intérieure en haut à gauche
+                c = (40 + n // 2, 35 + n // 2, 32 + n // 2)
+                if g(x - 1, y) == 55 or g(x, y - 1) == 55: c = (26, 22, 20)
+                px[x, y] = c + (a,)
+            elif v == 55: px[x, y] = (16, 13, 12, a)
+            elif v in (33,): px[x, y] = (20, 16, 14, a)
+            else:
+                t = v / 255; px[x, y] = (int(20 + 200 * t), int(16 + 160 * t), int(14 + 80 * t), a)
+    # double filet intérieur le long du bord du panneau (seulement sur la pierre, jamais sur les cases)
+    xs_ = [x for x in range(W) for y in range(H) if g(x, y) == 198]
+    X0, X1, Y0, Y1 = min(xs_), max(xs_), min(ys), max(ys)
+    for k, col in ((2, (58, 46, 36)), (3, (176, 136, 64))):
+        for x in range(X0 + k, X1 - k + 1):
+            for y in (Y0 + k, Y1 - k):
+                if g(x, y) == 198: px[x, y] = col + (255,)
+        for y in range(Y0 + k, Y1 - k + 1):
+            for x in (X0 + k, X1 - k):
+                if g(x, y) == 198: px[x, y] = col + (255,)
+    # ornements dorés aux 4 coins du panneau
+    xs = [x for x in range(W) for y in range(H) if g(x, y) == 198]
+    x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
+    motif = ["..#..", ".#O#.", "#OGO#", ".#O#.", "..#.."]
+    for cx, cy in ((x0 + 3, y0 + 3), (x1 - 3, y0 + 3), (x0 + 3, y1 - 3), (x1 - 3, y1 - 3)):  # sur le filet
+        for j, ligne in enumerate(motif):
+            for i, ch in enumerate(ligne):
+                X, Y = cx - 2 + i, cy - 2 + j
+                if ch == "." or g(X, Y) not in (198, 255, 85): continue
+                px[X, Y] = {"#": (70, 50, 22, 255), "O": (226, 184, 96, 255), "G": (255, 236, 160, 255)}[ch]
+    return out
+
 out = {}
 def ajoute(rel, im):
     b = io.BytesIO(); im.save(b, "PNG"); out["assets/minecraft/textures/gui/" + rel] = b.getvalue()
@@ -34,12 +90,14 @@ for base in ("container", "sprites/container", "sprites/recipe_book"):
     for dp, _, fs in os.walk(os.path.join(VAN, base)):
         for f in fs:
             p = os.path.join(dp, f); rel = os.path.relpath(p, VAN).replace(os.sep, "/")
-            if f.endswith(".png"): ajoute(rel, recolore(Image.open(p)))
+            if f.endswith(".png"):
+                riche = stylise(Image.open(p)) if base == "container" else None   # panneaux : pierre, filets et ornements
+                ajoute(rel, riche if riche is not None else recolore(Image.open(p)))
             elif f.endswith(".mcmeta"): out["assets/minecraft/textures/gui/" + rel] = open(p, "rb").read()
-ajoute("recipe_book.png", recolore(Image.open(os.path.join(VAN, "recipe_book.png"))))
+ajoute("recipe_book.png", stylise(Image.open(os.path.join(VAN, "recipe_book.png"))) or recolore(Image.open(os.path.join(VAN, "recipe_book.png"))))
 
 # 2. barre d'action
-HOT = {(93, 93, 93): (88, 74, 60), (126, 126, 126): (176, 136, 58), (0, 0, 0): (18, 14, 12)}
+HOT = {(93, 93, 93): (96, 72, 40), (126, 126, 126): (214, 168, 80), (0, 0, 0): (18, 14, 12), (39, 37, 5): (26, 21, 18), (4, 4, 4): (10, 8, 7)}
 for f in ("hotbar.png", "hotbar_offhand_left.png", "hotbar_offhand_right.png"):
     ajoute("sprites/hud/" + f, recolore(Image.open(os.path.join(VAN, "sprites/hud", f)), HOT))
 SEL = {(213, 232, 208): (255, 214, 104), (161, 178, 157): (214, 160, 64), (95, 109, 92): (128, 88, 34)}
