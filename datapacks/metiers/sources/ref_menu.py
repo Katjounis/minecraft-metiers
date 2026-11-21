@@ -472,15 +472,13 @@ TRG += [f'execute if score @s m.trig matches 610 run function {NS}:appel {{f:"f/
         f'execute if score @s m.trig matches 721..730 run function {NS}:appel {{f:"tp/aller"}}']
 add_lines(F + "trigger.mcfunction", TRG)
 
-# menu de la touche G / Échap
-hub = [{"label": {"text": "Mes métiers", "color": "gold"}, "width": 150, "action": {"type": "run_command", "command": "trigger metiers set 1"}}]
-hub += [{"label": [{"text": ""}, gj(f"metier_{j}"), {"text": " " + d["name"], "color": d["color"]}], "width": 150,
-         "action": {"type": "run_command", "command": f"trigger metiers set {20 + d['idx']}"}} for j, d in jobs.items()]
-hub += [{"label": [{"text": ""}, gj("forge_marteau"), {"text": " Forge", "color": "gold"}], "width": 150, "action": {"type": "run_command", "command": "trigger metiers set 400"}},
-        {"label": {"text": "Défis du jour", "color": "aqua"}, "width": 150, "action": {"type": "run_command", "command": "trigger metiers set 4"}},
-        {"label": {"text": "Classement", "color": "gold"}, "width": 150, "action": {"type": "run_command", "command": "trigger metiers set 5"}},
-        {"label": {"text": "Armure des Guildes", "color": "#F1CF4E"}, "width": 150, "action": {"type": "run_command", "command": "trigger metiers set 6"}}]
+# menu de la touche G / Échap : Minecraft impose un écran fixe ici (pas de niveaux ni de barres possibles),
+# donc un seul gros bouton qui ouvre le vrai écran « Mes métiers », plus deux raccourcis.
+RUN = lambda n: {"type": "run_command", "command": f"trigger metiers set {n}"}
+hub = [{"label": [{"text": ""}, gj("forge_marteau"), {"text": "  Ouvrir mes métiers  ", "color": "gold", "bold": True}, gj("eclat")],
+        "tooltip": {"text": "Niveaux, compétences, outils, défis, Forge."}, "width": 310, "action": RUN(1)},
+       {"label": [{"text": ""}, gj("forge_marteau"), {"text": " Forge", "color": "gold"}], "width": 150, "action": RUN(400)},
+       {"label": {"text": "Défis du jour", "color": "aqua"}, "width": 150, "action": RUN(4)}]
 wj(f"data/{NS}/dialog/ouvrir.json", {"type": "minecraft:multi_action", "title": {"text": "Métiers", "color": "gold", "bold": True},
                                      "external_title": {"text": "Métiers"}, "can_close_with_escape": True, "pause": False,
-                                     "body": [{"type": "minecraft:plain_message", "width": 300, "contents": {"text": "Choisis un métier ou ouvre la Forge.", "color": "gray"}}],
-                                     "actions": hub, "columns": 2})
+                                     "actions": hub, "columns": 1})
