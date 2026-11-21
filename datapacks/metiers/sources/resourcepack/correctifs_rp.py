@@ -2,7 +2,7 @@
 #  1. rotations d'éléments vides ({origin} seul) : refusées par le jeu, le modèle passe en texture manquante ;
 #  2. éléments hors de la zone -16..32 : idem, le modèle est rétréci et l'affichage agrandi d'autant ;
 #  3. outils plus gros dans l'inventaire : l'échelle « gui » remplit la case ;
-#  4. heaumes 3D grossis sur la tête (1,18) pour passer au-dessus de la couche externe du skin.
+#  4. heaumes 3D grossis sur la tête (1,10) pour passer au-dessus de la couche externe du skin.
 # Usage : python3 correctifs_rp.py metiers_resourcepack.zip
 import io, json, math, re, sys, zipfile
 from PIL import Image
@@ -82,8 +82,8 @@ for n in list(files):
         n0 = len(els); els[:] = [e for e in els if e.get("name") != "doublure"]
         if len(els) != n0: d.get("textures", {}).pop("doublure", None); changed = True
         h = d.setdefault("display", {}).setdefault("head", {})
-        if h.get("scale", [1])[0] < 1.18:
-            h["scale"] = [1.18, 1.18, 1.18]; stats["heaumes"] += 1; changed = True
+        if h.get("scale", [1])[0] != 1.10:
+            h["scale"] = [1.10, 1.10, 1.10]; stats["heaumes"] += 1; changed = True
     # 5. arcs : la corde partait vers la poignée en bandant (animation à l'envers) et la flèche pointait vers l'archer.
     #    On renvoie la corde et la flèche de l'autre côté des pointes des branches.
     if "arc5" not in FAIT and re.search(r"/arc_\d+(_[a-z_]+)?_pulling_\d\.json$", n):
@@ -120,7 +120,40 @@ for n in list(files):
     if changed:
         files[n] = json.dumps(d, separators=(",", ":")).encode()
 
-files[MARQ] = json.dumps(sorted(FAIT | {"arc5", "zfight"})).encode()
+# 7. armure palier 4 (netherite d'améthyste) : plus de traits violets en diagonale,
+#    remplacés par quelques gemmes d'améthyste serties au centre de chaque plaque.
+EQ4 = re.compile(r"assets/metiers/textures/entity/equipment/(humanoid|humanoid_leggings)/guilde_4(_[a-z_]+)?\.png$")
+if "ame4" not in FAIT:
+    for n in list(files):
+        m = EQ4.search(n)
+        if not m: continue
+        legs = m.group(1) == "humanoid_leggings"
+        im = Image.open(io.BytesIO(files[n])).convert("RGBA"); px = im.load()
+        rects = [(4, 20, 4, 12), (12, 20, 4, 12), (20, 20, 8, 12), (32, 20, 8, 12)] + ([] if legs else [(44, 20, 4, 12), (52, 20, 4, 12)])
+        for (x0, y0, w, h) in rects:
+            X0, Y0, W, H = x0 * 2, y0 * 2, w * 2, h * 2
+            pts = set()
+            for dd in range(-H, W, 7):
+                for i in range(H):
+                    if 0 <= dd + i < W and px[X0 + dd + i, Y0 + i][3] > 0: pts.add((X0 + dd + i, Y0 + i))
+            cols = {}
+            for q in pts: cols[px[q][:3]] = cols.get(px[q][:3], 0) + 1
+            if not cols: continue
+            ordre = sorted(cols, key=lambda c: -cols[c]); g1 = ordre[0]; g2 = ordre[1] if len(ordre) > 1 else g1
+            for (x, y) in pts:   # on rebouche avec le métal voisin sur la même ligne
+                for dx in (-1, 1, -2, 2, -3, 3):
+                    if (x + dx, y) not in pts and X0 <= x + dx < X0 + W and px[x + dx, y][3] > 0:
+                        px[x, y] = px[x + dx, y]; break
+            cx = X0 + W // 2 - 1
+            for y in range(Y0 + 5, Y0 + H - 3, 8):
+                for dx, dy, c in ((0, -2, g2), (1, -2, g2), (-1, -1, g1), (2, -1, g1), (-1, 0, g1), (2, 0, g1), (0, 1, g2), (1, 1, g2)):
+                    if px[cx + dx, y + dy][3] > 0: px[cx + dx, y + dy] = c + (255,)
+                for x in (cx, cx + 1):
+                    for yy in (y - 1, y):
+                        if px[x, yy][3] > 0: px[x, yy] = g2 + (255,)
+        b2 = io.BytesIO(); im.save(b2, "PNG"); files[n] = b2.getvalue(); stats["ame4"] = stats.get("ame4", 0) + 1
+
+files[MARQ] = json.dumps(sorted(FAIT | {"arc5", "zfight", "ame4"})).encode()
 out = io.BytesIO()
 with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
     for n in sorted(files):
