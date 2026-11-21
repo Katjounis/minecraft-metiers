@@ -213,7 +213,50 @@ if "grandes_icones" not in FAIT and FONT in files:
     prov += ajout; files[FONT] = json.dumps(fo, ensure_ascii=False, indent=1).encode()
     stats["grandes_icones"] = len(ajout)
 
-files[MARQ] = json.dumps(sorted(FAIT | {"arc5", "zfight", "ame4", "zfight2", "zfight3", "zfight4", "arcmiroir", "grandes_icones"})).encode()
+# 11. cristaux de métier (police d'icônes) : grappe de cristaux à facettes sur un socle, à la place des pastilles
+import colorsys
+from PIL import ImageDraw
+def shade(c, f):
+    h, l, s = colorsys.rgb_to_hls(*[v / 255 for v in c[:3]])
+    l = max(0, min(1, l * f if f < 1 else l + (1 - l) * (f - 1)))
+    return tuple(int(v * 255) for v in colorsys.hls_to_rgb(h, l, s)) + (255,)
+def prism(d, cx, base, top, w, col):
+    # prisme hexagonal vu de face : pointe, face gauche claire, centre, face droite sombre
+    pt = (cx, top); tl = (cx - w, top + w); tr = (cx + w, top + w); bl = (cx - w, base); br = (cx + w, base); m = (cx, base + 1)
+    d.polygon([pt, tl, bl, (cx - w // 2, base + 1), (cx, top + w + 1)], fill=shade(col, 1.25))
+    d.polygon([pt, tr, br, (cx + w // 2, base + 1), (cx, top + w + 1)], fill=shade(col, 0.55))
+    d.polygon([(cx, top + w + 1), (cx - w // 2, base + 1), (cx + w // 2, base + 1)], fill=shade(col, 0.9))
+    d.line([pt, (cx, top + w + 1)], fill=shade(col, 1.6))
+    d.line([(cx - w + 1, top + w + 1), (cx - w + 1, base - 2)], fill=shade(col, 1.45))
+def gem(col):
+    S = 24; im = Image.new("RGBA", (S, S), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
+    prism(d, 5, 20, 9, 4, shade(col, 0.8))
+    prism(d, 19, 20, 11, 3, shade(col, 0.72))
+    d.polygon([(12, 0), (6, 6), (6, 21), (18, 21), (18, 6)], fill=(20, 16, 22, 255))
+    prism(d, 12, 20, 1, 5, col)
+    # socle de roche
+    d.polygon([(2, 20), (22, 20), (20, 23), (4, 23)], fill=(70, 62, 58, 255))
+    d.line([(4, 21), (19, 21)], fill=(98, 88, 80, 255))
+    # contour sombre
+    a = im.load(); out = Image.new("RGBA", (S, S), (0, 0, 0, 0)); o = out.load()
+    for x in range(S):
+        for y in range(S):
+            if a[x, y][3] == 0 and any(0 <= x + dx < S and 0 <= y + dy < S and a[x + dx, y + dy][3] > 0 for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+                o[x, y] = (20, 16, 22, 255)
+    out.alpha_composite(im)
+    # éclat de lumière
+    o = out.load(); o[10, 5] = (255, 255, 255, 255); o[10, 6] = shade(col, 1.8); o[9, 6] = shade(col, 1.8)
+    return out
+
+if "gemmes" not in FAIT:
+    for n in list(files):
+        m = re.search(r"assets/metiers/textures/font/cristal_([a-z])\.png$", n)
+        if not m: continue
+        ancien = Image.open(io.BytesIO(files[n])).convert("RGBA")
+        b3 = io.BytesIO(); gem(ancien.getpixel((5, 7))[:3]).save(b3, "PNG"); files[n] = b3.getvalue()
+        stats["gemmes"] = stats.get("gemmes", 0) + 1
+
+files[MARQ] = json.dumps(sorted(FAIT | {"arc5", "zfight", "ame4", "zfight2", "zfight3", "zfight4", "arcmiroir", "grandes_icones", "gemmes"})).encode()
 out = io.BytesIO()
 with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
     for n in sorted(files):

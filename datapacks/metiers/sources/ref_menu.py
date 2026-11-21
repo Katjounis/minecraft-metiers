@@ -123,7 +123,7 @@ for j, d in jobs.items():
         tip = f"{desc}\\nCoût : {cost} points · niveau {SKILL_LVL[k - 1]} · requiert : {rq}"
         sbtn.append(f'{{label:{{text:"$(l{k})",color:"$(c{k})"}},width:200,tooltip:{{text:"{tip}"}},action:{{type:"run_command",command:"trigger metiers set {100 + 10 * d["idx"] + k}"}}}}')
     sp = SPECIAL[j]
-    sep = ['{label:{text:"▾   Outil et métier   ▾",color:"dark_gray"},width:200}'] * 2
+    sep = ['{label:{text:"━━━━━━━  OUTIL ET",color:"gold",bold:true},width:200}', '{label:{text:"MÉTIER  ━━━━━━━",color:"gold",bold:true},width:200}']
     abtn = [btn(txt("Récupérer l'outil", "aqua"), 300 + d["idx"], 200, "Redonne ton outil à son palier (une fois toutes les 10 minutes)."),
             btn(txt("Réparer · 5 niv.", "green"), 330 + d["idx"], 200, "Seule façon de réparer ton outil de métier. Incassable dès le palier 5."),
             f'{{label:{{text:"$(rl)",color:"$(rc)"}},width:200,action:{{type:"run_command",command:"trigger metiers set {200 + d["idx"]}"}}}}',
@@ -199,8 +199,10 @@ FG += [f'data modify storage {NS}:fg {c} set value "—"' for c in ("l_sag", "l_
 FG += [f'data modify storage {NS}:fg {c} set value "dark_gray"' for c in ("k_sag", "k_for", "k_eco", "k_eff")]
 for j, d in jobs.items():
     FG.append(f"execute if score #hj m.tmp matches {d['idx']} run function {NS}:forge/infos_{j}")
-FG.append(f"function {NS}:forge/menu_dialog with storage {NS}:fg")
-w(F + "forge/menu.mcfunction", "\n".join(FG))
+w(F + "forge/calcul.mcfunction", "\n".join(FG))
+w(F + "forge/menu.mcfunction", f"function {NS}:forge/calcul\nfunction {NS}:forge/menu_dialog with storage {NS}:fg")
+w(F + "forge/outil.mcfunction", f"function {NS}:forge/calcul\nfunction {NS}:forge/outil_dialog with storage {NS}:fg")
+w(F + "forge/boutique.mcfunction", f"function {NS}:forge/calcul\nfunction {NS}:forge/boutique_dialog with storage {NS}:fg")
 for j, d in jobs.items():
     I = ["scoreboard players set #sl m.tmp 0",
          f"execute if score @s m.{j}_out matches 3.. run scoreboard players add #sl m.tmp 1",
@@ -240,8 +242,7 @@ ICON = {"marteau": "forge_marteau", "faux": "forge_faux", "arc3": "forge_arc3", 
         "aimant": "forge_aimant", "cape": "forge_cape"}
 NOMF = {"marteau": "Marteau du Mineur", "faux": "Faux du Fermier", "arc3": "Arc à triple tir", "lasso": "Lasso de l'Éleveur",
         "parchemin": "Parchemin de transfert", "aimant": "Aimant à objets", "cape": "Cape-planeur"}
-fb = [f'{{label:[{{text:"★ ",color:"light_purple"}},{txt("Skins et cadres de titre", "light_purple", True)},{{text:" ★",color:"light_purple"}}],width:320,'
-      f'tooltip:{{text:"Change l’apparence de tes outils et de ton armure, et le cadre de ton titre."}},action:{{type:"run_command",command:"trigger metiers set 420"}}}}']
+fb = []
 for i, (key, (j, p, e, lv)) in enumerate(CRP.items(), 1):
     lab = f'[{gs(ICON[key])},{{text:" {NOMF[key]}  ",color:"$(c_{key})",italic:false}},{gs("cristal_" + j)},{{text:" {p}",color:"$(c_{key})"}}' + \
           (f',{{text:"  "}},{gs("eclat")},{{text:" {e}",color:"$(c_{key})"}}' if e else "") + "]"
@@ -250,21 +251,39 @@ for i, (key, (j, p, e, lv)) in enumerate(CRP.items(), 1):
 for i, (key, e) in enumerate(COMMUN.items(), 6):
     lab = f'[{gs(ICON[key])},{{text:" {NOMF[key]}  ",color:"$(c_{key})",italic:false}},{gs("eclat")},{{text:" {e}",color:"$(c_{key})"}}]'
     fb.append(f'{{label:{lab},width:320,tooltip:{{text:"{FORGE_IT[key][4]}\\nPrix : {e} éclats de boss"}},action:{{type:"run_command",command:"trigger metiers set {400 + i}"}}}}')
+fo = []
 for i, (kk, ic, tipc) in enumerate((("sag", "forge_cristal_sagesse", "+10 % d’XP de métier avec cet outil."),
                                     ("for", "forge_cristal_fortune", "+1 Fortune, Butin ou Chance de la mer."),
                                     ("eco", "forge_cristal_echo", "5 % de chance qu’un gain d’XP rapporte un cristal en plus."),
                                     ("eff", "forge_cristal_efficacite", "Efficacité de l’outil, jusqu’à VII (niveau 80).")), 11):
-    fb.append(f'{{label:[{gs(ic)},{{text:" $(l_{kk}) ",color:"$(k_{kk})",italic:false}},{{text:"$(g)",font:"metiers:icones",color:"white"}}],width:320,'
+    fo.append(f'{{label:[{gs(ic)},{{text:" $(l_{kk}) ",color:"$(k_{kk})",italic:false}},{{text:"$(g)",font:"metiers:icones",color:"white"}}],width:320,'
               f'tooltip:{{text:"{tipc}\\nPayé en cristaux du métier de l’outil tenu. Emplacements : 1 au palier 3, 2 au palier 6, 3 au palier 9."}},'
               f'action:{{type:"run_command",command:"trigger metiers set {400 + i}"}}}}')
-fb.append(btn(txt("Retirer le dernier cristal serti", "aqua"), 415, 320, "Libère un emplacement. Le cristal retiré est perdu."))
-crline = ",".join(f'{gs("cristal_" + j)},{{text:" $(cr_{j})   ",color:"white"}}' for j in JL)
+fo.append(btn(txt("Retirer le dernier cristal serti", "aqua"), 415, 320, "Libère un emplacement. Le cristal retiré est perdu."))
+def bourse(j):
+    return (f'{{text:"",hover_event:{{action:"show_text",value:{{text:"Cristaux de {jobs[j]["name"]}",color:"{jobs[j]["color"]}"}}}},'
+            f'extra:[{gs("cristal_" + j)},{{text:" $(cr_{j})   ",color:"white"}}]}}')
+crline = ",".join(bourse(j) for j in JL)
+ECL = f'{{text:"",hover_event:{{action:"show_text",value:{{text:"Éclats de boss : contre les boss et avec les défis de la semaine",color:"light_purple"}}}},extra:[{gs("eclat")},{{text:" $(ecl) éclats de boss",color:"light_purple"}}]}}'
+BOURSE = f'{{type:"minecraft:plain_message",width:420,contents:[{crline},{{text:"\\n"}},{ECL}]}}'
+RET400 = 'exit_action:{label:"Retour à la Forge",width:200,action:{type:"run_command",command:"trigger metiers set 400"}}}'
+w(F + "forge/boutique_dialog.mcfunction",
+  '$dialog show @s {type:"minecraft:multi_action",title:{text:"Boutique de la Forge",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
+  f'body:[{BOURSE},{{type:"minecraft:plain_message",width:380,contents:{{text:"Objets spéciaux de métier et objets communs. Survole un objet pour son effet et son prix.",color:"gray"}}}}],'
+  f'actions:[{",".join(fb)}],columns:1,' + RET400)
+w(F + "forge/outil_dialog.mcfunction",
+  '$dialog show @s {type:"minecraft:multi_action",title:{text:"Forger l’outil en main",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
+  f'body:[{BOURSE},'
+  '{type:"minecraft:plain_message",width:380,contents:[{text:"$(outil)",color:"gray"},{text:"$(us) / $(sl)",color:"yellow"}]}],'
+  f'actions:[{",".join(fo)}],columns:1,' + RET400)
+HUB = [btn(f'[{gs("forge_marteau")},{txt("  Forger l’outil en main", "gold", True)}]', 470, 320, "Sertis des cristaux dans l’outil de métier que tu tiens : Sagesse, Fortune, Écho, Efficacité."),
+       btn(f'[{gs("forge_cape")},{txt("  Boutique de la Forge", "yellow", True)}]', 471, 320, "Marteau 3x3, faux, arc triple, lasso, parchemin, aimant, cape-planeur."),
+       btn(f'[{gs("forge_cristal_sagesse")},{txt("  Skins d’outil et d’armure", "light_purple", True)}]', 420, 320, "Change l’apparence de tes outils et de ton armure."),
+       btn(f'[{gs("cadre_dore_g")},{txt("Cadres de titre", "gold", True)},{gs("cadre_dore_d")}]', 472, 320, "Le cadre qui entoure ton titre devant ton pseudo.")]
 w(F + "forge/menu_dialog.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Forge",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
-  f'body:[{{type:"minecraft:plain_message",width:420,contents:[{crline},{{text:"\\n"}},{gs("eclat")},{{text:" $(ecl) éclats de boss",color:"light_purple"}}]}},'
-  '{type:"minecraft:plain_message",width:380,contents:[{text:"$(outil)",color:"gray"},{text:"$(us) / $(sl)",color:"yellow"}]}],'
-  f'actions:[{",".join(fb)}],columns:1,'
-  'exit_action:{label:"Retour",width:150,action:{type:"run_command",command:"trigger metiers set 1"}}}')
+  f'body:[{BOURSE}],actions:[{",".join(HUB)}],columns:1,'
+  'exit_action:{label:"Retour",width:200,action:{type:"run_command",command:"trigger metiers set 1"}}}')
 # achats
 for i, (key, (j, p, e, lv)) in enumerate(CRP.items(), 1):
     w(F + f"forge/acheter_{key}.mcfunction", "\n".join([
@@ -273,12 +292,12 @@ for i, (key, (j, p, e, lv)) in enumerate(CRP.items(), 1):
         f"execute unless score @s m.ecl matches {e}.. run return run {tr('Pas assez d’éclats de boss.', 'red')}",
         f"scoreboard players remove @s m.cr_{j} {p}", f"scoreboard players remove @s m.ecl {e}",
         f"function {NS}:forge/donner_{key}", "playsound minecraft:block.anvil.use master @s ~ ~ ~ 1 1",
-        tr(f"Tu as forgé : {NOMF[key]}.", "gold"), f"function {NS}:forge/menu"]))
+        tr(f"Tu as forgé : {NOMF[key]}.", "gold"), f"function {NS}:forge/boutique"]))
 for key, e in COMMUN.items():
     w(F + f"forge/acheter_{key}.mcfunction", "\n".join([
         f"execute unless score @s m.ecl matches {e}.. run return run {tr('Pas assez d’éclats de boss.', 'red')}",
         f"scoreboard players remove @s m.ecl {e}", f"function {NS}:forge/donner_{key}",
-        "playsound minecraft:block.anvil.use master @s ~ ~ ~ 1 1", tr(f"Tu as forgé : {NOMF[key]}.", "gold"), f"function {NS}:forge/menu"]))
+        "playsound minecraft:block.anvil.use master @s ~ ~ ~ 1 1", tr(f"Tu as forgé : {NOMF[key]}.", "gold"), f"function {NS}:forge/boutique"]))
 for c, (pr, lv, sc, only) in CRIS.items():
     D = [f"execute if items entity @s weapon.mainhand {SEL(j)} run return run function {NS}:forge/sertir_{c}_{j}" for j in JL]
     D.append(tr("Tiens ton outil de métier en main.", "red"))
@@ -300,7 +319,7 @@ for c, (pr, lv, sc, only) in CRIS.items():
             f"execute unless score @s m.cr_{j} matches {pr}.. run return run {tr('Pas assez de cristaux.', 'red')}",
             f"scoreboard players remove @s m.cr_{j} {pr}", f"scoreboard players set @s m.{sc}_{j} 1",
             f"function {NS}:{j}/outil_donner", "playsound minecraft:block.amethyst_block.resonate master @s ~ ~ ~ 1 1.2",
-            tr("Cristal serti dans ton outil.", "aqua"), f"function {NS}:forge/menu"]))
+            tr("Cristal serti dans ton outil.", "aqua"), f"function {NS}:forge/outil"]))
 D = [f"execute if items entity @s weapon.mainhand {SEL(j)} run return run function {NS}:forge/eff_{j}" for j in JL]
 D.append(tr("Tiens ton outil de métier en main.", "red"))
 w(F + "forge/eff.mcfunction", "\n".join(D))
@@ -313,7 +332,7 @@ for j in JL:
               f"execute if score @s m.ceff_{j} matches {n} unless score @s m.cr_{j} matches {EFFC[n]}.. run return run {tr('Pas assez de cristaux.', 'red')}",
               f"execute if score @s m.ceff_{j} matches {n} run scoreboard players remove @s m.cr_{j} {EFFC[n]}"]
     E += [f"scoreboard players add @s m.ceff_{j} 1", f"function {NS}:{j}/outil_donner",
-          "playsound minecraft:block.amethyst_block.resonate master @s ~ ~ ~ 1 1.4", tr("Efficacité améliorée.", "aqua"), f"function {NS}:forge/menu"]
+          "playsound minecraft:block.amethyst_block.resonate master @s ~ ~ ~ 1 1.4", tr("Efficacité améliorée.", "aqua"), f"function {NS}:forge/outil"]
     w(F + f"forge/eff_{j}.mcfunction", "\n".join(E))
 D = [f"execute if items entity @s weapon.mainhand {SEL(j)} run return run function {NS}:forge/retirer_{j}" for j in JL]
 D.append(tr("Tiens ton outil de métier en main.", "red"))
@@ -324,7 +343,7 @@ for j in JL:
         f"execute if score @s m.cfor_{j} matches 1 run return run function {NS}:forge/retirer_fin {{s:\"m.cfor_{j}\",j:\"{j}\"}}",
         f"execute if score @s m.csag_{j} matches 1 run return run function {NS}:forge/retirer_fin {{s:\"m.csag_{j}\",j:\"{j}\"}}",
         tr("Aucun cristal serti sur cet outil.", "red")]))
-w(F + "forge/retirer_fin.mcfunction", f"$scoreboard players set @s $(s) 0\n$function {NS}:$(j)/outil_donner\n" + tr("Cristal retiré.", "gray") + f"\nfunction {NS}:forge/menu")
+w(F + "forge/retirer_fin.mcfunction", f"$scoreboard players set @s $(s) 0\n$function {NS}:$(j)/outil_donner\n" + tr("Cristal retiré.", "gray") + f"\nfunction {NS}:forge/outil")
 
 # ================================================================ skins et cadres
 TGT = [("a", "Armure des Guildes")] + [(j, f"{TOOL[j][1]} de {jobs[j]['name']}") for j in JL]
@@ -350,8 +369,9 @@ for ci, cn in enumerate(CADRE_NOM, 1):
     SK += [f'data modify storage {NS}:sk e{ci} set value ""',
            f'execute if score @s m.cd_{ci} matches 1 run data modify storage {NS}:sk f{ci} set value "green"',
            f'execute if score @s m.cadre matches {ci} run data modify storage {NS}:sk e{ci} set value " ★"']
-SK.append(f"function {NS}:skins/menu_dialog with storage {NS}:sk")
-w(F + "skins/menu.mcfunction", "\n".join(SK))
+w(F + "skins/calcul.mcfunction", "\n".join(SK))
+w(F + "skins/menu.mcfunction", f"function {NS}:skins/calcul\nfunction {NS}:skins/menu_dialog with storage {NS}:sk")
+w(F + "skins/cadres.mcfunction", f"function {NS}:skins/calcul\nfunction {NS}:skins/cadres_dialog with storage {NS}:sk")
 for ti, (t, nom) in enumerate(TGT):
     I = [f'data modify storage {NS}:sk skin set value ""', f'data modify storage {NS}:sk model set value "{t}_0"' if t != "a" else f'data modify storage {NS}:sk model set value "heaume_0"']
     if t == "a":
@@ -384,20 +404,25 @@ for ti, (t, nom) in enumerate(TGT):
               f'execute if score @s m.skin_{t} matches {i} run data modify storage {NS}:sk s{i} set value "★ {sn} · équipé"',
               f'execute if score @s m.skin_{t} matches {i} run data modify storage {NS}:sk k{i} set value "gold"']
     w(F + f"skins/infos_{t}.mcfunction", "\n".join(I))
-SKD = ['{label:[{text:"Appliquer à : ",color:"gray"},{text:"$(cible)",color:"aqua"},{text:"  ↻",color:"gray"}],width:320,'
-       'tooltip:{text:"Choisis l’objet : l’armure ou l’un de tes 9 outils de métier."},action:{type:"run_command",command:"trigger metiers set 421"}}']
-SKD += [f'{{label:{{text:"$(s{i})",color:"$(k{i})"}},width:155,tooltip:{{text:"{tip}"}},action:{{type:"run_command",command:"trigger metiers set {430 + i}"}}}}'
+SKD = ['{label:[{text:"Objet : ",color:"gray"},{text:"$(cible)",color:"aqua"},{text:"  ↻",color:"gray"}],width:200,'
+       'tooltip:{text:"Clique pour passer à l’objet suivant : l’armure ou l’un de tes 9 outils de métier."},action:{type:"run_command",command:"trigger metiers set 421"}}',
+       btn(txt("Apparence de base", "white"), 430, 200, "Retire le skin de cet objet.")]
+SKD += [f'{{label:{{text:"$(s{i})",color:"$(k{i})"}},width:200,tooltip:{{text:"{tip}"}},action:{{type:"run_command",command:"trigger metiers set {430 + i}"}}}}'
         for i, tip in enumerate(["Givre : acier bleu glacé, éclats de glace.", "Corail : métal turquoise des grands fonds, gemmes corail.",
                                  "Or royal : or massif serti de rubis.", "Ossements : trophée, vaincre 3 fois la Reine arachnide.",
                                  "Magma : trophée, vaincre 3 fois le Brasier ancestral.", "Ombre : réservé aux joueurs passés par le prestige."], 1)]
-SKD.append(btn(txt("Apparence de base", "white"), 430, 155))
-SKD.append(btn(txt("Sans cadre", "white"), 440, 155))
-SKD += [f'{{label:[{gs("cadre_" + CADRES[ci - 1] + "_g")},{{text:"{cn}",color:"$(f{ci})"}},{gs("cadre_" + CADRES[ci - 1] + "_d")},{{text:"$(e{ci})",color:"gold"}}],width:155,'
+CAD = [btn(txt("Sans cadre", "white"), 440, 200, "Ton titre s’affiche sans cadre.")]
+CAD += [f'{{label:[{gs("cadre_" + CADRES[ci - 1] + "_g")},{{text:"{cn}",color:"$(f{ci})"}},{gs("cadre_" + CADRES[ci - 1] + "_d")},{{text:"$(e{ci})",color:"gold"}}],width:200,'
         f'tooltip:{{text:"{tip}"}},action:{{type:"run_command",command:"trigger metiers set {440 + ci}"}}}}'
         for ci, (cn, tip) in enumerate(zip(CADRE_NOM, ["Offert.", "3 éclats de boss.", "6 éclats de boss.", "10 éclats de boss.",
                                                        "Trophée : vaincre 5 fois le Brasier ancestral.", "3 prestiges au total."]), 1)]
+w(F + "skins/cadres_dialog.mcfunction",
+  '$dialog show @s {type:"minecraft:multi_action",title:{text:"Cadres de titre",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
+  f'body:{{type:"minecraft:plain_message",width:380,contents:[{{text:"Le cadre entoure ton titre de métier devant ton pseudo. Le titre affiché se choisit sur la page d’un métier.\\n",color:"gray"}},{gs("eclat")},{{text:" $(ecl) éclats",color:"light_purple"}}]}},'
+  f'actions:[{",".join(CAD)}],columns:2,'
+  'exit_action:{label:"Retour à la Forge",width:200,action:{type:"run_command",command:"trigger metiers set 400"}}}')
 w(F + "skins/menu_dialog.mcfunction",
-  '$dialog show @s {type:"minecraft:multi_action",title:{text:"Skins et cadres de titre",color:"light_purple",bold:true},can_close_with_escape:true,pause:false,'
+  '$dialog show @s {type:"minecraft:multi_action",title:{text:"Skins d’outil et d’armure",color:"light_purple",bold:true},can_close_with_escape:true,pause:false,'
   'body:[{type:"minecraft:item",item:{id:"minecraft:paper",components:{"minecraft:item_model":"metiers:$(model)","minecraft:custom_model_data":{strings:["$(skin)"]}}},'
   'show_decorations:false,show_tooltip:false,description:{width:240,contents:[{text:"$(cible)\\n",color:"aqua",bold:true},'
   f'{{text:"Le skin change les matériaux, pas la forme du palier, et suit l’objet quand il évolue.\\n",color:"gray",bold:false}},{gs("eclat")},{{text:" $(ecl) éclats",color:"light_purple"}}]}}}}],'
@@ -446,11 +471,14 @@ for ci in range(1, 7):
         A += [f"execute unless score @s m.prtot matches 3.. run return run {tr('Il faut 3 prestiges au total.', 'red')}", f"scoreboard players set @s m.cd_{ci} 1"]
     A.append(f"function {NS}:skins/cadre {{i:{ci}}}")
     w(F + f"skins/cadre_{ci}.mcfunction", "\n".join(A))
-w(F + "skins/cadre.mcfunction", f"$scoreboard players set @s m.cadre $(i)\ntag @s add metiers.maj\nfunction {NS}:prefixe/maj\nfunction {NS}:skins/menu")
+w(F + "skins/cadre.mcfunction", f"$scoreboard players set @s m.cadre $(i)\ntag @s add metiers.maj\nfunction {NS}:prefixe/maj\nfunction {NS}:skins/cadres")
 w(F + "skins/cadre_0.mcfunction", f"function {NS}:skins/cadre {{i:0}}")
 
 # ================================================================ déclencheurs
-TRG = [f'execute if score @s m.trig matches 400 run function {NS}:appel {{f:"forge/menu"}}']
+TRG = [f'execute if score @s m.trig matches 400 run function {NS}:appel {{f:"forge/menu"}}',
+       f'execute if score @s m.trig matches 470 run function {NS}:appel {{f:"forge/outil"}}',
+       f'execute if score @s m.trig matches 471 run function {NS}:appel {{f:"forge/boutique"}}',
+       f'execute if score @s m.trig matches 472 run function {NS}:appel {{f:"skins/cadres"}}']
 for i, key in enumerate(CRP, 1):
     TRG.append(f'execute if score @s m.trig matches {400 + i} run function {NS}:appel {{f:"forge/acheter_{key}"}}')
 for i, key in enumerate(COMMUN, 6):

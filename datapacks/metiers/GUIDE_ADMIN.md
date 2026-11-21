@@ -18,7 +18,7 @@ Version actuelle du datapack : **24** (refonte : outils et armure sur 11 paliers
 ```
 require-resource-pack=true
 resource-pack=https://github.com/Katjounis/minecraft-metiers/raw/main/metiers_resourcepack.zip
-resource-pack-sha1=0bdcc4841252e58bd9a93a105d1d48ad78ada003
+resource-pack-sha1=f91b8c4ea025e3a690cc28cdd5d4c293c387e07d
 ```
 
 Ces lignes existent déjà dans le fichier, il faut les modifier à leur place et pas les ajouter en double. Le serveur peut réécrire le lien en `https\://...`, c'est normal.
