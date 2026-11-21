@@ -2,7 +2,7 @@
 #  1. rotations d'éléments vides ({origin} seul) : refusées par le jeu, le modèle passe en texture manquante ;
 #  2. éléments hors de la zone -16..32 : idem, le modèle est rétréci et l'affichage agrandi d'autant ;
 #  3. outils plus gros dans l'inventaire : l'échelle « gui » remplit la case ;
-#  4. heaumes 3D : doublure intérieure opaque, la tête du joueur ne traverse plus.
+#  4. heaumes 3D grossis sur la tête (1,18) pour passer au-dessus de la couche externe du skin.
 # Usage : python3 correctifs_rp.py metiers_resourcepack.zip
 import io, json, math, re, sys, zipfile
 from PIL import Image
@@ -36,15 +36,10 @@ def corners(e):
         P = out
     return P
 
-stats = {"rot": 0, "bornes": 0, "gui": 0, "doublure": 0}
+stats = {"rot": 0, "bornes": 0, "gui": 0, "heaumes": 0}
 OUTIL = re.compile(r"assets/metiers/models/item/v2/([a-z]_\d+|arc_\d+|forge_[a-z0-9_]+)(_[a-z_]+)?\.json$")
 HEAUME = re.compile(r"assets/metiers/models/item/v2/heaume_\d+(_[a-z_]+)?\.json$")
-DOUBLURE_TEX = "assets/metiers/textures/item/v2/doublure.png"
-img = Image.new("RGBA", (16, 16), (22, 20, 26, 255))
-for x in range(16):
-    for y in range(16):
-        if (x + y) % 5 == 0: img.putpixel((x, y), (30, 27, 34, 255))
-b = io.BytesIO(); img.save(b, "PNG"); files[DOUBLURE_TEX] = b.getvalue()
+files.pop("assets/metiers/textures/item/v2/doublure.png", None)
 
 for n in list(files):
     if not (n.startswith("assets/metiers/models/") and n.endswith(".json")): continue
@@ -80,12 +75,13 @@ for n in list(files):
             g["scale"] = [sc, sc, sc]
             g["translation"] = [round(-cx * sc, 2), round(-cy * sc, 2), 0]
             stats["gui"] += 1; changed = True
-    # 4. doublure des heaumes
-    if HEAUME.search(n) and els and not any(e.get("name") == "doublure" for e in els):
-        d.setdefault("textures", {})["doublure"] = "metiers:item/v2/doublure"
-        faces = {k: {"uv": [0, 0, 16, 16], "texture": "#doublure"} for k in ("north", "south", "east", "west", "up")}
-        els.append({"name": "doublure", "from": [0.6, 0.6, 0.6], "to": [15.4, 15.4, 15.4], "faces": faces})
-        stats["doublure"] += 1; changed = True
+    # 4. heaumes : plus de doublure, le heaume est grossi sur la tête pour passer au-dessus de la couche externe du skin
+    if HEAUME.search(n) and els:
+        n0 = len(els); els[:] = [e for e in els if e.get("name") != "doublure"]
+        if len(els) != n0: d.get("textures", {}).pop("doublure", None); changed = True
+        h = d.setdefault("display", {}).setdefault("head", {})
+        if h.get("scale", [1])[0] < 1.18:
+            h["scale"] = [1.18, 1.18, 1.18]; stats["heaumes"] += 1; changed = True
     if changed:
         files[n] = json.dumps(d, separators=(",", ":")).encode()
 
