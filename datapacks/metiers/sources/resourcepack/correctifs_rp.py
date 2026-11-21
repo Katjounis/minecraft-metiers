@@ -36,7 +36,9 @@ def corners(e):
         P = out
     return P
 
-stats = {"rot": 0, "bornes": 0, "gui": 0, "heaumes": 0}
+stats = {"rot": 0, "bornes": 0, "gui": 0, "heaumes": 0, "arcs": 0, "zfight": 0}
+MARQ = "assets/metiers/correctifs.json"
+FAIT = set(json.loads(files[MARQ])) if MARQ in files else set()
 OUTIL = re.compile(r"assets/metiers/models/item/v2/([a-z]_\d+|arc_\d+|forge_[a-z0-9_]+)(_[a-z_]+)?\.json$")
 HEAUME = re.compile(r"assets/metiers/models/item/v2/heaume_\d+(_[a-z_]+)?\.json$")
 files.pop("assets/metiers/textures/item/v2/doublure.png", None)
@@ -82,9 +84,43 @@ for n in list(files):
         h = d.setdefault("display", {}).setdefault("head", {})
         if h.get("scale", [1])[0] < 1.18:
             h["scale"] = [1.18, 1.18, 1.18]; stats["heaumes"] += 1; changed = True
+    # 5. arcs : la corde partait vers la poignée en bandant (animation à l'envers) et la flèche pointait vers l'archer.
+    #    On renvoie la corde et la flèche de l'autre côté des pointes des branches.
+    if "arc5" not in FAIT and re.search(r"/arc_\d+(_[a-z_]+)?_pulling_\d\.json$", n):
+        noms = [e.get("name") for e in els]
+        if "fleche" in noms:
+            i = noms.index("fleche"); part = els[i - 2:i + 3]
+            e0 = els[i - 2]; r = e0["rotation"]; o = r["origin"]; a = math.radians(r.get("z", r.get("angle", 0)))
+            ends = []
+            for x in (e0["from"][0], e0["to"][0]):
+                y = (e0["from"][1] + e0["to"][1]) / 2; dx, dy = x - o[0], y - o[1]
+                ends.append((o[0] + dx * math.cos(a) - dy * math.sin(a), o[1] + dx * math.sin(a) + dy * math.cos(a)))
+            t = min(ends, key=lambda q: abs(q[1] - 8) * -1)[0]   # extrémité loin de y=8 : la pointe
+            for e in part:
+                fx, tx = e["from"][0], e["to"][0]
+                e["from"][0], e["to"][0] = 2 * t - tx, 2 * t - fx
+                rr = e.get("rotation")
+                if rr:
+                    if "origin" in rr: rr["origin"][0] = 2 * t - rr["origin"][0]
+                    for k in ("z", "y"):
+                        if k in rr: rr[k] = -rr[k]
+                    if "angle" in rr and rr.get("axis") in ("z", "y"): rr["angle"] = -rr["angle"]
+                fc = e.get("faces", {})
+                if "east" in fc or "west" in fc:
+                    fc["east"], fc["west"] = fc.get("west"), fc.get("east")
+                    for k in ("east", "west"):
+                        if fc[k] is None: del fc[k]
+            stats["arcs"] += 1; changed = True
+    # 6. faces qui se chevauchent (scintillement) : chaque élément est très légèrement grossi, un peu plus que le précédent
+    if "zfight" not in FAIT and n.startswith("assets/metiers/models/item/v2/") and els:
+        for k, e in enumerate(els):
+            ep = min(0.006 * (k + 1), 0.18)
+            e["from"] = [c - ep for c in e["from"]]; e["to"] = [c + ep for c in e["to"]]
+        stats["zfight"] += 1; changed = True
     if changed:
         files[n] = json.dumps(d, separators=(",", ":")).encode()
 
+files[MARQ] = json.dumps(sorted(FAIT | {"arc5", "zfight"})).encode()
 out = io.BytesIO()
 with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
     for n in sorted(files):
