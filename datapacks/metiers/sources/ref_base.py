@@ -84,7 +84,7 @@ ARMV = {"head": [3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 5], "chest": [8, 8, 8, 8, 9, 9, 9
 TOUGHV = [2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5]
 KBV = [0, 0, 0.1, 0.1, 0.1, 0.1, 0.15, 0.15, 0.15, 0.2, 0.2]
 VIEV = [0, 0, 0, 0, 2, 2, 2, 4, 4, 6, 6]
-ARM_BON = {2: "Hâte I", 4: "Vitesse I", 6: "Résistance I", 8: "Régénération I", 10: "Force I"}
+ARM_BON = {2: "Célérité I", 4: "Vitesse I", 6: "Résistance I", 8: "Régénération I", 10: "Force I"}
 
 def piece_item2(piece, slot, nom, p):
     mods = [f'{{type:"minecraft:armor",amount:{ARMV[slot][p]},id:"metiers:g_{slot}_a",operation:"add_value",slot:"{slot}"}}',
@@ -155,27 +155,52 @@ AB += ["execute if score @s m.arm matches 3.. run effect give @s minecraft:haste
        "execute if score @s m.arm matches 9.. run effect give @s minecraft:regeneration 3 0 true",
        "execute if score @s m.arm matches 11.. run effect give @s minecraft:strength 2 0 true"]
 w(F + "armure/bonus.mcfunction", "\n".join(AB))
-AMN = ["scoreboard players add @s m.arm 0", f"execute store result storage {NS}:arm score int 1 run scoreboard players get @s m.total",
+AMN = ["scoreboard players add @s m.arm 0", "scoreboard players add @s m.total 0",
+       f"execute store result storage {NS}:arm score int 1 run scoreboard players get @s m.total",
        f'data modify storage {NS}:arm nom set value "Pas encore débloquée"', f'data modify storage {NS}:arm col set value "gray"',
-       f'data modify storage {NS}:arm next set value "Débloque-la à {ARM_SEUIL[0]} points"', f'data modify storage {NS}:arm model set value "heaume_0"']
+       f'data modify storage {NS}:arm next set value "Débloquée à {ARM_SEUIL[0]} points"', f'data modify storage {NS}:arm model set value "heaume_0"',
+       f'data modify storage {NS}:arm bar set value "{GLY["barre_0"]}"',
+       # progression vers le palier suivant, en dixièmes
+       f"scoreboard players set #lo m.tmp 0", f"scoreboard players set #hi m.tmp {ARM_SEUIL[0]}"]
 for p in range(11):
     nxt = f"Prochain palier à {ARM_SEUIL[p + 1]} points" if p < 10 else "Palier maximum atteint"
-    AMN += [f'execute if score @s m.arm matches {p + 1} run data modify storage {NS}:arm nom set value "{ARM_NOM[p]} (palier {p}/10)"',
+    AMN += [f'execute if score @s m.arm matches {p + 1} run data modify storage {NS}:arm nom set value "{ARM_NOM[p]}"',
             f'execute if score @s m.arm matches {p + 1} run data modify storage {NS}:arm col set value "{ARM_COL[p]}"',
             f'execute if score @s m.arm matches {p + 1} run data modify storage {NS}:arm next set value "{nxt}"',
-            f'execute if score @s m.arm matches {p + 1} run data modify storage {NS}:arm model set value "heaume_{p}"']
+            f'execute if score @s m.arm matches {p + 1} run data modify storage {NS}:arm model set value "heaume_{p}"',
+            f"execute if score @s m.arm matches {p + 1} run scoreboard players set #lo m.tmp {ARM_SEUIL[p]}",
+            f"execute if score @s m.arm matches {p + 1} run scoreboard players set #hi m.tmp {ARM_SEUIL[p + 1] if p < 10 else ARM_SEUIL[p]}"]
+    # état de chaque palier : atteint, actuel ou verrouillé
+    AMN += [f'data modify storage {NS}:arm t{p} set value "{p}. {ARM_NOM[p]}"', f'data modify storage {NS}:arm c{p} set value "dark_gray"',
+            f'execute if score @s m.arm matches {p + 2}.. run data modify storage {NS}:arm t{p} set value "✔ {ARM_NOM[p]}"',
+            f'execute if score @s m.arm matches {p + 2}.. run data modify storage {NS}:arm c{p} set value "{ARM_COL[p]}"',
+            f'execute if score @s m.arm matches {p + 1} run data modify storage {NS}:arm t{p} set value "★ {ARM_NOM[p]}"',
+            f'execute if score @s m.arm matches {p + 1} run data modify storage {NS}:arm c{p} set value "{ARM_COL[p]}"']
+AMN += ["scoreboard players operation #d m.tmp = #hi m.tmp", "scoreboard players operation #d m.tmp -= #lo m.tmp",
+        "scoreboard players operation #v m.tmp = @s m.total", "scoreboard players operation #v m.tmp -= #lo m.tmp",
+        "scoreboard players operation #v m.tmp *= #10 m.const",
+        "execute if score #d m.tmp matches 1.. run scoreboard players operation #v m.tmp /= #d m.tmp",
+        "execute if score #d m.tmp matches ..0 run scoreboard players set #v m.tmp 10",
+        "execute if score #v m.tmp matches 11.. run scoreboard players set #v m.tmp 10",
+        "execute if score #v m.tmp matches ..-1 run scoreboard players set #v m.tmp 0"]
+AMN += [f'execute if score #v m.tmp matches {k} run data modify storage {NS}:arm bar set value "{GLY["barre_" + str(k)]}"' for k in range(11)]
 AMN.append(f"function {NS}:armure/menu_dialog with storage {NS}:arm")
 w(F + "armure/menu.mcfunction", "\n".join(AMN))
-paliers = "\\n".join(f"{p}. {ARM_NOM[p]} : {ARM_SEUIL[p]} pts" + (f", set complet + {ARM_BON[p]}" if p in ARM_BON else "") for p in range(11))
+pal = []
+for p in range(11):
+    tip = f"{ARM_SEUIL[p]} points de score total" + (f"\\nSet complet (4 pièces) : {ARM_BON[p]}" if p in ARM_BON else "")
+    bon = f',{{text:"  +",color:"gold"}}' if p in ARM_BON else ""
+    pal.append(f'{{label:[{{text:"$(t{p})",color:"$(c{p})"}},{{text:"  {ARM_SEUIL[p]}",color:"gray"}}{bon}],width:190,tooltip:{{text:"{tip}"}}}}')
 w(F + "armure/menu_dialog.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Armure des Guildes",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
   'body:[{type:"minecraft:item",item:{id:"minecraft:paper",components:{"minecraft:item_model":"metiers:$(model)"}},show_decorations:false,show_tooltip:false,'
-  'description:{width:240,contents:[{text:"$(nom)\\n",color:"$(col)",bold:true},{text:"Score : $(score) points\\n$(next)",color:"white",bold:false}]}},'
-  '{type:"minecraft:plain_message",width:320,contents:['
-  f'{{text:"{paliers}\\n\\n",color:"gray"}},'
-  '{text:"Ton score est la somme de tes niveaux (+100 par prestige). Les bonus de set se cumulent quand tu portes les 4 pièces.",color:"dark_gray"}]}],'
-  'actions:[{label:{text:"Récupérer mon armure",color:"green"},width:200,tooltip:{text:"Une fois toutes les 10 minutes."},action:{type:"run_command",command:"trigger metiers set 8"}}],'
-  'columns:1,exit_action:{label:"Retour",width:150,action:{type:"run_command",command:"trigger metiers set 1"}}}')
+  'description:{width:260,contents:[{text:"$(nom)\\n",color:"$(col)",bold:true},{text:"Score ",color:"gray",bold:false},{text:"$(score)",color:"yellow"},'
+  '{text:"   "},{text:"$(bar)",font:"metiers:icones",color:"white"},{text:"\\n$(next)",color:"gray"}]}},'
+  '{type:"minecraft:plain_message",width:380,contents:[{text:"Score = somme de tes niveaux, +100 par prestige.  ",color:"dark_gray"},'
+  '{text:"+",color:"gold"},{text:" = bonus quand tu portes les 4 pièces (survole un palier).",color:"dark_gray"}]}],'
+  f'actions:[{",".join(pal)},'
+  '{label:{text:"Récupérer mon armure",color:"green",bold:true},width:390,tooltip:{text:"Une fois toutes les 10 minutes."},action:{type:"run_command",command:"trigger metiers set 8"}}],'
+  'columns:2,exit_action:{label:"Retour",width:200,action:{type:"run_command",command:"trigger metiers set 1"}}}')
 
 # ---------------------------------------------------------------- arc évolutif du Chasseur
 PW = [1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 5]
