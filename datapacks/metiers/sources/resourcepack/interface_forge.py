@@ -144,6 +144,32 @@ for f in ("header_separator.png", "footer_separator.png", "inworld_header_separa
                 if a: l = (r + g + b) // 3; px[x, y] = (min(255, int(l * 1.0) + 30), min(255, int(l * 0.8) + 18), int(l * 0.4), a)
         ajoute(f, im)
 
+# « Les Couillons » dans l'inventaire, à droite de la seconde main
+G = {  # police 5 px de haut
+ "L": ["#..", "#..", "#..", "#..", "###"], "e": ["...", "###", "#.#", "##.", "###"], "s": ["...", "###", "##.", "..#", "###"],
+ "C": [".##", "#..", "#..", "#..", ".##"], "o": ["...", "###", "#.#", "#.#", "###"], "u": ["...", "#.#", "#.#", "#.#", "###"],
+ "i": ["#", ".", "#", "#", "#"], "l": ["#", "#", "#", "#", "#"], "n": ["...", "##.", "#.#", "#.#", "#.#"], " ": ["..", "..", "..", "..", ".."]}
+def ecrit(im, x, y, txt, col, ombre):
+    px = im.load(); cx = x
+    for ch in txt:
+        g = G[ch]
+        for j, ligne in enumerate(g):
+            for i, c in enumerate(ligne):
+                if c == "#":
+                    px[cx + i + 1, y + j + 1] = ombre; px[cx + i, y + j] = col
+        cx += len(g[0]) + 1
+    return cx - x - 1
+def largeur(txt): return sum(len(G[c][0]) + 1 for c in txt) - 1
+def signe(im):
+    # à droite de la seconde main (case 77,62), sous l'établi 2x2, hors du bouton du livre de recettes (104..124, 61..79)
+    l1, l2 = "Les", "Couillons"; x0, x1 = 126, 172
+    for t, y in ((l1, 63), (l2, 70)):
+        ecrit(im, x0 + (x1 - x0 - largeur(t)) // 2, y, t, (232, 190, 100, 255), (52, 40, 28, 255))
+    return im
+
+_k = "assets/minecraft/textures/gui/container/inventory.png"
+_im = signe(Image.open(io.BytesIO(out[_k])).convert("RGBA")); _b = io.BytesIO(); _im.save(_b, "PNG"); out[_k] = _b.getvalue()
+
 zin = zipfile.ZipFile(ZIP); files = {n: zin.read(n) for n in zin.namelist()}; zin.close()
 files.update(out)
 buf = io.BytesIO()
