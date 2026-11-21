@@ -44,7 +44,8 @@ for j, d in jobs.items():
     acts.append(btn(lab, 20 + d["idx"], 200, f"Ouvre la page {d['name']} : outil, compétences, récompenses, titre."))
 forge_lab = f'[{gs("forge_marteau")},{txt("  Forge  ", "gold", True)},{gs("eclat")},{txt(" $(ecl) éclats", "gray")}]'
 acts += [btn(txt("Défis du jour", "aqua"), 4, 200), btn(txt("Classement", "gold"), 5, 200),
-         btn(txt("Armure des Guildes", "#F1CF4E"), 6, 200), btn(forge_lab, 400, 200, "Objets de métier, cristaux d'amélioration, skins et cadres de titre.")]
+         btn(txt("Armure des Guildes", "#F1CF4E"), 6, 200), btn(forge_lab, 400, 200, "Objets de métier, cristaux d'amélioration, skins et cadres de titre."),
+         btn(txt("Aide : cristaux, éclats, Forge", "white"), 460, 200, "Comment ça marche : cristaux, éclats de boss, Forge, défis, boss.")]
 w(F + "menu_dialog.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Mes métiers",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
   'body:[{type:"minecraft:plain_message",width:400,contents:[{text:"Score total ",color:"gray"},{text:"$(score)",color:"yellow"},'
@@ -477,8 +478,30 @@ add_lines(F + "trigger.mcfunction", TRG)
 RUN = lambda n: {"type": "run_command", "command": f"trigger metiers set {n}"}
 hub = [{"label": [{"text": ""}, gj("forge_marteau"), {"text": "  Ouvrir mes métiers  ", "color": "gold", "bold": True}, gj("eclat")],
         "tooltip": {"text": "Niveaux, compétences, outils, défis, Forge."}, "width": 310, "action": RUN(1)},
-       {"label": [{"text": ""}, gj("forge_marteau"), {"text": " Forge", "color": "gold"}], "width": 150, "action": RUN(400)},
-       {"label": {"text": "Défis du jour", "color": "aqua"}, "width": 150, "action": RUN(4)}]
+       {"label": [{"text": ""}, gj("forge_marteau"), {"text": "  Forge  ", "color": "gold", "bold": True}, gj("eclat")], "width": 310, "action": RUN(400)},
+       {"label": {"text": "Défis du jour", "color": "aqua", "bold": True}, "width": 310, "action": RUN(4)}]
 wj(f"data/{NS}/dialog/ouvrir.json", {"type": "minecraft:multi_action", "title": {"text": "Métiers", "color": "gold", "bold": True},
                                      "external_title": {"text": "Métiers"}, "can_close_with_escape": True, "pause": False,
                                      "actions": hub, "columns": 1})
+
+
+# ================================================================ aide
+AIDE = [
+    ("Les métiers", "gold", "Chaque action de métier rapporte de l'XP : couper du bois, miner, récolter, tuer, pêcher, élever, enchanter, explorer, échanger. Tous les 10 niveaux, ton outil passe au palier suivant (nouvelle forme, meilleures stats) et tu gagnes un titre."),
+    ("Compétences", "yellow", "Chaque niveau donne des points. Dans la page d'un métier, achète ses 6 compétences : une au niveau 5, les branches aux niveaux 20 puis 45, l'ultime au niveau 70. Le point rouge sur l'accueil signale des points ou une récompense à prendre."),
+    ("Cristaux de métier", "aqua", "La monnaie de chaque métier, pour la Forge et les skins d'outil. Tu en gagnes à chaque palier d'outil (3 par palier), 4 par défi du jour réussi, 20 avec le défi de la semaine. Le cristal Écho en donne parfois en plus."),
+    ("Éclats de boss", "light_purple", "La monnaie rare. 1 éclat par boss vaincu (2 pour le plus gros dégât), 1 avec le défi de la semaine, 1 avec le défi collectif si tu y as participé. Ils servent aux objets de la Forge, aux skins d'armure et aux cadres de titre."),
+    ("La Forge", "gold", "Objets de métier (marteau 3x3, faux, arc triple, lasso, parchemin), objets communs (aimant, cape-planeur) et cristaux à sertir dans l'outil tenu en main : Sagesse (+10 % d'XP), Fortune, Écho, Efficacité jusqu'à VII. Emplacements : 1 au palier 3, 2 au palier 6, 3 au palier 9."),
+    ("Boss", "red", "Toutes les 3 heures de jeu (2 joueurs minimum), un boss apparaît près d'un joueur : Colosse, Reine arachnide, Liche, Brasier, Creeper géant. Ses PV montent avec le nombre de joueurs et il appelle des renforts à 66 % et 33 %. Le vaincre plusieurs fois débloque des skins."),
+    ("Défis", "aqua", "Chaque jour : un défi par métier. Chaque semaine : un gros défi perso et un défi collectif pour tout le serveur. Tout se suit dans Défis du jour."),
+    ("Armure des Guildes", "#F1CF4E", "Elle se débloque avec ton score total (somme des niveaux) et évolue sur 11 paliers. Récupère-la depuis son bouton sur l'accueil."),
+]
+contents = []
+for titre, col, txt_ in AIDE:
+    contents += [{"text": titre + "\n", "color": col, "bold": True}, {"text": txt_ + "\n\n", "color": "white", "bold": False}]
+wj(f"data/{NS}/dialog/aide.json", {"type": "minecraft:notice", "title": {"text": "Aide des métiers", "color": "gold", "bold": True},
+                                  "can_close_with_escape": True, "pause": False,
+                                  "body": [{"type": "minecraft:plain_message", "width": 400, "contents": contents}],
+                                  "action": {"label": "Retour", "width": 200, "action": {"type": "run_command", "command": "trigger metiers set 1"}}})
+w(F + "aide.mcfunction", f"dialog show @s {NS}:aide")
+add_lines(F + "trigger.mcfunction", [f'execute if score @s m.trig matches 460 run function {NS}:appel {{f:"aide"}}'])

@@ -117,6 +117,29 @@ for n in list(files):
             ep = min(0.006 * (k + 1), 0.18)
             e["from"] = [c - ep for c in e["from"]]; e["to"] = [c + ep for c in e["to"]]
         stats["zfight"] += 1; changed = True
+    # 8. scintillement encore visible (pointes de la pioche du Vétéran...) : écart supplémentaire entre éléments
+    if "zfight2" not in FAIT and n.startswith("assets/metiers/models/item/v2/") and els:
+        for k, e in enumerate(els):
+            ep = min(0.014 * (k + 1), 0.32)
+            e["from"] = [c - ep for c in e["from"]]; e["to"] = [c + ep for c in e["to"]]
+        stats["zfight2"] = stats.get("zfight2", 0) + 1; changed = True
+    # 9. arcs vus en miroir par rapport à l'arc vanilla (corde loin, poignée devant) : miroir complet en x
+    if "arcmiroir" not in FAIT and re.search(r"/v2/arc_\d+", n) and els:
+        for e in els:
+            fx, tx = e["from"][0], e["to"][0]
+            e["from"][0], e["to"][0] = 16 - tx, 16 - fx
+            rr = e.get("rotation")
+            if rr:
+                if "origin" in rr: rr["origin"][0] = 16 - rr["origin"][0]
+                for k in ("z", "y"):
+                    if k in rr: rr[k] = -rr[k]
+                if "angle" in rr and rr.get("axis") in ("z", "y"): rr["angle"] = -rr["angle"]
+            fc = e.get("faces", {})
+            if "east" in fc or "west" in fc:
+                fe, fw = fc.pop("east", None), fc.pop("west", None)
+                if fw is not None: fc["east"] = fw
+                if fe is not None: fc["west"] = fe
+        stats["arcmiroir"] = stats.get("arcmiroir", 0) + 1; changed = True
     if changed:
         files[n] = json.dumps(d, separators=(",", ":")).encode()
 
@@ -153,7 +176,17 @@ if "ame4" not in FAIT:
                         if px[x, yy][3] > 0: px[x, yy] = g2 + (255,)
         b2 = io.BytesIO(); im.save(b2, "PNG"); files[n] = b2.getvalue(); stats["ame4"] = stats.get("ame4", 0) + 1
 
-files[MARQ] = json.dumps(sorted(FAIT | {"arc5", "zfight", "ame4"})).encode()
+# 10. icônes de métier en grand pour les barres du haut (défis, heure du métier)
+FONT = "assets/metiers/font/icones.json"
+if "grandes_icones" not in FAIT and FONT in files:
+    fo = json.loads(files[FONT]); prov = fo["providers"]; ajout = []
+    for i, j in enumerate("bfmcpenxt"):
+        sp = next((q for q in prov if q.get("file", "").endswith(f"font/metier_{j}.png")), None)
+        if sp: ajout.append({"type": "bitmap", "file": sp["file"], "height": 16, "ascent": 12, "chars": [chr(0xE200 + i)]})
+    prov += ajout; files[FONT] = json.dumps(fo, ensure_ascii=False, indent=1).encode()
+    stats["grandes_icones"] = len(ajout)
+
+files[MARQ] = json.dumps(sorted(FAIT | {"arc5", "zfight", "ame4", "zfight2", "arcmiroir", "grandes_icones"})).encode()
 out = io.BytesIO()
 with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
     for n in sorted(files):

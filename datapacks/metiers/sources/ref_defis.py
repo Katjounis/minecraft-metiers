@@ -21,7 +21,7 @@ for j, pool in DEFIS.items():
     d = jobs[j]
     BJ = ["$bossbar set metiers:d$(id) color purple", "$bossbar set metiers:d$(id) style notched_10"]
     for i, (desc, tgt, crits, div) in enumerate(pool, 1):
-        BJ += [f'$execute if score #d_{j} m.defi matches {i} run bossbar set metiers:d$(id) name [{GJ("metier_" + j)},{{"text":" Défi {d["name"]} : ","color":"{d["color"]}","bold":true}},{{"text":"{desc}  ","color":"white","bold":false}},{{"score":{{"name":"@s","objective":"m.dp_{j}"}},"color":"yellow"}},{{"text":" / {tgt}","color":"gray"}}]',
+        BJ += [f'$execute if score #d_{j} m.defi matches {i} run bossbar set metiers:d$(id) name [{GJ("grand_metier_" + j)},{{"text":" Défi {d["name"]} : ","color":"{d["color"]}","bold":true}},{{"text":"{desc}  ","color":"white","bold":false}},{{"score":{{"name":"@s","objective":"m.dp_{j}"}},"color":"yellow"}},{{"text":" / {tgt}","color":"gray"}}]',
                f"$execute if score #d_{j} m.defi matches {i} run bossbar set metiers:d$(id) max {tgt}"]
     BJ.append(f"$execute store result bossbar metiers:d$(id) value run scoreboard players get @s m.dp_{j}")
     w(F + f"defis/barre_{j}.mcfunction", "\n".join(BJ))
@@ -34,7 +34,7 @@ HL = ["scoreboard players set #cycle m.heure 0", f"execute store result score #j
       "scoreboard players set #reste m.heure 3600", "bossbar set metiers:heure color pink", "bossbar set metiers:heure style progress"]
 for j, d in jobs.items():
     i = d["idx"]
-    HL += [f'execute if score #job m.heure matches {i} run bossbar set metiers:heure name [{GJ("metier_" + j)},{{"text":" Heure du {d["name"]}","color":"{d["color"]}","bold":true}},{{"text":" : XP x2","color":"white","bold":false}}]',
+    HL += [f'execute if score #job m.heure matches {i} run bossbar set metiers:heure name [{GJ("grand_metier_" + j)},{{"text":" Heure du {d["name"]}","color":"{d["color"]}","bold":true}},{{"text":" : XP x2","color":"white","bold":false}}]',
            f'execute if score #job m.heure matches {i} run tellraw @a {PREFIX},{{"text":"C\'est l\'heure du {d["name"]} ! ","color":"{d["color"]}","bold":true}},{{"text":"Toute l\'XP de ce métier compte double pendant 30 minutes.","color":"white"}}]']
 HL += ["bossbar set metiers:heure visible true", "bossbar set metiers:heure players @a",
        "execute as @a at @s run playsound minecraft:block.bell.use master @s ~ ~ ~ 1 1"]
