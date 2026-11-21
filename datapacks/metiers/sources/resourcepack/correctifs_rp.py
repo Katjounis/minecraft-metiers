@@ -123,6 +123,33 @@ for n in list(files):
             ep = min(0.014 * (k + 1), 0.32)
             e["from"] = [c - ep for c in e["from"]]; e["to"] = [c + ep for c in e["to"]]
         stats["zfight2"] = stats.get("zfight2", 0) + 1; changed = True
+    # 8 bis. au-delà de 20 pièces l'écart plafonnait : les dernières pièces (picots du dessus des pioches...)
+    #        avaient de nouveau des faces confondues. Écart cyclique pour que deux pièces voisines diffèrent toujours.
+    if "zfight3" not in FAIT and n.startswith("assets/metiers/models/item/v2/") and els:
+        for k, e in enumerate(els):
+            ep = 0.016 * ((k % 9) + 1)
+            e["from"] = [c - ep for c in e["from"]]; e["to"] = [c + ep for c in e["to"]]
+        stats["zfight3"] = stats.get("zfight3", 0) + 1; changed = True
+    # 8 ter. dernières faces confondues : on écarte la seconde pièce de 0,02 sur l'axe concerné, jusqu'à n'en plus trouver
+    if "zfight4" not in FAIT and n.startswith("assets/metiers/models/item/v2/") and els:
+        def axes_rot(e):
+            r = e.get("rotation") or {}
+            if "angle" in r: return {r["axis"]} if r["angle"] else set()
+            return {k for k in ("x", "y", "z") if r.get(k)}
+        AX = "xyz"
+        for _ in range(6):
+            touche = False
+            for i in range(len(els)):
+                for j in range(i + 1, len(els)):
+                    a_, b_ = els[i], els[j]
+                    for ax in range(3):
+                        ra, rb = axes_rot(a_), axes_rot(b_)
+                        if not (ra <= {AX[ax]} and rb <= {AX[ax]}): continue
+                        if any(abs(fa - fb) < 0.01 for fa in (a_["from"][ax], a_["to"][ax]) for fb in (b_["from"][ax], b_["to"][ax])):
+                            if all(min(a_["to"][q], b_["to"][q]) > max(a_["from"][q], b_["from"][q]) for q in range(3) if q != ax):
+                                b_["from"][ax] -= 0.02; b_["to"][ax] += 0.02; touche = True
+            if not touche: break
+        stats["zfight4"] = stats.get("zfight4", 0) + 1; changed = True
     # 9. arcs vus en miroir par rapport à l'arc vanilla (corde loin, poignée devant) : miroir complet en x
     if "arcmiroir" not in FAIT and re.search(r"/v2/arc_\d+", n) and els:
         for e in els:
@@ -186,7 +213,7 @@ if "grandes_icones" not in FAIT and FONT in files:
     prov += ajout; files[FONT] = json.dumps(fo, ensure_ascii=False, indent=1).encode()
     stats["grandes_icones"] = len(ajout)
 
-files[MARQ] = json.dumps(sorted(FAIT | {"arc5", "zfight", "ame4", "zfight2", "arcmiroir", "grandes_icones"})).encode()
+files[MARQ] = json.dumps(sorted(FAIT | {"arc5", "zfight", "ame4", "zfight2", "zfight3", "zfight4", "arcmiroir", "grandes_icones"})).encode()
 out = io.BytesIO()
 with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
     for n in sorted(files):
