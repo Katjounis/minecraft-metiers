@@ -123,6 +123,7 @@ for j, d in jobs.items():
         tip = f"{desc}\\nCoût : {cost} points · niveau {SKILL_LVL[k - 1]} · requiert : {rq}"
         sbtn.append(f'{{label:{{text:"$(l{k})",color:"$(c{k})"}},width:200,tooltip:{{text:"{tip}"}},action:{{type:"run_command",command:"trigger metiers set {100 + 10 * d["idx"] + k}"}}}}')
     sp = SPECIAL[j]
+    sep = ['{label:{text:"▾   Outil et métier   ▾",color:"dark_gray"},width:200}'] * 2
     abtn = [btn(txt("Récupérer l'outil", "aqua"), 300 + d["idx"], 200, "Redonne ton outil à son palier (une fois toutes les 10 minutes)."),
             btn(txt("Réparer · 5 niv.", "green"), 330 + d["idx"], 200, "Seule façon de réparer ton outil de métier. Incassable dès le palier 5."),
             f'{{label:{{text:"$(rl)",color:"$(rc)"}},width:200,action:{{type:"run_command",command:"trigger metiers set {200 + d["idx"]}"}}}}',
@@ -139,7 +140,7 @@ for j, d in jobs.items():
             '{text:"Survole une compétence pour voir son effet.",color:"dark_gray"}]}]')
     w(F + f"{j}/page_dialog.mcfunction",
       f'$dialog show @s {{type:"minecraft:multi_action",title:[{gs("metier_" + j)},{{text:" {d["name"]}",color:"{d["color"]}",bold:true}}],'
-      f'can_close_with_escape:true,pause:false,body:{body},actions:[{",".join(sbtn + abtn)}],columns:2,'
+      f'can_close_with_escape:true,pause:false,body:{body},actions:[{",".join(sbtn + sep + abtn)}],columns:2,'
       f'exit_action:{{label:"Retour",width:200,action:{{type:"run_command",command:"trigger metiers set 1"}}}}}}')
     # bascule du titre de ce métier
     w(F + f"{j}/titre.mcfunction", "\n".join([
