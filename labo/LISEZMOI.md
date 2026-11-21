@@ -47,6 +47,7 @@ Une seule erreur dans un fichier de registre fait échouer **tout** le chargemen
 | `lab-stop.bat` | Arrête le serveur. Pour un arrêt définitif, fermer la fenêtre `lab-start`. |
 | `lab-sync-monde.bat` | Remplace le monde du labo par la **dernière sauvegarde** de la prod. Le labo doit être éteint. Lancer `backup.bat` sur la prod juste avant pour avoir un monde à jour. |
 | `lab-deploy.bat <pack>` | Passe un pack en **prod**. Il demande de taper `OUI`, fait une sauvegarde, puis remplace le pack dans `world\datapacks`. Il reste ensuite à faire `reload` ou `stop` dans la console de la prod. |
+| `python outils\fusion_rp.py [--labo]` | Verse les resource packs des packs (`build/<nom>_rp/`) dans `metiers_resourcepack.zip` et affiche le SHA-1. Avec `--labo`, il sert aussi le zip sur `http://127.0.0.1:8765/` et y branche le labo, pour voir les textures avant de pousser. Redémarrer ensuite le labo. |
 | `lab-cmd.bat < scenario.txt` | Joue un scénario de commandes : une commande par ligne, `#` pour un commentaire. |
 
 ## Commandes utiles en test
