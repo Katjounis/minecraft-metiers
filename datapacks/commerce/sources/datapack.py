@@ -11,7 +11,7 @@ from catalogue import ACHAT, CATEGORIES, ITEMS, RARES
 ROOT = os.path.join(HERE, "..", "build", "commerce_datapack")
 NS = "commerce"
 F = f"data/{NS}/function/"
-VERSION = 1
+VERSION = 2
 if os.path.exists(ROOT):
     shutil.rmtree(ROOT)
 
@@ -91,7 +91,7 @@ wj("data/minecraft/tags/function/load.json", {"values": [f"{NS}:load"]})
 wj("data/minecraft/tags/function/tick.json", {"values": [f"{NS}:tick"]})
 
 PLAYER_OBJ = ["c.ecus", "c.cts", "c.deb", "c.cmpt", "c.ser", "c.own", "c.nom", "c.init", "c.vu", "c.tv", "c.ta", "c.ncr"]
-PLAYER_OBJ += [f"c.pp_{j}" for j, *_ in JOBS]
+PLAYER_OBJ += [f"c.pp_{j}" for j, *_ in JOBS] + [f"c.dd_{j}" for j, *_ in JOBS] + ["c.dall", "c.wd", "c.wk", "c.bk", "c.init2"]
 ITEM_OBJ = ["c.p", "c.h", "c.vs", "c.as", "c.ev", "c.x"]
 LD = [f"scoreboard objectives add {o} dummy" for o in PLAYER_OBJ + ITEM_OBJ + ["c.t", "c.g"]]
 LD += ["scoreboard objectives add commerce trigger",
@@ -99,7 +99,7 @@ LD += ["scoreboard objectives add commerce trigger",
 for c in (2, 5, 10, 12, 100, 105, 250, 500, 1000, 1000000, -1):
     LD.append(f"scoreboard players set #{c} c.g {c}")
 LD.append(f"scoreboard players set #achat c.g {ACHAT}")
-for o in ("#dec", "#hr", "#cv", "#t", "#evi", "#evt"):
+for o in ("#dec", "#hr", "#cv", "#t", "#evi", "#evt", "#semp"):
     LD.append(f"scoreboard players add {o} c.g 0")
 for it in ITL:
     LD += [f"scoreboard players add {H(it)} {o} 0" for o in ("c.p", "c.h", "c.vs", "c.as", "c.ev")]
@@ -125,7 +125,11 @@ w(F + "seconde.mcfunction", [
     "scoreboard players add #dec c.g 1",
     f"execute if score #dec c.g matches 120.. run function {NS}:marche/detente",
     "scoreboard players add #hr c.g 1",
-    f"execute if score #hr c.g matches 3600.. run function {NS}:marche/heure"])
+    f"execute if score #hr c.g matches 3600.. run function {NS}:marche/heure",
+    # nouvelle semaine de Métiers : son compteur #semaine repart à zéro
+    "scoreboard players operation #sem c.t = #semp c.g",
+    "execute store result score #semp c.g run scoreboard players get #semaine m.defi",
+    f"execute if score #semp c.g < #sem c.t run function {NS}:marche/semaine"])
 
 w(F + "version.mcfunction", say(f"Version {VERSION} : Écus, comptoirs, marché de {NIT} objets à prix dynamiques, bourse, fortunes, cristaux.", "gold"))
 
@@ -136,7 +140,9 @@ w(F + "joueur/seconde.mcfunction", [
     f"execute unless score @s c.vu matches 1 run function {NS}:joueur/arrivee",
     f"execute unless score @s c.nom matches 1 run function {NS}:joueur/inscrire",
     f"execute unless score @s c.init matches 1 run function {NS}:joueur/init_paliers",
-    f"function {NS}:joueur/paliers"])
+    f"function {NS}:joueur/paliers",
+    f"execute unless score @s c.init2 matches 1 run function {NS}:joueur/evts_init",
+    f"function {NS}:joueur/evts"])
 w(F + "joueur/arrivee.mcfunction", [f"scoreboard players add @s {o} 0" for o in PLAYER_OBJ] + [
     f"recipe give @s {NS}:oeuf", "scoreboard players set @s c.vu 1"])
 
@@ -180,16 +186,36 @@ w(F + "joueur/init_paliers.mcfunction", IP + ["scoreboard players set @s c.init 
 
 # primes branchées sur les évènements du pack Métiers (tags #metiers:evt/...)
 PRIMES = {"defi_jour": (150, "défi du jour"), "defis_tous": (300, "tous les défis du jour"),
-          "defi_semaine": (1500, "défi de la semaine"), "defi_collectif": (400, "défi collectif"), "boss": (600, "boss terrassé")}
+          "defi_semaine": (1500, "défi de la semaine"), "defi_collectif": (400, "défi collectif"), "boss": (600, "boss vaincu")}
 for k, (val, lib) in PRIMES.items():
     lines = [f"scoreboard players add @s c.ecus {val}",
              f'tellraw @s {L(PREFIX, T(f"+{val} {ECU}", "gold", True), T(" (" + lib + ")", "gray"))}']
-    if k == "boss":
-        lines += [f"execute if entity @s[tag=metiers.btop] run scoreboard players add @s c.ecus {val}",
-                  f'execute if entity @s[tag=metiers.btop] run tellraw @s {L(PREFIX, T(f"+{val} {ECU}", "gold", True), T(" (plus gros dégâts)", "gray"))}']
     w(F + f"prime/{k}.mcfunction", lines)
-    wj(f"data/metiers/tags/function/evt/{k}.json", {"values": [f"{NS}:prime/{k}"]})
-wj("data/metiers/tags/function/evt/nouvelle_semaine.json", {"values": [f"{NS}:marche/semaine"]})
+
+# Commerce ne modifie pas Métiers : il lit ses scores chaque seconde et paie quand ils changent.
+#   m.dd_<métier> = 1 défi du jour réussi, m.wd = 1 défi de la semaine, m.wk = 1 défi collectif,
+#   m.bk1..5 = boss vaincus, #semaine m.defi repart à 0 à la nouvelle semaine.
+BKSUM = ["scoreboard players set #s c.t 0"] + [f"scoreboard players operation #s c.t += @s m.bk{k}" for k in range(1, 6)]
+EV = []
+for j, *_ in JOBS:
+    EV += [f"execute if score @s m.dd_{j} matches 1 unless score @s c.dd_{j} matches 1 run function {NS}:prime/defi_jour",
+           f"scoreboard players set @s c.dd_{j} 0", f"execute if score @s m.dd_{j} matches 1 run scoreboard players set @s c.dd_{j} 1"]
+EV += ["scoreboard players set #n c.t 0"] + [f"execute if score @s c.dd_{j} matches 1 run scoreboard players add #n c.t 1" for j, *_ in JOBS]
+EV += [f"execute if score #n c.t matches {len(JOBS)} unless score @s c.dall matches 1 run function {NS}:prime/defis_tous",
+       "scoreboard players set @s c.dall 0", f"execute if score #n c.t matches {len(JOBS)} run scoreboard players set @s c.dall 1",
+       f"execute if score @s m.wd matches 1 unless score @s c.wd matches 1 run function {NS}:prime/defi_semaine",
+       "scoreboard players set @s c.wd 0", "execute if score @s m.wd matches 1 run scoreboard players set @s c.wd 1",
+       f"execute if score @s m.wk matches 1 unless score @s c.wk matches 1 run function {NS}:prime/defi_collectif",
+       "scoreboard players set @s c.wk 0", "execute if score @s m.wk matches 1 run scoreboard players set @s c.wk 1"]
+EV += BKSUM + [f"execute if score #s c.t > @s c.bk run function {NS}:prime/boss", "scoreboard players operation @s c.bk = #s c.t"]
+w(F + "joueur/evts.mcfunction", EV)
+EI = []
+for j, *_ in JOBS:
+    EI += [f"scoreboard players set @s c.dd_{j} 0", f"execute if score @s m.dd_{j} matches 1 run scoreboard players set @s c.dd_{j} 1"]
+EI += ["scoreboard players set @s c.dall 1", "scoreboard players set @s c.wd 0", "execute if score @s m.wd matches 1 run scoreboard players set @s c.wd 1",
+       "scoreboard players set @s c.wk 0", "execute if score @s m.wk matches 1 run scoreboard players set @s c.wk 1"]
+EI += BKSUM + ["scoreboard players operation @s c.bk = #s c.t", "scoreboard players set @s c.init2 1"]
+w(F + "joueur/evts_init.mcfunction", EI)
 
 # =====================================================================
 # ŒUF DU COMPTOIR, DÉBLOCAGE
@@ -294,7 +320,7 @@ for it in ITL:
     w(F + f"i/{it['i']}/charger.mcfunction", [
         f"scoreboard players set #b c.t {it['b']}", f"scoreboard players set #V c.t {it['V']}",
         f"scoreboard players set #mj c.t {it['mj']}", f"scoreboard players set #rare c.t {1 if it['rare'] else 0}",
-        f'data modify storage {NS}:t it set value {{id:"{it["id"]}",n:"{it["n"]}",i3:"{it["i3"]}",cn:"{cn}",cb:{10 + it["cat"]}}}',
+        f'data modify storage {NS}:t it set value {{id:"{it["id"]}",n:"{it["n"]}",i3:"{it["i3"]}",cn:"{cn}",cb:{100 + it["cat"]}}}',
         f"scoreboard players operation #p c.t = {H(it)} c.p", f"scoreboard players operation #h c.t = {H(it)} c.h",
         f"scoreboard players operation #vs c.t = {H(it)} c.vs", f"scoreboard players operation #as c.t = {H(it)} c.as",
         f"scoreboard players operation #e c.t = {H(it)} c.ev", "scoreboard players add #e c.t 1000"])
@@ -328,7 +354,14 @@ w(F + "prix/vente.mcfunction", [
     "scoreboard players operation #u0 c.t = #u c.t",
     "scoreboard players operation #u c.t *= #bon c.t", "scoreboard players operation #u c.t /= #1000 c.g",
     "execute if score #u c.t matches ..0 run scoreboard players set #u c.t 1",
-    "scoreboard players operation #a c.t = #u0 c.t", "scoreboard players operation #a c.t *= #achat c.g"])
+    # rachat : ne descend jamais sous ACHAT x la base (ni marché saturé, ni krach), monte avec la demande et les pénuries
+    "scoreboard players operation #f c.t = #pm c.t", "execute if score #f c.t matches 1.. run scoreboard players set #f c.t 0",
+    "scoreboard players operation #f c.t *= #-1 c.g", "scoreboard players add #f c.t 1000",
+    "scoreboard players operation #a c.t = #b c.t", "scoreboard players operation #a c.t *= #f c.t",
+    "scoreboard players operation #a c.t /= #1000 c.g", "scoreboard players operation #f c.t = #e c.t",
+    "execute if score #f c.t matches ..999 run scoreboard players set #f c.t 1000",
+    "scoreboard players operation #a c.t *= #f c.t", "scoreboard players operation #a c.t /= #1000 c.g",
+    "scoreboard players operation #a c.t *= #achat c.g"])
 BO = ["scoreboard players set #bon c.t 1000", "scoreboard players set #lv c.t 0"]
 BO += [f"execute if score #mj c.t matches {JIDX[j]} run scoreboard players operation #lv c.t = @s m.{j}_lvl" for j, *_ in JOBS]
 BO += ["execute if score #lv c.t matches 101.. run scoreboard players set #lv c.t 100",
@@ -594,12 +627,12 @@ RETOUR = btn(T("Accueil", "white"), 1, 100)
 wj(f"data/{NS}/dialog/ouvrir.json", {
     "type": "minecraft:multi_action", "title": {"text": "Commerce", "color": "gold", "bold": True},
     "external_title": {"text": "Commerce"}, "can_close_with_escape": True, "pause": False,
-    "body": [{"type": "minecraft:item", "item": {"id": "minecraft:emerald"}, "show_decorations": False,
-              "description": {"contents": {"text": "Ton compte en Écus, le marché, la bourse et le classement des fortunes.", "color": "gray"}, "width": 250}}],
-    "actions": [{"label": {"text": t, "color": c}, "width": 150, "action": {"type": "run_command", "command": f"trigger commerce set {v}"}}
-                for t, c, v in (("Mon compte", "gold", 1), ("Marché", "yellow", 9), ("Bourse", "light_purple", 20),
-                                ("Fortunes", "gold", 21), ("Cristaux de métier", "aqua", 22), ("Aide", "white", 60))],
-    "columns": 2})
+    "body": [{"type": "minecraft:item", "item": {"id": "minecraft:villager_spawn_egg"}, "show_decorations": False,
+              "description": {"contents": [{"text": "Ton compte en Écus, le marché, la bourse, les fortunes et les cristaux.\n", "color": "gray"},
+                                          {"text": "Pas encore d'œuf de comptoir ? La recette s'affiche à l'ouverture.", "color": "dark_gray"}], "width": 250}}],
+    "actions": [{"label": {"text": "Ouvrir le Commerce", "color": "gold", "bold": True}, "width": 200,
+                 "action": {"type": "run_command", "command": "trigger commerce set 1"}}],
+    "columns": 1})
 wj("data/minecraft/tags/dialog/quick_actions.json", {"values": [f"{NS}:ouvrir"]})
 wj("data/minecraft/tags/dialog/pause_screen_additions.json", {"values": [f"{NS}:ouvrir"]})
 
@@ -614,7 +647,7 @@ TR = ["scoreboard players operation #v c.t = @s commerce", "scoreboard players s
       f"execute if score #v c.t matches 21 run return run function {NS}:page/fortunes",
       f"execute if score #v c.t matches 22 run return run function {NS}:page/cristaux",
       f"execute if score #v c.t matches 50 run return run function {NS}:comptoir/deplacer"]
-TR += [f"execute if score #v c.t matches {10 + c} run return run function {NS}:page/cat_{c}" for c in ITEMS]
+TR += [f"execute if score #v c.t matches {100 + c} run return run function {NS}:page/cat_{c}" for c in ITEMS]
 TR += [f"execute if score #v c.t matches {400 + JIDX[j]} run return run function {NS}:page/cristal_{j}" for j, *_ in JOBS]
 TR += [f"execute if score #v c.t matches 10001..{10000 + NIT} run return run function {NS}:page/item_depuis",
        f"execute if score #v c.t matches 1000000..3999999 run return run function {NS}:op/entree"]
@@ -624,22 +657,27 @@ for j, *_ in JOBS:
 w(F + "page/item_depuis.mcfunction", ["scoreboard players operation #i c.t = #v c.t",
                                       "scoreboard players remove #i c.t 10000", f"function {NS}:page/item"])
 
-# ---------------------------------------------------------------- page verrouillée : la recette
-REC = [("emerald_block", "4 blocs d'émeraude (les coins)"), ("diamond_block", "1 bloc de diamant (en haut)"),
+# ---------------------------------------------------------------- page verrouillée : la recette en grille, le reste grisé
+REC = [("emerald_block", "4 blocs d'émeraude (les quatre coins)"), ("diamond_block", "1 bloc de diamant (en haut au milieu)"),
        ("gold_block", "2 blocs d'or (à gauche et à droite)"), ("netherite_ingot", "1 lingot de netherite (au centre)"),
-       ("chest", "1 coffre (en bas)")]
+       ("chest", "1 coffre (en bas au milieu)")]
+CASE = {"E": ("Émeraude", "green", "Bloc d’émeraude"), "D": ("Diamant", "aqua", "Bloc de diamant"), "G": ("Or", "gold", "Bloc d’or"),
+        "N": ("Netherite", "#8B7F86", "Lingot de netherite"), "C": ("Coffre", "#C08A4C", "Coffre")}
+GRILLE = [btn(L(T("[ ", "dark_gray"), T(CASE[k][0], CASE[k][1], True), T(" ]", "dark_gray")), 1, 96, CASE[k][2]) for k in "EDEGNGECE"]
+GRIS = lambda txt: btn(T(txt, "dark_gray"), 1, 96, "Verrouillé : crafte l’œuf de comptoir pour l’ouvrir.")
 w(F + "page/verrou.mcfunction", SOLDE(f"{NS}:v") + [f"function {NS}:page/verrou_d with storage {NS}:v"])
 w(F + "page/verrou_d.mcfunction", "$" + dlg(
-    T("Commerce verrouillé", "gold", True),
-    [f'{{type:"minecraft:plain_message",width:300,contents:{L(T("Pour ouvrir le Commerce, crafte un ", "gray"), T("œuf de comptoir", "gold", True), T(" à l’établi et pose-le à ta base. Tu gagnes déjà des Écus avec tes paliers, défis et boss.\\n", "gray"), SOLDE_TXT)}}}']
-    + [f'{{type:"minecraft:item",item:{{id:"minecraft:{iid}"}},show_decorations:false,description:{{contents:{T(txt, "white")},width:250}}}}' for iid, txt in REC],
-    [btn(T("Aide", "white"), 60), btn(T("Compris", "gray"), 0)]))
+    T("Commerce : verrouillé", "gold", True),
+    [f'{{type:"minecraft:plain_message",width:310,contents:{L(T("Pour ouvrir le Commerce, crafte un ", "gray"), T("œuf de comptoir", "gold", True), T(" à l’établi (recette en grille ci-dessous) puis pose-le à ta base. En attendant, tes paliers, défis et boss te rapportent déjà des Écus.\\n", "gray"), SOLDE_TXT)}}}']
+    + [f'{{type:"minecraft:item",item:{{id:"minecraft:{iid}"}},show_decorations:false,description:{{contents:{T(txt, "white")},width:250}}}}' for iid, txt in REC]
+    + [f'{{type:"minecraft:plain_message",width:310,contents:{L(T("Recette de l’œuf de comptoir (établi) :", "gold", True))}}}'],
+    GRILLE + [GRIS("Marché"), GRIS("Bourse"), GRIS("Fortunes"), GRIS("Cristaux"), GRIS("Mon comptoir"), btn(T("Aide", "white"), 60, 96)], 3))
 
 # ---------------------------------------------------------------- aide
 AIDE = [
     ("Les Écus", "Ton argent est sur un compte, impossible à perdre ou à voler. Tout le monde voit les fortunes."),
-    ("Gagner", "Vends ce que tu récoltes, passe des paliers de métier (250 par palier), fais les défis (150 à 1 500) et les boss (600)."),
-    ("Prix qui bougent", "Plus le serveur rachète un objet, plus son prix baisse, puis il remonte en une heure de jeu environ. Racheter coûte 4 fois le prix de vente."),
+    ("Gagner", "Vends ce que tu récoltes, passe des paliers de métier (250 x le palier), fais les défis (150 à 1 500) et les boss (600)."),
+    ("Prix qui bougent", "Plus le serveur rachète un objet, plus son prix baisse, puis il remonte en une heure de jeu environ. Acheter coûte au moins 4 fois le prix de vente de base, et plus quand l'objet est demandé."),
     ("Bonus de métier", "Tes produits se vendent +0,5 % par niveau du métier lié, et +25 % pendant l'heure du métier."),
     ("Bourse", "Évènements de marché (pénurie, krach), tendances sur une heure, objets les plus vendus et achetés."),
     ("Cristaux", "Achetables, mais hors de prix : 2 500 Écus le premier, +5 % à chaque achat de la semaine."),
@@ -677,7 +715,7 @@ w(F + "page/marche_d.mcfunction", "$" + dlg(
     T("Marché", "yellow", True),
     [f'{{type:"minecraft:plain_message",width:300,contents:{L(SOLDE_TXT, T("\\nAchat et vente depuis n’importe où. Les prix suivent l’offre et la demande.", "gray"))}}}']
     + [f'{{type:"minecraft:item",item:{{id:"minecraft:{CATSHOW[c][0]}"}},show_decorations:false,description:{{width:250,contents:{L(T(CATNAME[c] + "\\n", CATSHOW[c][1], True), T(CATSHOW[c][2], "gray"))}}}}}' for c in ITEMS],
-    [btn(T(CATNAME[c], CATSHOW[c][1]), 10 + c) for c in ITEMS] + [RETOUR]))
+    [btn(T(CATNAME[c], CATSHOW[c][1]), 100 + c) for c in ITEMS] + [RETOUR]))
 
 # ---------------------------------------------------------------- une catégorie
 w(F + "page/ligne.mcfunction", [
