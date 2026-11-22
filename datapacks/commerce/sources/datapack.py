@@ -11,7 +11,7 @@ from catalogue import ACHAT, CATEGORIES, ITEMS, RARES
 ROOT = os.path.join(HERE, "..", "build", "commerce_datapack")
 NS = "commerce"
 F = f"data/{NS}/function/"
-VERSION = 8
+VERSION = 9
 if os.path.exists(ROOT):
     shutil.rmtree(ROOT)
 
@@ -108,10 +108,13 @@ LD = [f"scoreboard objectives add {o} dummy" for o in PLAYER_OBJ + ITEM_OBJ + ["
 LD += ["scoreboard objectives add commerce trigger",
        "scoreboard objectives add c.oeuf minecraft.used:minecraft.villager_spawn_egg",
        "scoreboard objectives add c.craft minecraft.crafted:minecraft.villager_spawn_egg"]
-for c in (2, 5, 10, 12, 100, 105, 250, 500, 1000, 1000000, -1):
+for c in (2, 5, 7, 10, 12, 100, 105, 250, 500, 1000, 1000000, -1):
     LD.append(f"scoreboard players set #{c} c.g {c}")
 LD.append(f"scoreboard players set #achat c.g {ACHAT}")
 for o in ("#dec", "#hr", "#cv", "#t", "#evi", "#evt", "#semp"):
+    LD.append(f"scoreboard players add {o} c.g 0")
+LD.append("execute unless score #indice c.g matches 1.. run scoreboard players set #indice c.g 1000")
+for o in ():
     LD.append(f"scoreboard players add {o} c.g 0")
 for it in ITL:
     LD += [f"scoreboard players add {H(it)} {o} 0" for o in ("c.p", "c.h", "c.vs", "c.as", "c.ev")]
@@ -509,11 +512,25 @@ w(F + "marche/detente.mcfunction", DT)
 RL = []
 for it in ITL:
     RL += [f"scoreboard players set #i c.t {it['i']}", f"function {NS}:marche/releve_un"]
+RL = ["scoreboard players set #isum c.t 0"] + RL + [
+    "scoreboard players operation #h c.t = #isum c.t", f"scoreboard players set #n c.t {NIT}",
+    "scoreboard players operation #h c.t /= #n c.t", "scoreboard players operation #indice c.g = #h c.t",
+    f"data modify storage {NS}:hist _indice append value 0",
+    f"execute store result storage {NS}:hist _indice[-1] int 1 run scoreboard players get #h c.t",
+    f"execute if data storage {NS}:hist _indice[24] run data remove storage {NS}:hist _indice[0]"]
 w(F + "marche/releve.mcfunction", RL)
 w(F + "marche/releve_un.mcfunction", [
     f"function {NS}:item/charger", "scoreboard players set #d c.t 0", f"function {NS}:prix/mid",
     f"function {NS}:prix/sans_bonus", f"function {NS}:prix/vente",
-    "scoreboard players operation #h c.t = #u0 c.t", f"function {NS}:item/sauver"])
+    "scoreboard players operation #h c.t = #u0 c.t", f"function {NS}:item/sauver",
+    f"function {NS}:hist/ajout with storage {NS}:t it",
+    # indice : moyenne des prix rapportés à leur base, en millièmes
+    "scoreboard players operation #r c.t = #u0 c.t", "scoreboard players operation #r c.t *= #1000 c.g",
+    "scoreboard players operation #r c.t /= #b c.t", "scoreboard players operation #isum c.t += #r c.t"])
+w(F + "hist/ajout.mcfunction", [
+    f"$data modify storage {NS}:hist $(id) append value 0",
+    f"$execute store result storage {NS}:hist $(id)[-1] int 1 run scoreboard players get #h c.t",
+    f"$execute if data storage {NS}:hist $(id)[24] run data remove storage {NS}:hist $(id)[0]"])
 w(F + "marche/heure.mcfunction", [
     "scoreboard players set #hr c.g 0", f"function {NS}:marche/releve",
     "scoreboard players set #r c.t 100",
@@ -650,6 +667,9 @@ RP = os.path.join(HERE, "..", "build", "commerce_rp", "assets", "commerce")
 PANNEAU = ""
 RECETTE = {"E": "emerald_block", "D": "diamond_block", "G": "gold_block", "N": "netherite_ingot", "C": "barrel_side"}
 GRID = ["EDE", "GNG", "ECE"]
+BANNIERES = [("COMMERCE", "emerald"), ("MARCHÉ", "emerald"), ("BOURSE", "bell"), ("FORTUNES", "gold_ingot"), ("CRISTAUX", "diamond")]
+# bandeau k : glyphe chr(0xE020 + k), 27 px de haut, soit 3 lignes de texte
+BAN = lambda k: f'{{type:"minecraft:plain_message",width:310,contents:[{{text:""}},{{text:"{chr(0xE020 + k)}",font:"commerce:recette",color:"white",shadow_color:0}},{{text:"\\n\\n"}}]}}'
 
 
 def dessiner_rp():
@@ -678,10 +698,64 @@ def dessiner_rp():
     for x0, y0, x1, y1 in [(12, 10, 14, 20), (12, 10, 20, 12), (12, 14, 18, 16), (12, 18, 20, 20), (15, 6, 18, 8)]:
         q.rectangle([x0, y0, x1 - 1, y1 - 1], fill=(150, 98, 12, 255))
     p.save(os.path.join(RP, "textures", "font", "ecu.png"))
+    # bandeaux de titre : plaque façon interface Forge (pierre, cadre doré), texte en police Minecraft x2, icônes
+    asc = Image.open(os.path.join(HERE, "textures_recette", "ascii.png")).convert("RGBA")
+    def lettre(ch):
+        o = ord(ch); cell = asc.crop(((o % 16) * 8, (o // 16) * 8, (o % 16) * 8 + 8, (o // 16) * 8 + 8))
+        w_ = max([x for x in range(8) for y in range(8) if cell.getpixel((x, y))[3]] or [2]) + 1
+        return cell, (4 if ch == " " else w_)
+    pierre = ct.crop((7, 7, 23, 23))
+
+    def plaque(Wb, Hb):
+        """Plaque en 9 tranches prises sur la texture d'établi : coins, bords et fond de pierre d'origine."""
+        b = Image.new("RGBA", (Wb, Hb), (0, 0, 0, 0))
+        for x in range(7, Wb - 7, 16):
+            for y in range(7, Hb - 7, 16):
+                b.paste(pierre.crop((0, 0, min(16, Wb - 7 - x), min(16, Hb - 7 - y))), (x, y))
+        for x in range(7, Wb - 7):
+            b.paste(ct.crop((7, 0, 8, 7)), (x, 0)); b.paste(ct.crop((7, 159, 8, 166)), (x, Hb - 7))
+        for y in range(7, Hb - 7):
+            b.paste(ct.crop((0, 7, 7, 8)), (0, y)); b.paste(ct.crop((169, 7, 176, 8)), (Wb - 7, y))
+        b.paste(ct.crop((0, 0, 7, 7)), (0, 0)); b.paste(ct.crop((169, 0, 176, 7)), (Wb - 7, 0))
+        b.paste(ct.crop((0, 159, 7, 166)), (0, Hb - 7)); b.paste(ct.crop((169, 159, 176, 166)), (Wb - 7, Hb - 7))
+        return b
+    provs = []
+    for k, (txt, ico) in enumerate(BANNIERES):
+        Wb, Hb = 200, 27
+        b = plaque(Wb, Hb)
+        d2 = ImageDraw.Draw(b)
+        # texte centré, deux fois la taille de la police, ombre portée
+        larg = sum(lettre(ch)[1] + 1 for ch in txt) * 2 - 2
+        x0, y0 = (Wb - larg) // 2, 5
+        for dx, dy, col in ((2, 2, (63, 45, 20)), (0, 0, (255, 205, 70))):
+            x = x0
+            for ch in txt:
+                cell, w_ = lettre("E" if ch == "É" else ch)
+                big = cell.resize((16, 16), Image.NEAREST)
+                for yy in range(16):
+                    for xx in range(16):
+                        if big.getpixel((xx, yy))[3]:
+                            b.putpixel((x + xx + dx, y0 + yy + dy), col + (255,))
+                if ch == "É":   # accent aigu dessiné à la main
+                    for xx, yy in ((8, -2), (6, -1)):
+                        d2.rectangle([x + xx + dx, y0 + yy + dy, x + xx + dx + 1, y0 + yy + dy], fill=col + (255,))
+                x += (w_ + 1) * 2
+        for ix in (8, Wb - 24):
+            t = tex(ico); b.paste(t, (ix, (Hb - 16) // 2), t)
+        b.save(os.path.join(RP, "textures", "font", f"bandeau_{k}.png"))
+        provs.append({"type": "bitmap", "file": f"commerce:font/bandeau_{k}.png", "height": Hb, "ascent": 7, "chars": [chr(0xE020 + k)]})
+    # barres de courbe : 8 hauteurs, blanches (la couleur du texte les teinte), 2 px de large, posées sur la ligne
+    bar = Image.new("RGBA", (24, 9), (0, 0, 0, 0))
+    for k in range(8):
+        for y in range(8 - k, 9):
+            for x in range(2):
+                bar.putpixel((k * 3 + x, y), (255, 255, 255, 255))
+    bar.save(os.path.join(RP, "textures", "font", "barres.png"))
+    provs.append({"type": "bitmap", "file": "commerce:font/barres.png", "height": 9, "ascent": 8, "chars": ["".join(chr(0xE030 + k) for k in range(8))]})
     os.makedirs(os.path.join(RP, "font"), exist_ok=True)
     json.dump({"providers": [
         {"type": "bitmap", "file": "commerce:font/recette.png", "height": 88, "ascent": 7, "chars": [PANNEAU]},
-        {"type": "bitmap", "file": "commerce:font/ecu.png", "height": 8, "ascent": 7, "chars": [ECU]}]},
+        {"type": "bitmap", "file": "commerce:font/ecu.png", "height": 8, "ascent": 7, "chars": [ECU]}] + provs},
         open(os.path.join(RP, "font", "recette.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 
 
@@ -771,7 +845,7 @@ AC = SOLDE(f"{NS}:a") + [
 w(F + "page/accueil.mcfunction", AC)
 w(F + "page/accueil_d.mcfunction", "$" + dlg(
     T("Commerce", "gold", True),
-    [f'{{type:"minecraft:plain_message",width:310,contents:{L(SOLDE_TXT, T("\\nVendu : $(tv) " + ECU + "   ·   acheté : $(ta) " + ECU, "gray"), T("\\n$(ev)", "light_purple"), MSG_TXT)}}}'],
+    [BAN(0), f'{{type:"minecraft:plain_message",width:310,contents:{L(SOLDE_TXT, T("\\nVendu : $(tv) " + ECU + "   ·   acheté : $(ta) " + ECU, "gray"), T("\\n$(ev)", "light_purple"), MSG_TXT)}}}'],
     [btn(L(spr("emerald"), T("  Marché", "yellow", True)), 9, 160, "Acheter et vendre, objet par objet."),
      btn(L(spr("diamond"), T("  Bourse", "light_purple", True)), 20, 160, "Évènements, tendances, tops."),
      btn(L(spr("gold_ingot"), T("  Fortunes", "gold")), 21, 160, "Le solde de tout le monde."),
@@ -784,7 +858,7 @@ CATSHOW = {c: (vit, col, desc) for c, _, vit, col, desc in CATEGORIES}
 w(F + "page/marche.mcfunction", SOLDE(f"{NS}:mk") + [f"function {NS}:page/marche_d with storage {NS}:mk"])
 w(F + "page/marche_d.mcfunction", "$" + dlg(
     T("Marché", "yellow", True),
-    [f'{{type:"minecraft:plain_message",width:310,contents:{L(SOLDE_TXT)}}}'],
+    [BAN(1), f'{{type:"minecraft:plain_message",width:310,contents:{L(SOLDE_TXT)}}}'],
     [btn(L(spr(CATSHOW[c][0]), T("  " + CATNAME[c], CATSHOW[c][1])), PG(c, 0), 160, CATSHOW[c][2]) for c in ITEMS]
     + [btn(T("Bourse", "light_purple"), 20, 160), btn(T("Accueil", "white"), 1, 160)]))
 
@@ -797,6 +871,22 @@ w(F + "page/ligne.mcfunction", [
     f"function {NS}:fmt/tendance",
     f"data modify storage {NS}:l t set from storage {NS}:t tr"])
 VIDE = '{label:{text:"·",color:"dark_gray"},width:160}'
+ABREV = [("Bûche écorcée ", "Écorcée "), ("Tige carmin écorcée", "Carmin écorcée"), ("Tige biscornue écorcée", "Biscornue écorcée"),
+         ("Bloc de bambou écorcé", "Bambou écorcé"), ("Briques de pierre ", "Briques "), ("Terre cuite émaillée ", "Émaillée "),
+         ("Pomme de terre empoisonnée", "Patate empoisonnée"), ("Pomme de terre cuite", "Patate cuite"),
+         ("Côtelette de porc crue", "Porc cru"), ("Côtelette de porc cuite", "Porc cuit"), ("Briques de roche noire polie", "Briques roche noire"),
+         ("Bloc de verrues ", "Verrues "), ("Crâne de wither squelette", "Crâne de wither"), ("Poche d'encre lumineuse", "Encre lumineuse"),
+         ("Pierre taillée moussue", "Pierre moussue"), ("Planches de ", "Planches "), ("Feuilles de ", "Feuilles "),
+         ("Propagule de palétuvier", "Propagule"), ("Terre cuite ", "T. cuite "), ("Verre teinté ", "Verre "),
+         ("Briques rouges du Nether", "Briques rouges"), ("Oeil d'araignée fermenté", "Oeil fermenté"), ("Cristaux de prismarine", "Cristaux prismarine")]
+
+
+def court(n, maxi=21):
+    """Libellé de bouton : le nom complet reste dans l'infobulle. Les boutons font 160 px, environ 21 caractères."""
+    for a, b in ABREV:
+        n = n.replace(a, b)
+    return n if len(n) <= maxi else n[:maxi - 1].rstrip() + "…"
+
 for c in ITEMS:
     rare = c in RARES
     for p in range(NPAGES[c]):
@@ -811,7 +901,7 @@ for c in ITEMS:
         for it in its:
             k = it["i"]
             tip = f"Vente : $(ve{k}),$(vz{k})$(vc{k}) Écus l’unité" + ("" if rare else f"\\nAchat : $(ae{k}),$(az{k})$(ac{k}) Écus l’unité") + f"\\nTendance sur 1 h : $(t{k})"
-            acts.append(btn(L(spr(it["id"]), T("  " + it["n"], "white")), 10000 + k, 160, tip))
+            acts.append(btn(L(spr(it["id"]), T("  " + court(it["n"]), "white")), 10000 + k, 160, it["n"] + "\\n" + tip))
         if len(its) % 2:
             acts.append(VIDE)
         acts.append(btn(T("◀  Page précédente", "white"), PG(c, p - 1), 160) if p > 0 else VIDE)
@@ -821,6 +911,49 @@ for c in ITEMS:
         w(F + f"page/cat_{c}_{p}_d.mcfunction", "$" + dlg(
             T(CATNAME[c], CATSHOW[c][1], True),
             [f'{{type:"minecraft:plain_message",width:310,contents:{L(SOLDE_TXT, T(sub + "   ·   prix au survol", "gray"))}}}'], acts))
+
+# ---------------------------------------------------------------- courbes (barres de la police commerce:recette)
+w(F + "hist/courbe.mcfunction", [
+    f'data modify storage {NS}:t SP set value [{{text:""}}]', f'data modify storage {NS}:t VAR set value ""',
+    f'data modify storage {NS}:t VARC set value "gray"',
+    f"execute store result score #hn c.t run data get storage {NS}:t H",
+    f'execute if score #hn c.t matches ..1 run return run data modify storage {NS}:t SP set value [{{text:"pas encore assez de relevés (un par heure de jeu)",color:"dark_gray",italic:true}}]',
+    "scoreboard players set #hmin c.t 2147483647", "scoreboard players set #hmax c.t -2147483648",
+    f"data modify storage {NS}:t W2 set from storage {NS}:t H", f"function {NS}:hist/minmax",
+    "scoreboard players operation #hsp c.t = #hmax c.t", "scoreboard players operation #hsp c.t -= #hmin c.t",
+    f"data modify storage {NS}:t W2 set from storage {NS}:t H", f"function {NS}:hist/barres",
+    # variation entre le premier et le dernier relevé, en millièmes
+    f"execute store result score #h0 c.t run data get storage {NS}:t H[0]",
+    f"execute store result score #h1 c.t run data get storage {NS}:t H[-1]",
+    "execute if score #h0 c.t matches ..0 run scoreboard players set #h0 c.t 1",
+    "scoreboard players operation #hv c.t = #h1 c.t", "scoreboard players operation #hv c.t -= #h0 c.t",
+    "scoreboard players operation #hv c.t *= #1000 c.g", "scoreboard players operation #hv c.t /= #h0 c.t",
+    f'execute if score #hv c.t matches 1.. run data modify storage {NS}:t VARC set value "green"',
+    f'execute if score #hv c.t matches ..-1 run data modify storage {NS}:t VARC set value "red"',
+    f'data modify storage {NS}:t vs set value "+"', f'execute if score #hv c.t matches ..-1 run data modify storage {NS}:t vs set value "-"',
+    "execute if score #hv c.t matches ..-1 run scoreboard players operation #hv c.t *= #-1 c.g",
+    "scoreboard players operation #hve c.t = #hv c.t", "scoreboard players operation #hve c.t /= #10 c.g",
+    "scoreboard players operation #hvd c.t = #hv c.t", "scoreboard players operation #hvd c.t %= #10 c.g",
+    f"execute store result storage {NS}:t ve int 1 run scoreboard players get #hve c.t",
+    f"execute store result storage {NS}:t vd int 1 run scoreboard players get #hvd c.t",
+    f"function {NS}:hist/var with storage {NS}:t"])
+w(F + "hist/var.mcfunction", f'$data modify storage {NS}:t VAR set value "  $(vs)$(ve),$(vd) %"')
+w(F + "hist/minmax.mcfunction", [
+    f"execute unless data storage {NS}:t W2[0] run return 0",
+    f"execute store result score #x c.t run data get storage {NS}:t W2[0]",
+    "scoreboard players operation #hmin c.t < #x c.t", "scoreboard players operation #hmax c.t > #x c.t",
+    f"data remove storage {NS}:t W2[0]", f"function {NS}:hist/minmax"])
+HB = [f"execute unless data storage {NS}:t W2[0] run return 0",
+      f"execute store result score #x c.t run data get storage {NS}:t W2[0]",
+      "scoreboard players set #hh c.t 3",
+      "execute if score #hsp c.t matches 1.. run scoreboard players operation #x c.t -= #hmin c.t",
+      "execute if score #hsp c.t matches 1.. run scoreboard players operation #x c.t *= #7 c.g",
+      "execute if score #hsp c.t matches 1.. run scoreboard players operation #x c.t /= #hsp c.t",
+      "execute if score #hsp c.t matches 1.. run scoreboard players operation #hh c.t = #x c.t"]
+HB += [f'execute if score #hh c.t matches {k} run data modify storage {NS}:t SP append value {{text:"{chr(0xE030 + k)}",font:"commerce:recette"}}' for k in range(8)]
+HB += [f"data remove storage {NS}:t W2[0]", f"function {NS}:hist/barres"]
+w(F + "hist/barres.mcfunction", HB)
+w(F + "hist/charger.mcfunction", [f"data modify storage {NS}:t H set value []", f"$data modify storage {NS}:t H set from storage {NS}:hist $(id)"])
 
 # ---------------------------------------------------------------- un objet : prix totaux écrits sur les boutons
 TOT = [1, 16, 64]
@@ -853,6 +986,9 @@ IPG += ["scoreboard players set #d c.t 0", f"function {NS}:prix/mid", f"function
         f'execute if score #x c.t matches 1.. run function {NS}:page/item_bonus',
         f"function {NS}:fmt/tendance",
         f"data modify storage {NS}:t ip.tr set from storage {NS}:t tr", f"data modify storage {NS}:t ip.trc set from storage {NS}:t trc",
+        f"function {NS}:hist/charger with storage {NS}:t it", f"function {NS}:hist/courbe",
+        f"data modify storage {NS}:t ip.sp set from storage {NS}:t SP", f"data modify storage {NS}:t ip.var set from storage {NS}:t VAR",
+        f"data modify storage {NS}:t ip.varc set from storage {NS}:t VARC",
         f'data modify storage {NS}:t ip.ev set value ""',
         f'execute if score #e c.t matches 1001.. run data modify storage {NS}:t ip.ev set value "   ·   pénurie : x1,6"',
         f'execute if score #e c.t matches ..999 run data modify storage {NS}:t ip.ev set value "   ·   krach : /2"'] + msg_line(f"{NS}:t", "ip.") + [
@@ -876,7 +1012,7 @@ for kind in ("a", "v"):
     desc = [T("Vente ", "gray"), T(f"$(ve),$(vz)$(vc) {ECU}", "gold", True), T("$(bp)", "gray")]
     if kind == "a":
         desc += [T("   Achat ", "gray"), T(f"$(ae),$(az)$(ac) {ECU}", "yellow", True)]
-    desc += [T("  l’unité\\nTu en as $(have)   ·   tendance ", "gray"), "{text:\"$(tr)\",color:\"$(trc)\",bold:true}", T("$(ev)", "light_purple"), T("\\n$(msg)", "yellow")]
+    desc += [T("  l’unité\\nTu en as $(have)$(ev)", "gray"), T("\\nCours 24 h  ", "gray"), "{text:\"\",color:\"$(varc)\",extra:$(sp)}", "{text:\"$(var)\",color:\"$(varc)\",bold:true}", T("\\n$(msg)", "yellow")]
     body = [f'{{type:"minecraft:item",item:{{id:"minecraft:$(id)"}},show_decorations:false,description:{{width:280,contents:{L(*desc)}}}}}']
     vend = lambda q: btn_cmd(L(T(f"Vendre {q}  ", "gold", True), T(f"$(s{q}e),$(s{q}z)$(s{q}c) {ECU}", "white")), f"trigger commerce set 2$(i3){q:03d}",
                              "Prix total, bonus de métier compris. Le prix baisse un peu à mesure que tu vends.")
@@ -911,7 +1047,12 @@ for key, obj in (("tv", "c.vs"), ("ta", "c.as")):
         PS += [f"execute unless score {H(it)} c.x matches 1 if score {H(it)} {obj} > #m c.t run scoreboard players set #best c.t {it['i']}",
                f"execute if score #best c.t matches {it['i']} run scoreboard players operation #m c.t = {H(it)} {obj}"]
     w(F + f"bourse/{key}_passe.mcfunction", PS)
-BO += [f'function {NS}:rang/calcul {{obj:"c.tv",n:3}}',
+BO += [f"data modify storage {NS}:t H set from storage {NS}:hist _indice", f"function {NS}:hist/courbe",
+       f"data modify storage {NS}:r sp set from storage {NS}:t SP", f"data modify storage {NS}:r var set from storage {NS}:t VAR",
+       f"data modify storage {NS}:r varc set from storage {NS}:t VARC",
+       "scoreboard players operation #x c.t = #indice c.g", "scoreboard players operation #x c.t /= #10 c.g",
+       f"execute store result storage {NS}:r ind int 1 run scoreboard players get #x c.t",
+       f'function {NS}:rang/calcul {{obj:"c.tv",n:3}}',
        f"data modify storage {NS}:r ev set from storage {NS}:g evtxt",
        f'execute if data storage {NS}:r {{ev:""}} run data modify storage {NS}:r ev set value "Pas d’évènement en cours."',
        f"function {NS}:page/bourse_d with storage {NS}:r"]
@@ -920,7 +1061,7 @@ NL = "\\n"
 top = lambda key, col: ",".join(T(f"{k}. ", "gray") + "," + T(f"$({key}{k}n)", col) + "," + T(f"  $({key}{k}q)" + (NL if k < NTOP else ""), "gray") for k in range(1, NTOP + 1))
 w(F + "page/bourse_d.mcfunction", "$" + dlg(
     T("Bourse", "light_purple", True),
-    [f'{{type:"minecraft:plain_message",width:310,contents:{L(T("$(ev)\\n\\n", "light_purple"), T("Plus vendus cette semaine\\n", "gold", True), top("tv", "white"), T("\\n\\nPlus achetés cette semaine\\n", "yellow", True), top("ta", "white"), T("\\n\\nPlus gros marchands\\n", "green", True))[:-1]},{{text:"",extra:$(C)}}]}}'],
+    [BAN(2), f'{{type:"minecraft:plain_message",width:310,contents:{L(T("Indice du marché  ", "white", True), T("$(ind) %  ", "gold", True), "{text:\"\",color:\"$(varc)\",extra:$(sp)}", "{text:\"$(var)\",color:\"$(varc)\",bold:true}", T("\\n$(ev)\\n\\n", "light_purple"), T("Plus vendus cette semaine\\n", "gold", True), top("tv", "white"), T("\\n\\nPlus achetés cette semaine\\n", "yellow", True), top("ta", "white"), T("\\n\\nPlus gros marchands\\n", "green", True))[:-1]},{{text:"",extra:$(C)}}]}}'],
     [btn(T("Marché", "yellow"), 9, 110), btn(T("Fortunes", "gold"), 21, 110), btn(T("Accueil", "white"), 1, 110)], 3))
 
 # ---------------------------------------------------------------- fortunes
@@ -928,7 +1069,7 @@ w(F + "page/fortunes.mcfunction", [f'function {NS}:rang/calcul {{obj:"c.ecus",n:
     f"function {NS}:page/fortunes_d with storage {NS}:r"])
 w(F + "page/fortunes_d.mcfunction", "$" + dlg(
     T("Fortunes", "gold", True),
-    [f'{{type:"minecraft:plain_message",width:310,contents:[{SOLDE_TXT},{T("\\n\\nLes 10 plus riches du serveur\\n", "gold", True)},{{text:"",extra:$(C)}}]}}'],
+    [BAN(3), f'{{type:"minecraft:plain_message",width:310,contents:[{SOLDE_TXT},{T("\\n\\nLes 10 plus riches du serveur\\n", "gold", True)},{{text:"",extra:$(C)}}]}}'],
     [btn(T("Bourse", "light_purple"), 20, 160), btn(T("Accueil", "white"), 1, 160)]))
 
 # ---------------------------------------------------------------- cristaux
@@ -940,7 +1081,7 @@ CR += msg_line(f"{NS}:cr") + [f"function {NS}:page/cristaux_d with storage {NS}:
 w(F + "page/cristaux.mcfunction", CR)
 w(F + "page/cristaux_d.mcfunction", "$" + dlg(
     T("Cristaux de métier", "aqua", True),
-    [f'{{type:"minecraft:plain_message",width:310,contents:{L(SOLDE_TXT, T("   ·   un cristal : ", "gray"), T("$(p) " + ECU, "aqua", True), T("\\nAchetés cette semaine : $(n), +5 % à chaque achat.", "gray"), T("\\n$(msg)", "yellow"))}}}'],
+    [BAN(4), f'{{type:"minecraft:plain_message",width:310,contents:{L(SOLDE_TXT, T("   ·   un cristal : ", "gray"), T("$(p) " + ECU, "aqua", True), T("\\nAchetés cette semaine : $(n), +5 % à chaque achat.", "gray"), T("\\n$(msg)", "yellow"))}}}'],
     [btn(L(G("cristal_" + j), T(f" {nom} ", col), T(f"($({j}))", "gray")), 400 + JIDX[j], 160, f"Acheter 1 cristal de {nom}.") for j, nom, col in JOBS] + [btn(T("Accueil", "white"), 1, 160)]))
 
 # =====================================================================

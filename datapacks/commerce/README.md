@@ -22,6 +22,7 @@ Les prix de base et les volumes sont dans `sources/catalogue.py`. `sources/coher
 
 ## Historique
 
+- v9 (22/11/2026) : bandeaux de titre au style de l'interface Forge (Commerce, Marché, Bourse, Fortunes, Cristaux), courbe du cours sur 24 h de jeu sur chaque objet, indice du marché avec sa courbe dans la Bourse, libellés de boutons raccourcis (nom complet en infobulle), « d’acajou » au lieu de « de acajou ».
 - v8 (22/11/2026) : menus compacts, sans défilement pour trouver les boutons : marché en boutons avec la texture de chaque catégorie, catégories en pages de 10 objets (prix au survol), page d'un objet avec le prix total écrit sur chaque bouton (vendre et acheter 1, 16, 64, tout vendre). Recette de l'oeuf en une seule image (texture d'établi Forge et vraies textures des ingrédients). Clic droit sur le comptoir corrigé (le joueur était effacé avant d'être lu).
 - v7 (22/11/2026) : la vente ne marchait pas, une commande mal écrite faisait ignorer toute la fonction de vente par le jeu. Corrigé, et `verifier.py` contrôle maintenant la structure des commandes data et scoreboard.
 - v6 (22/11/2026) : le fond d'établi de la v4 ne s'affichait pas (glyphe de 264 px, au-delà de la limite de 256 des polices), d'où la première ligne décalée. Il est remplacé par le haut de la vraie texture d'établi du resource pack (interface Forge), cases calées sur les textures des objets.

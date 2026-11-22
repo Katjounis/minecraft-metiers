@@ -117,11 +117,12 @@ ITEMS[16] = ITEMS[2][_k:]
 ITEMS[2] = ITEMS[2][:_k]
 
 # 3 et 4 Bois -------------------------------------------------------------
+DE = lambda nom: ("d’" if nom[0] in "aeiouéè" else "de ") + nom
 for ess, nom, p, sap, sapn in BOIS:
-    I(3, f"{ess}_log", f"Bûche de {nom}", p, 1024, "b")
-    I(3, f"stripped_{ess}_log", f"Bûche écorcée de {nom}", p, 1024, "b")
-    I(4, f"{ess}_planks", f"Planches de {nom}", _r(p / 4), 2048, "b")
-    I(4, f"{ess}_leaves", f"Feuilles de {nom}", 0.10, 1024, "b")
+    I(3, f"{ess}_log", f"Bûche {DE(nom)}", p, 1024, "b")
+    I(3, f"stripped_{ess}_log", f"Bûche écorcée {DE(nom)}", p, 1024, "b")
+    I(4, f"{ess}_planks", f"Planches {DE(nom)}", _r(p / 4), 2048, "b")
+    I(4, f"{ess}_leaves", f"Feuilles {DE(nom)}", 0.10, 1024, "b")
     I(4, sap, sapn, 0.20, 512, "b")
 for ess, nom, p, fun, funn in NETHER_BOIS:
     fem = nom + ("e" if nom == "biscornu" else "")
