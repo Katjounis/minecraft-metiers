@@ -22,6 +22,7 @@ Les prix de base et les volumes sont dans `sources/catalogue.py`. `sources/coher
 
 ## Historique
 
+- v6 (22/11/2026) : le fond d'établi de la v4 ne s'affichait pas (glyphe de 264 px, au-delà de la limite de 256 des polices), d'où la première ligne décalée. Il est remplacé par le haut de la vraie texture d'établi du resource pack (interface Forge), cases calées sur les textures des objets.
 - v5 (22/11/2026) : « oe » au lieu de « œ » partout (la police de l'interface Forge n'a pas ce caractère), et vraie pièce d'Écu dessinée (glyphe `ecu.png`) à la place du symbole ¤.
 - v4 (22/11/2026) : vrai fond d'établi derrière la recette de l'oeuf (resource pack), lignes de largeur identique pour que la grille ne se décale plus.
 - v3 (22/11/2026) : le serveur refusait de démarrer à cause de deux progrès écrits au format 1.21 (`clic_comptoir`, `debloque`). Le pack n'utilise plus aucun progrès : clic par entité `interaction`, déblocage par statistique de craft. Table de butin passée au format 26.x (`modifier`, `type`). `verifier.py` signale maintenant ces anciens formats.
@@ -73,7 +74,7 @@ Avec deux packs dans la touche G, le jeu affiche d'abord la liste « Métiers / 
 - Le craft de l'oeuf débloque le Commerce dans la seconde (statistique `minecraft.crafted:minecraft.villager_spawn_egg`).
 - La recette de l'oeuf apparaît dans l'établi : si la 26.x refuse son format, le serveur démarre quand même mais la recette est absente du log (`Parsing error loading recipe commerce:oeuf`).
 - Les listes déroulantes de quantité (dialogue `single_option` + `dynamic/run_command`).
-- La grille de craft : fond d'établi au style vanilla (glyphe `etabli.png` de la police `commerce:recette`, dans le resource pack commun) et textures des objets par-dessus via le composant de texte `object` (atlas `minecraft:blocks` et `minecraft:items`). Les positions viennent de mesures en jeu (sprite de 8 px, avance 8, haut à y = -1, lignes de 9 px) : si les objets tombent à côté des cases, ajuster `GX`, `RX` ou `PTOP` dans `datapack.py`.
+- La grille de craft : fond repris de la texture d'établi du resource pack commun (interface Forge), à l'échelle 1/2 (glyphe `etabli.png` de la police `commerce:recette`, 256 px de côté au plus, sinon le jeu ne l'affiche pas) et textures des objets par-dessus via le composant de texte `object` (atlas `minecraft:blocks` et `minecraft:items`). Les positions viennent de mesures en jeu (sprite de 8 px, avance 8, haut à y = -1, lignes de 9 px) : si les objets tombent à côté des cases, ajuster `GX`, `RX` ou `PTOP` dans `datapack.py`.
 
 ## Prévu ensuite
 

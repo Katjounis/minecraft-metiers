@@ -11,7 +11,7 @@ from catalogue import ACHAT, CATEGORIES, ITEMS, RARES
 ROOT = os.path.join(HERE, "..", "build", "commerce_datapack")
 NS = "commerce"
 F = f"data/{NS}/function/"
-VERSION = 5
+VERSION = 6
 if os.path.exists(ROOT):
     shutil.rmtree(ROOT)
 
@@ -651,41 +651,24 @@ GRID = ["EDE", "GNG", "ECE"]
 # Les textures des objets se placent par-dessus avec des espaces exacts (fournisseur « space »).
 # Repères mesurés en jeu : un sprite « object » fait 8 px de large, avance de 8, haut à y = -1 ; ligne de 9 px.
 RP = os.path.join(HERE, "..", "build", "commerce_rp", "assets", "commerce")
-GX, PW, PTOP, PH = 5, 66, -5, 34       # marge, largeur du panneau, haut (y relatif à la 1re ligne), hauteur (px d'interface)
-RX = GX + 46                          # x de l'oeuf (case de résultat)
-SC = 4                                # 4 pixels de texture par pixel d'interface
+# Fond : le haut de la texture d'établi du resource pack commun (interface Forge), 176 x 80 px, plus le bas du cadre,
+# affiché à l'échelle 1/2 : une case de 18 px devient 9 px, le pas des lignes de texte et des sprites de 8 px.
+# Une police n'accepte pas de glyphe de plus de 256 px de côté (la v4 en faisait 264 : il ne s'affichait pas).
+GX, PW, PTOP, PH = 15, 88, -10, 44     # x des cases, largeur, haut (y relatif à la 1re ligne), hauteur (px d'interface)
+RX = 62                               # x de l'œuf dans la case de résultat
 ESP = {-(PW + 1): "\ue001", GX: "\ue002", 1: "\ue003", PW - GX - 26: "\ue004", RX - GX - 26: "\ue005", PW - RX - 8: "\ue006"}
 PANNEAU = "\ue000"
 
 
 def dessiner_etabli():
+    import io as _io
     from PIL import Image, ImageDraw
-    W, Hh = PW * SC, PH * SC
-    im = Image.new("RGBA", (W, Hh), (0, 0, 0, 0))
-    d = ImageDraw.Draw(im)
-    R = lambda x0, y0, x1, y1, c: d.rectangle([x0 * SC, (y0 - PTOP) * SC, x1 * SC - 1, (y1 - PTOP) * SC - 1], fill=c)
-    NOIR, BLANC, OMBRE, FOND, CASE, CREUX = (0, 0, 0, 255), (255, 255, 255, 255), (85, 85, 85, 255), (198, 198, 198, 255), (139, 139, 139, 255), (55, 55, 55, 255)
-    # panneau vanilla : contour noir aux coins arrondis, reflet blanc en haut à gauche, ombre en bas à droite
-    R(1, PTOP, PW - 1, PTOP + PH, NOIR); R(0, PTOP + 1, PW, PTOP + PH - 1, NOIR)
-    R(1, PTOP + 1, PW - 1, PTOP + PH - 1, BLANC)
-    R(2, PTOP + 2, PW - 1, PTOP + PH - 1, OMBRE)
-    R(2, PTOP + 2, PW - 2, PTOP + PH - 2, FOND)
-    # grille 3 x 3 : cases de 8 px au pas de 9, bord sombre en haut à gauche, clair en bas à droite (demi-pixel)
-    h = 0.5
-    def case(x, y, w, hh, e=h):
-        # bord de e px : sombre en haut et à gauche, clair en bas et à droite ; deux cases voisines partagent 1 px
-        X = lambda v: round(v * SC); Y = lambda v: round((v - PTOP) * SC)
-        d.rectangle([X(x - e), Y(y - e), X(x + w + e) - 1, Y(y + hh + e) - 1], fill=BLANC)
-        d.rectangle([X(x - e), Y(y - e), X(x + w) - 1, Y(y + hh) - 1], fill=CREUX)
-        d.rectangle([X(x), Y(y), X(x + w) - 1, Y(y + hh) - 1], fill=CASE)
-    for r in range(3):
-        for c in range(3):
-            case(GX + 9 * c, -1 + 9 * r, 8, 8)
-    case(RX - 2, 6, 12, 12, 1)
-    # flèche vanilla
-    ax, ay = GX + 31, 12
-    d.rectangle([ax * SC, (ay - 1 - PTOP) * SC, (ax + 7) * SC - 1, (ay + 1 - PTOP) * SC - 1], fill=CASE)
-    d.polygon([((ax + 6) * SC, (ay - 4 - PTOP) * SC), ((ax + 11) * SC, (ay - PTOP) * SC), ((ax + 6) * SC, (ay + 4 - PTOP) * SC)], fill=CASE)
+    with zipfile.ZipFile(os.path.join(HERE, "..", "..", "..", "metiers_resourcepack.zip")) as z:
+        ct = Image.open(_io.BytesIO(z.read("assets/minecraft/textures/gui/container/crafting_table.png"))).convert("RGBA")
+    im = Image.new("RGBA", (176, 88), (0, 0, 0, 0))
+    im.paste(ct.crop((0, 0, 176, 80)), (0, 1))        # 1 ligne vide en haut : les cases tombent sur des pixels pairs
+    im.paste(ct.crop((0, 159, 176, 166)), (0, 81))    # bas du cadre
+    assert max(im.size) <= 256, "glyphe de police trop grand (256 px au plus)"
     os.makedirs(os.path.join(RP, "textures", "font"), exist_ok=True)
     im.save(os.path.join(RP, "textures", "font", "etabli.png"))
     # pièce d'Écu, 8 px d'interface (texture 32 x 32) : or, bord sombre, reflet, É gravé
@@ -717,7 +700,7 @@ def grille(fmt="snbt"):
     t = lambda x, c: f'{{text:"{x}",color:"{c}",bold:false,italic:false}}'
     sp = lambda k: f'{{object:"atlas",atlas:"minecraft:{SPR[k][0]}",sprite:"minecraft:{SPR[k][1]}"}}'
     e = lambda v: f'{{text:"{ESP[v]}",font:"commerce:recette"}}'
-    out = [t("Recette de l’oeuf de comptoir (établi)\\n\\n", "gold")]
+    out = [t("Recette de l’oeuf de comptoir (établi)\\n\\n\\n", "gold")]
     for r, row in enumerate(GRID):
         if r == 0:
             out += [f'{{text:"{PANNEAU}",font:"commerce:recette",color:"white",shadow_color:0}}', e(-(PW + 1))]
