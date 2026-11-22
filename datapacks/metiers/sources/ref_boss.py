@@ -27,7 +27,7 @@ ANN = lambda txt, col="white": f'tellraw @a {PREFIX},{{"text":"{txt}","color":"{
 
 w(F + "boss/alerte.mcfunction", "\n".join([
     "execute store result score #n m.boss if entity @a[gamemode=!spectator]",
-    "execute if score #n m.boss matches ..1 run return run scoreboard players set #cycle m.boss 9000",
+    "execute if score #n m.boss matches ..0 run return run scoreboard players set #cycle m.boss 3000",
     "scoreboard players set #cycle m.boss 0", "scoreboard players set #compte m.boss 240",
     "scoreboard players add #type m.boss 1", "execute unless score #type m.boss matches 1..5 run scoreboard players set #type m.boss 1"] +
     [f'execute if score #type m.boss matches {k} run tellraw @a {PREFIX},{{"text":"{b["nom"]} se réveille ! ","color":"{b["col"]}","bold":true}},{{"text":"Il apparaît dans 2 minutes près d\'un joueur au hasard. Préparez-vous.","color":"white"}}]' for k, b in BOSS.items()] +

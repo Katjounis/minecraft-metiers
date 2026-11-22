@@ -182,9 +182,9 @@ for i, (desc, tgt, crits) in enumerate(COLL, 1):
     RP.append(f'execute if score #rappel_i m.defi matches 1 if score #c_def m.defi matches {i} run tellraw @a {PREFIX},{{"text":"Défi collectif : ","color":"gold","bold":true}},'
               f'{{"text":"{desc} ","color":"white"}},{{"score":{{"name":"#c_tot","objective":"m.defi"}},"color":"yellow"}},{{"text":" / {tgt}","color":"gray"}},'
               f'{{"text":" → 1 éclat pour chaque participant.","color":"gray"}}]')
-RP += ["scoreboard players set #bmin m.defi 10800", "scoreboard players operation #bmin m.defi -= #cycle m.boss",
+RP += ["scoreboard players set #bmin m.defi 3600", "scoreboard players operation #bmin m.defi -= #cycle m.boss",
        "scoreboard players operation #bmin m.defi /= #120 m.const", "execute if score #bmin m.defi matches ..0 run scoreboard players set #bmin m.defi 1",
        f'execute if score #rappel_i m.defi matches 2 unless score #actif m.boss matches 1 run tellraw @a {PREFIX},{{"text":"Prochain boss dans environ ","color":"red"}},'
-       f'{{"score":{{"name":"#bmin","objective":"m.defi"}},"color":"yellow"}},{{"text":" min de jeu (2 joueurs minimum). Butin pour chaque participant !","color":"red"}}]']
+       f'{{"score":{{"name":"#bmin","objective":"m.defi"}},"color":"yellow"}},{{"text":" min. Butin pour chaque participant !","color":"red"}}]']
 w(F + "defis/rappel.mcfunction", "\n".join(RP))
 add_lines(F + "refonte/load.mcfunction", ["scoreboard players set #120 m.const 120"])
