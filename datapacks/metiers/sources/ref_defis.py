@@ -12,11 +12,11 @@ for j, d in jobs.items():
         f'tellraw @s {PREFIX},{{"text":"+4 ","color":"aqua"}},{GJ("cristal_" + j)},{{"text":" cristaux de {d["name"]} et un demi-niveau.","color":"aqua"}}]',
         "playsound minecraft:ui.toast.challenge_complete master @s ~ ~ ~ 1 1.2", "scoreboard players set @s m.tmp 0"] +
         [f"execute if score @s m.dd_{jj} matches 1 run scoreboard players add @s m.tmp 1" for jj in jobs] +
-        [f"execute if score @s m.tmp matches {NJ} run function {NS}:defis/tous", f"function {NS}:defis/plus1"]))
+        [f"execute if score @s m.tmp matches {NJ} run function {NS}:defis/tous", f"function {NS}:defis/plus1", f"function #{NS}:evt/defi_jour"]))
 w(F + "defis/tous.mcfunction", "\n".join(
     [f"scoreboard players add @s m.cr_{j} 2" for j in jobs] +
     [f'tellraw @a {PREFIX},{{"selector":"@s","color":"white"}},{{"text":" a réussi tous les défis du jour ! +2 cristaux de chaque métier.","color":"gold","bold":true}}]',
-     "playsound minecraft:entity.player.levelup master @s ~ ~ ~ 1 0.5"]))
+     "playsound minecraft:entity.player.levelup master @s ~ ~ ~ 1 0.5", f"function #{NS}:evt/defis_tous"]))
 for j, pool in DEFIS.items():
     d = jobs[j]
     BJ = ["$bossbar set metiers:d$(id) color purple", "$bossbar set metiers:d$(id) style notched_10"]
@@ -71,6 +71,7 @@ for i, (_, _, _, crits, _) in enumerate(SEM, 1):
 for i, (_, _, crits) in enumerate(COLL, 1):
     NW += [f"scoreboard players reset * dc.{i}_{n}" for n in range(len(crits))]
 NW.append(f'tellraw @a {PREFIX},{{"text":"Nouvelle semaine : un défi de la semaine et un défi collectif sont lancés ","color":"light_purple","bold":true}},{{"text":"(touche G, Défis du jour).","color":"white"}}]')
+NW.append(f"function #{NS}:evt/nouvelle_semaine")
 w(F + "defis/semaine.mcfunction", "\n".join(NW))
 # horloge : 7 journées de défis (temps de jeu avec au moins un joueur connecté)
 add_lines(F + "defis/tick.mcfunction", [
@@ -103,14 +104,14 @@ for i, (j, desc, tgt, crits, div) in enumerate(SEM, 1):
     w(F + f"defis/semaine_fini_{i}.mcfunction", "\n".join([
         "scoreboard players set @s m.wd 1", f"scoreboard players add @s m.cr_{j} 20", "scoreboard players add @s m.ecl 1",
         f'tellraw @a {PREFIX},{{"selector":"@s","color":"white"}},{{"text":" a réussi le défi de la semaine ! ","color":"light_purple","bold":true}},{{"text":"+20 ","color":"aqua"}},{GJ("cristal_" + j)},{{"text":" et 1 ","color":"aqua"}},{GJ("eclat")}]',
-        "playsound minecraft:ui.toast.challenge_complete master @s ~ ~ ~ 1 0.8"]))
+        "playsound minecraft:ui.toast.challenge_complete master @s ~ ~ ~ 1 0.8", f"function #{NS}:evt/defi_semaine"]))
 for i, (_, tgt, crits) in enumerate(COLL, 1):
     DW += [f"execute if score #c_def m.defi matches {i} run scoreboard players operation @s m.cc += @s dc.{i}_{n}" for n in range(len(crits))]
     DW.append(f"execute if score #c_def m.defi matches {i} run scoreboard players set #c_min m.defi {max(1, tgt // 50)}")
 DW.append(f"execute if score #c_ok m.defi matches 1 unless score @s m.wk matches 1 if score @s m.cc >= #c_min m.defi run function {NS}:defis/collectif_gain")
 add_lines(F + "defis/joueur.mcfunction", DW)
 w(F + "defis/collectif_gain.mcfunction", "\n".join([
-    "scoreboard players set @s m.wk 1", "scoreboard players add @s m.ecl 1",
+    "scoreboard players set @s m.wk 1", "scoreboard players add @s m.ecl 1", f"function #{NS}:evt/defi_collectif",
     f'tellraw @s {PREFIX},{{"text":"Défi collectif : +1 ","color":"light_purple"}},{GJ("eclat")},{{"text":" éclat de boss.","color":"light_purple"}}]']))
 
 # ---------------------------------------------------------------- écran des défis
@@ -170,21 +171,7 @@ RC += ["scoreboard players set #defis_v m.defi 25"] + [f"scoreboard players set 
 w(F + "defis/recreer.mcfunction", "\n".join(RC))
 add_lines(F + "refonte/load.mcfunction", [f"execute unless score #defis_v m.defi matches 25 run function {NS}:defis/recreer"])
 
-# ---------------------------------------------------------------- rappel dans le chat toutes les 20 minutes de jeu (tour à tour)
-add_lines(F + "defis/tick.mcfunction", ["execute if entity @a run scoreboard players add #rappel m.defi 1",
-                                       f"execute if score #rappel m.defi matches 2400.. run function {NS}:defis/rappel"])
-RP = ["scoreboard players set #rappel m.defi 0", "scoreboard players add #rappel_i m.defi 1",
-      "execute if score #rappel_i m.defi matches 3.. run scoreboard players set #rappel_i m.defi 0"]
-for i, (j, desc, tgt, crits, div) in enumerate(SEM, 1):
-    RP.append(f'execute if score #rappel_i m.defi matches 0 if score #s_def m.defi matches {i} run tellraw @a {PREFIX},{{"text":"Défi de la semaine : ","color":"light_purple","bold":true}},'
-              f'{{"text":"{desc}","color":"white"}},{{"text":" → 20 cristaux et 1 éclat de boss. ","color":"gray"}},{{"text":"(touche G, Défis du jour)","color":"dark_gray"}}]')
-for i, (desc, tgt, crits) in enumerate(COLL, 1):
-    RP.append(f'execute if score #rappel_i m.defi matches 1 if score #c_def m.defi matches {i} run tellraw @a {PREFIX},{{"text":"Défi collectif : ","color":"gold","bold":true}},'
-              f'{{"text":"{desc} ","color":"white"}},{{"score":{{"name":"#c_tot","objective":"m.defi"}},"color":"yellow"}},{{"text":" / {tgt}","color":"gray"}},'
-              f'{{"text":" → 1 éclat pour chaque participant.","color":"gray"}}]')
-RP += ["scoreboard players set #bmin m.defi 3600", "scoreboard players operation #bmin m.defi -= #cycle m.boss",
-       "scoreboard players operation #bmin m.defi /= #120 m.const", "execute if score #bmin m.defi matches ..0 run scoreboard players set #bmin m.defi 1",
-       f'execute if score #rappel_i m.defi matches 2 unless score #actif m.boss matches 1 run tellraw @a {PREFIX},{{"text":"Prochain boss dans environ ","color":"red"}},'
-       f'{{"score":{{"name":"#bmin","objective":"m.defi"}},"color":"yellow"}},{{"text":" min. Butin pour chaque participant !","color":"red"}}]']
-w(F + "defis/rappel.mcfunction", "\n".join(RP))
-add_lines(F + "refonte/load.mcfunction", ["scoreboard players set #120 m.const 120"])
+# ---------------------------------------------------------------- évènements pour les autres packs (Commerce)
+# Tags de fonction vides : un autre pack les remplit (ses fichiers de tag se cumulent aux nôtres).
+for _evt in ("defi_jour", "defis_tous", "defi_semaine", "defi_collectif", "boss", "nouvelle_semaine"):
+    wj(f"data/{NS}/tags/function/evt/{_evt}.json", {"values": []})
