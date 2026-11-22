@@ -1277,6 +1277,7 @@ def outil_give(j, k):
     if "efficiency" in ench: ench["efficiency"] = "$(eff)"
     if j in FORT_KEY: ench[FORT_KEY[j]] = "$(fort)"
     e = ",".join(f'"minecraft:{a}":{v}' for a, v in ench.items())
+    if j == "m": e = e.replace('"minecraft:fortune":$(fort)', '"minecraft:$(fk)":$(fort)')   # pioche : Fortune ou Toucher de soie
     lore = (f'[{{text:"Outil de {d["name"]}",color:"{d["color"]}",italic:false}},'
             f'{{text:"Palier {k}/10, il évolue tous les 10 niveaux",color:"gray",italic:false}}' +
             {"e": ',{text:"Clic droit : les animaux proches te suivent",color:"light_purple",italic:false}',
@@ -1330,7 +1331,11 @@ for j, d in jobs.items():
            f"scoreboard players operation #bf m.tmp += @s m.cfor_{j}",
            f"execute store result storage {NS}:tmp eff int 1 run scoreboard players get #be m.tmp",
            f"execute store result storage {NS}:tmp fort int 1 run scoreboard players get #bf m.tmp",
-           f'data modify storage {NS}:tmp skin set value ""']
+           f'data modify storage {NS}:tmp skin set value ""',
+           f'data modify storage {NS}:tmp fk set value "fortune"'] + ([
+           "scoreboard players add @s m.silk 0",
+           f'execute if score @s m.silk matches 1 run data modify storage {NS}:tmp fk set value "silk_touch"',
+           f"execute if score @s m.silk matches 1 run data modify storage {NS}:tmp fort set value 1"] if j == "m" else [])
     OP += [f'execute if score @s m.skin_{j} matches {i} run data modify storage {NS}:tmp skin set value "{sk}"' for i, sk in enumerate(SKIN_IDS, 1)]
     w(F + f"{j}/outil_params.mcfunction", "\n".join(OP))
     w(F + f"{j}/outil_recup.mcfunction", "\n".join([

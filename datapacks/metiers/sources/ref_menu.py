@@ -152,6 +152,8 @@ for j, d in jobs.items():
           f'data modify storage {NS}:pg pl set value "Prestige au niveau 100"', f'data modify storage {NS}:pg pc set value "dark_gray"',
           f'execute if score @s m.{j}_lvl matches {MAXLVL}.. run data modify storage {NS}:pg pl set value "★ Prestige disponible"',
           f'execute if score @s m.{j}_lvl matches {MAXLVL}.. run data modify storage {NS}:pg pc set value "gold"',
+          f'data modify storage {NS}:pg sk_mode set value "Pioche : Fortune  ⇄"',
+          f'execute if score @s m.silk matches 1 run data modify storage {NS}:pg sk_mode set value "Pioche : Toucher de soie  ⇄"',
           f"function {NS}:{j}/page_dialog with storage {NS}:pg"]
     w(F + f"{j}/arbre.mcfunction", "\n".join(P))
     sbtn = []
@@ -166,7 +168,7 @@ for j, d in jobs.items():
             f'{{label:{{text:"$(rl)",color:"$(rc)"}},width:200,action:{{type:"run_command",command:"trigger metiers set {200 + d["idx"]}"}}}}',
             f'{{label:{{text:"$(tl)",color:"$(tc)"}},width:200,tooltip:{{text:"Affiche ton titre de {d["name"]} devant ton pseudo. Le cadre se choisit à la Forge."}},action:{{type:"run_command",command:"trigger metiers set {600 + d["idx"]}"}}}}',
             btn(txt(sp[1], sp[2]), sp[0], 200, sp[3]),
-            f'{{label:{{text:"$(pl)",color:"$(pc)"}},width:200,tooltip:{{text:"Au niveau 100 : repars au niveau 1 avec une étoile et +10 % d’XP par étoile (5 max)."}},action:{{type:"run_command",command:"trigger metiers set {310 + d["idx"]}"}}}}']
+            f'{{label:{{text:"$(pl)",color:"$(pc)"}},width:200,tooltip:{{text:"Au niveau 100 : repars au niveau 1 avec une étoile et +10 % d’XP par étoile (5 max)."}},action:{{type:"run_command",command:"trigger metiers set {310 + d["idx"]}"}}}}'] + ([f'{{label:{{text:"$(sk_mode)",color:"aqua"}},width:200,tooltip:{{text:"Change l’enchantement de ta pioche : Fortune (plus de minerais) ou Toucher de soie (récupère le bloc tel quel). Ta pioche est remplacée tout de suite."}},action:{{type:"run_command",command:"trigger metiers set 761"}}}}'] if j == "m" else [])
     body = ('[{type:"minecraft:item",item:{id:"minecraft:paper",components:{"minecraft:item_model":"metiers:$(model)","minecraft:custom_model_data":{strings:["$(skin)"]}}},'
             'show_decorations:false,show_tooltip:false,description:{width:260,contents:['
             f'{{text:"$(titre) {d["name"]}\\n",color:"{d["color"]}",bold:true}},{{text:"Niveau $(lvl)   ",color:"yellow",bold:false}},'
@@ -589,3 +591,17 @@ wj(f"data/{NS}/dialog/aide.json", {"type": "minecraft:notice", "title": {"text":
                                   "action": {"label": "Retour", "width": 200, "action": {"type": "run_command", "command": "trigger metiers set 1"}}})
 w(F + "aide.mcfunction", f"dialog show @s {NS}:aide")
 add_lines(F + "trigger.mcfunction", [f'execute if score @s m.trig matches 460 run function {NS}:appel {{f:"aide"}}'])
+
+# pioche : bascule Fortune / Toucher de soie
+w(F + "m/soie.mcfunction", "\n".join([
+    "scoreboard players add @s m.silk 0",
+    "execute if score @s m.silk matches 1 run scoreboard players set #s m.tmp 0",
+    "execute unless score @s m.silk matches 1 run scoreboard players set #s m.tmp 1",
+    "scoreboard players operation @s m.silk = #s m.tmp",
+    f"execute if items entity @s container.* {SEL('m')} run function {NS}:m/outil_donner",
+    f"execute if items entity @s weapon.offhand {SEL('m')} run function {NS}:m/outil_donner",
+    f"execute if score @s m.silk matches 1 run {tr('Pioche en Toucher de soie.', 'aqua')}",
+    f"execute if score @s m.silk matches 0 run {tr('Pioche en Fortune.', 'aqua')}",
+    "playsound minecraft:block.enchantment_table.use master @s ~ ~ ~ 0.6 1.4", f"function {NS}:m/arbre"]))
+add_lines(F + "trigger.mcfunction", [f'execute if score @s m.trig matches 761 run function {NS}:appel {{f:"m/soie"}}'])
+add_lines(F + "refonte/load.mcfunction", ["scoreboard objectives add m.silk dummy"])
