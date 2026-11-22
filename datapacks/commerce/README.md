@@ -22,6 +22,7 @@ Les prix de base et les volumes sont dans `sources/catalogue.py`. `sources/coher
 
 ## Historique
 
+- v8 (22/11/2026) : menus compacts, sans défilement pour trouver les boutons : marché en boutons avec la texture de chaque catégorie, catégories en pages de 10 objets (prix au survol), page d'un objet avec le prix total écrit sur chaque bouton (vendre et acheter 1, 16, 64, tout vendre). Recette de l'oeuf en une seule image (texture d'établi Forge et vraies textures des ingrédients). Clic droit sur le comptoir corrigé (le joueur était effacé avant d'être lu).
 - v7 (22/11/2026) : la vente ne marchait pas, une commande mal écrite faisait ignorer toute la fonction de vente par le jeu. Corrigé, et `verifier.py` contrôle maintenant la structure des commandes data et scoreboard.
 - v6 (22/11/2026) : le fond d'établi de la v4 ne s'affichait pas (glyphe de 264 px, au-delà de la limite de 256 des polices), d'où la première ligne décalée. Il est remplacé par le haut de la vraie texture d'établi du resource pack (interface Forge), cases calées sur les textures des objets.
 - v5 (22/11/2026) : « oe » au lieu de « œ » partout (la police de l'interface Forge n'a pas ce caractère), et vraie pièce d'Écu dessinée (glyphe `ecu.png`) à la place du symbole ¤.
@@ -41,6 +42,8 @@ Commerce ajoute `assets/commerce/` (police `commerce:recette` : fond d'établi e
 | `sources/catalogue.py` | Objets, prix, volumes, métiers liés, catégories |
 | `sources/coherence.py` | Contrôle du catalogue (ids 26.1, boucles de craft rentables) |
 | `sources/donnees_26.1.json` | Liste des objets et recettes de la 26.1 |
+| `sources/sprites_26.1.json` | Texture de chaque objet du catalogue (atlas et chemin), pour les icônes des boutons |
+| `sources/textures_recette/` | Les 6 textures vanilla collées dans l'image de la recette de l'oeuf |
 | `sources/verifier.py` | Contrôle statique du pack généré (JSON, macros, fonctions, SNBT des dialogues). Demande `pip install nbtlib` |
 
 ## Liens avec Métiers

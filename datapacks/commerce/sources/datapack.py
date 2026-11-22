@@ -11,7 +11,7 @@ from catalogue import ACHAT, CATEGORIES, ITEMS, RARES
 ROOT = os.path.join(HERE, "..", "build", "commerce_datapack")
 NS = "commerce"
 F = f"data/{NS}/function/"
-VERSION = 7
+VERSION = 8
 if os.path.exists(ROOT):
     shutil.rmtree(ROOT)
 
@@ -318,8 +318,8 @@ w(F + "comptoir/deplacer.mcfunction", [
     "playsound minecraft:item.bundle.insert master @s ~ ~ ~ 1 1",
     say("Ton comptoir est rangé dans ton inventaire : pose l'oeuf où tu veux.", "green")])
 w(F + "comptoir/clic_i.mcfunction", [
-    "data remove entity @s interaction", "data remove entity @s attack",
-    f"execute on target run function {NS}:comptoir/clic"])
+    f"execute on target run function {NS}:comptoir/clic",
+    "data remove entity @s interaction", "data remove entity @s attack"])
 w(F + "comptoir/clic.mcfunction", [
     f"execute unless score @s c.deb matches 1 run return run function {NS}:page/verrou",
     f"function {NS}:page/accueil"])
@@ -637,101 +637,86 @@ def msg_line(st, pre=""):
 MSG_TXT = T("$(msg)", "yellow")
 RETOUR = btn(T("Accueil", "white"), 1, 100)
 
-# ---------------------------------------------------------------- grille de craft de l'oeuf, en vraies textures
+# ---------------------------------------------------------------- textures des objets dans les boutons
 # Composant de texte « object » (1.21.9+) : affiche une texture d'un atlas du jeu, sans resource pack.
-# Seulement dans les dialogues envoyés par commande : une erreur y est sans gravité. Pas dans les fichiers
-# de registre (dialog/*.json) lus au démarrage, où une faute bloquerait le serveur.
-# Depuis la 1.21.11 les objets sont dans l'atlas minecraft:items, les blocs dans minecraft:blocks.
-SPR = {"E": ("blocks", "block/emerald_block"), "D": ("blocks", "block/diamond_block"), "G": ("blocks", "block/gold_block"),
-       "N": ("items", "item/netherite_ingot"), "C": ("blocks", "block/barrel_side"), "O": ("items", "item/villager_spawn_egg")}
+# Correspondance objet -> texture tirée des textures officielles de la 26.1 (sprites_26.1.json, minecraft-assets).
+SPRITES = json.load(open(os.path.join(HERE, "sprites_26.1.json"), encoding="utf-8"))
+spr = lambda iid: f'{{object:"atlas",atlas:"minecraft:{SPRITES[iid][0]}",sprite:"minecraft:{SPRITES[iid][1]}"}}'
+
+# ---------------------------------------------------------------- recette de l'oeuf : une seule image
+# Le haut de la texture d'établi du resource pack commun (interface Forge) avec les vraies textures des ingrédients
+# déjà posées dans les cases : rien à aligner au pixel en jeu. Taille réelle (176 x 88), sous les 256 px permis.
+RP = os.path.join(HERE, "..", "build", "commerce_rp", "assets", "commerce")
+PANNEAU = ""
+RECETTE = {"E": "emerald_block", "D": "diamond_block", "G": "gold_block", "N": "netherite_ingot", "C": "barrel_side"}
 GRID = ["EDE", "GNG", "ECE"]
 
-# Fond de l'établi : un seul glyphe (resource pack, police commerce:recette) dessiné au style vanilla
-# (panneau gris clair, cases en creux, flèche, case de résultat), posé sous la première ligne de la grille.
-# Les textures des objets se placent par-dessus avec des espaces exacts (fournisseur « space »).
-# Repères mesurés en jeu : un sprite « object » fait 8 px de large, avance de 8, haut à y = -1 ; ligne de 9 px.
-RP = os.path.join(HERE, "..", "build", "commerce_rp", "assets", "commerce")
-# Fond : le haut de la texture d'établi du resource pack commun (interface Forge), 176 x 80 px, plus le bas du cadre,
-# affiché à l'échelle 1/2 : une case de 18 px devient 9 px, le pas des lignes de texte et des sprites de 8 px.
-# Une police n'accepte pas de glyphe de plus de 256 px de côté (la v4 en faisait 264 : il ne s'affichait pas).
-GX, PW, PTOP, PH = 15, 88, -10, 44     # x des cases, largeur, haut (y relatif à la 1re ligne), hauteur (px d'interface)
-RX = 62                               # x de l'œuf dans la case de résultat
-ESP = {-(PW + 1): "\ue001", GX: "\ue002", 1: "\ue003", PW - GX - 26: "\ue004", RX - GX - 26: "\ue005", PW - RX - 8: "\ue006"}
-PANNEAU = "\ue000"
 
-
-def dessiner_etabli():
+def dessiner_rp():
     import io as _io
     from PIL import Image, ImageDraw
     with zipfile.ZipFile(os.path.join(HERE, "..", "..", "..", "metiers_resourcepack.zip")) as z:
         ct = Image.open(_io.BytesIO(z.read("assets/minecraft/textures/gui/container/crafting_table.png"))).convert("RGBA")
     im = Image.new("RGBA", (176, 88), (0, 0, 0, 0))
-    im.paste(ct.crop((0, 0, 176, 80)), (0, 1))        # 1 ligne vide en haut : les cases tombent sur des pixels pairs
-    im.paste(ct.crop((0, 159, 176, 166)), (0, 81))    # bas du cadre
+    im.paste(ct.crop((0, 0, 176, 81)), (0, 0))
+    im.paste(ct.crop((0, 159, 176, 166)), (0, 81))
+    tex = lambda n: Image.open(os.path.join(HERE, "textures_recette", n + ".png")).convert("RGBA")
+    for r, row in enumerate(GRID):
+        for c, k in enumerate(row):
+            t = tex(RECETTE[k]); im.paste(t, (30 + 18 * c, 17 + 18 * r), t)
+    t = tex("villager_spawn_egg"); im.paste(t, (124, 35), t)
     assert max(im.size) <= 256, "glyphe de police trop grand (256 px au plus)"
     os.makedirs(os.path.join(RP, "textures", "font"), exist_ok=True)
-    im.save(os.path.join(RP, "textures", "font", "etabli.png"))
+    im.save(os.path.join(RP, "textures", "font", "recette.png"))
     # pièce d'Écu, 8 px d'interface (texture 32 x 32) : or, bord sombre, reflet, É gravé
     p = Image.new("RGBA", (32, 32), (0, 0, 0, 0)); q = ImageDraw.Draw(p)
-    q.ellipse([0, 2, 31, 31], fill=(122, 78, 10, 255))           # tranche
-    q.ellipse([0, 0, 31, 29], fill=(176, 120, 20, 255))          # bord
-    q.ellipse([3, 3, 28, 26], fill=(246, 196, 60, 255))          # face
-    q.ellipse([6, 5, 18, 14], fill=(255, 232, 140, 255))         # reflet
+    q.ellipse([0, 2, 31, 31], fill=(122, 78, 10, 255))
+    q.ellipse([0, 0, 31, 29], fill=(176, 120, 20, 255))
+    q.ellipse([3, 3, 28, 26], fill=(246, 196, 60, 255))
+    q.ellipse([6, 5, 18, 14], fill=(255, 232, 140, 255))
     q.ellipse([8, 7, 23, 22], outline=(196, 140, 30, 255), width=2)
     for x0, y0, x1, y1 in [(12, 10, 14, 20), (12, 10, 20, 12), (12, 14, 18, 16), (12, 18, 20, 20), (15, 6, 18, 8)]:
-        q.rectangle([x0, y0, x1 - 1, y1 - 1], fill=(150, 98, 12, 255))  # « É »
+        q.rectangle([x0, y0, x1 - 1, y1 - 1], fill=(150, 98, 12, 255))
     p.save(os.path.join(RP, "textures", "font", "ecu.png"))
     os.makedirs(os.path.join(RP, "font"), exist_ok=True)
     json.dump({"providers": [
-        {"type": "bitmap", "file": "commerce:font/etabli.png", "height": PH, "ascent": 7 - PTOP, "chars": [PANNEAU]},
-        {"type": "bitmap", "file": "commerce:font/ecu.png", "height": 8, "ascent": 7, "chars": [ECU]},
-        {"type": "space", "advances": {c: v for v, c in ESP.items()}}]},
+        {"type": "bitmap", "file": "commerce:font/recette.png", "height": 88, "ascent": 7, "chars": [PANNEAU]},
+        {"type": "bitmap", "file": "commerce:font/ecu.png", "height": 8, "ascent": 7, "chars": [ECU]}]},
         open(os.path.join(RP, "font", "recette.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 
 
 if os.path.exists(os.path.join(HERE, "..", "build", "commerce_rp")):
     shutil.rmtree(os.path.join(HERE, "..", "build", "commerce_rp"))
-dessiner_etabli()
-
-
-def grille(fmt="snbt"):
-    """Grille de l'établi : panneau en fond, textures des objets posées dans les cases. Lignes de même largeur
-    pour que le centrage du dialogue ne les décale pas."""
-    t = lambda x, c: f'{{text:"{x}",color:"{c}",bold:false,italic:false}}'
-    sp = lambda k: f'{{object:"atlas",atlas:"minecraft:{SPR[k][0]}",sprite:"minecraft:{SPR[k][1]}"}}'
-    e = lambda v: f'{{text:"{ESP[v]}",font:"commerce:recette"}}'
-    out = [t("Recette de l’oeuf de comptoir (établi)\\n\\n\\n", "gold")]
-    for r, row in enumerate(GRID):
-        if r == 0:
-            out += [f'{{text:"{PANNEAU}",font:"commerce:recette",color:"white",shadow_color:0}}', e(-(PW + 1))]
-        out.append(e(GX))
-        for c, k in enumerate(row):
-            out.append(sp(k))
-            if c < 2:
-                out.append(e(1))
-        if r == 1:
-            out += [e(RX - GX - 26), sp("O"), e(PW - RX - 8)]
-        else:
-            out.append(e(PW - GX - 26))
-        out.append(t("\\n", "white"))
-    out.append(t("\\n\\nÉmeraude : 4 blocs · Diamant : 1 bloc · Or : 2 blocs\\nNetherite : 1 lingot · Tonneau : 1", "gray"))
-    return "[" + ",".join(['{text:""}'] + out) + "]"
-
-
-GRILLE_SNBT = grille("snbt")
+dessiner_rp()
+# l'image occupe 88 px, soit 10 lignes de texte : la ligne qui la porte est suivie de 10 retours à la ligne
+GRILLE_SNBT = L(f'{{text:"{PANNEAU}",font:"commerce:recette",color:"white",shadow_color:0}}', T("\\n" * 10, "white"),
+                T("Émeraude : 4 blocs · Diamant : 1 bloc · Or : 2 blocs · Netherite : 1 lingot · Tonneau : 1", "gray"))
 
 # ---------------------------------------------------------------- touche G (dialogue fixe, lu au démarrage)
 wj(f"data/{NS}/dialog/ouvrir.json", {
     "type": "minecraft:multi_action", "title": {"text": "Commerce", "color": "gold", "bold": True},
     "external_title": {"text": "Commerce"}, "can_close_with_escape": True, "pause": False,
     "body": [{"type": "minecraft:plain_message", "width": 300,
-              "contents": [{"text": "Ton compte en Écus, le marché, la bourse, les fortunes et les cristaux. Il se débloque en craftant l'oeuf de comptoir.", "color": "gray"}]},
-             {"type": "minecraft:plain_message", "width": 300, "contents": {"text": "La grille de craft de l'oeuf s'affiche quand tu ouvres le Commerce.", "color": "dark_gray"}}],
+              "contents": [{"text": "Ton compte en Écus, le marché, la bourse, les fortunes et les cristaux. Il se débloque en craftant l'oeuf de comptoir.", "color": "gray"}]}],
     "actions": [{"label": {"text": "Ouvrir le Commerce", "color": "gold", "bold": True}, "width": 200,
                  "action": {"type": "run_command", "command": "trigger commerce set 1"}}],
     "columns": 1})
 wj("data/minecraft/tags/dialog/quick_actions.json", {"values": [f"{NS}:ouvrir"]})
 wj("data/minecraft/tags/dialog/pause_screen_additions.json", {"values": [f"{NS}:ouvrir"]})
+
+# ---------------------------------------------------------------- pagination du marché
+PAGE = 10                                   # objets par page : 5 rangées de 2 boutons, tout tient sans défiler
+CATIT = {c: [it for it in ITL if it["cat"] == c] for c in ITEMS}
+NPAGES = {c: (len(v) + PAGE - 1) // PAGE for c, v in CATIT.items()}
+for c, v in CATIT.items():
+    for k, it in enumerate(v):
+        it["page"] = k // PAGE
+PG = lambda c, p: 1000 + 10 * c + p         # valeur du trigger d'une page de catégorie
+for it in ITL:
+    # retour vers la bonne page de la catégorie : on corrige la valeur stockée par i/<n>/charger
+    pth = os.path.join(ROOT, F, "i", str(it["i"]), "charger.mcfunction")
+    txt = open(pth, encoding="utf-8").read().replace(f'cb:{100 + it["cat"]}}}', f'cb:{PG(it["cat"], it["page"])}}}')
+    open(pth, "w", encoding="utf-8").write(txt)
 
 # ---------------------------------------------------------------- aiguillage du trigger
 TR = ["scoreboard players operation #v c.t = @s commerce", "scoreboard players set @s commerce 0",
@@ -744,7 +729,7 @@ TR = ["scoreboard players operation #v c.t = @s commerce", "scoreboard players s
       f"execute if score #v c.t matches 21 run return run function {NS}:page/fortunes",
       f"execute if score #v c.t matches 22 run return run function {NS}:page/cristaux",
       f"execute if score #v c.t matches 50 run return run function {NS}:comptoir/deplacer"]
-TR += [f"execute if score #v c.t matches {100 + c} run return run function {NS}:page/cat_{c}" for c in ITEMS]
+TR += [f"execute if score #v c.t matches {PG(c, p)} run return run function {NS}:page/cat_{c}_{p}" for c in ITEMS for p in range(NPAGES[c])]
 TR += [f"execute if score #v c.t matches {400 + JIDX[j]} run return run function {NS}:page/cristal_{j}" for j, *_ in JOBS]
 TR += [f"execute if score #v c.t matches 10001..{10000 + NIT} run return run function {NS}:page/item_depuis",
        f"execute if score #v c.t matches 1000000..3999999 run return run function {NS}:op/entree"]
@@ -754,142 +739,163 @@ for j, *_ in JOBS:
 w(F + "page/item_depuis.mcfunction", ["scoreboard players operation #i c.t = #v c.t",
                                       "scoreboard players remove #i c.t 10000", f"function {NS}:page/item"])
 
+# ---------------------------------------------------------------- page verrouillée : la recette en image, le reste grisé
 GRIS = lambda txt: btn(T(txt, "dark_gray"), 1, 96, "Verrouillé : crafte l’oeuf de comptoir pour l’ouvrir.")
 w(F + "page/verrou.mcfunction", SOLDE(f"{NS}:v") + [f"function {NS}:page/verrou_d with storage {NS}:v"])
 w(F + "page/verrou_d.mcfunction", "$" + dlg(
     T("Commerce : verrouillé", "gold", True),
-    [f'{{type:"minecraft:plain_message",width:310,contents:{L(T("Pour ouvrir le Commerce, crafte un ", "gray"), T("oeuf de comptoir", "gold", True), T(" à l’établi puis pose-le à ta base. En attendant, tes paliers, défis et boss te rapportent déjà des Écus.\\n", "gray"), SOLDE_TXT)}}}',
+    [f'{{type:"minecraft:plain_message",width:310,contents:{L(T("Crafte l’", "gray"), T("oeuf de comptoir", "gold", True), T(" puis pose-le à ta base pour ouvrir le Commerce. ", "gray"), SOLDE_TXT)}}}',
      f'{{type:"minecraft:plain_message",width:310,contents:{GRILLE_SNBT}}}'],
     [GRIS("Marché"), GRIS("Bourse"), GRIS("Fortunes"), GRIS("Cristaux"), GRIS("Mon comptoir"), btn(T("Aide", "white"), 60, 96)], 3))
 
 # ---------------------------------------------------------------- aide
 AIDE = [
-    ("Les Écus", "Ton argent est sur un compte, impossible à perdre ou à voler. Tout le monde voit les fortunes."),
-    ("Gagner", "Vends ce que tu récoltes, passe des paliers de métier (250 x le palier), fais les défis (150 à 1 500) et les boss (600)."),
-    ("Prix qui bougent", "Plus le serveur rachète un objet, plus son prix baisse, puis il remonte en une heure de jeu environ. Acheter coûte au moins 4 fois le prix de vente de base, et plus quand l'objet est demandé."),
-    ("Bonus de métier", "Tes produits se vendent +0,5 % par niveau du métier lié, et +25 % pendant l'heure du métier."),
-    ("Bourse", "Évènements de marché (pénurie, krach), tendances sur une heure, objets les plus vendus et achetés."),
-    ("Cristaux", "Achetables, mais hors de prix : 2 500 Écus le premier, +5 % à chaque achat de la semaine."),
-    ("Comptoir", "Un par joueur, clic droit pour ouvrir. Touche G pour le ranger et le reposer ailleurs."),
+    ("Écus", "Sur un compte, impossible à perdre ou à voler. Tout le monde voit les fortunes."),
+    ("Gagner", "Vendre ce que tu récoltes, paliers de métier (250 x le palier), défis (150 à 1 500), boss (600)."),
+    ("Prix", "Plus le serveur rachète un objet, plus son prix baisse, puis il remonte en une heure de jeu. Acheter coûte au moins 4 fois la vente."),
+    ("Bonus", "+0,5 % par niveau du métier lié à l’objet, +25 % pendant l’heure du métier."),
+    ("Cristaux", "2 500 Écus le premier, +5 % à chaque achat de la semaine."),
+    ("Comptoir", "Un par joueur, clic droit pour ouvrir. Mon comptoir le range pour le reposer ailleurs."),
 ]
 w(F + "page/aide.mcfunction", dlg(
     T("Commerce : comment ça marche", "gold", True),
-    [f'{{type:"minecraft:plain_message",width:320,contents:{L(T(t + " : ", "gold", True), T(d, "gray"))}}}' for t, d in AIDE],
-    [btn(T("Accueil", "white"), 1, 100)], 1))
+    [f'{{type:"minecraft:plain_message",width:320,contents:{L(*[x for t, d in AIDE for x in (T(t + " : ", "gold", True), T(d + "\\n", "gray"))])}}}'],
+    [btn(T("Accueil", "white"), 1, 150)], 1))
 
 # ---------------------------------------------------------------- accueil
 AC = SOLDE(f"{NS}:a") + [
     f"execute store result storage {NS}:a tv int 1 run scoreboard players get @s c.tv",
     f"execute store result storage {NS}:a ta int 1 run scoreboard players get @s c.ta",
-    f'data modify storage {NS}:a cp set value "pas posé"',
-    f'execute if score @s c.cmpt matches 1 run data modify storage {NS}:a cp set value "posé"',
     f"data modify storage {NS}:a ev set from storage {NS}:g evtxt"] + msg_line(f"{NS}:a") + [
     f"function {NS}:page/accueil_d with storage {NS}:a"]
 w(F + "page/accueil.mcfunction", AC)
 w(F + "page/accueil_d.mcfunction", "$" + dlg(
-    T("Mon compte", "gold", True),
-    [f'{{type:"minecraft:item",item:{{id:"minecraft:emerald"}},show_decorations:false,description:{{width:260,contents:{L(SOLDE_TXT, T("\\nVendu au total : $(tv) " + ECU + "   ·   acheté : $(ta) " + ECU, "gray"), T("\\nComptoir : $(cp)", "gray"))}}}}}',
-     f'{{type:"minecraft:plain_message",width:300,contents:{L(T("$(ev)", "light_purple"), T("\\n", "white"), MSG_TXT)}}}'],
-    [btn(T("Marché", "yellow", True), 9, 150, "Acheter et vendre, objet par objet."),
-     btn(T("Bourse", "light_purple", True), 20, 150, "Tendances, évènements, tops."),
-     btn(T("Fortunes", "gold"), 21, 150, "Le solde de tout le monde."),
-     btn(L(G("cristal_m"), T(" Cristaux de métier", "aqua")), 22, 150, "Hors de prix, mais c'est le but."),
-     btn(T("Mon comptoir : déplacer", "white"), 50, 150, "Range ton comptoir dans ton inventaire pour le reposer ailleurs."),
-     btn(T("Aide", "gray"), 60, 150)]))
+    T("Commerce", "gold", True),
+    [f'{{type:"minecraft:plain_message",width:310,contents:{L(SOLDE_TXT, T("\\nVendu : $(tv) " + ECU + "   ·   acheté : $(ta) " + ECU, "gray"), T("\\n$(ev)", "light_purple"), MSG_TXT)}}}'],
+    [btn(L(spr("emerald"), T("  Marché", "yellow", True)), 9, 160, "Acheter et vendre, objet par objet."),
+     btn(L(spr("diamond"), T("  Bourse", "light_purple", True)), 20, 160, "Évènements, tendances, tops."),
+     btn(L(spr("gold_ingot"), T("  Fortunes", "gold")), 21, 160, "Le solde de tout le monde."),
+     btn(L(G("cristal_m"), T("  Cristaux de métier", "aqua")), 22, 160, "Hors de prix, mais c'est le but."),
+     btn(L(spr("barrel"), T("  Mon comptoir", "white")), 50, 160, "Range ton comptoir dans ton inventaire pour le reposer ailleurs."),
+     btn(T("Aide", "gray"), 60, 160)]))
 
-# ---------------------------------------------------------------- index du marché
+# ---------------------------------------------------------------- index du marché : une ligne de texte, puis les boutons
 CATSHOW = {c: (vit, col, desc) for c, _, vit, col, desc in CATEGORIES}
 w(F + "page/marche.mcfunction", SOLDE(f"{NS}:mk") + [f"function {NS}:page/marche_d with storage {NS}:mk"])
 w(F + "page/marche_d.mcfunction", "$" + dlg(
     T("Marché", "yellow", True),
-    [f'{{type:"minecraft:plain_message",width:300,contents:{L(SOLDE_TXT, T("\\nAchat et vente depuis n’importe où. Les prix suivent l’offre et la demande.", "gray"))}}}']
-    + [f'{{type:"minecraft:item",item:{{id:"minecraft:{CATSHOW[c][0]}"}},show_decorations:false,description:{{width:250,contents:{L(T(CATNAME[c] + "\\n", CATSHOW[c][1], True), T(CATSHOW[c][2], "gray"))}}}}}' for c in ITEMS],
-    [btn(T(CATNAME[c], CATSHOW[c][1]), 100 + c) for c in ITEMS] + [RETOUR]))
+    [f'{{type:"minecraft:plain_message",width:310,contents:{L(SOLDE_TXT)}}}'],
+    [btn(L(spr(CATSHOW[c][0]), T("  " + CATNAME[c], CATSHOW[c][1])), PG(c, 0), 160, CATSHOW[c][2]) for c in ITEMS]
+    + [btn(T("Bourse", "light_purple"), 20, 160), btn(T("Accueil", "white"), 1, 160)]))
 
-# ---------------------------------------------------------------- une catégorie
+# ---------------------------------------------------------------- une page de catégorie : 10 boutons, prix en infobulle
 w(F + "page/ligne.mcfunction", [
     f"function {NS}:item/charger", "scoreboard players set #d c.t 0", f"function {NS}:prix/mid",
     f"function {NS}:prix/bonus", f"function {NS}:prix/vente",
     "scoreboard players operation #x c.t = #u c.t"] + fmt(f"{NS}:l", "v") + [
     "scoreboard players operation #x c.t = #a c.t"] + fmt(f"{NS}:l", "a") + [
     f"function {NS}:fmt/tendance",
-    f"data modify storage {NS}:l t set from storage {NS}:t tr", f"data modify storage {NS}:l tc set from storage {NS}:t trc"])
+    f"data modify storage {NS}:l t set from storage {NS}:t tr"])
+VIDE = '{label:{text:"·",color:"dark_gray"},width:160}'
 for c in ITEMS:
-    its = [it for it in ITL if it["cat"] == c]
     rare = c in RARES
-    CL = SOLDE(f"{NS}:cp")
-    for it in its:
-        CL += [f"scoreboard players set #i c.t {it['i']}", f"function {NS}:page/ligne"]
-        for k in ("ve", "vz", "vc", "ae", "az", "ac", "t", "tc"):
-            CL.append(f"data modify storage {NS}:cp {k}{it['i']} set from storage {NS}:l {k}")
-    CL.append(f"function {NS}:page/cat_{c}_d with storage {NS}:cp")
-    w(F + f"page/cat_{c}.mcfunction", CL)
-    body = [f'{{type:"minecraft:plain_message",width:300,contents:{L(SOLDE_TXT, T("\\nPrix à l’unité, bonus de métier compris. Clique sur un nom pour vendre" + ("." if rare else " ou acheter."), "gray"))}}}']
-    for it in its:
-        k = it["i"]
-        desc = [T(it["n"] + "\n", "white", True), T("Vente ", "gray"), T(f"$(ve{k}),$(vz{k})$(vc{k}) {ECU}", "gold")]
-        if not rare:
-            desc += [T("   Achat ", "gray"), T(f"$(ae{k}),$(az{k})$(ac{k}) {ECU}", "yellow")]
-        desc += [T("   ", "gray"), f'{{text:"$(t{k})",color:"$(tc{k})",bold:true,italic:false}}']
-        body.append(f'{{type:"minecraft:item",item:{{id:"minecraft:{it["id"]}"}},show_decorations:false,description:{{width:260,contents:{L(*desc).replace(chr(10), chr(92) + "n")}}}}}')
-    acts = [btn(T(it["n"], "white"), 10000 + it["i"], 150) for it in its] + [btn(T("Marché", "yellow"), 9, 150), RETOUR]
-    w(F + f"page/cat_{c}_d.mcfunction", "$" + dlg(T(CATNAME[c], CATSHOW[c][1], True), body, acts))
+    for p in range(NPAGES[c]):
+        its = CATIT[c][p * PAGE:(p + 1) * PAGE]
+        CL = SOLDE(f"{NS}:cp")
+        for it in its:
+            CL += [f"scoreboard players set #i c.t {it['i']}", f"function {NS}:page/ligne"]
+            CL += [f"data modify storage {NS}:cp {k}{it['i']} set from storage {NS}:l {k}" for k in ("ve", "vz", "vc", "ae", "az", "ac", "t")]
+        CL.append(f"function {NS}:page/cat_{c}_{p}_d with storage {NS}:cp")
+        w(F + f"page/cat_{c}_{p}.mcfunction", CL)
+        acts = []
+        for it in its:
+            k = it["i"]
+            tip = f"Vente : $(ve{k}),$(vz{k})$(vc{k}) Écus l’unité" + ("" if rare else f"\\nAchat : $(ae{k}),$(az{k})$(ac{k}) Écus l’unité") + f"\\nTendance sur 1 h : $(t{k})"
+            acts.append(btn(L(spr(it["id"]), T("  " + it["n"], "white")), 10000 + k, 160, tip))
+        if len(its) % 2:
+            acts.append(VIDE)
+        acts.append(btn(T("◀  Page précédente", "white"), PG(c, p - 1), 160) if p > 0 else VIDE)
+        acts.append(btn(T("Page suivante  ▶", "white"), PG(c, p + 1), 160) if p < NPAGES[c] - 1 else VIDE)
+        acts += [btn(T("Marché", "yellow"), 9, 160), btn(T("Accueil", "white"), 1, 160)]
+        sub = f"   ·   page {p + 1}/{NPAGES[c]}" if NPAGES[c] > 1 else ""
+        w(F + f"page/cat_{c}_{p}_d.mcfunction", "$" + dlg(
+            T(CATNAME[c], CATSHOW[c][1], True),
+            [f'{{type:"minecraft:plain_message",width:310,contents:{L(SOLDE_TXT, T(sub + "   ·   prix au survol", "gray"))}}}'], acts))
 
-# ---------------------------------------------------------------- un objet
-QTE = [("001", "1"), ("008", "8"), ("016", "16"), ("032", "32"), ("064", "64 (1 stack)"), ("128", "128 (2 stacks)"),
-       ("320", "320 (5 stacks)"), ("640", "640 (10 stacks)")]
-QOPT = ",".join(f'{{id:"{i}",display:{{text:"{d}"}}{",initial:true" if i == "064" else ""}}}' for i, d in QTE)
-IPG = [f"function {NS}:item/charger", "scoreboard players set #d c.t 0", f"function {NS}:prix/mid",
-       f"function {NS}:prix/bonus", f"function {NS}:prix/vente",
-       f"data modify storage {NS}:t ip set from storage {NS}:t it",
-       "scoreboard players operation #x c.t = #u c.t"] + fmt(f"{NS}:t", "ip.v") + [
-       "scoreboard players operation #x c.t = #a c.t"] + fmt(f"{NS}:t", "ip.a") + [
-       "scoreboard players operation #x c.t = #bon c.t", "scoreboard players remove #x c.t 1000",
-       "scoreboard players operation #x c.t /= #10 c.g",
-       f'data modify storage {NS}:t ip.bp set value ""',
-       f'execute if score #x c.t matches 1.. run function {NS}:page/item_bonus',
-       f"function {NS}:fmt/tendance",
-       f"data modify storage {NS}:t ip.tr set from storage {NS}:t tr", f"data modify storage {NS}:t ip.trc set from storage {NS}:t trc",
-       f"execute store result storage {NS}:t ip.have int 1 run function {NS}:op/compter with storage {NS}:t it",
-       f"execute store result storage {NS}:t ip.vs int 1 run scoreboard players get #vs c.t",
-       f"execute store result storage {NS}:t ip.as int 1 run scoreboard players get #as c.t",
-       # barre de demande : pleine quand le prix est au plus haut (pression -300), vide au plancher (700)
-       "scoreboard players set #x c.t 700", "scoreboard players operation #x c.t -= #p c.t",
-       "scoreboard players operation #x c.t /= #100 c.g"]
-IPG += [f'execute if score #x c.t matches {k} run data modify storage {NS}:t ip.bar set value "{GLY["barre_" + str(k)]}"' for k in range(11)]
-IPG += [f'data modify storage {NS}:t ip.ev set value ""',
-        f'execute if score #e c.t matches 1001.. run data modify storage {NS}:t ip.ev set value "\\nPénurie en cours : prix de vente x1,6."',
-        f'execute if score #e c.t matches ..999 run data modify storage {NS}:t ip.ev set value "\\nKrach en cours : prix divisé par deux."',
-        f'data modify storage {NS}:t ip.q set value "$(q)"'] + msg_line(f"{NS}:t", "ip.") + [
+# ---------------------------------------------------------------- un objet : prix totaux écrits sur les boutons
+TOT = [1, 16, 64]
+IPG = [f"function {NS}:item/charger", f"data modify storage {NS}:t ip set from storage {NS}:t it",
+       f"execute store result score #have c.t run function {NS}:op/compter with storage {NS}:t it",
+       f"execute store result storage {NS}:t ip.have int 1 run scoreboard players get #have c.t"]
+for q in TOT + ["tout"]:
+    if q == "tout":
+        IPG += ["scoreboard players operation #q c.t = #have c.t", "execute if score #q c.t matches 641.. run scoreboard players set #q c.t 640"]
+    else:
+        IPG.append(f"scoreboard players set #q c.t {q}")
+    IPG += ["scoreboard players operation #d c.t = #q c.t", "scoreboard players operation #d c.t *= #1000 c.g",
+            "scoreboard players operation #d c.t /= #V c.t", f"function {NS}:prix/mid", f"function {NS}:prix/bonus",
+            f"function {NS}:prix/vente", "scoreboard players operation #x c.t = #u c.t",
+            "scoreboard players operation #x c.t *= #q c.t"] + fmt(f"{NS}:t", f"ip.s{q}")
+    if q != "tout":
+        IPG += ["scoreboard players operation #d c.t = #q c.t", "scoreboard players operation #d c.t *= #500 c.g",
+                "scoreboard players operation #d c.t /= #V c.t", "scoreboard players operation #d c.t *= #-1 c.g",
+                f"function {NS}:prix/mid", f"function {NS}:prix/sans_bonus", f"function {NS}:prix/vente",
+                "scoreboard players operation #x c.t = #a c.t", "scoreboard players operation #x c.t *= #q c.t",
+                "scoreboard players add #x c.t 99", "scoreboard players operation #x c.t /= #100 c.g",
+                f"execute store result storage {NS}:t ip.b{q} int 1 run scoreboard players get #x c.t"]
+# prix à l'unité, tendance, demande
+IPG += ["scoreboard players set #d c.t 0", f"function {NS}:prix/mid", f"function {NS}:prix/bonus", f"function {NS}:prix/vente",
+        "scoreboard players operation #x c.t = #u c.t"] + fmt(f"{NS}:t", "ip.v") + [
+        "scoreboard players operation #x c.t = #a c.t"] + fmt(f"{NS}:t", "ip.a") + [
+        "scoreboard players operation #x c.t = #bon c.t", "scoreboard players remove #x c.t 1000",
+        "scoreboard players operation #x c.t /= #10 c.g",
+        f'data modify storage {NS}:t ip.bp set value ""',
+        f'execute if score #x c.t matches 1.. run function {NS}:page/item_bonus',
+        f"function {NS}:fmt/tendance",
+        f"data modify storage {NS}:t ip.tr set from storage {NS}:t tr", f"data modify storage {NS}:t ip.trc set from storage {NS}:t trc",
+        f'data modify storage {NS}:t ip.ev set value ""',
+        f'execute if score #e c.t matches 1001.. run data modify storage {NS}:t ip.ev set value "   ·   pénurie : x1,6"',
+        f'execute if score #e c.t matches ..999 run data modify storage {NS}:t ip.ev set value "   ·   krach : /2"'] + msg_line(f"{NS}:t", "ip.") + [
         f"execute if score #rare c.t matches 1 run return run function {NS}:page/item_v with storage {NS}:t ip",
         f"function {NS}:page/item_a with storage {NS}:t ip"]
 w(F + "page/item.mcfunction", IPG)
 w(F + "page/item_bonus.mcfunction", [
     f"execute store result storage {NS}:t f.e int 1 run scoreboard players get #x c.t",
     f"function {NS}:page/item_bonus_m with storage {NS}:t f"])
-w(F + "page/item_bonus_m.mcfunction", f'$data modify storage {NS}:t ip.bp set value " (dont +$(e) % de métier)"')
-for kind in ("a", "v"):
-    desc = [T("Vente : ", "gray"), T(f"$(ve),$(vz)$(vc) {ECU}", "gold", True), T(" l’unité$(bp)", "gray")]
-    if kind == "a":
-        desc += [T("\\nAchat : ", "gray"), T(f"$(ae),$(az)$(ac) {ECU}", "yellow", True), T(" l’unité", "gray")]
-    else:
-        desc += [T("\\nLe serveur ne revend pas cet objet.", "dark_gray")]
-    body = [f'{{type:"minecraft:item",item:{{id:"minecraft:$(id)"}},show_decorations:false,description:{{width:260,contents:{L(*desc)}}}}}',
-            f'{{type:"minecraft:plain_message",width:300,contents:{L(T("Demande  ", "gray"), "{text:\"$(bar)\",font:\"metiers:icones\",color:\"white\"}", T("  sur 1 h : ", "gray"), "{text:\"$(tr)\",color:\"$(trc)\",bold:true}", T("\\nTu en as $(have)   ·   vendus cette semaine : $(vs)   ·   achetés : $(as)", "gray"), T("$(ev)", "light_purple"), T("\\n$(msg)", "yellow"))}}}']
-    acts = ['{label:{text:"Vendre",color:"gold",bold:true},width:150,tooltip:{text:"Vend la quantité choisie (ce que tu as, au plus)."},action:{type:"minecraft:dynamic/run_command",template:"trigger commerce set 2$(i3)$(q)"}}']
-    if kind == "a":
-        acts.append('{label:{text:"Acheter",color:"yellow",bold:true},width:150,tooltip:{text:"Achète la quantité choisie."},action:{type:"minecraft:dynamic/run_command",template:"trigger commerce set 1$(i3)$(q)"}}')
-    acts += ['{label:{text:"Tout vendre",color:"gold"},width:150,tooltip:{text:"Vend tout ce que tu as (10 stacks au plus par clic)."},action:{type:"run_command",command:"trigger commerce set 3$(i3)000"}}',
-             '{label:{text:"Retour : $(cn)",color:"white"},width:150,action:{type:"run_command",command:"trigger commerce set $(cb)"}}']
-    inp = f'inputs:[{{type:"minecraft:single_option",key:"q",label:{{text:"Quantité"}},width:200,options:[{QOPT}]}}],'
-    d = dlg('{text:"$(n)",color:"gold",bold:true}', body, acts)
-    d = d.replace("body:[", inp + "body:[", 1)
-    w(F + f"page/item_{kind}.mcfunction", "$" + d)
+w(F + "page/item_bonus_m.mcfunction", f'$data modify storage {NS}:t ip.bp set value " (+$(e) % métier)"')
 
-# ---------------------------------------------------------------- bourse
+
+def btn_cmd(label, cmd, tip=None):
+    s = f"{{label:{label},width:160"
+    if tip:
+        s += f',tooltip:{{text:"{tip}"}}'
+    return s + f',action:{{type:"run_command",command:"{cmd}"}}}}'
+
+
+for kind in ("a", "v"):
+    desc = [T("Vente ", "gray"), T(f"$(ve),$(vz)$(vc) {ECU}", "gold", True), T("$(bp)", "gray")]
+    if kind == "a":
+        desc += [T("   Achat ", "gray"), T(f"$(ae),$(az)$(ac) {ECU}", "yellow", True)]
+    desc += [T("  l’unité\\nTu en as $(have)   ·   tendance ", "gray"), "{text:\"$(tr)\",color:\"$(trc)\",bold:true}", T("$(ev)", "light_purple"), T("\\n$(msg)", "yellow")]
+    body = [f'{{type:"minecraft:item",item:{{id:"minecraft:$(id)"}},show_decorations:false,description:{{width:280,contents:{L(*desc)}}}}}']
+    vend = lambda q: btn_cmd(L(T(f"Vendre {q}  ", "gold", True), T(f"$(s{q}e),$(s{q}z)$(s{q}c) {ECU}", "white")), f"trigger commerce set 2$(i3){q:03d}",
+                             "Prix total, bonus de métier compris. Le prix baisse un peu à mesure que tu vends.")
+    ach = lambda q: btn_cmd(L(T(f"Acheter {q}  ", "yellow", True), T(f"$(b{q}),00 {ECU}", "white")), f"trigger commerce set 1$(i3){q:03d}",
+                            "Prix total. Le prix monte un peu à mesure que tu achètes.")
+    tout = btn_cmd(L(T("Tout vendre ($(have))  ", "gold", True), T(f"$(stoute),$(stoutz)$(stoutc) {ECU}", "white")), "trigger commerce set 3$(i3)000",
+                   "Vend tout ce que tu as de cet objet (10 stacks au plus par clic).")
+    retour = btn_cmd(T("Retour : $(cn)", "white"), "trigger commerce set $(cb)")
+    if kind == "a":
+        acts = [vend(1), ach(1), vend(16), ach(16), vend(64), ach(64), tout, retour]
+    else:
+        acts = [vend(1), vend(16), vend(64), tout, retour, btn_cmd(T("Marché", "yellow"), "trigger commerce set 9")]
+    w(F + f"page/item_{kind}.mcfunction", "$" + dlg('{text:"$(n)",color:"gold",bold:true}', body, acts))
+
+# ---------------------------------------------------------------- bourse (tops de 3 pour tenir sans défiler)
+NTOP = 3
 BO = [f"scoreboard players reset * c.x"]
 for key, obj in (("tv", "c.vs"), ("ta", "c.as")):
-    for k in range(1, 6):
+    for k in range(1, NTOP + 1):
         BO += ["scoreboard players set #m c.t 0", "scoreboard players set #best c.t 0"]
         BO.append(f"function {NS}:bourse/{key}_passe")
         BO += [f'data modify storage {NS}:r {key}{k}n set value "·"', f'data modify storage {NS}:r {key}{k}q set value ""',
@@ -907,26 +913,23 @@ for key, obj in (("tv", "c.vs"), ("ta", "c.as")):
     w(F + f"bourse/{key}_passe.mcfunction", PS)
 BO += [f'function {NS}:rang/calcul {{obj:"c.tv",n:3}}',
        f"data modify storage {NS}:r ev set from storage {NS}:g evtxt",
-       f'execute if data storage {NS}:r {{ev:""}} run data modify storage {NS}:r ev set value "Pas d’évènement en cours. Un nouveau peut tomber à chaque heure de jeu."',
+       f'execute if data storage {NS}:r {{ev:""}} run data modify storage {NS}:r ev set value "Pas d’évènement en cours."',
        f"function {NS}:page/bourse_d with storage {NS}:r"]
 w(F + "page/bourse.mcfunction", BO)
 NL = "\\n"
-top = lambda key, col: ",".join(T(f"{k}. ", "gray") + "," + T(f"$({key}{k}n)", col) + "," + T(f"  $({key}{k}q)" + (NL if k < 5 else ""), "gray") for k in range(1, 6))
+top = lambda key, col: ",".join(T(f"{k}. ", "gray") + "," + T(f"$({key}{k}n)", col) + "," + T(f"  $({key}{k}q)" + (NL if k < NTOP else ""), "gray") for k in range(1, NTOP + 1))
 w(F + "page/bourse_d.mcfunction", "$" + dlg(
     T("Bourse", "light_purple", True),
-    [f'{{type:"minecraft:item",item:{{id:"minecraft:bell"}},show_decorations:false,description:{{width:260,contents:{L(T("$(ev)", "light_purple"))}}}}}',
-     f'{{type:"minecraft:plain_message",width:300,contents:{L(T("Les plus vendus cette semaine\\n", "gold", True), top("tv", "white"))}}}',
-     f'{{type:"minecraft:plain_message",width:300,contents:{L(T("Les plus achetés cette semaine\\n", "yellow", True), top("ta", "white"))}}}',
-     f'{{type:"minecraft:plain_message",width:300,contents:[{T("Plus gros marchands (total vendu)\\n", "green", True)},{{text:"",extra:$(C)}}]}}'],
-    [btn(T("Marché", "yellow"), 9, 150), btn(T("Fortunes", "gold"), 21, 150), RETOUR]))
+    [f'{{type:"minecraft:plain_message",width:310,contents:{L(T("$(ev)\\n\\n", "light_purple"), T("Plus vendus cette semaine\\n", "gold", True), top("tv", "white"), T("\\n\\nPlus achetés cette semaine\\n", "yellow", True), top("ta", "white"), T("\\n\\nPlus gros marchands\\n", "green", True))[:-1]},{{text:"",extra:$(C)}}]}}'],
+    [btn(T("Marché", "yellow"), 9, 110), btn(T("Fortunes", "gold"), 21, 110), btn(T("Accueil", "white"), 1, 110)], 3))
 
 # ---------------------------------------------------------------- fortunes
 w(F + "page/fortunes.mcfunction", [f'function {NS}:rang/calcul {{obj:"c.ecus",n:10}}'] + SOLDE(f"{NS}:r") + [
     f"function {NS}:page/fortunes_d with storage {NS}:r"])
 w(F + "page/fortunes_d.mcfunction", "$" + dlg(
     T("Fortunes", "gold", True),
-    [f'{{type:"minecraft:plain_message",width:300,contents:[{SOLDE_TXT},{T("\\n\\nLes 10 plus riches du serveur\\n", "gold", True)},{{text:"",extra:$(C)}}]}}'],
-    [btn(T("Bourse", "light_purple"), 20, 150), RETOUR]))
+    [f'{{type:"minecraft:plain_message",width:310,contents:[{SOLDE_TXT},{T("\\n\\nLes 10 plus riches du serveur\\n", "gold", True)},{{text:"",extra:$(C)}}]}}'],
+    [btn(T("Bourse", "light_purple"), 20, 160), btn(T("Accueil", "white"), 1, 160)]))
 
 # ---------------------------------------------------------------- cristaux
 CR = SOLDE(f"{NS}:cr") + [f"function {NS}:cristal/prix",
@@ -937,8 +940,8 @@ CR += msg_line(f"{NS}:cr") + [f"function {NS}:page/cristaux_d with storage {NS}:
 w(F + "page/cristaux.mcfunction", CR)
 w(F + "page/cristaux_d.mcfunction", "$" + dlg(
     T("Cristaux de métier", "aqua", True),
-    [f'{{type:"minecraft:plain_message",width:320,contents:{L(SOLDE_TXT, T("\\nPrix d’un cristal : ", "gray"), T("$(p) " + ECU, "aqua", True), T("\\nAchetés cette semaine : $(n). Chaque achat augmente le prix de 5 %, remise à zéro à la nouvelle semaine.", "gray"), T("\\n$(msg)", "yellow"))}}}'],
-    [btn(L(G("cristal_" + j), T(f" {nom} ", col), T(f"($({j}))", "gray")), 400 + JIDX[j], 150, f"Acheter 1 cristal de {nom}.") for j, nom, col in JOBS] + [RETOUR]))
+    [f'{{type:"minecraft:plain_message",width:310,contents:{L(SOLDE_TXT, T("   ·   un cristal : ", "gray"), T("$(p) " + ECU, "aqua", True), T("\\nAchetés cette semaine : $(n), +5 % à chaque achat.", "gray"), T("\\n$(msg)", "yellow"))}}}'],
+    [btn(L(G("cristal_" + j), T(f" {nom} ", col), T(f"($({j}))", "gray")), 400 + JIDX[j], 160, f"Acheter 1 cristal de {nom}.") for j, nom, col in JOBS] + [btn(T("Accueil", "white"), 1, 160)]))
 
 # =====================================================================
 # ADMIN
