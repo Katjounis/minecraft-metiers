@@ -22,7 +22,12 @@ Les prix de base et les volumes sont dans `sources/catalogue.py`. `sources/coher
 
 ## Historique
 
+- v4 (22/11/2026) : vrai fond d'établi derrière la recette de l'œuf (resource pack), lignes de largeur identique pour que la grille ne se décale plus.
 - v3 (22/11/2026) : le serveur refusait de démarrer à cause de deux progrès écrits au format 1.21 (`clic_comptoir`, `debloque`). Le pack n'utilise plus aucun progrès : clic par entité `interaction`, déblocage par statistique de craft. Table de butin passée au format 26.x (`modifier`, `type`). `verifier.py` signale maintenant ces anciens formats.
+
+## Resource pack
+
+Commerce ajoute `assets/commerce/` (police `commerce:recette` et texture du fond d'établi) au resource pack commun : `python sources/datapack.py` puis `python labo/outils/fusion_rp.py` depuis la racine du dépôt. Le SHA-1 affiché va dans `resource-pack-sha1` du `server.properties` une fois le zip poussé sur main.
 
 ## Fichiers
 
@@ -67,7 +72,7 @@ Avec deux packs dans la touche G, le jeu affiche d'abord la liste « Métiers / 
 - Le craft de l'œuf débloque le Commerce dans la seconde (statistique `minecraft.crafted:minecraft.villager_spawn_egg`).
 - La recette de l'œuf apparaît dans l'établi : si la 26.x refuse son format, le serveur démarre quand même mais la recette est absente du log (`Parsing error loading recipe commerce:oeuf`).
 - Les listes déroulantes de quantité (dialogue `single_option` + `dynamic/run_command`).
-- La grille de craft : elle utilise le composant de texte `object` (atlas `minecraft:blocks` et `minecraft:items`, découpage valable depuis la 1.21.11). Si une case affiche le damier violet et noir, le nom de l'atlas ou de la texture a changé en 26.x : à corriger dans `SPR` de `datapack.py`.
+- La grille de craft : fond d'établi au style vanilla (glyphe `etabli.png` de la police `commerce:recette`, dans le resource pack commun) et textures des objets par-dessus via le composant de texte `object` (atlas `minecraft:blocks` et `minecraft:items`). Les positions viennent de mesures en jeu (sprite de 8 px, avance 8, haut à y = -1, lignes de 9 px) : si les objets tombent à côté des cases, ajuster `GX`, `RX` ou `PTOP` dans `datapack.py`.
 
 ## Prévu ensuite
 

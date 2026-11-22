@@ -11,7 +11,7 @@ from catalogue import ACHAT, CATEGORIES, ITEMS, RARES
 ROOT = os.path.join(HERE, "..", "build", "commerce_datapack")
 NS = "commerce"
 F = f"data/{NS}/function/"
-VERSION = 3
+VERSION = 4
 if os.path.exists(ROOT):
     shutil.rmtree(ROOT)
 
@@ -633,27 +633,81 @@ SPR = {"E": ("blocks", "block/emerald_block"), "D": ("blocks", "block/diamond_bl
        "N": ("items", "item/netherite_ingot"), "C": ("blocks", "block/barrel_side"), "O": ("items", "item/villager_spawn_egg")}
 GRID = ["EDE", "GNG", "ECE"]
 
+# Fond de l'établi : un seul glyphe (resource pack, police commerce:recette) dessiné au style vanilla
+# (panneau gris clair, cases en creux, flèche, case de résultat), posé sous la première ligne de la grille.
+# Les textures des objets se placent par-dessus avec des espaces exacts (fournisseur « space »).
+# Repères mesurés en jeu : un sprite « object » fait 8 px de large, avance de 8, haut à y = -1 ; ligne de 9 px.
+RP = os.path.join(HERE, "..", "build", "commerce_rp", "assets", "commerce")
+GX, PW, PTOP, PH = 5, 66, -5, 34       # marge, largeur du panneau, haut (y relatif à la 1re ligne), hauteur (px d'interface)
+RX = GX + 46                          # x de l'œuf (case de résultat)
+SC = 4                                # 4 pixels de texture par pixel d'interface
+ESP = {-(PW + 1): "\ue001", GX: "\ue002", 1: "\ue003", PW - GX - 26: "\ue004", RX - GX - 26: "\ue005", PW - RX - 8: "\ue006"}
+PANNEAU = "\ue000"
 
-def grille(fmt):
-    """Grille 3x3 façon établi, flèche, puis l'œuf. fmt = 'snbt' (dialogues dynamiques) ou 'json' (dialogue fixe)."""
-    nl = "\\n" if fmt == "snbt" else "\n"
-    if fmt == "snbt":
-        t = lambda x, c: f'{{text:"{x}",color:"{c}",bold:false,italic:false}}'
-        sp = lambda k: f'{{object:"atlas",atlas:"minecraft:{SPR[k][0]}",sprite:"minecraft:{SPR[k][1]}"}}'
-    else:
-        t = lambda x, c: {"text": x, "color": c, "bold": False, "italic": False}
-        sp = lambda k: {"object": "atlas", "atlas": f"minecraft:{SPR[k][0]}", "sprite": f"minecraft:{SPR[k][1]}"}
-    out = [t("Recette de l’œuf de comptoir (établi)" + nl + nl, "gold")]
+
+def dessiner_etabli():
+    from PIL import Image, ImageDraw
+    W, Hh = PW * SC, PH * SC
+    im = Image.new("RGBA", (W, Hh), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    R = lambda x0, y0, x1, y1, c: d.rectangle([x0 * SC, (y0 - PTOP) * SC, x1 * SC - 1, (y1 - PTOP) * SC - 1], fill=c)
+    NOIR, BLANC, OMBRE, FOND, CASE, CREUX = (0, 0, 0, 255), (255, 255, 255, 255), (85, 85, 85, 255), (198, 198, 198, 255), (139, 139, 139, 255), (55, 55, 55, 255)
+    # panneau vanilla : contour noir aux coins arrondis, reflet blanc en haut à gauche, ombre en bas à droite
+    R(1, PTOP, PW - 1, PTOP + PH, NOIR); R(0, PTOP + 1, PW, PTOP + PH - 1, NOIR)
+    R(1, PTOP + 1, PW - 1, PTOP + PH - 1, BLANC)
+    R(2, PTOP + 2, PW - 1, PTOP + PH - 1, OMBRE)
+    R(2, PTOP + 2, PW - 2, PTOP + PH - 2, FOND)
+    # grille 3 x 3 : cases de 8 px au pas de 9, bord sombre en haut à gauche, clair en bas à droite (demi-pixel)
+    h = 0.5
+    def case(x, y, w, hh, e=h):
+        # bord de e px : sombre en haut et à gauche, clair en bas et à droite ; deux cases voisines partagent 1 px
+        X = lambda v: round(v * SC); Y = lambda v: round((v - PTOP) * SC)
+        d.rectangle([X(x - e), Y(y - e), X(x + w + e) - 1, Y(y + hh + e) - 1], fill=BLANC)
+        d.rectangle([X(x - e), Y(y - e), X(x + w) - 1, Y(y + hh) - 1], fill=CREUX)
+        d.rectangle([X(x), Y(y), X(x + w) - 1, Y(y + hh) - 1], fill=CASE)
+    for r in range(3):
+        for c in range(3):
+            case(GX + 9 * c, -1 + 9 * r, 8, 8)
+    case(RX - 2, 6, 12, 12, 1)
+    # flèche vanilla
+    ax, ay = GX + 31, 12
+    d.rectangle([ax * SC, (ay - 1 - PTOP) * SC, (ax + 7) * SC - 1, (ay + 1 - PTOP) * SC - 1], fill=CASE)
+    d.polygon([((ax + 6) * SC, (ay - 4 - PTOP) * SC), ((ax + 11) * SC, (ay - PTOP) * SC), ((ax + 6) * SC, (ay + 4 - PTOP) * SC)], fill=CASE)
+    os.makedirs(os.path.join(RP, "textures", "font"), exist_ok=True)
+    im.save(os.path.join(RP, "textures", "font", "etabli.png"))
+    os.makedirs(os.path.join(RP, "font"), exist_ok=True)
+    json.dump({"providers": [
+        {"type": "bitmap", "file": "commerce:font/etabli.png", "height": PH, "ascent": 7 - PTOP, "chars": [PANNEAU]},
+        {"type": "space", "advances": {c: v for v, c in ESP.items()}}]},
+        open(os.path.join(RP, "font", "recette.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+
+
+if os.path.exists(os.path.join(HERE, "..", "build", "commerce_rp")):
+    shutil.rmtree(os.path.join(HERE, "..", "build", "commerce_rp"))
+dessiner_etabli()
+
+
+def grille(fmt="snbt"):
+    """Grille de l'établi : panneau en fond, textures des objets posées dans les cases. Lignes de même largeur
+    pour que le centrage du dialogue ne les décale pas."""
+    t = lambda x, c: f'{{text:"{x}",color:"{c}",bold:false,italic:false}}'
+    sp = lambda k: f'{{object:"atlas",atlas:"minecraft:{SPR[k][0]}",sprite:"minecraft:{SPR[k][1]}"}}'
+    e = lambda v: f'{{text:"{ESP[v]}",font:"commerce:recette"}}'
+    out = [t("Recette de l’œuf de comptoir (établi)\\n\\n", "gold")]
     for r, row in enumerate(GRID):
-        out.append(t("   ", "white"))
-        for k in row:
-            out += [t("[", "dark_gray"), sp(k), t("]", "dark_gray")]
+        if r == 0:
+            out += [f'{{text:"{PANNEAU}",font:"commerce:recette",color:"white",shadow_color:0}}', e(-(PW + 1))]
+        out.append(e(GX))
+        for c, k in enumerate(row):
+            out.append(sp(k))
+            if c < 2:
+                out.append(e(1))
         if r == 1:
-            out += [t("    ➜    ", "gold"), t("[", "gold"), sp("O"), t("]", "gold")]
-        out.append(t(nl, "white"))
-    out.append(t(nl + "Émeraude : 4 blocs · Diamant : 1 bloc · Or : 2 blocs" + nl + "Netherite : 1 lingot · Tonneau : 1", "gray"))
-    if fmt == "json":
-        return [""] + out
+            out += [e(RX - GX - 26), sp("O"), e(PW - RX - 8)]
+        else:
+            out.append(e(PW - GX - 26))
+        out.append(t("\\n", "white"))
+    out.append(t("\\n\\nÉmeraude : 4 blocs · Diamant : 1 bloc · Or : 2 blocs\\nNetherite : 1 lingot · Tonneau : 1", "gray"))
     return "[" + ",".join(['{text:""}'] + out) + "]"
 
 
