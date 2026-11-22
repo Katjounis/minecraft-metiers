@@ -231,9 +231,9 @@ EGG_LORE = [{"text": "Pose-le à ta base : c'est ton comptoir de commerce.", "co
             {"text": "Un seul par joueur. Touche G pour le déplacer.", "color": "gray", "italic": False}]
 wj(f"data/{NS}/recipe/oeuf.json", {
     "type": "minecraft:crafting_shaped", "category": "misc",
-    "pattern": ["EDE", "GNG", "ECE"],
+    "pattern": ["EDE", "GNG", "ECE"],  # C = tonneau
     "key": {"E": "minecraft:emerald_block", "D": "minecraft:diamond_block", "G": "minecraft:gold_block",
-            "N": "minecraft:netherite_ingot", "C": "minecraft:chest"},
+            "N": "minecraft:netherite_ingot", "C": "minecraft:barrel"},
     "result": {"id": "minecraft:villager_spawn_egg", "count": 1, "components": {
         "minecraft:custom_name": EGG_NAME, "minecraft:lore": EGG_LORE, "minecraft:entity_data": EGG_ENTITY_JSON,
         "minecraft:custom_data": {"commerce": "oeuf"}, "minecraft:max_stack_size": 1, "minecraft:rarity": "epic",
@@ -623,13 +623,46 @@ def msg_line(st, pre=""):
 MSG_TXT = T("$(msg)", "yellow")
 RETOUR = btn(T("Accueil", "white"), 1, 100)
 
+# ---------------------------------------------------------------- grille de craft de l'œuf, en vraies textures
+# Composant de texte « object » (1.21.9+) : affiche une texture d'un atlas du jeu, sans resource pack.
+# Depuis la 1.21.11 les objets sont dans l'atlas minecraft:items, les blocs dans minecraft:blocks.
+SPR = {"E": ("blocks", "block/emerald_block"), "D": ("blocks", "block/diamond_block"), "G": ("blocks", "block/gold_block"),
+       "N": ("items", "item/netherite_ingot"), "C": ("blocks", "block/barrel_side"), "O": ("items", "item/villager_spawn_egg")}
+GRID = ["EDE", "GNG", "ECE"]
+
+
+def grille(fmt):
+    """Grille 3x3 façon établi, flèche, puis l'œuf. fmt = 'snbt' (dialogues dynamiques) ou 'json' (dialogue fixe)."""
+    nl = "\\n" if fmt == "snbt" else "\n"
+    if fmt == "snbt":
+        t = lambda x, c: f'{{text:"{x}",color:"{c}",bold:false,italic:false}}'
+        sp = lambda k: f'{{object:"atlas",atlas:"minecraft:{SPR[k][0]}",sprite:"minecraft:{SPR[k][1]}"}}'
+    else:
+        t = lambda x, c: {"text": x, "color": c, "bold": False, "italic": False}
+        sp = lambda k: {"object": "atlas", "atlas": f"minecraft:{SPR[k][0]}", "sprite": f"minecraft:{SPR[k][1]}"}
+    out = [t("Recette de l’œuf de comptoir (établi)" + nl + nl, "gold")]
+    for r, row in enumerate(GRID):
+        out.append(t("   ", "white"))
+        for k in row:
+            out += [t("[", "dark_gray"), sp(k), t("]", "dark_gray")]
+        if r == 1:
+            out += [t("    ➜    ", "gold"), t("[", "gold"), sp("O"), t("]", "gold")]
+        out.append(t(nl, "white"))
+    out.append(t(nl + "Émeraude : 4 blocs · Diamant : 1 bloc · Or : 2 blocs" + nl + "Netherite : 1 lingot · Tonneau : 1", "gray"))
+    if fmt == "json":
+        return [""] + out
+    return "[" + ",".join(['{text:""}'] + out) + "]"
+
+
+GRILLE_SNBT = grille("snbt")
+
 # ---------------------------------------------------------------- touche G (dialogue fixe, lu au démarrage)
 wj(f"data/{NS}/dialog/ouvrir.json", {
     "type": "minecraft:multi_action", "title": {"text": "Commerce", "color": "gold", "bold": True},
     "external_title": {"text": "Commerce"}, "can_close_with_escape": True, "pause": False,
-    "body": [{"type": "minecraft:item", "item": {"id": "minecraft:villager_spawn_egg"}, "show_decorations": False,
-              "description": {"contents": [{"text": "Ton compte en Écus, le marché, la bourse, les fortunes et les cristaux.\n", "color": "gray"},
-                                          {"text": "Pas encore d'œuf de comptoir ? La recette s'affiche à l'ouverture.", "color": "dark_gray"}], "width": 250}}],
+    "body": [{"type": "minecraft:plain_message", "width": 300,
+              "contents": [{"text": "Ton compte en Écus, le marché, la bourse, les fortunes et les cristaux. Il se débloque en craftant l'œuf de comptoir.", "color": "gray"}]},
+             {"type": "minecraft:plain_message", "width": 300, "contents": grille("json")}],
     "actions": [{"label": {"text": "Ouvrir le Commerce", "color": "gold", "bold": True}, "width": 200,
                  "action": {"type": "run_command", "command": "trigger commerce set 1"}}],
     "columns": 1})
@@ -657,21 +690,13 @@ for j, *_ in JOBS:
 w(F + "page/item_depuis.mcfunction", ["scoreboard players operation #i c.t = #v c.t",
                                       "scoreboard players remove #i c.t 10000", f"function {NS}:page/item"])
 
-# ---------------------------------------------------------------- page verrouillée : la recette en grille, le reste grisé
-REC = [("emerald_block", "4 blocs d'émeraude (les quatre coins)"), ("diamond_block", "1 bloc de diamant (en haut au milieu)"),
-       ("gold_block", "2 blocs d'or (à gauche et à droite)"), ("netherite_ingot", "1 lingot de netherite (au centre)"),
-       ("chest", "1 coffre (en bas au milieu)")]
-CASE = {"E": ("Émeraude", "green", "Bloc d’émeraude"), "D": ("Diamant", "aqua", "Bloc de diamant"), "G": ("Or", "gold", "Bloc d’or"),
-        "N": ("Netherite", "#8B7F86", "Lingot de netherite"), "C": ("Coffre", "#C08A4C", "Coffre")}
-GRILLE = [btn(L(T("[ ", "dark_gray"), T(CASE[k][0], CASE[k][1], True), T(" ]", "dark_gray")), 1, 96, CASE[k][2]) for k in "EDEGNGECE"]
 GRIS = lambda txt: btn(T(txt, "dark_gray"), 1, 96, "Verrouillé : crafte l’œuf de comptoir pour l’ouvrir.")
 w(F + "page/verrou.mcfunction", SOLDE(f"{NS}:v") + [f"function {NS}:page/verrou_d with storage {NS}:v"])
 w(F + "page/verrou_d.mcfunction", "$" + dlg(
     T("Commerce : verrouillé", "gold", True),
-    [f'{{type:"minecraft:plain_message",width:310,contents:{L(T("Pour ouvrir le Commerce, crafte un ", "gray"), T("œuf de comptoir", "gold", True), T(" à l’établi (recette en grille ci-dessous) puis pose-le à ta base. En attendant, tes paliers, défis et boss te rapportent déjà des Écus.\\n", "gray"), SOLDE_TXT)}}}']
-    + [f'{{type:"minecraft:item",item:{{id:"minecraft:{iid}"}},show_decorations:false,description:{{contents:{T(txt, "white")},width:250}}}}' for iid, txt in REC]
-    + [f'{{type:"minecraft:plain_message",width:310,contents:{L(T("Recette de l’œuf de comptoir (établi) :", "gold", True))}}}'],
-    GRILLE + [GRIS("Marché"), GRIS("Bourse"), GRIS("Fortunes"), GRIS("Cristaux"), GRIS("Mon comptoir"), btn(T("Aide", "white"), 60, 96)], 3))
+    [f'{{type:"minecraft:plain_message",width:310,contents:{L(T("Pour ouvrir le Commerce, crafte un ", "gray"), T("œuf de comptoir", "gold", True), T(" à l’établi puis pose-le à ta base. En attendant, tes paliers, défis et boss te rapportent déjà des Écus.\\n", "gray"), SOLDE_TXT)}}}',
+     f'{{type:"minecraft:plain_message",width:310,contents:{GRILLE_SNBT}}}'],
+    [GRIS("Marché"), GRIS("Bourse"), GRIS("Fortunes"), GRIS("Cristaux"), GRIS("Mon comptoir"), btn(T("Aide", "white"), 60, 96)], 3))
 
 # ---------------------------------------------------------------- aide
 AIDE = [

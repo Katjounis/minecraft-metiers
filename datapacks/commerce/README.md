@@ -7,7 +7,7 @@ Datapack vanilla (Minecraft Java 26.x) qui ajoute une économie au serveur, bran
 | Élément | Fonctionnement |
 |---|---|
 | Écus | Argent sur un compte (score `c.ecus`, centimes dans `c.cts`), impossible à perdre ou à voler |
-| Déblocage | Crafter l'**œuf de comptoir** débloque le Commerce. Recette : blocs d'émeraude aux 4 coins, bloc de diamant en haut, blocs d'or à gauche et à droite, lingot de netherite au centre, coffre en bas. Tant que ce n'est pas fait, le Commerce s'ouvre sur la recette en grille, les boutons sont grisés |
+| Déblocage | Crafter l'**œuf de comptoir** débloque le Commerce. Recette : blocs d'émeraude aux 4 coins, bloc de diamant en haut, blocs d'or à gauche et à droite, lingot de netherite au centre, tonneau en bas. La grille de craft est dessinée avec les vraies textures du jeu dans la fenêtre de la touche G et sur la page du Commerce ; tant que l'œuf n'est pas crafté, les autres boutons sont grisés |
 | Comptoir | L'œuf pose un villageois immobile et invincible « Comptoir de <pseudo> ». Un seul par joueur, utilisable par tous (clic droit). Touche G, Mon comptoir : il revient en œuf pour être reposé ailleurs |
 | Menu | Touche G (ou menu Échap), Commerce, « Ouvrir le Commerce » : compte, marché, bourse, fortunes, cristaux. Tout marche depuis n'importe où |
 | Marché | 459 objets en 16 catégories (pierres, terre, fleurs, bois, 16 couleurs de laine, béton, terre cuite et verre, minerais et blocs, Nether et End, agriculture, élevage, pêche, cuisine, utilitaires et redstone, trésors), achat et vente par 1 à 640, « Tout vendre ». Les Trésors (diamant, netherite, élytres...) sont en vente seulement |
@@ -61,6 +61,7 @@ Avec deux packs dans la touche G, le jeu affiche d'abord la liste « Métiers / 
 - Le nom du comptoir et le classement des fortunes : le pseudo est lu sur une tête de joueur générée (`profile.name`). Si le comptoir s'appelle « Comptoir de Joueur », ce chemin a changé en 26.x.
 - Le clic droit sur le comptoir ouvre bien le menu (progrès `player_interacted_with_entity`).
 - Les listes déroulantes de quantité (dialogue `single_option` + `dynamic/run_command`).
+- La grille de craft : elle utilise le composant de texte `object` (atlas `minecraft:blocks` et `minecraft:items`, découpage valable depuis la 1.21.11). Si une case affiche le damier violet et noir, le nom de l'atlas ou de la texture a changé en 26.x : à corriger dans `SPR` de `datapack.py`.
 
 ## Prévu ensuite
 
