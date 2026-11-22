@@ -937,7 +937,7 @@ scoreboard players operation @s m.tmp -= @s m.{j}_spent
       f'exit_action:{{label:"Retour",width:150,action:{{type:"run_command",command:"trigger metiers set 1"}}}}}}')
 
     for k, (name, cost, req, desc) in enumerate(sk, 1):
-        B = [f"execute if entity @s[tag=metiers.sk.{j}{k}] run return run function {NS}:{j}/arbre",
+        B = [f"execute if entity @s[tag=metiers.sk.{j}{k}] run return run function {NS}:{j}/basculer_{k}",
              f'execute unless score @s m.{j}_lvl matches {SKILL_LVL[k-1]}.. run tellraw @s ' + PREFIX + f',{{"text":"Il faut être niveau {SKILL_LVL[k-1]} en {d["name"]}.","color":"red"}}]',
              f"execute unless score @s m.{j}_lvl matches {SKILL_LVL[k-1]}.. run return run function {NS}:{j}/arbre",
              f"function {NS}:{j}/points"]
@@ -2105,6 +2105,20 @@ playsound minecraft:ui.toast.in master @s ~ ~ ~ 0.6 1.4
 # REFONTE (v24) : objets, armure 11 paliers, compétences, menus, Forge, skins, boss, défis
 for _mod in ("ref_base.py", "ref_skills.py", "ref_menu.py", "ref_boss.py", "ref_defis.py"):
     exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), _mod), encoding="utf-8").read())
+
+# Compétences désactivables : une compétence achetée garde son tag metiers.sk.XN (achat, prérequis, menus),
+# et le tag metiers.skoff.XN coupe son effet. Tous les sélecteurs d'effet reçoivent donc « et pas désactivée ».
+import re as _re2
+_SK = _re2.compile(r"tag=metiers\.sk\.([a-z])(\d)(?=[,\]])")
+_GARDE = _re2.compile(r"(/acheter_\d|/basculer_\d|/arbre|/page_dialog|/points|function[/\\]menu|refonte[/\\]migration|desinstaller)")
+for _dp, _, _fs in os.walk(ROOT):
+    for _fn in _fs:
+        if not _fn.endswith(".mcfunction"): continue
+        _p = os.path.join(_dp, _fn)
+        if _GARDE.search(_p.replace(os.sep, "/")): continue
+        _t = open(_p, encoding="utf-8").read()
+        _n = _SK.sub(lambda m: f"tag=metiers.sk.{m.group(1)}{m.group(2)},tag=!metiers.skoff.{m.group(1)}{m.group(2)}", _t)
+        if _n != _t: open(_p, "w", encoding="utf-8").write(_n)
 
 # Un texte en liste hérite du style de son premier élément : si c'est une icône, tout passe dans la police d'icônes
 # (gros carrés). On met donc un parent vide devant chaque liste qui commence par une icône.

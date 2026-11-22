@@ -139,7 +139,9 @@ for j, d in jobs.items():
               (f'execute if score @s m.{j}_lvl matches {lv}.. {cond[8:]} if score #pts m.tmp matches ..{cost - 1} run data modify storage {NS}:pg c{k} set value "red"' if req else
                f'execute if score @s m.{j}_lvl matches {lv}.. if score #pts m.tmp matches ..{cost - 1} run data modify storage {NS}:pg c{k} set value "red"'),
               f'execute if entity @s[tag=metiers.sk.{j}{k}] run data modify storage {NS}:pg l{k} set value "✔ {name}"',
-              f'execute if entity @s[tag=metiers.sk.{j}{k}] run data modify storage {NS}:pg c{k} set value "green"']
+              f'execute if entity @s[tag=metiers.sk.{j}{k}] run data modify storage {NS}:pg c{k} set value "green"',
+              f'execute if entity @s[tag=metiers.sk.{j}{k},tag=metiers.skoff.{j}{k}] run data modify storage {NS}:pg l{k} set value "○ {name} · désactivée"',
+              f'execute if entity @s[tag=metiers.sk.{j}{k},tag=metiers.skoff.{j}{k}] run data modify storage {NS}:pg c{k} set value "gold"']
     P += ["scoreboard players operation @s m.tmp = @s m.{0}_lvl".format(j), "scoreboard players operation @s m.tmp /= #10 m.const",
           f'data modify storage {NS}:pg rl set value "Aucune récompense"', f'data modify storage {NS}:pg rc set value "dark_gray"',
           f'execute if score @s m.{j}_pal < @s m.tmp run data modify storage {NS}:pg rl set value "Récompense à prendre ●"',
@@ -155,7 +157,7 @@ for j, d in jobs.items():
     sbtn = []
     for k, (name, cost, req, desc) in enumerate(sk, 1):
         rq = " + ".join(sk[r - 1][0] for r in req) if req else "rien"
-        tip = f"{desc}\\nCoût : {cost} points · niveau {SKILL_LVL[k - 1]} · requiert : {rq}"
+        tip = f"{desc}\\nCoût : {cost} points · niveau {SKILL_LVL[k - 1]} · requiert : {rq}\\nUne fois acquise : clic pour l’activer ou la désactiver."
         sbtn.append(f'{{label:{{text:"$(l{k})",color:"$(c{k})"}},width:200,tooltip:{{text:"{tip}"}},action:{{type:"run_command",command:"trigger metiers set {100 + 10 * d["idx"] + k}"}}}}')
     sp = SPECIAL[j]
     sep = [f'{{label:{bandeau("OUTIL ET", "droite")},width:200}}', f'{{label:{bandeau("MÉTIER", "gauche")},width:200}}']
@@ -175,11 +177,19 @@ for j, d in jobs.items():
             '{text:"Survole une compétence pour voir son effet.",color:"dark_gray"}]},'
             f'{{type:"minecraft:plain_message",width:380,contents:[{{text:"Ton outil  ",color:"{d["color"]}",bold:true}},{{text:"{TDESC[j]}\\n",color:"white",bold:false}}' +
             (f',{{text:"Objet de Forge  ",color:"gold",bold:true}},{{text:"{NOMF_J[j]}\\n",color:"white",bold:false}}' if j in FITEM else "") +
-            ',{text:"✔ acquis   ",color:"green"},{text:"jaune : disponible   ",color:"yellow"},{text:"rouge : il manque des points   ",color:"red"},{text:"gris : niveau trop bas",color:"dark_gray"}]}]')
+            ',{text:"✔ acquis   ",color:"green"},{text:"jaune : disponible   ",color:"yellow"},{text:"rouge : il manque des points   ",color:"red"},{text:"gris : niveau trop bas   ",color:"dark_gray"},{text:"○ désactivée (clic pour réactiver)",color:"gold"}]}]')
     w(F + f"{j}/page_dialog.mcfunction",
       f'$dialog show @s {{type:"minecraft:multi_action",title:[{gs("metier_" + j)},{{text:" {d["name"]}",color:"{d["color"]}",bold:true}}],'
       f'can_close_with_escape:true,pause:false,body:{body},actions:[{",".join(sbtn + sep + abtn)}],columns:2,'
       f'exit_action:{{label:"Retour",width:200,action:{{type:"run_command",command:"trigger metiers set 1"}}}}}}')
+    for k, (name, cost, req, desc) in enumerate(sk, 1):
+        w(F + f"{j}/basculer_{k}.mcfunction", "\n".join([
+            f"execute if entity @s[tag=metiers.skoff.{j}{k}] run return run function {NS}:{j}/activer_{k}",
+            f"tag @s add metiers.skoff.{j}{k}", tr(f"{name} est désactivée. Tu la gardes : reclique pour la réactiver.", "gold"),
+            "playsound minecraft:block.lever.click master @s ~ ~ ~ 1 0.7", f"function {NS}:{j}/arbre"]))
+        w(F + f"{j}/activer_{k}.mcfunction", "\n".join([
+            f"tag @s remove metiers.skoff.{j}{k}", tr(f"{name} est réactivée.", "green"),
+            "playsound minecraft:block.lever.click master @s ~ ~ ~ 1 1.2", f"function {NS}:{j}/arbre"]))
     # bascule du titre de ce métier
     w(F + f"{j}/titre.mcfunction", "\n".join([
         f"execute if score @s m.pref matches {d['idx']} run scoreboard players set @s m.trig 10",
@@ -262,7 +272,7 @@ for j, d in jobs.items():
               f'execute if score @s m.cr_{j} matches {pr}.. if score #us m.tmp < #sl m.tmp run data modify storage {NS}:fg k_{kk} set value "yellow"',
               f'execute unless score @s m.{j}_lvl matches {lv}.. run data modify storage {NS}:fg l_{kk} set value "✖ {lab} · niv. {lv}"',
               f'execute unless score @s m.{j}_lvl matches {lv}.. run data modify storage {NS}:fg k_{kk} set value "dark_gray"',
-              f'execute if score @s m.{sc}_{j} matches 1 run data modify storage {NS}:fg l_{kk} set value "✔ {lab} serti"',
+              f'execute if score @s m.{sc}_{j} matches 1 run data modify storage {NS}:fg l_{kk} set value "✔ {lab} serti · clic pour le retirer"',
               f'execute if score @s m.{sc}_{j} matches 1 run data modify storage {NS}:fg k_{kk} set value "green"']
     if j in EFF_J:
         I += [f'data modify storage {NS}:fg l_eff set value "✔ Efficacité VII"', f'data modify storage {NS}:fg k_eff set value "green"']
@@ -297,7 +307,7 @@ for i, (kk, ic, tipc) in enumerate((("sag", "forge_cristal_sagesse", "+10 % d’
     fo.append(f'{{label:[{gs(ic)},{{text:" $(l_{kk}) ",color:"$(k_{kk})",italic:false}},{{text:"$(g)",font:"metiers:icones",color:"white"}}],width:320,'
               f'tooltip:{{text:"{tipc}\\nPayé en cristaux du métier de l’outil tenu. Emplacements : 1 au palier 3, 2 au palier 6, 3 au palier 9."}},'
               f'action:{{type:"run_command",command:"trigger metiers set {400 + i}"}}}}')
-fo.append(btn(txt("Retirer le dernier cristal serti", "aqua"), 415, 320, "Libère un emplacement. Le cristal retiré est perdu."))
+fo.append(btn(txt("Baisser l’Efficacité d’un niveau (remboursé)", "aqua"), 415, 320, "Rend les cristaux du dernier niveau d’Efficacité. Pour retirer Sagesse, Fortune ou Écho, clique dessus."))
 def bourse(j):
     return (f'{{text:"",hover_event:{{action:"show_text",value:{{text:"Cristaux de {jobs[j]["name"]}",color:"{jobs[j]["color"]}"}}}},'
             f'extra:[{gs("cristal_" + j)},{{text:" $(cr_{j})   ",color:"white"}}]}}')
@@ -345,7 +355,7 @@ for c, (pr, lv, sc, only) in CRIS.items():
             w(F + f"forge/sertir_{c}_{j}.mcfunction", tr("Ce cristal ne va pas sur cet outil.", "red"))
             continue
         w(F + f"forge/sertir_{c}_{j}.mcfunction", "\n".join([
-            f"execute if score @s m.{sc}_{j} matches 1 run return run {tr('Ce cristal est déjà serti.', 'red')}",
+            f"execute if score @s m.{sc}_{j} matches 1 run return run function {NS}:forge/desertir_{c}_{j}",
             f"execute unless score @s m.{j}_lvl matches {lv}.. run return run {tr(f'Il faut être niveau {lv} dans ce métier.', 'red')}",
             "scoreboard players set #sl m.tmp 0",
             f"execute if score @s m.{j}_out matches 3.. run scoreboard players add #sl m.tmp 1",
@@ -358,6 +368,12 @@ for c, (pr, lv, sc, only) in CRIS.items():
             f"scoreboard players remove @s m.cr_{j} {pr}", f"scoreboard players set @s m.{sc}_{j} 1",
             f"function {NS}:{j}/outil_donner", "playsound minecraft:block.amethyst_block.resonate master @s ~ ~ ~ 1 1.2",
             tr("Cristal serti dans ton outil.", "aqua"), f"function {NS}:forge/outil"]))
+for c, (pr, lv, sc, only) in CRIS.items():
+    for j in JL:
+        w(F + f"forge/desertir_{c}_{j}.mcfunction", "\n".join([
+            f"scoreboard players set @s m.{sc}_{j} 0", f"scoreboard players add @s m.cr_{j} {pr}",
+            f"function {NS}:{j}/outil_donner", "playsound minecraft:block.grindstone.use master @s ~ ~ ~ 1 1",
+            tr(f"Cristal retiré : {pr} cristaux remboursés.", "aqua"), f"function {NS}:forge/outil"]))
 D = [f"execute if items entity @s weapon.mainhand {SEL(j)} run return run function {NS}:forge/eff_{j}" for j in JL]
 D.append(tr("Tiens ton outil de métier en main.", "red"))
 w(F + "forge/eff.mcfunction", "\n".join(D))
@@ -376,12 +392,12 @@ D = [f"execute if items entity @s weapon.mainhand {SEL(j)} run return run functi
 D.append(tr("Tiens ton outil de métier en main.", "red"))
 w(F + "forge/retirer.mcfunction", "\n".join(D))
 for j in JL:
-    w(F + f"forge/retirer_{j}.mcfunction", "\n".join([
-        f"execute if score @s m.ceco_{j} matches 1 run return run function {NS}:forge/retirer_fin {{s:\"m.ceco_{j}\",j:\"{j}\"}}",
-        f"execute if score @s m.cfor_{j} matches 1 run return run function {NS}:forge/retirer_fin {{s:\"m.cfor_{j}\",j:\"{j}\"}}",
-        f"execute if score @s m.csag_{j} matches 1 run return run function {NS}:forge/retirer_fin {{s:\"m.csag_{j}\",j:\"{j}\"}}",
-        tr("Aucun cristal serti sur cet outil.", "red")]))
-w(F + "forge/retirer_fin.mcfunction", f"$scoreboard players set @s $(s) 0\n$function {NS}:$(j)/outil_donner\n" + tr("Cristal retiré.", "gray") + f"\nfunction {NS}:forge/outil")
+    R = [f"execute unless score @s m.ceff_{j} matches 1.. run return run {tr('Aucun niveau d’Efficacité acheté sur cet outil.', 'red')}"]
+    for n in range(1, 8):
+        R.append(f"execute if score @s m.ceff_{j} matches {n} run scoreboard players add @s m.cr_{j} {EFFC[n - 1]}")
+    R += [f"scoreboard players remove @s m.ceff_{j} 1", f"function {NS}:{j}/outil_donner",
+          "playsound minecraft:block.grindstone.use master @s ~ ~ ~ 1 1", tr("Un niveau d’Efficacité retiré, cristaux remboursés.", "aqua"), f"function {NS}:forge/outil"]
+    w(F + f"forge/retirer_{j}.mcfunction", "\n".join(R))
 
 # ================================================================ skins et cadres
 TGT = [("a", "Armure des Guildes")] + [(j, f"{TOOL[j][1]} de {jobs[j]['name']}") for j in JL]
