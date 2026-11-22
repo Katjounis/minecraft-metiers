@@ -11,7 +11,7 @@ from catalogue import ACHAT, CATEGORIES, ITEMS, RARES
 ROOT = os.path.join(HERE, "..", "build", "commerce_datapack")
 NS = "commerce"
 F = f"data/{NS}/function/"
-VERSION = 9
+VERSION = 10
 if os.path.exists(ROOT):
     shutil.rmtree(ROOT)
 
@@ -121,7 +121,16 @@ for it in ITL:
 LD += [f'execute unless data storage {NS}:g evtxt run data modify storage {NS}:g evtxt set value ""',
        f"execute unless data storage {NS}:j l run data modify storage {NS}:j l set value []",
        f'data modify storage {NS}:t msg set value ""']
+LD += ["execute unless score #tableau c.g matches 0..1 run scoreboard players set #tableau c.g 1",
+       f"execute if score #tableau c.g matches 1 run function {NS}:tableau/on"]
 w(F + "load.mcfunction", LD)
+# Barre latérale : le seul affichage permanent fiable en vanilla. Elle montre le solde de chaque joueur,
+# trié du plus riche au moins riche (les fortunes sont publiques), avec le préfixe de titre de Métiers.
+w(F + "tableau/on.mcfunction", [
+    "scoreboard players set #tableau c.g 1", "scoreboard objectives setdisplay sidebar c.ecus",
+    f'scoreboard objectives modify c.ecus displayname [{{text:""}},{{text:"{ECU}",font:"commerce:recette",color:"white"}},{{text:" Écus ",color:"gold",bold:true}}]',
+    'scoreboard objectives modify c.ecus numberformat styled {color:"yellow",bold:true}'])
+w(F + "tableau/off.mcfunction", ["scoreboard players set #tableau c.g 0", "scoreboard objectives setdisplay sidebar"])
 
 w(F + "tick.mcfunction", [
     "scoreboard players enable @a commerce",
@@ -480,13 +489,20 @@ w(F + "op/acheter.mcfunction", [
     "scoreboard players operation #d c.t /= #V c.t", "scoreboard players operation #d c.t *= #-1 c.g",
     f"function {NS}:prix/mid", f"function {NS}:prix/sans_bonus", f"function {NS}:prix/vente",
     "scoreboard players operation #tot c.t = #a c.t", "scoreboard players operation #tot c.t *= #q c.t",
-    "scoreboard players operation #ce c.t = #tot c.t", "scoreboard players add #ce c.t 99",
-    "scoreboard players operation #ce c.t /= #100 c.g",
-    f"execute store result storage {NS}:t m.e int 1 run scoreboard players get #ce c.t",
+    # paiement au centime près : #ce Écus et #cc centimes
+    "scoreboard players operation #ce c.t = #tot c.t", "scoreboard players operation #ce c.t /= #100 c.g",
+    "scoreboard players operation #cc c.t = #tot c.t", "scoreboard players operation #cc c.t %= #100 c.g",
+    "scoreboard players operation #x c.t = #tot c.t"] + fmt(f"{NS}:t", "m.") + [
     f"execute store result storage {NS}:t it.q int 1 run scoreboard players get #q c.t",
     f"data modify storage {NS}:t m.q set from storage {NS}:t it.q",
-    f"execute if score @s c.ecus < #ce c.t run return run function {NS}:op/msg_pauvre with storage {NS}:t m",
-    "scoreboard players operation @s c.ecus -= #ce c.t", "scoreboard players operation @s c.ta += #ce c.t",
+    "scoreboard players set #ok c.t 0",
+    "execute if score @s c.ecus > #ce c.t run scoreboard players set #ok c.t 1",
+    "execute if score @s c.ecus = #ce c.t if score @s c.cts >= #cc c.t run scoreboard players set #ok c.t 1",
+    f"execute if score #ok c.t matches 0 run return run function {NS}:op/msg_pauvre with storage {NS}:t m",
+    "scoreboard players operation @s c.ecus -= #ce c.t", "scoreboard players operation @s c.cts -= #cc c.t",
+    "execute if score @s c.cts matches ..-1 run scoreboard players remove @s c.ecus 1",
+    "execute if score @s c.cts matches ..-1 run scoreboard players add @s c.cts 100",
+    "scoreboard players operation @s c.ta += #ce c.t",
     f"function {NS}:op/donner with storage {NS}:t it",
     "scoreboard players operation #p c.t += #d c.t",
     "execute if score #p c.t matches ..-301 run scoreboard players set #p c.t -300",
@@ -495,9 +511,9 @@ w(F + "op/acheter.mcfunction", [
     f"function {NS}:op/msg_achat with storage {NS}:t m",
     "playsound minecraft:entity.villager.trade master @s ~ ~ ~ 0.8 1",
     "playsound minecraft:entity.item.pickup master @s ~ ~ ~ 0.6 0.8"])
-w(F + "op/msg_achat.mcfunction", f'$data modify storage {NS}:t msg set value "Acheté : $(q) pour $(e) Écus."')
+w(F + "op/msg_achat.mcfunction", f'$data modify storage {NS}:t msg set value "Acheté : $(q) pour $(e),$(z)$(c) Écus."')
 w(F + "op/msg_pauvre.mcfunction", [
-    f'$data modify storage {NS}:t msg set value "Pas assez d\'Écus : il te faut $(e) Écus pour $(q)."',
+    f'$data modify storage {NS}:t msg set value "Pas assez d\'Écus : il te faut $(e),$(z)$(c) Écus pour $(q)."',
     "playsound minecraft:entity.villager.no master @s ~ ~ ~ 0.8 1"])
 
 # =====================================================================
@@ -974,8 +990,7 @@ for q in TOT + ["tout"]:
                 "scoreboard players operation #d c.t /= #V c.t", "scoreboard players operation #d c.t *= #-1 c.g",
                 f"function {NS}:prix/mid", f"function {NS}:prix/sans_bonus", f"function {NS}:prix/vente",
                 "scoreboard players operation #x c.t = #a c.t", "scoreboard players operation #x c.t *= #q c.t",
-                "scoreboard players add #x c.t 99", "scoreboard players operation #x c.t /= #100 c.g",
-                f"execute store result storage {NS}:t ip.b{q} int 1 run scoreboard players get #x c.t"]
+               ] + fmt(f"{NS}:t", f"ip.b{q}")
 # prix à l'unité, tendance, demande
 IPG += ["scoreboard players set #d c.t 0", f"function {NS}:prix/mid", f"function {NS}:prix/bonus", f"function {NS}:prix/vente",
         "scoreboard players operation #x c.t = #u c.t"] + fmt(f"{NS}:t", "ip.v") + [
@@ -1016,7 +1031,7 @@ for kind in ("a", "v"):
     body = [f'{{type:"minecraft:item",item:{{id:"minecraft:$(id)"}},show_decorations:false,description:{{width:280,contents:{L(*desc)}}}}}']
     vend = lambda q: btn_cmd(L(T(f"Vendre {q}  ", "gold", True), T(f"$(s{q}e),$(s{q}z)$(s{q}c) {ECU}", "white")), f"trigger commerce set 2$(i3){q:03d}",
                              "Prix total, bonus de métier compris. Le prix baisse un peu à mesure que tu vends.")
-    ach = lambda q: btn_cmd(L(T(f"Acheter {q}  ", "yellow", True), T(f"$(b{q}),00 {ECU}", "white")), f"trigger commerce set 1$(i3){q:03d}",
+    ach = lambda q: btn_cmd(L(T(f"Acheter {q}  ", "yellow", True), T(f"$(b{q}e),$(b{q}z)$(b{q}c) {ECU}", "white")), f"trigger commerce set 1$(i3){q:03d}",
                             "Prix total. Le prix monte un peu à mesure que tu achètes.")
     tout = btn_cmd(L(T("Tout vendre ($(have))  ", "gold", True), T(f"$(stoute),$(stoutz)$(stoutc) {ECU}", "white")), "trigger commerce set 3$(i3)000",
                    "Vend tout ce que tu as de cet objet (10 stacks au plus par clic).")

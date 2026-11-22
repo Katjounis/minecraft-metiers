@@ -22,6 +22,7 @@ Les prix de base et les volumes sont dans `sources/catalogue.py`. `sources/coher
 
 ## Historique
 
+- v10 (22/11/2026) : solde de tous les joueurs affiché en permanence dans la barre latérale (à droite, trié du plus riche au moins riche), achats payés au centime près (le prix affiché pour 1 vitre n'est plus arrondi à 1 Écu).
 - v9 (22/11/2026) : bandeaux de titre au style de l'interface Forge (Commerce, Marché, Bourse, Fortunes, Cristaux), courbe du cours sur 24 h de jeu sur chaque objet, indice du marché avec sa courbe dans la Bourse, libellés de boutons raccourcis (nom complet en infobulle), « d’acajou » au lieu de « de acajou ».
 - v8 (22/11/2026) : menus compacts, sans défilement pour trouver les boutons : marché en boutons avec la texture de chaque catégorie, catégories en pages de 10 objets (prix au survol), page d'un objet avec le prix total écrit sur chaque bouton (vendre et acheter 1, 16, 64, tout vendre). Recette de l'oeuf en une seule image (texture d'établi Forge et vraies textures des ingrédients). Clic droit sur le comptoir corrigé (le joueur était effacé avant d'être lu).
 - v7 (22/11/2026) : la vente ne marchait pas, une commande mal écrite faisait ignorer toute la fonction de vente par le jeu. Corrigé, et `verifier.py` contrôle maintenant la structure des commandes data et scoreboard.
@@ -70,6 +71,7 @@ Avec deux packs dans la touche G, le jeu affiche d'abord la liste « Métiers / 
 | `/function commerce:admin/ecus` | +10 000 Écus (tests) |
 | `/function commerce:admin/evenement` | Lance un évènement de marché |
 | `/function commerce:admin/marche_reset` | Remet tous les prix au calme |
+| `/function commerce:tableau/off` | Retire le tableau des Écus de la barre latérale (`tableau/on` pour le remettre) |
 | `/function commerce:desinstaller` | Supprime les scores avant de retirer le zip |
 
 ## À tester en priorité au labo
