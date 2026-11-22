@@ -20,6 +20,10 @@ Datapack vanilla (Minecraft Java 26.x) qui ajoute une économie au serveur, bran
 
 Les prix de base et les volumes sont dans `sources/catalogue.py`. `sources/coherence.py` vérifie avec les données officielles de la 26.1 (`donnees_26.1.json`, tirées de minecraft-data) que chaque id existe et qu'aucune recette d'établi ou de four ne permet de racheter, fabriquer et revendre avec profit.
 
+## Historique
+
+- v3 (22/11/2026) : le serveur refusait de démarrer à cause de deux progrès écrits au format 1.21 (`clic_comptoir`, `debloque`). Le pack n'utilise plus aucun progrès : clic par entité `interaction`, déblocage par statistique de craft. Table de butin passée au format 26.x (`modifier`, `type`). `verifier.py` signale maintenant ces anciens formats.
+
 ## Fichiers
 
 | Fichier | Rôle |
@@ -59,7 +63,9 @@ Avec deux packs dans la touche G, le jeu affiche d'abord la liste « Métiers / 
 ## À tester en priorité au labo
 
 - Le nom du comptoir et le classement des fortunes : le pseudo est lu sur une tête de joueur générée (`profile.name`). Si le comptoir s'appelle « Comptoir de Joueur », ce chemin a changé en 26.x.
-- Le clic droit sur le comptoir ouvre bien le menu (progrès `player_interacted_with_entity`).
+- Le clic droit sur le comptoir ouvre bien le menu (entité `interaction` posée sur le villageois, lue chaque tick).
+- Le craft de l'œuf débloque le Commerce dans la seconde (statistique `minecraft.crafted:minecraft.villager_spawn_egg`).
+- La recette de l'œuf apparaît dans l'établi : si la 26.x refuse son format, le serveur démarre quand même mais la recette est absente du log (`Parsing error loading recipe commerce:oeuf`).
 - Les listes déroulantes de quantité (dialogue `single_option` + `dynamic/run_command`).
 - La grille de craft : elle utilise le composant de texte `object` (atlas `minecraft:blocks` et `minecraft:items`, découpage valable depuis la 1.21.11). Si une case affiche le damier violet et noir, le nom de l'atlas ou de la texture a changé en 26.x : à corriger dans `SPR` de `datapack.py`.
 

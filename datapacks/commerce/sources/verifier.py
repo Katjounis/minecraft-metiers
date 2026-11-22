@@ -18,6 +18,13 @@ for dp, _, fs in os.walk(ROOT):
                 json.load(open(p, encoding="utf-8"))
             except Exception as e:
                 err.append(f"{rel}: JSON invalide ({e})")
+            # format 26.x : les conditions et fonctions de butin utilisent « type » (et « modifier »),
+            # plus « condition » / « function » ; une faute dans un fichier de registre bloque le démarrage.
+            txt = open(p, encoding="utf-8").read()
+            if "/tags/" not in rel and re.search(r'"(condition|functions?)"\s*:', txt):
+                err.append(f"{rel}: clé « condition » ou « function » (ancien format, refusé en 26.x)")
+            if "/advancement/" in rel:
+                err.append(f"{rel}: progrès à éviter (format des conditions incertain en 26.x, bloque le démarrage si faux)")
             m = re.match(r"data/([^/]+)/tags/function/(.+)\.json", rel)
             if m:
                 tags.add(f"{m.group(1)}:{m.group(2)}")

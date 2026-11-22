@@ -11,7 +11,7 @@ from catalogue import ACHAT, CATEGORIES, ITEMS, RARES
 ROOT = os.path.join(HERE, "..", "build", "commerce_datapack")
 NS = "commerce"
 F = f"data/{NS}/function/"
-VERSION = 2
+VERSION = 3
 if os.path.exists(ROOT):
     shutil.rmtree(ROOT)
 
@@ -95,7 +95,8 @@ PLAYER_OBJ += [f"c.pp_{j}" for j, *_ in JOBS] + [f"c.dd_{j}" for j, *_ in JOBS] 
 ITEM_OBJ = ["c.p", "c.h", "c.vs", "c.as", "c.ev", "c.x"]
 LD = [f"scoreboard objectives add {o} dummy" for o in PLAYER_OBJ + ITEM_OBJ + ["c.t", "c.g"]]
 LD += ["scoreboard objectives add commerce trigger",
-       "scoreboard objectives add c.oeuf minecraft.used:minecraft.villager_spawn_egg"]
+       "scoreboard objectives add c.oeuf minecraft.used:minecraft.villager_spawn_egg",
+       "scoreboard objectives add c.craft minecraft.crafted:minecraft.villager_spawn_egg"]
 for c in (2, 5, 10, 12, 100, 105, 250, 500, 1000, 1000000, -1):
     LD.append(f"scoreboard players set #{c} c.g {c}")
 LD.append(f"scoreboard players set #achat c.g {ACHAT}")
@@ -112,6 +113,8 @@ w(F + "tick.mcfunction", [
     "scoreboard players enable @a commerce",
     f"execute as @a[scores={{commerce=1..}}] at @s run function {NS}:trigger/entree",
     f"execute as @e[type=minecraft:villager,tag=commerce.nouveau] at @s run function {NS}:comptoir/pose",
+    f"execute as @e[type=minecraft:interaction,tag=commerce.clic] if data entity @s interaction run function {NS}:comptoir/clic_i",
+    "execute as @e[type=minecraft:interaction,tag=commerce.clic] if data entity @s attack run data remove entity @s attack",
     "scoreboard players set @a[scores={c.oeuf=1..}] c.oeuf 0",
     "execute if entity @a run scoreboard players add #t c.g 1",
     f"execute if score #t c.g matches 20.. run function {NS}:seconde"])
@@ -140,6 +143,7 @@ w(F + "joueur/seconde.mcfunction", [
     f"execute unless score @s c.vu matches 1 run function {NS}:joueur/arrivee",
     f"execute unless score @s c.nom matches 1 run function {NS}:joueur/inscrire",
     f"execute unless score @s c.init matches 1 run function {NS}:joueur/init_paliers",
+    f"execute if score @s c.craft matches 1.. unless score @s c.deb matches 1 run function {NS}:debloque",
     f"function {NS}:joueur/paliers",
     f"execute unless score @s c.init2 matches 1 run function {NS}:joueur/evts_init",
     f"function {NS}:joueur/evts"])
@@ -148,8 +152,8 @@ w(F + "joueur/arrivee.mcfunction", [f"scoreboard players add @s {o} 0" for o in 
 
 # Le nom du joueur n'existe dans aucune donnée lisible : on le récupère sur une tête de joueur générée
 # par une table de butin, posée un instant dans un item_display.
-wj(f"data/{NS}/loot_table/tete.json", {"pools": [{"rolls": 1, "entries": [{"type": "minecraft:item", "name": "minecraft:player_head",
-   "functions": [{"function": "minecraft:fill_player_head", "entity": "this"}]}]}]})
+wj(f"data/{NS}/loot_table/tete.json", {"type": "minecraft:generic", "pools": [{"rolls": 1, "entries": [{"type": "minecraft:item", "name": "minecraft:player_head",
+   "modifier": [{"type": "minecraft:fill_player_head", "entity": "this"}]}]}]})
 w(F + "joueur/inscrire.mcfunction", [
     "summon minecraft:item_display ~ ~ ~ {Tags:[\"commerce.tete\"]}",
     f"loot replace entity @e[type=minecraft:item_display,tag=commerce.tete,limit=1,sort=nearest] contents loot {NS}:tete",
@@ -244,9 +248,6 @@ w(F + "oeuf/donner.mcfunction",
   f"minecraft:entity_data={EGG_ENTITY_SNBT},minecraft:custom_data={{commerce:\"oeuf\"}},minecraft:max_stack_size=1,"
   f'minecraft:rarity="epic",minecraft:enchantment_glint_override=true] 1')
 
-wj(f"data/{NS}/advancement/debloque.json", {
-    "criteria": {"c": {"trigger": "minecraft:recipe_crafted", "conditions": {"recipe_id": f"{NS}:oeuf"}}},
-    "rewards": {"function": f"{NS}:debloque"}})
 w(F + "debloque.mcfunction", [
     f"execute if score @s c.deb matches 1 run return 0",
     "scoreboard players set @s c.deb 1",
@@ -273,6 +274,7 @@ w(F + "comptoir/proprio.mcfunction", [
     f"execute as @e[type=minecraft:villager,tag=commerce.pose,limit=1] run function {NS}:comptoir/nommer with storage {NS}:t",
     "execute as @e[type=minecraft:villager,tag=commerce.pose,limit=1] run data modify entity @s Age set value 0",
     "tag @e[type=minecraft:villager,tag=commerce.pose,limit=1] add commerce.comptoir",
+    "execute at @e[type=minecraft:villager,tag=commerce.pose,limit=1] run summon minecraft:interaction ~ ~ ~ {Tags:[\"commerce.clic\"],width:0.9f,height:2.0f,response:1b}",
     "execute at @e[type=minecraft:villager,tag=commerce.pose,limit=1] run particle minecraft:happy_villager ~ ~1 ~ 0.5 1 0.5 0 30",
     "playsound minecraft:entity.villager.celebrate master @s ~ ~ ~ 1 1",
     say("Ton comptoir est posé. Tout le monde peut l'utiliser (clic droit). Pour le déplacer : touche G, Commerce, Mon comptoir.", "green")])
@@ -287,12 +289,14 @@ w(F + "comptoir/refus.mcfunction", [
     say("Tu as déjà un comptoir. Pour le changer de place : touche G, Commerce, Mon comptoir. L'œuf t'est rendu.", "red")])
 w(F + "comptoir/verif_tous.mcfunction", [
     "scoreboard players set #cv c.g 0",
-    f"execute as @e[type=minecraft:villager,tag=commerce.comptoir] at @s run function {NS}:comptoir/verif"])
+    f"execute as @e[type=minecraft:villager,tag=commerce.comptoir] at @s run function {NS}:comptoir/verif",
+    "execute as @e[type=minecraft:interaction,tag=commerce.clic] at @s unless entity @e[type=minecraft:villager,tag=commerce.comptoir,distance=..1] run kill @s"])
 w(F + "comptoir/verif.mcfunction", [
     f"execute store result storage {NS}:t o.id int 1 run scoreboard players get @s c.own",
     f"function {NS}:comptoir/verif_m with storage {NS}:t o"])
 w(F + "comptoir/verif_m.mcfunction", f"$execute unless score @s c.ser = #o$(id) c.ser run function {NS}:comptoir/retirer")
 w(F + "comptoir/retirer.mcfunction", [
+    "kill @e[type=minecraft:interaction,tag=commerce.clic,distance=..1]",
     "particle minecraft:poof ~ ~1 ~ 0.3 0.6 0.3 0.02 20", "tp @s ~ -400 ~", "kill @s"])
 w(F + "comptoir/deplacer.mcfunction", [
     f"execute unless score @s c.cmpt matches 1 run return run {say('Tu n’as pas de comptoir posé. Crafte un œuf de comptoir pour en avoir un.', 'red')}",
@@ -302,13 +306,10 @@ w(F + "comptoir/deplacer.mcfunction", [
     "scoreboard players set @s c.cmpt 0", f"function {NS}:oeuf/donner",
     "playsound minecraft:item.bundle.insert master @s ~ ~ ~ 1 1",
     say("Ton comptoir est rangé dans ton inventaire : pose l'œuf où tu veux.", "green")])
-wj(f"data/{NS}/advancement/clic_comptoir.json", {
-    "criteria": {"c": {"trigger": "minecraft:player_interacted_with_entity", "conditions": {"entity": [
-        {"condition": "minecraft:entity_properties", "entity": "this",
-         "predicate": {"type": "minecraft:villager", "nbt": "{Tags:[\"commerce.comptoir\"]}"}}]}}},
-    "rewards": {"function": f"{NS}:comptoir/clic"}})
+w(F + "comptoir/clic_i.mcfunction", [
+    "data remove entity @s interaction", "data remove entity @s attack",
+    f"execute on target run function {NS}:comptoir/clic"])
 w(F + "comptoir/clic.mcfunction", [
-    f"advancement revoke @s only {NS}:clic_comptoir",
     f"execute unless score @s c.deb matches 1 run return run function {NS}:page/verrou",
     f"function {NS}:page/accueil"])
 
@@ -625,6 +626,8 @@ RETOUR = btn(T("Accueil", "white"), 1, 100)
 
 # ---------------------------------------------------------------- grille de craft de l'œuf, en vraies textures
 # Composant de texte « object » (1.21.9+) : affiche une texture d'un atlas du jeu, sans resource pack.
+# Seulement dans les dialogues envoyés par commande : une erreur y est sans gravité. Pas dans les fichiers
+# de registre (dialog/*.json) lus au démarrage, où une faute bloquerait le serveur.
 # Depuis la 1.21.11 les objets sont dans l'atlas minecraft:items, les blocs dans minecraft:blocks.
 SPR = {"E": ("blocks", "block/emerald_block"), "D": ("blocks", "block/diamond_block"), "G": ("blocks", "block/gold_block"),
        "N": ("items", "item/netherite_ingot"), "C": ("blocks", "block/barrel_side"), "O": ("items", "item/villager_spawn_egg")}
@@ -662,7 +665,7 @@ wj(f"data/{NS}/dialog/ouvrir.json", {
     "external_title": {"text": "Commerce"}, "can_close_with_escape": True, "pause": False,
     "body": [{"type": "minecraft:plain_message", "width": 300,
               "contents": [{"text": "Ton compte en Écus, le marché, la bourse, les fortunes et les cristaux. Il se débloque en craftant l'œuf de comptoir.", "color": "gray"}]},
-             {"type": "minecraft:plain_message", "width": 300, "contents": grille("json")}],
+             {"type": "minecraft:plain_message", "width": 300, "contents": {"text": "La grille de craft de l'œuf s'affiche quand tu ouvres le Commerce.", "color": "dark_gray"}}],
     "actions": [{"label": {"text": "Ouvrir le Commerce", "color": "gold", "bold": True}, "width": 200,
                  "action": {"type": "run_command", "command": "trigger commerce set 1"}}],
     "columns": 1})
@@ -884,7 +887,7 @@ w(F + "admin/ecus.mcfunction", ["scoreboard players add @s c.ecus 10000", say("+
 w(F + "admin/marche_reset.mcfunction", [f"scoreboard players set {H(it)} c.{o} 0" for it in ITL for o in ("p", "h", "ev")] +
   ["scoreboard players set #evi c.g 0", "scoreboard players set #evt c.g 0", f'data modify storage {NS}:g evtxt set value ""', say("Marché remis à zéro.", "gold")])
 w(F + "admin/evenement.mcfunction", f"function {NS}:marche/evt_debut")
-w(F + "desinstaller.mcfunction", [f"scoreboard objectives remove {o}" for o in PLAYER_OBJ + ITEM_OBJ + ["c.t", "c.g", "commerce", "c.oeuf"]] + [
+w(F + "desinstaller.mcfunction", [f"scoreboard objectives remove {o}" for o in PLAYER_OBJ + ITEM_OBJ + ["c.t", "c.g", "commerce", "c.oeuf", "c.craft"]] + ["kill @e[type=minecraft:interaction,tag=commerce.clic]"] + [
     f"data remove storage {NS}:{s} x" for s in ()] + [
     f"data modify storage {NS}:g evtxt set value \"\"",
     say("Commerce désinstallé (les comptoirs posés restent des villageois). Retire commerce.zip puis redémarre.", "gold")])
