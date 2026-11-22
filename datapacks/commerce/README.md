@@ -7,8 +7,8 @@ Datapack vanilla (Minecraft Java 26.x) qui ajoute une économie au serveur, bran
 | Élément | Fonctionnement |
 |---|---|
 | Écus | Argent sur un compte (score `c.ecus`, centimes dans `c.cts`), impossible à perdre ou à voler |
-| Déblocage | Crafter l'**œuf de comptoir** débloque le Commerce. Recette : blocs d'émeraude aux 4 coins, bloc de diamant en haut, blocs d'or à gauche et à droite, lingot de netherite au centre, tonneau en bas. La grille de craft est dessinée avec les vraies textures du jeu dans la fenêtre de la touche G et sur la page du Commerce ; tant que l'œuf n'est pas crafté, les autres boutons sont grisés |
-| Comptoir | L'œuf pose un villageois immobile et invincible « Comptoir de <pseudo> ». Un seul par joueur, utilisable par tous (clic droit). Touche G, Mon comptoir : il revient en œuf pour être reposé ailleurs |
+| Déblocage | Crafter l'**oeuf de comptoir** débloque le Commerce. Recette : blocs d'émeraude aux 4 coins, bloc de diamant en haut, blocs d'or à gauche et à droite, lingot de netherite au centre, tonneau en bas. La grille de craft est dessinée avec les vraies textures du jeu dans la fenêtre de la touche G et sur la page du Commerce ; tant que l'oeuf n'est pas crafté, les autres boutons sont grisés |
+| Comptoir | L'oeuf pose un villageois immobile et invincible « Comptoir de <pseudo> ». Un seul par joueur, utilisable par tous (clic droit). Touche G, Mon comptoir : il revient en oeuf pour être reposé ailleurs |
 | Menu | Touche G (ou menu Échap), Commerce, « Ouvrir le Commerce » : compte, marché, bourse, fortunes, cristaux. Tout marche depuis n'importe où |
 | Marché | 459 objets en 16 catégories (pierres, terre, fleurs, bois, 16 couleurs de laine, béton, terre cuite et verre, minerais et blocs, Nether et End, agriculture, élevage, pêche, cuisine, utilitaires et redstone, trésors), achat et vente par 1 à 640, « Tout vendre ». Les Trésors (diamant, netherite, élytres...) sont en vente seulement |
 | Prix dynamiques | Chaque vente fait baisser le prix de l'objet (jusqu'à 30 % du prix de base), chaque achat le fait monter (jusqu'à 130 %), et le marché se détend en une heure de jeu environ. Le rachat vaut au moins 4 fois le prix de vente de base et ne baisse jamais (ni krach, ni marché saturé) |
@@ -22,12 +22,13 @@ Les prix de base et les volumes sont dans `sources/catalogue.py`. `sources/coher
 
 ## Historique
 
-- v4 (22/11/2026) : vrai fond d'établi derrière la recette de l'œuf (resource pack), lignes de largeur identique pour que la grille ne se décale plus.
+- v5 (22/11/2026) : « oe » au lieu de « œ » partout (la police de l'interface Forge n'a pas ce caractère), et vraie pièce d'Écu dessinée (glyphe `ecu.png`) à la place du symbole ¤.
+- v4 (22/11/2026) : vrai fond d'établi derrière la recette de l'oeuf (resource pack), lignes de largeur identique pour que la grille ne se décale plus.
 - v3 (22/11/2026) : le serveur refusait de démarrer à cause de deux progrès écrits au format 1.21 (`clic_comptoir`, `debloque`). Le pack n'utilise plus aucun progrès : clic par entité `interaction`, déblocage par statistique de craft. Table de butin passée au format 26.x (`modifier`, `type`). `verifier.py` signale maintenant ces anciens formats.
 
 ## Resource pack
 
-Commerce ajoute `assets/commerce/` (police `commerce:recette` et texture du fond d'établi) au resource pack commun : `python sources/datapack.py` puis `python labo/outils/fusion_rp.py` depuis la racine du dépôt. Le SHA-1 affiché va dans `resource-pack-sha1` du `server.properties` une fois le zip poussé sur main.
+Commerce ajoute `assets/commerce/` (police `commerce:recette` : fond d'établi et pièce d'Écu) au resource pack commun : `python sources/datapack.py` puis `python labo/outils/fusion_rp.py` depuis la racine du dépôt. Le SHA-1 affiché va dans `resource-pack-sha1` du `server.properties` une fois le zip poussé sur main.
 
 ## Fichiers
 
@@ -59,7 +60,7 @@ Avec deux packs dans la touche G, le jeu affiche d'abord la liste « Métiers / 
 | Commande | Effet |
 |---|---|
 | `/function commerce:version` | Version chargée |
-| `/function commerce:admin/oeuf` | Donne un œuf de comptoir |
+| `/function commerce:admin/oeuf` | Donne un oeuf de comptoir |
 | `/function commerce:admin/ecus` | +10 000 Écus (tests) |
 | `/function commerce:admin/evenement` | Lance un évènement de marché |
 | `/function commerce:admin/marche_reset` | Remet tous les prix au calme |
@@ -69,8 +70,8 @@ Avec deux packs dans la touche G, le jeu affiche d'abord la liste « Métiers / 
 
 - Le nom du comptoir et le classement des fortunes : le pseudo est lu sur une tête de joueur générée (`profile.name`). Si le comptoir s'appelle « Comptoir de Joueur », ce chemin a changé en 26.x.
 - Le clic droit sur le comptoir ouvre bien le menu (entité `interaction` posée sur le villageois, lue chaque tick).
-- Le craft de l'œuf débloque le Commerce dans la seconde (statistique `minecraft.crafted:minecraft.villager_spawn_egg`).
-- La recette de l'œuf apparaît dans l'établi : si la 26.x refuse son format, le serveur démarre quand même mais la recette est absente du log (`Parsing error loading recipe commerce:oeuf`).
+- Le craft de l'oeuf débloque le Commerce dans la seconde (statistique `minecraft.crafted:minecraft.villager_spawn_egg`).
+- La recette de l'oeuf apparaît dans l'établi : si la 26.x refuse son format, le serveur démarre quand même mais la recette est absente du log (`Parsing error loading recipe commerce:oeuf`).
 - Les listes déroulantes de quantité (dialogue `single_option` + `dynamic/run_command`).
 - La grille de craft : fond d'établi au style vanilla (glyphe `etabli.png` de la police `commerce:recette`, dans le resource pack commun) et textures des objets par-dessus via le composant de texte `object` (atlas `minecraft:blocks` et `minecraft:items`). Les positions viennent de mesures en jeu (sprite de 8 px, avance 8, haut à y = -1, lignes de 9 px) : si les objets tombent à côté des cases, ajuster `GX`, `RX` ou `PTOP` dans `datapack.py`.
 

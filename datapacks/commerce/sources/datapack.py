@@ -11,12 +11,13 @@ from catalogue import ACHAT, CATEGORIES, ITEMS, RARES
 ROOT = os.path.join(HERE, "..", "build", "commerce_datapack")
 NS = "commerce"
 F = f"data/{NS}/function/"
-VERSION = 4
+VERSION = 5
 if os.path.exists(ROOT):
     shutil.rmtree(ROOT)
 
 GLY = json.load(open(os.path.join(HERE, "..", "..", "metiers", "sources", "glyphes.json"), encoding="utf-8"))
-ECU = "¤"
+ECU = "\ue010"   # pièce d'Écu : glyphe de la police commerce:recette (resource pack)
+ECU_C = f'{{text:"{ECU}",font:"commerce:recette",color:"white",bold:false}}'
 
 
 def w(path, txt):
@@ -33,8 +34,18 @@ def wj(path, obj):
 
 
 def T(text, col="white", bold=False):
-    """Composant de texte en SNBT (dialogues, tellraw)."""
-    return f'{{text:"{text}",color:"{col}",bold:{"true" if bold else "false"},italic:false}}'
+    """Composant de texte en SNBT (dialogues, tellraw). Le symbole ECU devient la pièce dessinée du resource pack."""
+    b = "true" if bold else "false"
+    if ECU in text:
+        parts = text.split(ECU)
+        kids = []
+        for k, p in enumerate(parts):
+            if p:
+                kids.append(f'{{text:"{p}"}}')
+            if k < len(parts) - 1:
+                kids.append(ECU_C)
+        return f'{{text:"",color:"{col}",bold:{b},italic:false,extra:[{",".join(kids)}]}}'
+    return f'{{text:"{text}",color:"{col}",bold:{b},italic:false}}'
 
 
 def G(name, col="white"):
@@ -222,7 +233,7 @@ EI += BKSUM + ["scoreboard players operation @s c.bk = #s c.t", "scoreboard play
 w(F + "joueur/evts_init.mcfunction", EI)
 
 # =====================================================================
-# ŒUF DU COMPTOIR, DÉBLOCAGE
+# OeUF DU COMPTOIR, DÉBLOCAGE
 # =====================================================================
 EGG_ENTITY_SNBT = ('{id:"minecraft:villager",Tags:["commerce.nouveau"],NoAI:1b,Invulnerable:1b,PersistenceRequired:1b,Silent:1b,'
                    'CustomNameVisible:1b,VillagerData:{type:"minecraft:plains",profession:"minecraft:none",level:1},Offers:{Recipes:[]}}')
@@ -230,7 +241,7 @@ EGG_ENTITY_JSON = {"id": "minecraft:villager", "Tags": ["commerce.nouveau"], "No
                    "PersistenceRequired": True, "Silent": True, "CustomNameVisible": True,
                    "VillagerData": {"type": "minecraft:plains", "profession": "minecraft:none", "level": 1},
                    "Offers": {"Recipes": []}}
-EGG_NAME = {"text": "Œuf de comptoir", "color": "gold", "bold": True, "italic": False}
+EGG_NAME = {"text": "Oeuf de comptoir", "color": "gold", "bold": True, "italic": False}
 EGG_LORE = [{"text": "Pose-le à ta base : c'est ton comptoir de commerce.", "color": "gray", "italic": False},
             {"text": "Un seul par joueur. Touche G pour le déplacer.", "color": "gray", "italic": False}]
 wj(f"data/{NS}/recipe/oeuf.json", {
@@ -252,7 +263,7 @@ w(F + "debloque.mcfunction", [
     f"execute if score @s c.deb matches 1 run return 0",
     "scoreboard players set @s c.deb 1",
     f'tellraw @a {L(PREFIX, "{selector:\"@s\",color:\"white\"}", T(" ouvre son comptoir : le Commerce est débloqué !", "gold", True))}',
-    say("Pose l'œuf à ta base. Touche G, Commerce : marché, bourse, banque et cristaux, depuis n'importe où.", "yellow"),
+    say("Pose l'oeuf à ta base. Touche G, Commerce : marché, bourse, banque et cristaux, depuis n'importe où.", "yellow"),
     "playsound minecraft:ui.toast.challenge_complete master @s ~ ~ ~ 1 1"])
 
 # =====================================================================
@@ -286,7 +297,7 @@ w(F + "comptoir/ser_maj_m.mcfunction", "$scoreboard players operation #o$(id) c.
 w(F + "comptoir/refus.mcfunction", [
     "kill @e[type=minecraft:villager,tag=commerce.pose,limit=1]",
     f"execute unless entity @s[gamemode=creative] run function {NS}:oeuf/donner",
-    say("Tu as déjà un comptoir. Pour le changer de place : touche G, Commerce, Mon comptoir. L'œuf t'est rendu.", "red")])
+    say("Tu as déjà un comptoir. Pour le changer de place : touche G, Commerce, Mon comptoir. L'oeuf t'est rendu.", "red")])
 w(F + "comptoir/verif_tous.mcfunction", [
     "scoreboard players set #cv c.g 0",
     f"execute as @e[type=minecraft:villager,tag=commerce.comptoir] at @s run function {NS}:comptoir/verif",
@@ -299,13 +310,13 @@ w(F + "comptoir/retirer.mcfunction", [
     "kill @e[type=minecraft:interaction,tag=commerce.clic,distance=..1]",
     "particle minecraft:poof ~ ~1 ~ 0.3 0.6 0.3 0.02 20", "tp @s ~ -400 ~", "kill @s"])
 w(F + "comptoir/deplacer.mcfunction", [
-    f"execute unless score @s c.cmpt matches 1 run return run {say('Tu n’as pas de comptoir posé. Crafte un œuf de comptoir pour en avoir un.', 'red')}",
+    f"execute unless score @s c.cmpt matches 1 run return run {say('Tu n’as pas de comptoir posé. Crafte un oeuf de comptoir pour en avoir un.', 'red')}",
     "scoreboard players operation #pid c.t = @s m.id",
     f"execute as @e[type=minecraft:villager,tag=commerce.comptoir] if score @s c.own = #pid c.t at @s run function {NS}:comptoir/retirer",
     "scoreboard players add @s c.ser 1", f"function {NS}:comptoir/ser_maj",
     "scoreboard players set @s c.cmpt 0", f"function {NS}:oeuf/donner",
     "playsound minecraft:item.bundle.insert master @s ~ ~ ~ 1 1",
-    say("Ton comptoir est rangé dans ton inventaire : pose l'œuf où tu veux.", "green")])
+    say("Ton comptoir est rangé dans ton inventaire : pose l'oeuf où tu veux.", "green")])
 w(F + "comptoir/clic_i.mcfunction", [
     "data remove entity @s interaction", "data remove entity @s attack",
     f"execute on target run function {NS}:comptoir/clic"])
@@ -458,7 +469,7 @@ w(F + "op/vendre.mcfunction", [
     f"function {NS}:op/msg_vente with storage {NS}:t m",
     "playsound minecraft:entity.villager.yes master @s ~ ~ ~ 0.8 1.2",
     "playsound minecraft:block.chain.place master @s ~ ~ ~ 0.6 1.6"])
-w(F + "op/msg_vente.mcfunction", f'$data modify storage {NS}:t msg set value "Vendu : $(q) pour $(e),$(z)$(c) {ECU}."')
+w(F + "op/msg_vente.mcfunction", f'$data modify storage {NS}:t msg set value "Vendu : $(q) pour $(e),$(z)$(c) Écus."')
 w(F + "op/acheter.mcfunction", [
     f"function {NS}:item/charger",
     f'execute if score #rare c.t matches 1 run return run data modify storage {NS}:t msg set value "Le serveur ne revend pas cet objet, il le rachète seulement."',
@@ -481,9 +492,9 @@ w(F + "op/acheter.mcfunction", [
     f"function {NS}:op/msg_achat with storage {NS}:t m",
     "playsound minecraft:entity.villager.trade master @s ~ ~ ~ 0.8 1",
     "playsound minecraft:entity.item.pickup master @s ~ ~ ~ 0.6 0.8"])
-w(F + "op/msg_achat.mcfunction", f'$data modify storage {NS}:t msg set value "Acheté : $(q) pour $(e) {ECU}."')
+w(F + "op/msg_achat.mcfunction", f'$data modify storage {NS}:t msg set value "Acheté : $(q) pour $(e) Écus."')
 w(F + "op/msg_pauvre.mcfunction", [
-    f'$data modify storage {NS}:t msg set value "Pas assez d\'Écus : il te faut $(e) {ECU} pour $(q)."',
+    f'$data modify storage {NS}:t msg set value "Pas assez d\'Écus : il te faut $(e) Écus pour $(q)."',
     "playsound minecraft:entity.villager.no master @s ~ ~ ~ 0.8 1"])
 
 # =====================================================================
@@ -583,7 +594,9 @@ w(F + "rang/texte_boucle.mcfunction", [
 w(F + "rang/texte_m.mcfunction", [
     f'$data modify storage {NS}:r C append value {{text:"$(r). ",color:"gray"}}',
     f'$data modify storage {NS}:r C append value {{text:"$(nom)",color:"white"}}',
-    f'$data modify storage {NS}:r C append value {{text:"   $(e) {ECU}\\n",color:"gold"}}'])
+    f'$data modify storage {NS}:r C append value {{text:"   $(e) ",color:"gold"}}',
+    f'data modify storage {NS}:r C append value {ECU_C}',
+    f'data modify storage {NS}:r C append value {{text:"\\n"}}'])
 
 # =====================================================================
 # CRISTAUX DE MÉTIER : 2 500 Écus, +5 % à chaque achat de la semaine
@@ -606,7 +619,7 @@ for j, nom, col in JOBS:
         f'data modify storage {NS}:t msg set value "Cristal de {nom} acheté. Le suivant coûte 5 % de plus."',
         "playsound minecraft:block.amethyst_block.chime master @s ~ ~ ~ 1 1.2"])
 w(F + "cristal/msg_pauvre.mcfunction", [
-    f'$data modify storage {NS}:t msg set value "Pas assez d\'Écus : un cristal coûte $(e) {ECU}."',
+    f'$data modify storage {NS}:t msg set value "Pas assez d\'Écus : un cristal coûte $(e) Écus."',
     "playsound minecraft:entity.villager.no master @s ~ ~ ~ 0.8 1"])
 
 # =====================================================================
@@ -624,7 +637,7 @@ def msg_line(st, pre=""):
 MSG_TXT = T("$(msg)", "yellow")
 RETOUR = btn(T("Accueil", "white"), 1, 100)
 
-# ---------------------------------------------------------------- grille de craft de l'œuf, en vraies textures
+# ---------------------------------------------------------------- grille de craft de l'oeuf, en vraies textures
 # Composant de texte « object » (1.21.9+) : affiche une texture d'un atlas du jeu, sans resource pack.
 # Seulement dans les dialogues envoyés par commande : une erreur y est sans gravité. Pas dans les fichiers
 # de registre (dialog/*.json) lus au démarrage, où une faute bloquerait le serveur.
@@ -639,7 +652,7 @@ GRID = ["EDE", "GNG", "ECE"]
 # Repères mesurés en jeu : un sprite « object » fait 8 px de large, avance de 8, haut à y = -1 ; ligne de 9 px.
 RP = os.path.join(HERE, "..", "build", "commerce_rp", "assets", "commerce")
 GX, PW, PTOP, PH = 5, 66, -5, 34       # marge, largeur du panneau, haut (y relatif à la 1re ligne), hauteur (px d'interface)
-RX = GX + 46                          # x de l'œuf (case de résultat)
+RX = GX + 46                          # x de l'oeuf (case de résultat)
 SC = 4                                # 4 pixels de texture par pixel d'interface
 ESP = {-(PW + 1): "\ue001", GX: "\ue002", 1: "\ue003", PW - GX - 26: "\ue004", RX - GX - 26: "\ue005", PW - RX - 8: "\ue006"}
 PANNEAU = "\ue000"
@@ -675,9 +688,20 @@ def dessiner_etabli():
     d.polygon([((ax + 6) * SC, (ay - 4 - PTOP) * SC), ((ax + 11) * SC, (ay - PTOP) * SC), ((ax + 6) * SC, (ay + 4 - PTOP) * SC)], fill=CASE)
     os.makedirs(os.path.join(RP, "textures", "font"), exist_ok=True)
     im.save(os.path.join(RP, "textures", "font", "etabli.png"))
+    # pièce d'Écu, 8 px d'interface (texture 32 x 32) : or, bord sombre, reflet, É gravé
+    p = Image.new("RGBA", (32, 32), (0, 0, 0, 0)); q = ImageDraw.Draw(p)
+    q.ellipse([0, 2, 31, 31], fill=(122, 78, 10, 255))           # tranche
+    q.ellipse([0, 0, 31, 29], fill=(176, 120, 20, 255))          # bord
+    q.ellipse([3, 3, 28, 26], fill=(246, 196, 60, 255))          # face
+    q.ellipse([6, 5, 18, 14], fill=(255, 232, 140, 255))         # reflet
+    q.ellipse([8, 7, 23, 22], outline=(196, 140, 30, 255), width=2)
+    for x0, y0, x1, y1 in [(12, 10, 14, 20), (12, 10, 20, 12), (12, 14, 18, 16), (12, 18, 20, 20), (15, 6, 18, 8)]:
+        q.rectangle([x0, y0, x1 - 1, y1 - 1], fill=(150, 98, 12, 255))  # « É »
+    p.save(os.path.join(RP, "textures", "font", "ecu.png"))
     os.makedirs(os.path.join(RP, "font"), exist_ok=True)
     json.dump({"providers": [
         {"type": "bitmap", "file": "commerce:font/etabli.png", "height": PH, "ascent": 7 - PTOP, "chars": [PANNEAU]},
+        {"type": "bitmap", "file": "commerce:font/ecu.png", "height": 8, "ascent": 7, "chars": [ECU]},
         {"type": "space", "advances": {c: v for v, c in ESP.items()}}]},
         open(os.path.join(RP, "font", "recette.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 
@@ -693,7 +717,7 @@ def grille(fmt="snbt"):
     t = lambda x, c: f'{{text:"{x}",color:"{c}",bold:false,italic:false}}'
     sp = lambda k: f'{{object:"atlas",atlas:"minecraft:{SPR[k][0]}",sprite:"minecraft:{SPR[k][1]}"}}'
     e = lambda v: f'{{text:"{ESP[v]}",font:"commerce:recette"}}'
-    out = [t("Recette de l’œuf de comptoir (établi)\\n\\n", "gold")]
+    out = [t("Recette de l’oeuf de comptoir (établi)\\n\\n", "gold")]
     for r, row in enumerate(GRID):
         if r == 0:
             out += [f'{{text:"{PANNEAU}",font:"commerce:recette",color:"white",shadow_color:0}}', e(-(PW + 1))]
@@ -718,8 +742,8 @@ wj(f"data/{NS}/dialog/ouvrir.json", {
     "type": "minecraft:multi_action", "title": {"text": "Commerce", "color": "gold", "bold": True},
     "external_title": {"text": "Commerce"}, "can_close_with_escape": True, "pause": False,
     "body": [{"type": "minecraft:plain_message", "width": 300,
-              "contents": [{"text": "Ton compte en Écus, le marché, la bourse, les fortunes et les cristaux. Il se débloque en craftant l'œuf de comptoir.", "color": "gray"}]},
-             {"type": "minecraft:plain_message", "width": 300, "contents": {"text": "La grille de craft de l'œuf s'affiche quand tu ouvres le Commerce.", "color": "dark_gray"}}],
+              "contents": [{"text": "Ton compte en Écus, le marché, la bourse, les fortunes et les cristaux. Il se débloque en craftant l'oeuf de comptoir.", "color": "gray"}]},
+             {"type": "minecraft:plain_message", "width": 300, "contents": {"text": "La grille de craft de l'oeuf s'affiche quand tu ouvres le Commerce.", "color": "dark_gray"}}],
     "actions": [{"label": {"text": "Ouvrir le Commerce", "color": "gold", "bold": True}, "width": 200,
                  "action": {"type": "run_command", "command": "trigger commerce set 1"}}],
     "columns": 1})
@@ -747,11 +771,11 @@ for j, *_ in JOBS:
 w(F + "page/item_depuis.mcfunction", ["scoreboard players operation #i c.t = #v c.t",
                                       "scoreboard players remove #i c.t 10000", f"function {NS}:page/item"])
 
-GRIS = lambda txt: btn(T(txt, "dark_gray"), 1, 96, "Verrouillé : crafte l’œuf de comptoir pour l’ouvrir.")
+GRIS = lambda txt: btn(T(txt, "dark_gray"), 1, 96, "Verrouillé : crafte l’oeuf de comptoir pour l’ouvrir.")
 w(F + "page/verrou.mcfunction", SOLDE(f"{NS}:v") + [f"function {NS}:page/verrou_d with storage {NS}:v"])
 w(F + "page/verrou_d.mcfunction", "$" + dlg(
     T("Commerce : verrouillé", "gold", True),
-    [f'{{type:"minecraft:plain_message",width:310,contents:{L(T("Pour ouvrir le Commerce, crafte un ", "gray"), T("œuf de comptoir", "gold", True), T(" à l’établi puis pose-le à ta base. En attendant, tes paliers, défis et boss te rapportent déjà des Écus.\\n", "gray"), SOLDE_TXT)}}}',
+    [f'{{type:"minecraft:plain_message",width:310,contents:{L(T("Pour ouvrir le Commerce, crafte un ", "gray"), T("oeuf de comptoir", "gold", True), T(" à l’établi puis pose-le à ta base. En attendant, tes paliers, défis et boss te rapportent déjà des Écus.\\n", "gray"), SOLDE_TXT)}}}',
      f'{{type:"minecraft:plain_message",width:310,contents:{GRILLE_SNBT}}}'],
     [GRIS("Marché"), GRIS("Bourse"), GRIS("Fortunes"), GRIS("Cristaux"), GRIS("Mon comptoir"), btn(T("Aide", "white"), 60, 96)], 3))
 

@@ -215,18 +215,18 @@ for t in [
 # 11 Élevage et chasse -------------------------------------------------------
 for t in [
     ("leather", "Cuir", 2.0, 512, "e"), ("rabbit_hide", "Peau de lapin", 0.50, 512, "e"), ("rabbit_foot", "Patte de lapin", 5.0, 64, "e"),
-    ("egg", "Œuf", 0.30, 1024, "e"), ("brown_egg", "Œuf brun", 0.30, 1024, "e"), ("blue_egg", "Œuf bleu", 0.30, 1024, "e"),
-    ("feather", "Plume", 0.30, 1024, "e"), ("beef", "Bœuf cru", 1.5, 512, "e"), ("porkchop", "Côtelette de porc crue", 1.5, 512, "e"),
+    ("egg", "Oeuf", 0.30, 1024, "e"), ("brown_egg", "Oeuf brun", 0.30, 1024, "e"), ("blue_egg", "Oeuf bleu", 0.30, 1024, "e"),
+    ("feather", "Plume", 0.30, 1024, "e"), ("beef", "Boeuf cru", 1.5, 512, "e"), ("porkchop", "Côtelette de porc crue", 1.5, 512, "e"),
     ("chicken", "Poulet cru", 1.0, 512, "e"), ("mutton", "Mouton cru", 1.2, 512, "e"), ("rabbit", "Lapin cru", 1.5, 256, "e"),
     ("honeycomb", "Rayon de miel", 2.0, 256, "e"), ("honey_bottle", "Fiole de miel", 2.0, 256, "e"),
     ("honey_block", "Bloc de miel", 8.0, 64, "e"), ("turtle_scute", "Écaille de tortue", 10.0, 64, "e"),
     ("armadillo_scute", "Écaille de tatou", 3.0, 128, "e"),
     ("rotten_flesh", "Chair putréfiée", 0.05, 2048, "c"), ("bone", "Os", 0.40, 1024, "c"), ("bone_meal", "Poudre d'os", 0.13, 2048, "c"),
-    ("string", "Ficelle", 0.50, 1024, "c"), ("gunpowder", "Poudre à canon", 2.0, 512, "c"), ("spider_eye", "Œil d'araignée", 0.80, 512, "c"),
-    ("fermented_spider_eye", "Œil d'araignée fermenté", 1.5, 256, "c"),
+    ("string", "Ficelle", 0.50, 1024, "c"), ("gunpowder", "Poudre à canon", 2.0, 512, "c"), ("spider_eye", "Oeil d'araignée", 0.80, 512, "c"),
+    ("fermented_spider_eye", "Oeil d'araignée fermenté", 1.5, 256, "c"),
     ("slime_ball", "Boule de slime", 3.0, 256, "c"), ("slime_block", "Bloc de slime", 27.0, 64, "c"),
     ("ender_pearl", "Perle de l'Ender", 6.0, 256, "c"), ("blaze_rod", "Bâton de blaze", 8.0, 256, "c"),
-    ("blaze_powder", "Poudre de blaze", 4.0, 512, "c"), ("ender_eye", "Œil de l'Ender", 10.0, 128, "c"),
+    ("blaze_powder", "Poudre de blaze", 4.0, 512, "c"), ("ender_eye", "Oeil de l'Ender", 10.0, 128, "c"),
     ("breeze_rod", "Bâton de breeze", 10.0, 128, "c"), ("phantom_membrane", "Membrane de Phantom", 4.0, 128, "c"),
 ]:
     I(11, *t)
@@ -278,7 +278,7 @@ for t in [
     ("emerald", "Émeraude", 15.0, 128, "t"), ("emerald_block", "Bloc d'émeraude", 135.0, 16, "t"),
     ("ancient_debris", "Débris antiques", 600.0, 8, "m"), ("netherite_scrap", "Fragment de netherite", 620.0, 8, "m"),
     ("netherite_ingot", "Lingot de netherite", 2600.0, 4, "m"), ("echo_shard", "Éclat d'écho", 50.0, 32, "x"),
-    ("nautilus_shell", "Coquille de nautile", 40.0, 32, "p"), ("heart_of_the_sea", "Cœur de la mer", 800.0, 4, "p"),
+    ("nautilus_shell", "Coquille de nautile", 40.0, 32, "p"), ("heart_of_the_sea", "Coeur de la mer", 800.0, 4, "p"),
     ("sponge", "Éponge", 30.0, 32, "p"), ("wet_sponge", "Éponge mouillée", 30.0, 32, "p"),
     ("ghast_tear", "Larme de ghast", 20.0, 64, "c"), ("shulker_shell", "Carapace de shulker", 100.0, 16, "c"),
     ("totem_of_undying", "Totem d'immortalité", 300.0, 8, "c"), ("wither_skeleton_skull", "Crâne de wither squelette", 150.0, 8, "c"),
@@ -286,7 +286,7 @@ for t in [
     ("creeper_head", "Tête de creeper", 50.0, 16, "c"), ("piglin_head", "Tête de piglin", 50.0, 16, "c"),
     ("nether_star", "Étoile du Nether", 1500.0, 4, "c"), ("dragon_breath", "Souffle de dragon", 20.0, 32, "c"),
     ("dragon_head", "Tête de dragon", 2000.0, 2, "c"), ("heavy_core", "Noyau lourd", 500.0, 4, "x"),
-    ("goat_horn", "Corne de chèvre", 30.0, 16, "e"), ("sniffer_egg", "Œuf de renifleur", 100.0, 8, "e"),
+    ("goat_horn", "Corne de chèvre", 30.0, 16, "e"), ("sniffer_egg", "Oeuf de renifleur", 100.0, 8, "e"),
     ("trident", "Trident", 400.0, 4, "c"), ("elytra", "Élytres", 2000.0, 2, "x"),
     ("enchanted_golden_apple", "Pomme de Notch", 1000.0, 4, ""),
 ]:
