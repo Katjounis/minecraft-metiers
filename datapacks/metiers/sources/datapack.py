@@ -1689,12 +1689,12 @@ w(F + "classement/dialog.mcfunction",
 w(F + "boss/tick.mcfunction", f"""
 scoreboard players add #cycle m.boss 1
 execute if score #actif m.boss matches 0 if score #compte m.boss matches 1.. run function {NS}:boss/compte
-execute if score #actif m.boss matches 0 if score #compte m.boss matches ..0 if score #cycle m.boss matches 21600.. run function {NS}:boss/alerte
+execute if score #actif m.boss matches 0 if score #compte m.boss matches ..0 if score #cycle m.boss matches 10800.. run function {NS}:boss/alerte
 execute if score #actif m.boss matches 1 run function {NS}:boss/encours
 """)
 w(F + "boss/alerte.mcfunction", f"""
 execute store result score #n m.boss if entity @a
-execute if score #n m.boss matches ..1 run return run scoreboard players set #cycle m.boss 18000
+execute if score #n m.boss matches ..1 run return run scoreboard players set #cycle m.boss 9000
 scoreboard players set #cycle m.boss 0
 scoreboard players set #compte m.boss 240
 tellraw @a {PREFIX},{{"text":"Le Colosse des Métiers se réveille ! ","color":"dark_red","bold":true}},{{"text":"Il apparaît dans 2 minutes près d'un joueur au hasard. Préparez-vous.","color":"white"}}]

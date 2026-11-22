@@ -27,15 +27,15 @@ ANN = lambda txt, col="white": f'tellraw @a {PREFIX},{{"text":"{txt}","color":"{
 
 w(F + "boss/alerte.mcfunction", "\n".join([
     "execute store result score #n m.boss if entity @a[gamemode=!spectator]",
-    "execute if score #n m.boss matches ..1 run return run scoreboard players set #cycle m.boss 18000",
+    "execute if score #n m.boss matches ..1 run return run scoreboard players set #cycle m.boss 9000",
     "scoreboard players set #cycle m.boss 0", "scoreboard players set #compte m.boss 240",
     "scoreboard players add #type m.boss 1", "execute unless score #type m.boss matches 1..5 run scoreboard players set #type m.boss 1"] +
     [f'execute if score #type m.boss matches {k} run tellraw @a {PREFIX},{{"text":"{b["nom"]} se réveille ! ","color":"{b["col"]}","bold":true}},{{"text":"Il apparaît dans 2 minutes près d\'un joueur au hasard. Préparez-vous.","color":"white"}}]' for k, b in BOSS.items()] +
     ["execute as @a at @s run playsound minecraft:entity.wither.spawn master @s ~ ~ ~ 0.6 0.6"]))
 
 AP = ["execute store result score #n m.boss if entity @a[gamemode=!spectator]",
-      "scoreboard players operation #max m.boss = #n m.boss", "scoreboard players operation #max m.boss *= #150 m.const",
-      "scoreboard players add #max m.boss 250",
+      "scoreboard players operation #max m.boss = #n m.boss", "scoreboard players operation #max m.boss *= #300 m.const",
+      "scoreboard players add #max m.boss 500",
       f"execute store result storage {NS}:boss hp int 1 run scoreboard players get #max m.boss"]
 AP += [f"execute if score #type m.boss matches {k} run function {NS}:boss/apparaitre_{k} with storage {NS}:boss" for k in BOSS]
 AP += [f"spreadplayers ~ ~ 6 14 false {B}", "scoreboard players set #actif m.boss 1", "scoreboard players set #temps m.boss 0",
@@ -80,7 +80,7 @@ w(F + "boss/encours.mcfunction", "\n".join([
     f"execute if score #phase m.boss matches 1 if score #hp3 m.boss <= #seuil m.boss as {B} at @s run function {NS}:boss/vague",
     "scoreboard players add #atk m.boss 1",
     f"execute if score #phase m.boss matches 2 run scoreboard players add #atk m.boss 1",
-    f"execute if score #atk m.boss matches 16.. as {B} at @s run function {NS}:boss/attaque",
+    f"execute if score #atk m.boss matches 10.. as {B} at @s run function {NS}:boss/attaque",
     f"execute if score #mk m.boss matches 1.. run function {NS}:boss/marques",
     f"execute at {B} run function {NS}:boss/particules",
     "execute if score #type m.boss matches 5 if score #temps m.boss matches 2400.. run function metiers:boss/fuite",
@@ -185,4 +185,40 @@ w(F + "boss/recompense.mcfunction", "\n".join(RC))
 # le Brasier ne met pas le feu au décor : ses boules de feu sont supprimées
 add_lines(F + "refonte/tick.mcfunction", ["execute if score #actif m.boss matches 1 if score #type m.boss matches 4 run kill @e[type=minecraft:small_fireball]"])
 add_lines(F + "refonte/load.mcfunction", ["scoreboard players add #type m.boss 0", "scoreboard players add #mk m.boss 0", "scoreboard players add #tue m.boss 0"] +
-          [f"scoreboard players set #{c} m.const {c}" for c in (2, 3, 5, 10, 50, 100, 150, 7200)])
+          [f"scoreboard players set #{c} m.const {c}" for c in (2, 3, 5, 10, 50, 100, 150, 300, 7200)])
+
+
+# ---------------------------------------------------------------- butin des boss : une table par boss, tirée 1 fois en facile,
+# 2 en normal, 3 en difficile, +1 pour le plus gros dégât ; et une chance d'objet rare (10 % par niveau de difficulté, +10 % au top)
+def E(n, w, a=1, b=1, extra=None):
+    e = {"type": "minecraft:item", "name": f"minecraft:{n}", "weight": w}
+    mods = []
+    if (a, b) != (1, 1): mods.append({"type": "minecraft:set_count", "count": {"type": "minecraft:uniform", "min": a, "max": b}})
+    if extra: mods.append(extra)
+    if mods: e["modifier"] = mods
+    return e
+BUTIN = {
+    1: [E("iron_ingot", 20, 4, 10), E("gold_ingot", 15, 3, 8), E("emerald", 10, 3, 8), E("diamond", 8, 1, 3), E("iron_block", 4)],
+    2: [E("string", 20, 8, 16), E("spider_eye", 15, 4, 8), E("ender_pearl", 10, 2, 4), E("slime_ball", 8, 4, 8), E("cobweb", 8, 2, 4), E("diamond", 6, 1, 2)],
+    3: [E("bone", 20, 8, 16), E("experience_bottle", 15, 4, 12), E("lapis_lazuli", 12, 6, 16), E("packed_ice", 6, 4, 8), E("diamond", 6, 1, 2),
+        E("book", 8, 1, 1, {"type": "minecraft:enchant_randomly"})],
+    4: [E("blaze_rod", 20, 3, 8), E("quartz", 12, 8, 16), E("magma_cream", 12, 3, 6), E("fire_charge", 10, 4, 8), E("gold_block", 5), E("netherite_scrap", 3)],
+    5: [E("gunpowder", 20, 8, 16), E("firework_rocket", 10, 8, 16), E("emerald", 10, 4, 8), E("tnt", 8, 2, 4), E("diamond", 6, 1, 2), E("music_disc_cat", 4)],
+}
+for k, ent in BUTIN.items():
+    wj(f"data/{NS}/loot_table/boss/{k}.json", {"type": "minecraft:generic", "pools": [{"rolls": 3, "entries": ent}]})
+wj(f"data/{NS}/loot_table/boss/rare.json", {"type": "minecraft:generic", "pools": [{"rolls": 1, "entries": [
+    E("enchanted_golden_apple", 2), E("totem_of_undying", 3), E("netherite_scrap", 4, 1, 2), E("diamond_block", 3), E("heart_of_the_sea", 2)]}]})
+BT = ["execute store result score #diff m.boss run difficulty", "scoreboard players operation #tirs m.boss = #diff m.boss",
+      "execute if entity @s[tag=metiers.btop] run scoreboard players add #tirs m.boss 1"]
+for k in BUTIN:
+    for n in range(1, 5):
+        BT.append(f"execute if score #type m.boss matches {k} if score #tirs m.boss matches {n}.. run loot give @s loot {NS}:boss/{k}")
+BT += ["scoreboard players operation #chance m.boss = #diff m.boss", "scoreboard players operation #chance m.boss *= #10 m.const",
+       "execute if entity @s[tag=metiers.btop] run scoreboard players add #chance m.boss 10",
+       "execute store result score #r m.boss run random value 1..100",
+       f"execute if score #r m.boss <= #chance m.boss run loot give @s loot {NS}:boss/rare",
+       f'execute if score #r m.boss <= #chance m.boss run tellraw @a {PREFIX},{{"selector":"@s","color":"white"}},{{"text":" obtient un butin rare du boss !","color":"light_purple","bold":true}}]',
+       f'tellraw @s {PREFIX},{{"text":"Butin du boss dans ton inventaire (difficulté : plus de butin en difficile).","color":"gold"}}]']
+w(F + "boss/butin.mcfunction", "\n".join(BT))
+add_lines(F + "boss/recompense.mcfunction", [f"function {NS}:boss/butin"])

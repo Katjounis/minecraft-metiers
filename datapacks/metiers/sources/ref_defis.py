@@ -169,3 +169,22 @@ for j, pool in DEFIS.items():
 RC += ["scoreboard players set #defis_v m.defi 25"] + [f"scoreboard players set @a m.dp_{j} 0" for j in DEFIS]
 w(F + "defis/recreer.mcfunction", "\n".join(RC))
 add_lines(F + "refonte/load.mcfunction", [f"execute unless score #defis_v m.defi matches 25 run function {NS}:defis/recreer"])
+
+# ---------------------------------------------------------------- rappel dans le chat toutes les 20 minutes de jeu (tour à tour)
+add_lines(F + "defis/tick.mcfunction", ["execute if entity @a run scoreboard players add #rappel m.defi 1",
+                                       f"execute if score #rappel m.defi matches 2400.. run function {NS}:defis/rappel"])
+RP = ["scoreboard players set #rappel m.defi 0", "scoreboard players add #rappel_i m.defi 1",
+      "execute if score #rappel_i m.defi matches 3.. run scoreboard players set #rappel_i m.defi 0"]
+for i, (j, desc, tgt, crits, div) in enumerate(SEM, 1):
+    RP.append(f'execute if score #rappel_i m.defi matches 0 if score #s_def m.defi matches {i} run tellraw @a {PREFIX},{{"text":"Défi de la semaine : ","color":"light_purple","bold":true}},'
+              f'{{"text":"{desc}","color":"white"}},{{"text":" → 20 cristaux et 1 éclat de boss. ","color":"gray"}},{{"text":"(touche G, Défis du jour)","color":"dark_gray"}}]')
+for i, (desc, tgt, crits) in enumerate(COLL, 1):
+    RP.append(f'execute if score #rappel_i m.defi matches 1 if score #c_def m.defi matches {i} run tellraw @a {PREFIX},{{"text":"Défi collectif : ","color":"gold","bold":true}},'
+              f'{{"text":"{desc} ","color":"white"}},{{"score":{{"name":"#c_tot","objective":"m.defi"}},"color":"yellow"}},{{"text":" / {tgt}","color":"gray"}},'
+              f'{{"text":" → 1 éclat pour chaque participant.","color":"gray"}}]')
+RP += ["scoreboard players set #bmin m.defi 10800", "scoreboard players operation #bmin m.defi -= #cycle m.boss",
+       "scoreboard players operation #bmin m.defi /= #120 m.const", "execute if score #bmin m.defi matches ..0 run scoreboard players set #bmin m.defi 1",
+       f'execute if score #rappel_i m.defi matches 2 unless score #actif m.boss matches 1 run tellraw @a {PREFIX},{{"text":"Prochain boss dans environ ","color":"red"}},'
+       f'{{"score":{{"name":"#bmin","objective":"m.defi"}},"color":"yellow"}},{{"text":" min de jeu (2 joueurs minimum). Butin pour chaque participant !","color":"red"}}]']
+w(F + "defis/rappel.mcfunction", "\n".join(RP))
+add_lines(F + "refonte/load.mcfunction", ["scoreboard players set #120 m.const 120"])
