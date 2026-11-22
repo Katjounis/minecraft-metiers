@@ -255,3 +255,15 @@ for j in JL:
                     f"execute if score @s m.ceco_{j} matches 1 if score #r m.tmp matches ..5 run scoreboard players add @s m.cr_{j} 1\n", 1)
     open(_p, "w", encoding="utf-8").write(_t)
 w(F + "refonte/sagesse.mcfunction", "scoreboard players operation #s m.tmp = @s m.gain\nscoreboard players operation #s m.tmp /= #10 m.const\nexecute if score #s m.tmp matches 0 run scoreboard players set #s m.tmp 1\nscoreboard players operation @s m.gain += #s m.tmp")
+
+# ---------------------------------------------------------------- mort : les objets lâchés à la mort comptent comme jetés
+# Sinon, en ramassant son stuff (blé, laine...), on regagnait l'XP de métier une seconde fois.
+DROPS = [(src[3], src[0].split("minecraft.dropped:minecraft.")[1]) for j in jobs for src in jobs[j]["src"] if src[0].startswith("minecraft.dropped:")]
+add_lines(F + "refonte/load.mcfunction", ["scoreboard objectives add m.mortx deathCount"])
+add_lines(F + "refonte/tick.mcfunction", [f"execute as @a[scores={{m.mortx=1..}}] at @s run function {NS}:mort/drops"])
+w(F + "mort/drops.mcfunction", "\n".join(
+    ["scoreboard players set @s m.mortx 0", "tag @s add metiers.mort"] +
+    [f'execute as @e[type=minecraft:item,distance=..8] if items entity @s contents minecraft:{it} run function {NS}:mort/compte {{o:"{ob}"}}' for ob, it in DROPS] +
+    ["tag @s remove metiers.mort"]))
+w(F + "mort/compte.mcfunction", "execute store result score #c m.tmp run data get entity @s Item.count\n"
+  "$scoreboard players operation @a[tag=metiers.mort,limit=1] $(o) += #c m.tmp")

@@ -537,7 +537,8 @@ TRG += [f'execute if score @s m.trig matches 610 run function {NS}:appel {{f:"f/
         f'execute if score @s m.trig matches 613 run function {NS}:appel {{f:"c/arc_recup"}}',
         f'execute if score @s m.trig matches 701 run function {NS}:appel {{f:"tp/enregistrer"}}',
         f'execute if score @s m.trig matches 702 run function {NS}:appel {{f:"tp/effacer"}}',
-        f'execute if score @s m.trig matches 721..730 run function {NS}:appel {{f:"tp/aller"}}']
+        f'execute if score @s m.trig matches 721..730 run function {NS}:appel {{f:"tp/aller"}}',
+        f'execute if score @s m.trig matches 741..750 run function {NS}:appel {{f:"tp/renommer"}}']
 add_lines(F + "trigger.mcfunction", TRG)
 
 # menu de la touche G / Échap : Minecraft impose un écran fixe ici (pas de niveaux ni de barres possibles),

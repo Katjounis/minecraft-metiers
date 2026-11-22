@@ -26,7 +26,7 @@ Dans `server.properties` :
 
 ```
 resource-pack=https://github.com/Katjounis/minecraft-metiers/raw/main/metiers_resourcepack.zip
-resource-pack-sha1=d7706e67eaeab8a9c42661b7958393ca874da46b
+resource-pack-sha1=df19d298fcc3a7dc4144baecdae61f06356cfabd
 require-resource-pack=true
 ```
 
@@ -41,3 +41,7 @@ Commandes admin : `/function metiers:boss/alerte` (boss suivant de la rotation d
 ## Interface « Forge »
 
 Le resource pack recolore toute l'interface vanilla (inventaire, conteneurs, barre d'action, info-bulles, curseurs, boutons) au style de la Forge. Script : `sources/resourcepack/interface_forge.py <textures gui vanilla 26.x> metiers_resourcepack.zip`, puis `sources/resourcepack/correctifs_rp.py metiers_resourcepack.zip`.
+
+## Sac à dos
+
+Le sac s'ouvre en un clic droit : tant qu'il est tenu en main, une barque à coffre en bambou invisible (texture vidée par le resource pack) suit les yeux du joueur. Contrepartie : les vraies barques à coffre en bambou sont invisibles sur le serveur.

@@ -319,7 +319,14 @@ if "bandeau" not in FAIT and FONT in files:
     files[FONT] = json.dumps(fo, ensure_ascii=False, indent=1).encode()
     stats["bandeau"] = 1
 
-files[MARQ] = json.dumps(sorted(FAIT | {"arc5", "zfight", "ame4", "zfight2", "zfight3", "zfight4", "arcmiroir", "grandes_icones", "gemmes", "arcgui", "boutons", "bandeau"})).encode()
+# 15. sac à dos : la barque à coffre en bambou sert de sac invisible devant les yeux du joueur, sa texture est vidée
+#     (contrepartie : les vraies barques à coffre en bambou deviennent invisibles elles aussi)
+if "sac_invisible" not in FAIT:
+    b6 = io.BytesIO(); Image.new("RGBA", (128, 128), (0, 0, 0, 0)).save(b6, "PNG")
+    files["assets/minecraft/textures/entity/chest_boat/bamboo.png"] = b6.getvalue()
+    stats["sac_invisible"] = 1
+
+files[MARQ] = json.dumps(sorted(FAIT | {"arc5", "zfight", "ame4", "zfight2", "zfight3", "zfight4", "arcmiroir", "grandes_icones", "gemmes", "arcgui", "boutons", "bandeau", "sac_invisible"})).encode()
 out = io.BytesIO()
 with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
     for n in sorted(files):

@@ -421,7 +421,7 @@ PAGEB = ('{Slot:26b,id:"minecraft:arrow",count:1,components:{"minecraft:custom_n
 SAC_TIER = ["", "18 cases", "27 cases", "2 pages, 52 cases"]
 def sac_item(t):
     return (f'minecraft:carrot_on_a_stick[minecraft:custom_name={{text:"Sac à dos",color:"blue",bold:true,italic:false}},'
-            f'minecraft:lore=[{{text:"{SAC_TIER[t]}, grandit avec ton niveau d\'Explorateur",color:"gray",italic:false}},{{text:"Clic droit, puis clic sur le coffre qui apparaît",color:"dark_gray",italic:false}}],'
+            f'minecraft:lore=[{{text:"{SAC_TIER[t]}, grandit avec ton niveau d\'Explorateur",color:"gray",italic:false}},{{text:"Clic droit pour l\'ouvrir",color:"dark_gray",italic:false}}],'
             f'minecraft:item_model="metiers:sac_{t}",minecraft:custom_data={{metiers_sac:1b}},minecraft:unbreakable={{}},minecraft:max_stack_size=1,'
             f'minecraft:repair_cost=1000,minecraft:enchantment_glint_override=false] 1')
 SACSEL = "*[minecraft:custom_data~{metiers_sac:1b}]"
@@ -434,24 +434,33 @@ w(F + "sac/donner.mcfunction", "\n".join([
     f"clear @s {SACSEL}"] + [f"execute if score @s m.sact matches {t} run give @s {sac_item(t)}" for t in (1, 2, 3)] +
     [tr("Voici ton sac à dos. Ce que tu y ranges reste dedans, même si tu le perds : récupère-le ici.", "green")]))
 add_lines(F + "x/outil_monte.mcfunction", [f"execute if items entity @s container.* {SACSEL} run function {NS}:sac/donner"])
-w(F + "sac/ouvrir.mcfunction", f"""
-scoreboard players operation #pid m.tmp = @s m.id
-execute as @e[type=minecraft:chest_minecart,tag=metiers.sac] if score @s m.own = #pid m.tmp run function {NS}:sac/fermer
-scoreboard players set @s m.sact 1
-execute if score @s m.x_lvl matches 50.. run scoreboard players set @s m.sact 2
-execute if score @s m.x_lvl matches 80.. run scoreboard players set @s m.sact 3
-execute unless score @s m.sacp matches 1..2 run scoreboard players set @s m.sacp 1
-execute if score @s m.sact matches ..2 run scoreboard players set @s m.sacp 1
-execute anchored eyes positioned ^ ^-0.4 ^1.6 run summon minecraft:chest_minecart ~ ~ ~ {{Tags:["metiers.sac","metiers.sacnew"],Invulnerable:1b,NoGravity:1b,Silent:1b,CustomName:{{text:"Sac à dos",color:"blue"}}}}
-scoreboard players operation @e[tag=metiers.sacnew] m.own = #pid m.tmp
-scoreboard players set @e[tag=metiers.sacnew] m.tmp 0
-scoreboard players set @s m.saco 1
-execute as @e[tag=metiers.sacnew] run function {NS}:sac/remplir
-tag @e[tag=metiers.sacnew] remove metiers.sacnew
-title @s actionbar {{"text":"Clique sur le coffre pour ouvrir ton sac","color":"aqua"}}
-playsound minecraft:item.bundle.drop_contents master @s ~ ~ ~ 1 0.8
-""")
-# le chariot lit la page du joueur (#pid) et y ajoute les cases verrouillées
+# Sac à dos v2 : une barque à coffre en bambou invisible (texture vidée par le resource pack) suit les yeux du joueur tant qu'il
+# tient le sac. Le clic droit tombe donc sur elle et ouvre directement l'inventaire, en un clic, sans coffre posé par terre.
+# Un passager (item_display) occupe la barque pour que le clic ouvre le coffre au lieu de faire monter le joueur.
+SACT = "minecraft:bamboo_chest_raft"
+SACB = f"@e[type={SACT},tag=metiers.sac]"
+w(F + "sac/ouvrir.mcfunction", 'title @s actionbar {"text":"Clic droit avec le sac en main pour l\'ouvrir","color":"aqua"}')
+w(F + "sac/tenu.mcfunction", "\n".join([
+    "scoreboard players operation #pid m.tmp = @s m.id",
+    "scoreboard players set #trouve m.tmp 0",
+    f"execute as {SACB} if score @s m.own = #pid m.tmp run scoreboard players set #trouve m.tmp 1",
+    f"execute if score #trouve m.tmp matches 0 run function {NS}:sac/creer",
+    f"execute anchored eyes positioned ^ ^ ^ as {SACB} if score @s m.own = #pid m.tmp run tp @s ~ ~-0.28 ~",
+    "scoreboard players add @s m.saco 1",
+    f"execute if score @s m.saco matches 5.. run function {NS}:sac/entretien"]))
+w(F + "sac/creer.mcfunction", "\n".join([
+    "scoreboard players set @s m.sact 1",
+    "execute if score @s m.x_lvl matches 50.. run scoreboard players set @s m.sact 2",
+    "execute if score @s m.x_lvl matches 80.. run scoreboard players set @s m.sact 3",
+    "execute unless score @s m.sacp matches 1..2 run scoreboard players set @s m.sacp 1",
+    "execute if score @s m.sact matches ..2 run scoreboard players set @s m.sacp 1",
+    f'execute anchored eyes positioned ^ ^ ^ run summon {SACT} ~ ~-0.28 ~ {{Tags:["metiers.sac","metiers.sacnew"],Invulnerable:1b,NoGravity:1b,Silent:1b,'
+    f'CustomName:{{text:"Sac à dos",color:"blue"}},Passengers:[{{id:"minecraft:item_display",Tags:["metiers.sacpass"]}}]}}',
+    "scoreboard players operation @e[tag=metiers.sacnew] m.own = #pid m.tmp",
+    "scoreboard players operation @e[tag=metiers.sacnew] m.sacp = @s m.sacp",
+    f"execute as @e[tag=metiers.sacnew] run function {NS}:sac/remplir",
+    "tag @e[tag=metiers.sacnew] remove metiers.sacnew"]))
+# la barque lit la page du joueur (#pid) et y ajoute les cases verrouillées
 w(F + "sac/remplir.mcfunction", "\n".join([
     f"execute store result storage {NS}:sac id int 1 run scoreboard players get #pid m.tmp",
     f"execute as @a if score @s m.id = #pid m.tmp store result storage {NS}:sac page int 1 run scoreboard players get @s m.sacp",
@@ -465,33 +474,27 @@ w(F + "sac/sauver.mcfunction", "\n".join([
     f"$data modify storage {NS}:sac j$(id).p$(page) set from entity @s Items",
     f"$data remove storage {NS}:sac j$(id).p$(page)[{{components:{{\"minecraft:custom_data\":{{metiers_lock:1b}}}}}}]",
     f"$data remove storage {NS}:sac j$(id).p$(page)[{{components:{{\"minecraft:custom_data\":{{metiers_page:1b}}}}}}]"]))
-# suivi toutes les 0,5 s pendant que le sac est ouvert
-w(F + "sac/suivi.mcfunction", "\n".join([
-    "scoreboard players operation #pid m.tmp = @s m.id",
-    f"execute store result storage {NS}:sac id int 1 run scoreboard players get @s m.id",
+# sauvegarde par la barque elle-même (propriétaire et page lus sur ses scores)
+w(F + "sac/sauver_ici.mcfunction", "\n".join([
+    f"execute store result storage {NS}:sac id int 1 run scoreboard players get @s m.own",
     f"execute store result storage {NS}:sac page int 1 run scoreboard players get @s m.sacp",
-    "scoreboard players set #trouve m.tmp 0", "scoreboard players operation #t m.tmp = @s m.sact",
-    f"execute as @e[type=minecraft:chest_minecart,tag=metiers.sac] if score @s m.own = #pid m.tmp run function {NS}:sac/suivi_chariot",
-    "execute if score #trouve m.tmp matches 0 run scoreboard players set @s m.saco 0",
+    f"function {NS}:sac/sauver with storage {NS}:sac"]))
+# toutes les 5 ticks pendant que le sac est tenu : sauvegarde, cases verrouillées, flèche de page
+w(F + "sac/entretien.mcfunction", "\n".join([
+    "scoreboard players set @s m.saco 0",
+    "scoreboard players operation #pid m.tmp = @s m.id", "scoreboard players operation #t m.tmp = @s m.sact",
+    f"execute as {SACB} if score @s m.own = #pid m.tmp run function {NS}:sac/sauver_ici",
     "clear @s *[minecraft:custom_data~{metiers_lock:1b}]",
-    f"execute if items entity @s container.* *[minecraft:custom_data~{{metiers_page:1b}}] run function {NS}:sac/page",
-    f"execute if items entity @s player.cursor *[minecraft:custom_data~{{metiers_page:1b}}] run function {NS}:sac/page"]))
-w(F + "sac/suivi_chariot.mcfunction", "\n".join([
-    "scoreboard players set #trouve m.tmp 1",
-    "scoreboard players add @s m.tmp 1",
-    f"function {NS}:sac/sauver with storage {NS}:sac",
-    f"execute unless items entity @s container.26 *[minecraft:custom_data~{{metiers_page:1b}}] if score #t m.tmp matches 3 run return 0",
-    f"execute unless entity @a[distance=..6] run return run function {NS}:sac/fermer",
-    f"execute if score @s m.tmp matches 240.. run return run function {NS}:sac/fermer",
-    f"function {NS}:sac/reverrouiller"]))
+    f"execute if items entity @s container.* *[minecraft:custom_data~{{metiers_page:1b}}] run return run function {NS}:sac/page",
+    f"execute if items entity @s player.cursor *[minecraft:custom_data~{{metiers_page:1b}}] run return run function {NS}:sac/page",
+    f"execute as {SACB} if score @s m.own = #pid m.tmp run function {NS}:sac/reverrouiller"]))
 w(F + "sac/reverrouiller.mcfunction", "\n".join(
-    [f"execute as @a if score @s m.id = #pid m.tmp store result score #t m.tmp run scoreboard players get @s m.sact"] +
     [f"execute if score #t m.tmp matches 1 unless items entity @s container.{sl} *[minecraft:custom_data~{{metiers_lock:1b}}] run function {NS}:sac/case {{slot:{sl}}}" for sl in range(18, 27)]))
 w(F + "sac/case.mcfunction", "\n".join([
     "$execute if items entity @s container.$(slot) * run summon minecraft:item ~ ~ ~ {Tags:[\"metiers.rendu\"],Item:{id:\"minecraft:stone\",count:1}}",
     "$execute if items entity @s container.$(slot) * run data modify entity @e[tag=metiers.rendu,limit=1] Item set from entity @s Items[{Slot:$(slot)b}]",
     "$execute if items entity @s container.$(slot) * run data remove entity @e[tag=metiers.rendu,limit=1] Item.Slot",
-    "$execute if items entity @s container.$(slot) * run tp @e[tag=metiers.rendu] @p",
+    "$execute if items entity @s container.$(slot) * as @a if score @s m.id = #pid m.tmp run tp @e[tag=metiers.rendu] @s",
     "tag @e[tag=metiers.rendu] remove metiers.rendu",
     "$data remove entity @s Items[{Slot:$(slot)b}]",
     f"$data modify entity @s Items append value {LOCK.replace('SLOT', '$(slot)')}"]))
@@ -501,11 +504,27 @@ w(F + "sac/page.mcfunction", "\n".join([
     "execute if score @s m.sacp matches 2 run scoreboard players set #np m.tmp 1",
     "scoreboard players operation @s m.sacp = #np m.tmp",
     "scoreboard players operation #pid m.tmp = @s m.id",
-    f"execute as @e[type=minecraft:chest_minecart,tag=metiers.sac] if score @s m.own = #pid m.tmp run function {NS}:sac/remplir",
+    f"execute as {SACB} if score @s m.own = #pid m.tmp run scoreboard players operation @s m.sacp = #np m.tmp",
+    f"execute as {SACB} if score @s m.own = #pid m.tmp run function {NS}:sac/remplir",
     'title @s actionbar [{"text":"Sac à dos : page ","color":"aqua"},{"score":{"name":"@s","objective":"m.sacp"},"color":"yellow"}]',
     "playsound minecraft:item.book.page_turn master @s ~ ~ ~ 1 1"]))
+# chaque tick, pour chaque barque : si son joueur ne tient plus le sac (ou s'est éloigné, déconnecté, mort), on range et on retire
+w(F + "sac/verifier.mcfunction", "\n".join([
+    "scoreboard players operation #o m.tmp = @s m.own", "scoreboard players set #ok m.tmp 0",
+    f"execute as @a[distance=..3,gamemode=!spectator] if score @s m.id = #o m.tmp if items entity @s weapon.mainhand {SACSEL} run scoreboard players set #ok m.tmp 1",
+    f"execute if score #ok m.tmp matches 0 run function {NS}:sac/ranger"]))
+w(F + "sac/ranger.mcfunction", f"function {NS}:sac/sauver_ici\nfunction {NS}:sac/fermer")
 w(F + "sac/fermer.mcfunction", "\n".join([
-    "data modify entity @s Items set value []", "tp @s ~ -400 ~", "kill @s"]))
+    "data modify entity @s Items set value []", "kill @e[type=minecraft:item_display,tag=metiers.sacpass,distance=..3]",
+    "tp @s ~ -400 ~", "kill @s"]))
+# anciens chariots du sac v1 posés par terre : on sauve leur contenu puis on les retire
+w(F + "sac/vieux.mcfunction", "\n".join([
+    "scoreboard players set @s m.sacp 1",
+    "scoreboard players operation #o m.tmp = @s m.own",
+    "execute as @a if score @s m.id = #o m.tmp run scoreboard players operation #o2 m.tmp = @s m.sacp",
+    "execute as @a if score @s m.id = #o m.tmp run scoreboard players operation @e[type=minecraft:chest_minecart,tag=metiers.sac,limit=1,sort=nearest] m.sacp = #o2 m.tmp",
+    f"function {NS}:sac/sauver_ici", "data modify entity @s Items set value []", "tp @s ~ -400 ~", "kill @s"]))
+w(F + "sac/suivi.mcfunction", "scoreboard players set @s m.saco 0")
 
 # ---------------------------------------------------------------- grimoire de téléportation de l'Enchanteur
 TPMAX = [1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
@@ -525,15 +544,31 @@ w(F + "tp/lister.mcfunction", "\n".join(LI))
 w(F + "tp/etiquette.mcfunction", f'$data modify storage {NS}:tp b.l$(n) set value "$(n). $(nom) : $(x) $(y) $(z)"')
 btn = []
 for i in range(1, 11):
-    btn.append(f'{{label:{{text:"$(l{i})",color:"light_purple"}},width:300,tooltip:{{text:"Téléportation après 3 secondes immobile"}},action:{{type:"run_command",command:"trigger metiers set {720 + i}"}}}}')
+    btn.append(f'{{label:{{text:"$(l{i})",color:"light_purple"}},width:240,tooltip:{{text:"Clique pour t’y téléporter (3 secondes sans bouger)."}},action:{{type:"run_command",command:"trigger metiers set {720 + i}"}}}}')
+    btn.append(f'{{label:{{text:"✎ Nommer",color:"yellow"}},width:80,tooltip:{{text:"Renomme ce point : tiens en main un objet renommé à l’enclume (un papier, par exemple), puis clique ici."}},action:{{type:"run_command",command:"trigger metiers set {740 + i}"}}}}')
 w(F + "tp/menu.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Grimoire de téléportation",color:"dark_purple",bold:true},can_close_with_escape:true,pause:false,'
-  'body:[{type:"minecraft:plain_message",width:300,contents:[{text:"Points : $(max) au maximum à ton palier.\\n",color:"gray"},{text:"Recharge restante : $(cd) s\\n",color:"yellow"},'
-  '{text:"Les autres dimensions s\'ouvrent au palier 8.",color:"dark_gray"}]}],'
-  'actions:[{label:{text:"Enregistrer ma position ici",color:"green"},width:300,action:{type:"run_command",command:"trigger metiers set 701"}},'
-  + ",".join(btn) +
-  ',{label:{text:"Effacer le dernier point",color:"red"},width:300,action:{type:"run_command",command:"trigger metiers set 702"}}],'
-  'columns:1,exit_action:{label:"Fermer",width:150}}')
+  'body:[{type:"minecraft:plain_message",width:330,contents:[{text:"Points : $(max) au maximum à ton palier.   ",color:"gray"},{text:"Recharge : $(cd) s\\n",color:"yellow"},'
+  '{text:"Pour nommer un point : renomme un papier à l’enclume (Maison, Mine, Ferme...), tiens-le en main et clique sur ✎ Nommer.\\n",color:"aqua"},'
+  '{text:"Les autres dimensions s’ouvrent au palier 8.",color:"dark_gray"}]}],'
+  'actions:[{label:{text:"Enregistrer ma position ici",color:"green",bold:true},width:240,action:{type:"run_command",command:"trigger metiers set 701"}},'
+  '{label:{text:"✖ Effacer",color:"red"},width:80,tooltip:{text:"Efface le dernier point enregistré."},action:{type:"run_command",command:"trigger metiers set 702"}},'
+  + ",".join(btn) + '],'
+  'columns:2,exit_action:{label:"Fermer",width:150}}')
+# renommer un point avec le nom de l'objet tenu en main
+w(F + "tp/renommer.mcfunction", "\n".join([
+    f"execute unless data entity @s SelectedItem.components.\"minecraft:custom_name\" run return run {tr('Tiens en main un objet renommé à l’enclume (un papier par exemple), puis clique sur Nommer.', 'red')}",
+    f"execute store result storage {NS}:tp id int 1 run scoreboard players get @s m.id",
+    "scoreboard players operation #k m.tmp = @s m.trig", "scoreboard players remove #k m.tmp 741",
+    f"execute store result storage {NS}:tp k int 1 run scoreboard players get #k m.tmp",
+    f"data modify storage {NS}:tp nv set from entity @s SelectedItem.components.\"minecraft:custom_name\"",
+    f"execute if data storage {NS}:tp nv.text run data modify storage {NS}:tp nv set from storage {NS}:tp nv.text",
+    f"data remove storage {NS}:tp cible", f"function {NS}:tp/choisir with storage {NS}:tp",
+    f"execute unless data storage {NS}:tp cible run return run {tr('Cet emplacement est vide : enregistre d’abord une position.', 'red')}",
+    f"function {NS}:tp/renommer_m with storage {NS}:tp",
+    tr("Point renommé.", "light_purple"), "playsound minecraft:item.book.page_turn master @s ~ ~ ~ 1 1.2",
+    f"function {NS}:tp/ouvrir"]))
+w(F + "tp/renommer_m.mcfunction", f"$data modify storage {NS}:tp j$(id)[$(k)].nom set from storage {NS}:tp nv")
 EN = [f"execute store result storage {NS}:tp id int 1 run scoreboard players get @s m.id",
       f"execute store result score #n m.tmp run data get storage {NS}:tp tmpl"]
 w(F + "tp/compter.mcfunction", f"$execute store result score #n m.tmp run data get storage {NS}:tp j$(id)")
@@ -612,9 +647,11 @@ w(F + "refonte/tick.mcfunction", "\n".join([
     f"execute as @a[scores={{s.bow=1..}}] at @s if items entity @s weapon.mainhand {FSEL('arc3')} run function {NS}:forge/arc3",
     "scoreboard players set @a s.bow 0", "scoreboard players set @a s.pick 0",
     f"execute as @a at @s if entity @e[type=#{NS}:animaux,distance=..48,predicate={NS}:suit_moi] run function {NS}:e/houlette_suivre",
-    "scoreboard players remove @a[scores={m.forgecd=1..}] m.forgecd 1"]))
+    "scoreboard players remove @a[scores={m.forgecd=1..}] m.forgecd 1",
+    f"execute as @a[gamemode=!spectator] if items entity @s weapon.mainhand {SACSEL} at @s run function {NS}:sac/tenu",
+    f"execute as {SACB} at @s run function {NS}:sac/verifier",
+    f"execute as @e[type=minecraft:chest_minecart,tag=metiers.sac] at @s run function {NS}:sac/vieux"]))
 RJ = [f"execute unless entity @s[tag=metiers.v24] run function {NS}:refonte/migration",
-      f"execute if score @s m.saco matches 1 run function {NS}:sac/suivi",
       f"execute if score @s m.tpinc matches 1.. run function {NS}:tp/incantation",
       "execute if score @s m.tpcd matches 1.. run scoreboard players remove @s m.tpcd 1",
       f"execute if entity @s[tag=metiers.lasso_plein] run function {NS}:forge/lasso_retour",
