@@ -34,8 +34,8 @@ w(F + "boss/alerte.mcfunction", "\n".join([
     ["execute as @a at @s run playsound minecraft:entity.wither.spawn master @s ~ ~ ~ 0.6 0.6"]))
 
 AP = ["execute store result score #n m.boss if entity @a[gamemode=!spectator]",
-      "scoreboard players operation #max m.boss = #n m.boss", "scoreboard players operation #max m.boss *= #300 m.const",
-      "scoreboard players add #max m.boss 500",
+      "scoreboard players operation #max m.boss = #n m.boss", "scoreboard players operation #max m.boss *= #200 m.const",
+      "scoreboard players add #max m.boss 350",
       f"execute store result storage {NS}:boss hp int 1 run scoreboard players get #max m.boss"]
 AP += [f"execute if score #type m.boss matches {k} run function {NS}:boss/apparaitre_{k} with storage {NS}:boss" for k in BOSS]
 AP += [f"spreadplayers ~ ~ 6 14 false {B}", "scoreboard players set #actif m.boss 1", "scoreboard players set #temps m.boss 0",
@@ -185,7 +185,7 @@ w(F + "boss/recompense.mcfunction", "\n".join(RC))
 # le Brasier ne met pas le feu au décor : ses boules de feu sont supprimées
 add_lines(F + "refonte/tick.mcfunction", ["execute if score #actif m.boss matches 1 if score #type m.boss matches 4 run kill @e[type=minecraft:small_fireball]"])
 add_lines(F + "refonte/load.mcfunction", ["scoreboard players add #type m.boss 0", "scoreboard players add #mk m.boss 0", "scoreboard players add #tue m.boss 0"] +
-          [f"scoreboard players set #{c} m.const {c}" for c in (2, 3, 5, 10, 50, 100, 150, 300, 7200)])
+          [f"scoreboard players set #{c} m.const {c}" for c in (2, 3, 5, 10, 50, 100, 150, 200, 300, 7200)])
 
 
 # ---------------------------------------------------------------- butin des boss : une table par boss, tirée 1 fois en facile,
@@ -222,3 +222,15 @@ BT += ["scoreboard players operation #chance m.boss = #diff m.boss", "scoreboard
        f'tellraw @s {PREFIX},{{"text":"Butin du boss dans ton inventaire (difficulté : plus de butin en difficile).","color":"gold"}}]']
 w(F + "boss/butin.mcfunction", "\n".join(BT))
 add_lines(F + "boss/recompense.mcfunction", [f"function {NS}:boss/butin"])
+
+
+# ---------------------------------------------------------------- Brasier : rien ne brûle
+# Pendant le combat, la règle mob_griefing passe à false (les boules de feu ne posent plus de feu), puis reprend sa valeur.
+# En plus, le feu éventuel autour du boss est éteint toutes les 0,5 s.
+add_lines(F + "boss/apparaitre_4.mcfunction", ["execute store result score #mg m.boss run gamerule mob_griefing",
+                                               "scoreboard players set #mgset m.boss 1", "gamerule mob_griefing false"])
+add_lines(F + "boss/fin.mcfunction", ["execute if score #mgset m.boss matches 1 if score #mg m.boss matches 1 run gamerule mob_griefing true",
+                                      "scoreboard players set #mgset m.boss 0"])
+add_lines(F + "boss/encours.mcfunction", [f"execute if score #type m.boss matches 4 at {B} run fill ~-15 ~-8 ~-15 ~15 ~7 ~15 minecraft:air replace minecraft:fire"])
+add_lines(F + "refonte/load.mcfunction", ["execute if score #mgset m.boss matches 1 unless score #actif m.boss matches 1 run gamerule mob_griefing true",
+                                          "execute if score #mgset m.boss matches 1 unless score #actif m.boss matches 1 run scoreboard players set #mgset m.boss 0"])
