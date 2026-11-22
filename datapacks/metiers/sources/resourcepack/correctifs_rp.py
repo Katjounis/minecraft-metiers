@@ -326,7 +326,73 @@ if "sac_invisible" not in FAIT:
     files["assets/minecraft/textures/entity/chest_boat/bamboo.png"] = b6.getvalue()
     stats["sac_invisible"] = 1
 
-files[MARQ] = json.dumps(sorted(FAIT | {"arc5", "zfight", "ame4", "zfight2", "zfight3", "zfight4", "arcmiroir", "grandes_icones", "gemmes", "arcgui", "boutons", "bandeau", "sac_invisible"})).encode()
+# 16. sac à dos : nouvelle apparence en pixel art (cuir, rabat à boucle, poche ; couchage roulé au palier 2 ;
+#     liserés dorés, fermoir à gemme, lanterne et étui à carte au palier 3)
+O = (28, 18, 10, 255)
+def sac_img(t):
+    S = 32; im = Image.new("RGBA", (S, S), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
+    cuir = [(74, 44, 22), (104, 64, 32), (134, 86, 44), (166, 112, 60)]
+    if t == 3: cuir = [(58, 36, 30), (88, 54, 40), (118, 74, 52), (150, 98, 66)]
+    met = {1: [(90, 70, 40), (150, 118, 60), (210, 176, 96)], 2: [(70, 74, 82), (140, 146, 156), (214, 220, 228)],
+           3: [(110, 76, 16), (212, 160, 40), (255, 226, 120)]}[t]
+    C = lambda i: cuir[i] + (255,)
+    M = lambda i: met[i] + (255,)
+    # sangle de portage derrière (dépasse en haut)
+    d.rectangle((10, 5, 21, 7), fill=C(0))
+    d.rectangle((12, 4, 19, 5), fill=C(1))
+    # corps
+    d.rounded_rectangle((6, 8, 25, 29), radius=4, fill=C(2), outline=O)
+    for y in range(9, 29): d.point((24, y), fill=C(1)); d.point((23, y), fill=C(1)) if y > 12 else None
+    for y in range(10, 28): d.point((7, y), fill=C(3))
+    # coutures
+    for y in range(11, 28, 2): d.point((9, y), fill=C(1)); d.point((22, y), fill=C(1))
+    # rabat
+    d.rounded_rectangle((7, 8, 24, 15), radius=3, fill=C(3), outline=O)
+    d.line((8, 15, 23, 15), fill=C(1))
+    for x in range(9, 23): d.point((x, 9), fill=(196, 140, 80, 255))
+    # poche avant
+    d.rounded_rectangle((9, 18, 22, 27), radius=2, fill=C(1), outline=O)
+    d.line((10, 19, 21, 19), fill=C(2))
+    # boucle du rabat
+    d.rectangle((14, 13, 17, 19), fill=M(1), outline=O)
+    d.point((15, 15), fill=M(2)); d.point((16, 16), fill=M(0))
+    # lanières verticales
+    d.line((11, 14, 11, 18), fill=C(0)); d.line((20, 14, 20, 18), fill=C(0))
+    if t >= 2:
+        # couchage roulé sur le dessus
+        rouge = [(90, 24, 24, 255), (150, 44, 40, 255), (196, 74, 62, 255)]
+        d.rounded_rectangle((4, 2, 27, 7), radius=2, fill=rouge[1], outline=O)
+        d.line((6, 3, 25, 3), fill=rouge[2]); d.line((6, 6, 25, 6), fill=rouge[0])
+        for x in (9, 22): d.line((x, 2, x, 7), fill=M(1))
+        # poches latérales
+        d.rectangle((3, 16, 6, 26), fill=C(1), outline=O); d.rectangle((25, 16, 28, 26), fill=C(1), outline=O)
+        d.point((4, 18), fill=M(2)); d.point((27, 18), fill=M(2))
+    if t >= 3:
+        # liserés dorés et gemme de fermoir
+        d.rounded_rectangle((6, 8, 25, 29), radius=4, outline=O)
+        for x in range(9, 23): d.point((x, 28), fill=M(1))
+        d.rectangle((14, 14, 17, 17), fill=(40, 120, 190, 255), outline=O)
+        d.point((15, 15), fill=(160, 230, 255, 255))
+        # petite lanterne accrochée à droite
+        d.rectangle((26, 9, 29, 14), fill=(40, 34, 28, 255), outline=O)
+        d.point((27, 11), fill=(255, 210, 90, 255)); d.point((28, 12), fill=(255, 170, 60, 255)); d.point((27, 12), fill=(255, 230, 140, 255))
+        d.line((27, 7, 28, 7), fill=M(1))
+        # étui à carte à gauche
+        d.rectangle((2, 9, 5, 15), fill=(196, 176, 130, 255), outline=O); d.line((3, 9, 3, 15), fill=(226, 210, 170, 255))
+    return im
+
+if "sac2d" not in FAIT:
+    for t in (1, 2, 3):
+        b7 = io.BytesIO(); sac_img(t).save(b7, "PNG")
+        files[f"assets/metiers/textures/item/v2/sac_{t}_pixel.png"] = b7.getvalue()
+        files[f"assets/metiers/models/item/v2/sac_{t}.json"] = json.dumps({"parent": "minecraft:item/handheld",
+            "textures": {"layer0": f"metiers:item/v2/sac_{t}_pixel"},
+            "display": {"thirdperson_righthand": {"rotation": [0, -90, 0], "translation": [0, 1, 1], "scale": [0.7, 0.7, 0.7]},
+                        "firstperson_righthand": {"rotation": [0, -90, 15], "translation": [1.1, 2.5, 1], "scale": [0.6, 0.6, 0.6]},
+                        "firstperson_lefthand": {"rotation": [0, 90, -15], "translation": [1.1, 2.5, 1], "scale": [0.6, 0.6, 0.6]}}}).encode()
+    stats["sac2d"] = 3
+
+files[MARQ] = json.dumps(sorted(FAIT | {"arc5", "zfight", "ame4", "zfight2", "zfight3", "zfight4", "arcmiroir", "grandes_icones", "gemmes", "arcgui", "boutons", "bandeau", "sac_invisible", "sac2d"})).encode()
 out = io.BytesIO()
 with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
     for n in sorted(files):
