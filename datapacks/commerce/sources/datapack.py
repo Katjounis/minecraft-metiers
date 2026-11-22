@@ -11,7 +11,7 @@ from catalogue import ACHAT, CATEGORIES, ITEMS, RARES
 ROOT = os.path.join(HERE, "..", "build", "commerce_datapack")
 NS = "commerce"
 F = f"data/{NS}/function/"
-VERSION = 6
+VERSION = 7
 if os.path.exists(ROOT):
     shutil.rmtree(ROOT)
 
@@ -464,7 +464,7 @@ w(F + "op/vendre.mcfunction", [
     "execute if score #p c.t matches 701.. run scoreboard players set #p c.t 700",
     "scoreboard players operation #vs c.t += #q c.t",
     f"function {NS}:item/sauver", f"function {NS}:op/crediter",
-    "scoreboard players operation #x c.t = #tot c.t"] + fmt(f"{NS}:t m", "") + [
+    "scoreboard players operation #x c.t = #tot c.t"] + fmt(f"{NS}:t", "m.") + [
     f"data modify storage {NS}:t m.q set from storage {NS}:t it.q",
     f"function {NS}:op/msg_vente with storage {NS}:t m",
     "playsound minecraft:entity.villager.yes master @s ~ ~ ~ 0.8 1.2",

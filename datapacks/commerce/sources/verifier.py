@@ -66,6 +66,23 @@ for dp, _, fs in os.walk(ROOT):
             if macro and "$(" not in body: err.append(f"{rel}:{n} ligne macro sans variable")
             if not macro and re.search(r"\$\([a-z]", body) and 'set value "$(q)"' not in body:
                 err.append(f"{rel}:{n} variable de macro hors ligne macro")
+            # structure des commandes scoreboard et des conditions de score
+            OPS = {"=", "+=", "-=", "*=", "/=", "%=", "<", ">", "><"}
+            t = re.split(r" run ", body)[-1].split()
+            if len(t) > 2 and t[0] == "scoreboard" and t[1] == "players":
+                attendu = {"operation": 8, "set": 6, "add": 6, "remove": 6, "get": 5, "reset": 5}.get(t[2])
+                if attendu and (len(t) != attendu or (t[2] == "operation" and t[5] not in OPS)):
+                    err.append(f"{rel}:{n} commande scoreboard mal formée")
+            for m in re.finditer(r"(?:if|unless) score \S+ \S+ (\S+) \S+", body):
+                if m.group(1) not in {"=", "<", ">", "<=", ">=", "matches"}:
+                    err.append(f"{rel}:{n} condition de score mal formée")
+            # syntaxe des commandes data : une faute fait ignorer toute la fonction par le jeu
+            for m in re.finditer(r"data modify storage \S+ \S+ (\S+)", body):
+                if m.group(1) not in ("set", "append", "prepend", "insert", "merge"):
+                    err.append(f"{rel}:{n} commande data mal formée : {m.group(0)}")
+            for m in re.finditer(r"store result storage \S+ \S+ (\S+) ", body):
+                if m.group(1) not in ("int", "byte", "short", "long", "float", "double"):
+                    err.append(f"{rel}:{n} store result mal formé : {m.group(0)}")
             for m in re.finditer(r"function (#?[a-z_]+:[a-z0-9_/$()]+)", body):
                 calls.append((rel, n, m.group(1)))
             for kw in ("dialog show @s ", "tellraw @s ", "tellraw @a ", "set value {", "append value {", "set value [", "give @s minecraft:villager_spawn_egg"):

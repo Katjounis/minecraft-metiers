@@ -22,6 +22,7 @@ Les prix de base et les volumes sont dans `sources/catalogue.py`. `sources/coher
 
 ## Historique
 
+- v7 (22/11/2026) : la vente ne marchait pas, une commande mal écrite faisait ignorer toute la fonction de vente par le jeu. Corrigé, et `verifier.py` contrôle maintenant la structure des commandes data et scoreboard.
 - v6 (22/11/2026) : le fond d'établi de la v4 ne s'affichait pas (glyphe de 264 px, au-delà de la limite de 256 des polices), d'où la première ligne décalée. Il est remplacé par le haut de la vraie texture d'établi du resource pack (interface Forge), cases calées sur les textures des objets.
 - v5 (22/11/2026) : « oe » au lieu de « œ » partout (la police de l'interface Forge n'a pas ce caractère), et vraie pièce d'Écu dessinée (glyphe `ecu.png`) à la place du symbole ¤.
 - v4 (22/11/2026) : vrai fond d'établi derrière la recette de l'oeuf (resource pack), lignes de largeur identique pour que la grille ne se décale plus.
