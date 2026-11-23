@@ -15,7 +15,7 @@ MENU_SERVEUR = {
     "external_title": {"text": "Menu du serveur"},
     "can_close_with_escape": True, "pause": False,
     "body": [{"type": "minecraft:plain_message", "width": 300, "contents": [
-        {"text": "Métiers, Commerce, Bestiaire : tout est ici.", "color": "gray"}]}],
+        {"text": "Métiers, Commerce, Bestiaire, Compagnons : tout est ici.", "color": "gray"}]}],
     "actions": [
         {"label": [_ic("iron_pickaxe"), {"text": "  Métiers", "color": "aqua", "bold": True}], "width": 150, "tooltip": {"text": "Niveaux, compétences, Forge, défis, classement."},
          "action": {"type": "minecraft:run_command", "command": "trigger metiers set 1"}},
@@ -23,9 +23,11 @@ MENU_SERVEUR = {
          "action": {"type": "minecraft:run_command", "command": "trigger commerce set 1"}},
         {"label": [_ic("bone"), {"text": "  Bestiaire", "color": "dark_red", "bold": True}], "width": 150, "tooltip": {"text": "Les créatures de la nuit, contrats, classement."},
          "action": {"type": "minecraft:run_command", "command": "trigger bestiaire set 1"}},
+        {"label": [_ic("lead"), {"text": "  Compagnons", "color": "#E0A040", "bold": True}], "width": 150, "tooltip": {"text": "Loup, chat, golem... qui combattent et progressent avec toi."},
+         "action": {"type": "minecraft:run_command", "command": "trigger compagnons set 1"}},
         {"label": [_ic("name_tag"), {"text": "  Mon profil", "color": "yellow", "bold": True}], "width": 150, "tooltip": {"text": "Tout ton parcours sur une page."},
          "action": {"type": "minecraft:run_command", "command": "trigger commerce set 30"}},
-        {"label": [_ic("book"), {"text": "  Guide du serveur", "color": "white"}], "width": 304, "tooltip": {"text": "Pour bien démarrer, en 5 pages."},
+        {"label": [_ic("book"), {"text": "  Guide", "color": "white"}], "width": 150, "tooltip": {"text": "Pour bien démarrer, en 5 pages."},
          "action": {"type": "minecraft:run_command", "command": "trigger commerce set 31"}}],
     "columns": 2}
 wj("data/serveur/dialog/menu.json", MENU_SERVEUR)
@@ -69,7 +71,7 @@ GUIDE = [
     ("Métiers", "Tu progresses dans 10 métiers juste en jouant : couper du bois, miner, pêcher, chasser, construire... Chaque niveau donne un point de compétence, chaque palier de 10 niveaux un meilleur outil de métier (à récupérer dès le niveau 10).\\n\\nLa Forge échange tes cristaux contre des améliorations et des objets uniques. Au niveau 100, le prestige garde tout et ajoute une étoile et une capacité.\\n\\nG, Métiers, Barème d’XP : ce que rapporte chaque action."),
     ("Commerce", "Crafte l’oeuf de comptoir pour ouvrir le Commerce. Tu vends tes récoltes, tu achètes des blocs, les prix bougent avec l’offre et la demande.\\n\\nLa banque fait les virements et l’épargne (2 % par semaine). L’hôtel des ventes vend les objets entre joueurs. Un panneau [Privé] protège un coffre, un panneau [Vente] en fait un magasin. Ton solde est toujours en haut à gauche."),
     ("Bestiaire", "La nuit et sous terre, des créatures rôdent : Slender, Herobrine, la Nonne, le Loup-garou les nuits de pleine lune... Un message te prévient quand l’une d’elles approche.\\n\\nChaque victoire paie une prime en Écus et remplit le bestiaire (trophée à 10 victoires, titre à 50, relique à 100). Une nuit sur huit, la Nuit de sang les rend quatre fois plus nombreuses."),
-    ("Astuces", "Les boss du serveur arrivent régulièrement près d’un joueur au hasard : tout le monde peut participer et gagner des éclats.\\n\\nTon profil (G, Mon profil) résume tout ton parcours. Les classements sont dans chaque menu.\\n\\nUn souci ? Préviens un admin. Bon jeu !"),
+    ("Astuces", "Les boss du serveur arrivent régulièrement près d’un joueur au hasard : tout le monde peut participer et gagner des éclats.\\n\\nLes compagnons (G, Compagnons) se débloquent avec tes métiers : un loup dès Chasseur 10, puis chat, perroquet, bonhomme de neige, allay et golem. Ils se battent avec toi et gagnent leurs propres niveaux.\\n\\nTon profil (G, Mon profil) résume tout ton parcours. Les classements sont dans chaque menu.\\n\\nUn souci ? Préviens un admin. Bon jeu !"),
 ]
 for i, (titre, texte) in enumerate(GUIDE):
     acts = []

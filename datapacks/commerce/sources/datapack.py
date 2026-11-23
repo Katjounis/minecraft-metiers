@@ -710,8 +710,8 @@ PANNEAU = ""
 RECETTE = {"E": "emerald_block", "D": "diamond_block", "G": "gold_block", "N": "netherite_ingot", "C": "barrel_side"}
 GRID = ["EDE", "GNG", "ECE"]
 BANNIERES = [("COMMERCE", "emerald"), ("MARCHÉ", "emerald"), ("BOURSE", "bell"), ("FORTUNES", "gold_ingot"), ("CRISTAUX", "diamond"), ("SPAWNERS", "spawner"), ("GRAPHIQUES", "clock"),
-             # bandeaux des autres packs (même police, resource pack commun) : Métiers 7 à 11, Horreur 12
-             ("MÉTIERS", "iron_pickaxe"), ("FORGE", "anvil_top"), ("QUETES", "writable_book"), ("GUILDE", "name_tag"), ("BAREME", "book"), ("BESTIAIRE", "bone")]
+             # bandeaux des autres packs (même police, resource pack commun) : Métiers 7 à 11, Horreur 12, Compagnons 13
+             ("MÉTIERS", "iron_pickaxe"), ("FORGE", "anvil_top"), ("QUETES", "writable_book"), ("GUILDE", "name_tag"), ("BAREME", "book"), ("BESTIAIRE", "bone"), ("COMPAGNONS", "lead")]
 # bandeau k : glyphe chr(0xE020 + k), 27 px de haut, soit 3 lignes de texte
 BAN = lambda k: f'{{type:"minecraft:plain_message",width:310,contents:[{{text:""}},{{text:"{chr(0xE020 + k)}",font:"commerce:recette",color:"white",shadow_color:0}},{{text:"\\n\\n"}}]}}'
 

@@ -10,6 +10,7 @@ Ce dépôt sert à fabriquer des datapacks pour Minecraft Java 26.x (vanilla, sa
 | `datapacks/metiers/` | **Métiers** : niveaux, compétences, menus, défis, boss. Voir son [README](datapacks/metiers/README.md) |
 | `datapacks/commerce/` | **Commerce** : Écus, comptoirs, marché à prix dynamiques, bourse, fortunes, cristaux. Dépend de Métiers. Voir son [README](datapacks/commerce/README.md) |
 | `datapacks/horreur/` | **Horreur** : créatures de cauchemar la nuit et bestiaire. Voir son [README](datapacks/horreur/README.md) |
+| `datapacks/compagnons/` | **Compagnons** : 6 compagnons qui se battent et progressent avec le joueur, débloqués par Métiers. Voir son [README](datapacks/compagnons/README.md) |
 | `metiers_resourcepack.zip` | Resource pack commun à tous les packs, car le serveur n'en impose qu'un. Il reste à la racine parce que son URL est utilisée par le serveur. `python labo\outils\fusion_rp.py` y verse les textures des autres packs (`build/<nom>_rp/`). |
 | `labo/` | Scripts du serveur de test. Voir [labo/LISEZMOI.md](labo/LISEZMOI.md) |
 

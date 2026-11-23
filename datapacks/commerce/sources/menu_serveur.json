@@ -16,7 +16,7 @@
    "width": 300,
    "contents": [
     {
-     "text": "Métiers, Commerce, Bestiaire : tout est ici.",
+     "text": "Métiers, Commerce, Bestiaire, Compagnons : tout est ici.",
      "color": "gray"
     }
    ]
@@ -94,6 +94,28 @@
     {
      "object": "atlas",
      "atlas": "minecraft:items",
+     "sprite": "minecraft:item/lead"
+    },
+    {
+     "text": "  Compagnons",
+     "color": "#E0A040",
+     "bold": true
+    }
+   ],
+   "width": 150,
+   "tooltip": {
+    "text": "Loup, chat, golem... qui combattent et progressent avec toi."
+   },
+   "action": {
+    "type": "minecraft:run_command",
+    "command": "trigger compagnons set 1"
+   }
+  },
+  {
+   "label": [
+    {
+     "object": "atlas",
+     "atlas": "minecraft:items",
      "sprite": "minecraft:item/name_tag"
     },
     {
@@ -119,11 +141,11 @@
      "sprite": "minecraft:item/book"
     },
     {
-     "text": "  Guide du serveur",
+     "text": "  Guide",
      "color": "white"
     }
    ],
-   "width": 304,
+   "width": 150,
    "tooltip": {
     "text": "Pour bien démarrer, en 5 pages."
    },
