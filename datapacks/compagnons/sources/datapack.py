@@ -57,11 +57,32 @@ TYPES = [
     (4, "neige", "Bonhomme de neige", "#D8F0FF", "snow_golem", "snowball", ("p", 20, "Pêcheur"), False, True),
     (5, "allay", "Allay", "#60C8FF", "allay", "amethyst_shard", ("n", 25, "Enchanteur"), True, False),
     (6, "golem", "Golem de fer", "#D8CFC0", "iron_golem", "iron_ingot", ("m", 30, "Mineur"), False, True),
+    # montures volantes : un ghast joyeux harnaché (vol contrôlé par le jeu) ; dragon et wither = ghast invisible
+    # (harnais sans rendu) qui porte le joueur, et le vrai boss figé (NoAI, invulnérable, réduit) collé dessus à chaque tick
+    (7, "ghast", "Ghast joyeux", "#F4F4F4", "happy_ghast", "ghast_tear", ("x", 40, "Explorateur"), False, False),
+    (8, "dragon", "Dragon de l’Ender", "#C060FF", "happy_ghast", "dragon_breath", ("c", 50, "Chasseur"), False, True),
+    (9, "wither", "Wither", "#8A8A8A", "happy_ghast", "nether_star", ("c", 70, "Chasseur"), False, True),
 ]
+MONTURES = (7, 8, 9)
+# boss figé : (entité, taille, décalage de rotation, décalage vertical, tag)
+VISUEL = {8: ("ender_dragon", 0.45, 180, -0.6, "cp.vdragon"), 9: ("wither", 0.8, 0, -0.4, "cp.vwither")}
+OEUF = {7: "happy_ghast", 8: "ender_dragon", 9: "wither"}
+# condition de boss en plus du niveau : (texte, lignes qui remettent #deb à 0 si elle manque)
+BOSS = {8: ("après avoir vaincu l’Ender Dragon",
+            ["execute if score #deb cp.t matches 1 unless entity @s[advancements={minecraft:end/kill_dragon=true}] run scoreboard players set #deb cp.t 0"]),
+        9: ("après avoir affronté le Wither",
+            ["scoreboard players set #bw cp.t 0",
+             "execute if entity @s[advancements={minecraft:nether/summon_wither=true}] run scoreboard players set #bw cp.t 1",
+             "execute if score @s cp.kwi matches 1.. run scoreboard players set #bw cp.t 1",
+             "execute if score #bw cp.t matches 0 run scoreboard players set #deb cp.t 0"])}
 T = {t[0]: t for t in TYPES}
 DE = lambda m: ("d’" if m[0] in "AEÉIOUaeéiou" else "de ") + m
 LE = lambda n: ("L’" if n[0] in "AEÉIOU" else "Le ") + n
 LMAX = 30
+def COND(k):
+    """Texte de la condition de déblocage."""
+    j, n, jn = T[k][6]
+    return f"niveau {n} {DE(jn)}" + (" (ou Bâtisseur 30)" if k == 6 else "") + (f", {BOSS[k][0]}" if k in BOSS else "")
 
 # stats au niveau L : (PV, dégâts, vitesse, armure, taille)
 def stats(k, L):
@@ -70,7 +91,12 @@ def stats(k, L):
             3: (6 + L, 0, 0.20 + 0.002 * L, L // 6, 1.0),
             4: (4 + 2 * L, 0, 0.20 + 0.003 * L, L // 5, 1 + 0.01 * L),
             5: (20 + L, 0, 0.10 + 0.002 * L, L // 6, 1.0),
-            6: (60 + 4 * L, 10 + 0.5 * L, 0.25 + 0.002 * L, L // 3, 0.55 + 0.015 * L)}[k]
+            6: (60 + 4 * L, 10 + 0.5 * L, 0.25 + 0.002 * L, L // 3, 0.55 + 0.015 * L),
+            7: (20 + 2 * L, 0, 0.20, L // 5, 0.7),
+            8: (40 + 4 * L, 0, 0.20, L // 3, 0.55),
+            9: (60 + 5 * L, 0, 0.20, L // 3, 0.55)}[k]
+# vitesse de vol (attribut flying_speed ; un ghast joyeux du jeu vole à 0,05)
+VOL = {5: lambda L: 0.1 + 0.003 * L, 7: lambda L: 0.05 + 0.0015 * L, 8: lambda L: 0.07 + 0.002 * L, 9: lambda L: 0.065 + 0.002 * L}
 
 # capacités : (niveau, nom, effet)
 CAPS = {
@@ -90,13 +116,22 @@ CAPS = {
         (30, "Ange gardien", "Sous 3 cœurs : absorption, régénération et résistance (toutes les 5 min).")],
     6: [(5, "Rempart", "Résistance I pour toi près de lui."), (10, "Frappe sismique", "Toutes les 8 s, les monstres collés à lui sont projetés."),
         (20, "Peau de fer", "Il encaisse beaucoup moins de dégâts."), (30, "Titan", "Il grandit encore et te donne de l’absorption chaque minute.")],
+    7: [(5, "Nuage protecteur", "Résistance I quand tu le montes."), (10, "Rafale", "Il vole 25 % plus vite."),
+        (20, "Vol de nuit", "Vision nocturne quand tu le montes."), (30, "Nuée", "Régénération et résistance au feu quand tu le montes.")],
+    8: [(5, "Souffle", "Toutes les 3 s, il souffle sur les monstres devant lui."), (10, "Écailles", "Résistance I quand tu le montes."),
+        (20, "Envergure", "Il vole 30 % plus vite."), (30, "Colère du dragon", "Souffle plus large et bien plus fort.")],
+    9: [(5, "Crânes", "Toutes les 3 s, il frappe le monstre le plus proche (Wither)."), (10, "Armure de Wither", "Résistance I quand tu le montes."),
+        (20, "Aura noire", "Les monstres à 6 blocs se flétrissent."), (30, "Explosion", "Toutes les 20 s, une onde pulvérise les monstres à 6 blocs (sans casser de blocs).")],
 }
 BASE = {1: "Te suit, attaque ce que tu frappes et ce qui t’attaque. Mode chasse : il va chercher les monstres tout seul.",
         2: "Te suit, fait fuir creepers et phantoms, rapporte parfois un cadeau le matin.",
         3: "Te suit ou se pose sur ton épaule, imite le cri des monstres proches.",
         4: "Bombarde les monstres de boules de neige. Ne fond plus, même dans le désert.",
         5: "Te suit en volant et ramasse les objets que tu lui donnes en main.",
-        6: "Tank : frappe fort et encaisse. Ramené près de toi s’il s’éloigne."}
+        6: "Tank : frappe fort et encaisse. Ramené près de toi s’il s’éloigne.",
+        7: "Monture volante : clic droit pour monter, regarde où aller et avance. Jusqu’à 4 passagers.",
+        8: "Monture volante : clic droit pour monter, regarde où aller et avance. Pas dans l’End (le combat du dragon s’y joue).",
+        9: "Monture volante : clic droit pour monter, regarde où aller et avance. Sa barre de boss porte son nom."}
 
 # apparences : (valeur, nom), la n-ième se débloque au niveau 1 + PAS * n
 VARIANTES = {
@@ -107,6 +142,10 @@ VARIANTES = {
                     ("minecraft:british_shorthair", "British"), ("minecraft:calico", "Calico"), ("minecraft:persian", "Persan"),
                     ("minecraft:ragdoll", "Ragdoll"), ("minecraft:white", "Blanc"), ("minecraft:jellie", "Jellie"), ("minecraft:all_black", "Tout noir")], 2),
     3: ("Variant", [(0, "Rouge"), (1, "Bleu"), (2, "Vert"), (3, "Cyan"), (4, "Gris")], 5),
+    # ghast joyeux : couleur du harnais
+    7: ("harnais", [("white", "Harnais blanc"), ("light_blue", "Harnais ciel"), ("yellow", "Harnais jaune"), ("lime", "Harnais vert"),
+                    ("pink", "Harnais rose"), ("orange", "Harnais orange"), ("purple", "Harnais violet"), ("red", "Harnais rouge"),
+                    ("black", "Harnais noir")], 3),
 }
 
 HOSTILES = ["zombie", "husk", "drowned", "zombie_villager", "skeleton", "stray", "bogged", "wither_skeleton", "spider", "cave_spider",
@@ -119,7 +158,7 @@ wj(f"data/{NS}/tags/entity_type/chasse.json", {"values": [f"minecraft:{h}" for h
 # CHARGEMENT ET BOUCLES
 # =====================================================================
 OBJ = ["cp.id", "cp.ser", "cp.out", "cp.cd", "cp.cda", "cp.mode", "cp.ag", "cp.own", "cp.typ", "cp.hp", "cp.hpm", "cp.min",
-       "cp.vie", "cp.t", "cp.tk", "cp.ok"] + [f"cp.{a}{k}" for k in T for a in ("l", "x", "v")]
+       "cp.vie", "cp.t", "cp.tk", "cp.ok", "cp.mt"] + [f"cp.{a}{k}" for k in T for a in ("l", "x", "v", "r", "f", "m")]
 w(F + "load.mcfunction", [f"scoreboard objectives add {o} dummy" for o in OBJ] + [
     "scoreboard objectives add compagnons trigger",
     "scoreboard objectives add cp.mk minecraft.custom:minecraft.mob_kills",
@@ -132,11 +171,20 @@ wj("data/minecraft/tags/function/tick.json", {"values": [f"{NS}:tick"]})
 w(F + "tick.mcfunction", [
     f"execute as @a[scores={{compagnons=1..}}] at @s run function {NS}:menu/entree",
     f"{S} add #t5 cp.t 1", f"execute if score #t5 cp.t matches 5.. run {S} set #t5 cp.t 0",
-    f"execute if score #t5 cp.t matches 0 as @e[tag=cp.c] at @s as @e[type=#{NS}:hostiles,distance=..24,tag=!cp.mort] if data entity @s {{Health:0.0f}} run function {NS}:xp/mort"])
+    f"execute if score #t5 cp.t matches 0 as @e[tag=cp.c] at @s as @e[type=#{NS}:hostiles,distance=..24,tag=!cp.mort] if data entity @s {{Health:0.0f}} run function {NS}:xp/mort",
+    f"execute as @e[tag=cp.porteur] at @s run function {NS}:c/visuel"])
+# le boss figé suit son porteur (ghast invisible) à chaque tick, tourné comme lui (le dragon du jeu regarde à l'envers)
+w(F + "c/visuel.mcfunction", [f"{S} operation #o cp.t = @s cp.own", f"{S} operation #s cp.t = @s cp.ser"] +
+  [f"execute as @e[tag={v[4]}] if score @s cp.own = #o cp.t if score @s cp.ser = #s cp.t run tp @s ~ ~{v[3]} ~ ~{v[2]} 0" for v in VISUEL.values()])
+w(F + "c/vis_valide.mcfunction", [
+    f"{S} operation #o cp.t = @s cp.own", f"{S} operation #s cp.t = @s cp.ser", f"{S} set #ok cp.t 0",
+    f"execute as @e[tag=cp.porteur] if score @s cp.own = #o cp.t if score @s cp.ser = #s cp.t run {S} set #ok cp.t 1",
+    "execute if score #ok cp.t matches 0 run tp @s ~ -1000 ~", "execute if score #ok cp.t matches 0 run kill @s"])
 w(F + "seconde.mcfunction", [
     f"schedule function {NS}:seconde 1s replace", f"{S} add #s cp.tk 1",
     f"execute as @a at @s run function {NS}:joueur",
     f"execute as @e[tag=cp.c] run function {NS}:c/valide",
+    f"execute as @e[tag=cp.vis] run function {NS}:c/vis_valide",
     f"execute as @e[tag=cp.renfort] run function {NS}:c/renfort"])
 
 # =====================================================================
@@ -184,20 +232,39 @@ TOUR = [f"execute store result score @s cp.hp run data get entity @s Health",
         f"{S} operation #q cp.t = @s cp.hp", f"{S} operation #q cp.t *= #5 cp.t",
         f"execute if score #q cp.t <= @s cp.hpm run return run function {NS}:c/ko",
         # suivre : plus de 24 blocs (ou une autre dimension) : il revient près du joueur ; golem et bonhomme dès 8 blocs
-        f"execute if entity @a[tag=cp.moi,scores={{cp.mode=0}}] unless entity @a[tag=cp.moi,distance=..24] run function {NS}:c/rejoindre",
-        f"execute if entity @s[tag=cp.lent] if entity @a[tag=cp.moi,scores={{cp.mode=0}}] unless entity @a[tag=cp.moi,distance=..8] run function {NS}:c/rejoindre",
+        # monture : le joueur est-il dessus ? (alors pas de rappel), et personne d'autre ne la conduit
+        f"{S} set #monte cp.t 0", f"execute on passengers if entity @s[tag=cp.moi] run {S} set #monte cp.t 1",
+        # les amis peuvent monter derrière le propriétaire, pas prendre la monture sans lui
+        "execute if entity @s[tag=cp.vol] if score #monte cp.t matches 0 on passengers if entity @s[type=minecraft:player,tag=!cp.moi] run ride @s dismount",
+        # en descendant d'une monture en plein vol : chute lente
+        "execute if entity @s[tag=cp.vol] if score #monte cp.t matches 0 as @a[tag=cp.moi,scores={cp.mt=1}] run effect give @s minecraft:slow_falling 8 0 true",
+        f"{S} operation @a[tag=cp.moi] cp.mt = #monte cp.t",
+        f"execute if score #monte cp.t matches 0 if entity @a[tag=cp.moi,scores={{cp.mode=0}}] unless entity @a[tag=cp.moi,distance=..24] run function {NS}:c/rejoindre",
+        f"execute if score #monte cp.t matches 0 if entity @s[tag=cp.lent,tag=!cp.vol] if entity @a[tag=cp.moi,scores={{cp.mode=0}}] unless entity @a[tag=cp.moi,distance=..8] run function {NS}:c/rejoindre",
+        f"execute if score #monte cp.t matches 0 if entity @s[tag=cp.vol] if entity @a[tag=cp.moi,scores={{cp.mode=0}}] unless entity @a[tag=cp.moi,distance=..14] run function {NS}:c/rejoindre",
+        # le dragon ne vole pas dans l'End (le combat du dragon du jeu pourrait le prendre pour le vrai)
+        f"execute if score @s cp.typ matches 8 if entity @a[tag=cp.moi,limit=1] as @a[tag=cp.moi] at @s if dimension minecraft:the_end run return run function {NS}:ranger_end",
         ]
 for k in T:
+    # niveau effectif des capacités : niveau + 2 par rang de Maîtrise
+    w(F + f"c/niv_{k}.mcfunction", [f"{S} operation #L cp.t = @a[tag=cp.moi,limit=1] cp.l{k}",
+                                    f"{S} operation #mm cp.t = @a[tag=cp.moi,limit=1] cp.m{k}", f"{S} operation #mm cp.t *= #2 cp.t",
+                                    f"{S} operation #L cp.t += #mm cp.t"])
+    TOUR.append(f"execute if score @s cp.typ matches {k} run function {NS}:c/niv_{k}")
     TOUR.append(f"execute if score @s cp.typ matches {k} run function {NS}:c/cap_{k}")
 w(F + "c/tour.mcfunction", TOUR)
+w(F + "ranger_end.mcfunction", [f"function {NS}:ranger_silence", tr("Le dragon refuse d’entrer dans l’End. Il t’attend dehors.", "light_purple")])
 w(F + "c/rejoindre.mcfunction", [
     "particle minecraft:poof ~ ~0.5 ~ 0.3 0.4 0.3 0.02 8",
-    "execute at @a[tag=cp.moi,limit=1] run tp @s ^ ^ ^-1.5",
+    "execute unless entity @s[tag=cp.vol] at @a[tag=cp.moi,limit=1] run tp @s ^ ^ ^-1.5",
+    "execute if entity @s[tag=cp.vol] at @a[tag=cp.moi,limit=1] rotated ~ 0 run tp @s ^ ^2 ^-5",
     "execute at @s run particle minecraft:poof ~ ~0.5 ~ 0.3 0.4 0.3 0.02 8"])
 w(F + "c/ko.mcfunction", [
     "particle minecraft:cloud ~ ~0.6 ~ 0.3 0.4 0.3 0.05 20", "playsound minecraft:entity.player.hurt_sweet_berry_bush neutral @a[distance=..16] ~ ~ ~ 0.8 0.7",
     f"{S} set @a[tag=cp.moi] cp.cd 60", f"{S} set @a[tag=cp.moi] cp.hp 99999",
     "execute as @a[tag=cp.moi] run " + tr("Ton compagnon est K.O. Il se repose et revient dans 60 secondes.", "red"),
+    f"{S} operation #o cp.t = @s cp.own", f"{S} operation #s cp.t = @s cp.ser",
+    "execute as @e[tag=cp.vis] if score @s cp.own = #o cp.t if score @s cp.ser = #s cp.t run kill @s",
     "tp @s ~ -1000 ~", "kill @s"])
 # compagnon sans joueur (déconnecté), ancien numéro d'invocation, ou compagnon rangé : il disparaît sans rien lâcher
 w(F + "c/valide.mcfunction", [
@@ -298,6 +365,47 @@ for cd in (120, 300):
         (["effect give @s minecraft:resistance 5 1 true"] if cd == 300 else []) +
         ["particle minecraft:heart ~ ~1.5 ~ 0.4 0.4 0.4 0 8", "playsound minecraft:item.totem.use neutral @s ~ ~ ~ 0.4 1.6",
          tr("Ton compagnon te sauve la mise !", "light_purple")])
+CAP = {k: v[1:] for k, v in CAP.items()}
+CAP[7] = [  # ghast joyeux
+    f"{L(7, 5)} if score #monte cp.t matches 1 run effect give @a[tag=cp.moi] minecraft:resistance 2 0 true",
+    f"attribute @s minecraft:flying_speed modifier remove {NS}:rafale",
+    f"{L(7, 10)} run attribute @s minecraft:flying_speed modifier add {NS}:rafale 0.25 add_multiplied_base",
+    f"{L(7, 20)} if score #monte cp.t matches 1 run effect give @a[tag=cp.moi] minecraft:night_vision 15 0 true",
+    f"{L(7, 30)} if score #monte cp.t matches 1 run effect give @a[tag=cp.moi] minecraft:regeneration 2 0 true",
+    f"{L(7, 30)} if score #monte cp.t matches 1 run effect give @a[tag=cp.moi] minecraft:fire_resistance 2 0 true"]
+CAP[8] = [  # dragon
+    "scoreboard players set #3 cp.t 3", f"{S} operation #m cp.t = #s cp.tk", f"{S} operation #m cp.t %= #3 cp.t",
+    f"execute if score #L cp.t matches 5..29 if score #m cp.t matches 0 rotated as @s positioned ^ ^ ^5 if entity @e[type=#{NS}:hostiles,distance=..5] run function {NS}:c/souffle {{r:5,d:6}}",
+    f"{L(8, 30)} if score #m cp.t matches 0 rotated as @s positioned ^ ^ ^6 if entity @e[type=#{NS}:hostiles,distance=..8] run function {NS}:c/souffle {{r:8,d:12}}",
+    f"{L(8, 10)} if score #monte cp.t matches 1 run effect give @a[tag=cp.moi] minecraft:resistance 2 0 true",
+    f"attribute @s minecraft:flying_speed modifier remove {NS}:envergure",
+    f"{L(8, 20)} run attribute @s minecraft:flying_speed modifier add {NS}:envergure 0.3 add_multiplied_base"]
+w(F + "c/souffle.mcfunction", [  # exécuté par le porteur, positionné devant lui
+    "tag @s add cp.souffleur",
+    "$particle minecraft:dragon_breath ~ ~1 ~ $(r) 1 $(r) 0.02 150",
+    "playsound minecraft:entity.ender_dragon.shoot neutral @a[distance=..32] ~ ~ ~ 1.5 1",
+    f"$execute as @e[type=#{NS}:hostiles,distance=..$(r)] run damage @s $(d) minecraft:dragon_breath by @e[tag=cp.souffleur,limit=1]",
+    "tag @s remove cp.souffleur"])
+CAP[9] = [  # wither
+    "scoreboard players set #3 cp.t 3", f"{S} operation #m cp.t = #s cp.tk", f"{S} operation #m cp.t %= #3 cp.t",
+    f"{L(9, 5)} if score #m cp.t matches 0 if entity @e[type=#{NS}:hostiles,distance=..16] run function {NS}:c/crane",
+    f"{L(9, 10)} if score #monte cp.t matches 1 run effect give @a[tag=cp.moi] minecraft:resistance 2 0 true",
+    f"{L(9, 20)} run effect give @e[type=#{NS}:hostiles,distance=..6] minecraft:wither 3 0",
+    "scoreboard players set #20 cp.t 20", f"{S} operation #m cp.t = #s cp.tk", f"{S} operation #m cp.t %= #20 cp.t",
+    f"{L(9, 30)} if score #m cp.t matches 0 if entity @e[type=#{NS}:hostiles,distance=..6] run function {NS}:c/onde"]
+w(F + "c/crane.mcfunction", [
+    "tag @s add cp.tireur",
+    f"execute as @e[type=#{NS}:hostiles,distance=..16,sort=nearest,limit=1] at @s run function {NS}:c/crane_touche",
+    "playsound minecraft:entity.wither.shoot neutral @a[distance=..32] ~ ~ ~ 1 1",
+    "tag @s remove cp.tireur"])
+w(F + "c/crane_touche.mcfunction", [
+    "particle minecraft:large_smoke ~ ~1 ~ 0.3 0.5 0.3 0.02 15", "particle minecraft:soul ~ ~1 ~ 0.3 0.5 0.3 0.02 6",
+    "damage @s 7 minecraft:wither_skull by @e[tag=cp.tireur,limit=1]", "effect give @s minecraft:wither 4 1"])
+w(F + "c/onde.mcfunction", [
+    "tag @s add cp.tireur",
+    "particle minecraft:explosion_emitter ~ ~1 ~ 0 0 0 0 1", "playsound minecraft:entity.generic.explode neutral @a[distance=..32] ~ ~ ~ 1.5 0.8",
+    f"execute as @e[type=#{NS}:hostiles,distance=..6] run damage @s 14 minecraft:explosion by @e[tag=cp.tireur,limit=1]",
+    "tag @s remove cp.tireur"])
 for k, lignes in CAP.items():
     w(F + f"c/cap_{k}.mcfunction", lignes)
 # santé du joueur : prédicats (vie sous 8, 6, 20)
@@ -310,6 +418,7 @@ w(F + "joueur.mcfunction", ["execute store result score @s cp.vie_j run data get
 w(F + "load.mcfunction", [f"scoreboard objectives add {o} dummy" for o in OBJ] + [
     "scoreboard objectives add compagnons trigger",
     "scoreboard objectives add cp.mk minecraft.custom:minecraft.mob_kills",
+    "scoreboard objectives add cp.kwi minecraft.killed:minecraft.wither",
     f"{S} add #next cp.t 0", f"{S} set #6 cp.t 6", f"{S} set #10 cp.t 10", f"{S} set #20 cp.t 20", f"{S} set #2 cp.t 2", f"{S} set #5 cp.t 5", f"{S} set #100 cp.t 100",
     f"execute unless data storage {NS}:noms J run data modify storage {NS}:noms J set value []",
     f"schedule function {NS}:seconde 1s replace"])
@@ -359,16 +468,19 @@ def deblocage(k):
     j, n, _ = T[k][6]
     return [f"{S} set #deb cp.t 0", f"execute if score @s m.{j}_lvl matches {n}.. run {S} set #deb cp.t 1",
             f"execute if score @s m.{j}_pr matches 1.. run {S} set #deb cp.t 1"] + \
-           ([f"execute if score @s m.k_lvl matches {n}.. run {S} set #deb cp.t 1"] if k == 6 else [])
+           ([f"execute if score @s m.k_lvl matches {n}.. run {S} set #deb cp.t 1"] if k == 6 else []) + \
+           (BOSS[k][1] if k in BOSS else [])
 for k, (_, cle, nom, col, ent, ico, (j, n, jn), suit, combat) in T.items():
     # appel depuis le menu (20 + k) : invoque, ou range s'il est déjà dehors
     w(F + f"invoquer/{k}.mcfunction", deblocage(k) + [
-        f"execute if score #deb cp.t matches 0 run return run " + tr(f"{LE(nom)} se débloque au niveau {n} {DE(jn)}" + (" (ou Bâtisseur 30)" if k == 6 else "") + ".", "red"),
+        f"execute if score #deb cp.t matches 0 run return run " + tr(f"{LE(nom)} se débloque au {COND(k)}.", "red"),
         f"execute if score @s cp.out matches {k} run return run function {NS}:ranger",
         f"execute if score @s cp.cd matches 1.. run return run " + tr("Ton compagnon se repose encore (K.O.). Patiente un peu.", "red"),
+        *([f"execute if dimension minecraft:the_end run return run " + tr("Le dragon refuse de voler dans l’End.", "light_purple")] if k == 8 else []),
         f"function {NS}:ranger_silence", f"{S} set @s cp.out {k}", f"function {NS}:invoquer/actuel",
         tr(f"Ton {nom} t’accompagne.", col)])
 w(F + "ranger_silence.mcfunction", [f"function {NS}:marquer", "execute at @e[tag=cp.cur] run particle minecraft:poof ~ ~0.5 ~ 0.3 0.4 0.3 0.02 10",
+                                    "execute as @e[tag=cp.vis] if score @s cp.own = #o cp.t if score @s cp.ser = #s cp.t run kill @s",
                                     "tp @e[tag=cp.cur] ~ -1000 ~", "kill @e[tag=cp.cur]", f"{S} set @s cp.out 0", f"{S} add @s cp.ser 1"])
 w(F + "ranger.mcfunction", [f"function {NS}:ranger_silence", tr("Ton compagnon est rentré.", "gray"),
                             "playsound minecraft:entity.item.pickup neutral @s ~ ~ ~ 0.6 0.8"])
@@ -377,16 +489,22 @@ w(F + "invoquer/actuel.mcfunction", [f"{S} add @s cp.ser 1", f"{S} set @s cp.hp 
   [f"execute if score @s cp.out matches {k} run function {NS}:invoquer/s_{k}" for k in T] + [
     f"{S} operation @e[tag=cp.nouveau] cp.own = @s cp.id", f"{S} operation @e[tag=cp.nouveau] cp.ser = @s cp.ser",
     f"{S} operation @e[tag=cp.nouveau] cp.typ = @s cp.out",
+    f"{S} operation @e[tag=cp.nvis] cp.own = @s cp.id", f"{S} operation @e[tag=cp.nvis] cp.ser = @s cp.ser",
     f"execute as @e[tag=cp.nouveau] run function {NS}:invoquer/stats",
-    f"function {NS}:invoquer/nom", "tag @e[tag=cp.nouveau] remove cp.nouveau",
+    f"function {NS}:invoquer/nom", "tag @e[tag=cp.nouveau] remove cp.nouveau", "tag @e[tag=cp.nvis] remove cp.nvis",
     "particle minecraft:happy_villager ~ ~1 ~ 0.5 0.5 0.5 0 12", "playsound minecraft:entity.allay.item_given neutral @s ~ ~ ~ 0.6 1.2"])
 for k, (_, cle, nom, col, ent, ico, req, suit, combat) in T.items():
-    tags = ["cp.c", "cp.nouveau", f"cp.{cle}"] + ([] if suit else ["cp.lent"])
+    tags = ["cp.c", "cp.nouveau", f"cp.{cle}"] + ([] if suit else ["cp.lent"]) + (["cp.vol"] if k in MONTURES else []) + \
+           (["cp.porteur"] if k in VISUEL else [])
     nbt = [f'Tags:{json.dumps(tags)}', 'DeathLootTable:"minecraft:empty"', "PersistenceRequired:1b", "CanPickUpLoot:0b", "CustomNameVisible:1b"]
     if ent == "iron_golem":
         nbt.append("PlayerCreated:1b")
     if ent == "snow_golem":
         nbt.append("Pumpkin:1b")
+    if k in VISUEL:   # porteur invisible, harnais sans rendu (équipement « compagnons:vide » du resource pack)
+        nbt.append('active_effects:[{id:"minecraft:invisibility",duration:-1,amplifier:0b,show_particles:0b,show_icon:0b}]')
+        nbt.append('equipment:{body:{id:"minecraft:white_harness",count:1,components:{"minecraft:equippable":{slot:"body",asset_id:"compagnons:vide"}}}}')
+        nbt.append("Silent:1b")
     post = []
     if ent in ("wolf", "cat", "parrot"):
         post.append("data modify entity @e[tag=cp.nouveau,limit=1] Owner set from entity @s UUID")
@@ -396,15 +514,39 @@ for k, (_, cle, nom, col, ent, ico, req, suit, combat) in T.items():
         cleV, lst, pas = VARIANTES[k]
         for i, (val, _) in enumerate(lst):
             v = f'"{val}"' if isinstance(val, str) else str(val)
-            post.append(f"execute if score @s cp.v{k} matches {i} run data modify entity @e[tag=cp.nouveau,limit=1] {cleV} set value {v}")
+            if cleV != "harnais":
+                post.append(f"execute if score @s cp.v{k} matches {i} run data modify entity @e[tag=cp.nouveau,limit=1] {cleV} set value {v}")
+    if k == 7:   # couleur du harnais
+        for i, (couleur, _) in enumerate(VARIANTES[7][1]):
+            post.append(f'execute if score @s cp.v7 matches {i} run data modify entity @e[tag=cp.nouveau,limit=1] equipment.body set value {{id:"minecraft:{couleur}_harness",count:1}}')
+    if k in VISUEL:
+        e, taille, rot, dy, tg = VISUEL[k]
+        post.append(f'summon minecraft:{e} ^ ^ ^-3 {{Tags:["cp.vis","{tg}","cp.nvis"],NoAI:1b,Invulnerable:1b,Silent:1b,PersistenceRequired:1b,'
+                    f'DeathLootTable:"minecraft:empty",' + ("Invul:0," if e == "wither" else "") +
+                    f'attributes:[{{id:"minecraft:scale",base:{taille}d}}]}}')
     if k == 1:   # armure de loup dès le niveau 15
         post.append('execute if score @s cp.l1 matches 15.. run data modify entity @e[tag=cp.nouveau,limit=1] equipment.body set value {id:"minecraft:wolf_armor",count:1}')
     w(F + f"invoquer/s_{k}.mcfunction", [f"summon minecraft:{ent} ^ ^ ^-1.5 {{{','.join(nbt)}}}"] + post)
 # stats du niveau, exécuté par le compagnon (lit le niveau de son joueur)
 ST = [f"{S} operation #o cp.t = @s cp.own", f"{S} operation #y cp.t = @s cp.typ", f"{S} set #L cp.t 1"] + \
      [f"execute if score #y cp.t matches {k} as @a if score @s cp.id = #o cp.t run {S} operation #L cp.t = @s cp.l{k}" for k in T] + \
-     [f"execute if score #y cp.t matches {k} run function {NS}:stats/{k}" for k in T]
+     [f"execute if score #y cp.t matches {k} as @a if score @s cp.id = #o cp.t run {S} operation #R cp.t = @s cp.r{k}" for k in T] + \
+     [f"execute if score #y cp.t matches {k} as @a if score @s cp.id = #o cp.t run {S} operation #P cp.t = @s cp.f{k}" for k in T] + \
+     [f"execute if score #y cp.t matches {k} run function {NS}:stats/{k}" for k in T] + \
+     [f"function {NS}:stats/rangs"]
+ST.insert(0, f"{S} set #R cp.t 0")
+ST.insert(0, f"{S} set #P cp.t 0")
 w(F + "invoquer/stats.mcfunction", ST)
+# Robustesse : +10 % de vie par rang ; Puissance : +15 % de dégâts, +5 % de vitesse, +10 % de vol par rang
+RG = [f"attribute @s minecraft:max_health modifier remove {NS}:robustesse", f"attribute @s minecraft:attack_damage modifier remove {NS}:puissance",
+      f"attribute @s minecraft:movement_speed modifier remove {NS}:puissance", f"attribute @s minecraft:flying_speed modifier remove {NS}:puissance"]
+for r in range(1, 6):
+    RG += [f"execute if score #R cp.t matches {r} run attribute @s minecraft:max_health modifier add {NS}:robustesse {0.1 * r:.2f} add_multiplied_base",
+           f"execute if score #P cp.t matches {r} run attribute @s minecraft:attack_damage modifier add {NS}:puissance {0.15 * r:.2f} add_multiplied_base",
+           f"execute if score #P cp.t matches {r} run attribute @s minecraft:movement_speed modifier add {NS}:puissance {0.05 * r:.2f} add_multiplied_base",
+           f"execute if score #P cp.t matches {r} run attribute @s minecraft:flying_speed modifier add {NS}:puissance {0.1 * r:.2f} add_multiplied_base"]
+RG.append("execute store result entity @s Health float 1 run attribute @s minecraft:max_health get")
+w(F + "stats/rangs.mcfunction", RG)
 for k in T:
     lignes = []
     for lv in range(1, LMAX + 1):
@@ -414,8 +556,8 @@ for k in T:
                 f"data modify entity @s Health set value {hp}f"]
         if dmg:
             cmds.insert(1, f"attribute @s minecraft:attack_damage base set {dmg:.2f}")
-        if k == 5:
-            cmds.append(f"attribute @s minecraft:flying_speed base set {0.1 + 0.003 * lv:.3f}")
+        if k in VOL:
+            cmds.append(f"attribute @s minecraft:flying_speed base set {VOL[k](lv):.4f}")
         w(F + f"stats/{k}_{lv}.mcfunction", cmds)
         lignes.append(f"execute if score #L cp.t matches {lv} run return run function {NS}:stats/{k}_{lv}")
     w(F + f"stats/{k}.mcfunction", lignes)
@@ -434,7 +576,8 @@ w(F + "invoquer/nom.mcfunction", [
      f"function {NS}:invoquer/nom_poser with storage {NS}:t"])
 w(F + "invoquer/nom_lire.mcfunction", f"$execute if data storage {NS}:noms J[{{id:$(id)}}].n$(k) run data modify storage {NS}:t n set from storage {NS}:noms J[{{id:$(id)}}].n$(k)")
 w(F + "invoquer/nom_poser.mcfunction",
-  '$data modify entity @e[tag=cp.nouveau,limit=1] CustomName set value [{text:"",color:"white",italic:false},$(n),{text:"  niv. $(lv)",color:"gray"}]')
+  '$data modify entity @e[tag=cp.nouveau,limit=1] CustomName set value [{text:"",color:"white",italic:false},$(n),{text:"  niv. $(lv)",color:"gray"}]\n'
+  '$data modify entity @e[tag=cp.nvis,limit=1] CustomName set value [{text:"",color:"white",italic:false},$(n),{text:"  niv. $(lv)",color:"gray"}]')
 
 # =====================================================================
 # ACTIONS DU MENU
@@ -482,6 +625,53 @@ def btn(label, val, width=130, tip=None):
 def txt(t, col="white", bold=False):
     return f'{{text:"{t}",color:"{col}",bold:{"true" if bold else "false"},italic:false}}'
 
+# =====================================================================
+# AMÉLIORATIONS : 3 voies de 5 rangs par compagnon, payées en points de dressage (1 par niveau) et en Écus
+#   rang r : r points (les 3 voies au max coûtent 45 points, il y en a 30 : il faut choisir) et 1 500 x r Écus
+# =====================================================================
+VOIES = [("r", "Robustesse", "red", "apple", "+10 % de vie par rang."),
+         ("f", "Puissance", "gold", "blaze_powder", "+15 % de dégâts, +5 % de vitesse et +10 % de vitesse de vol par rang."),
+         ("m", "Maîtrise", "light_purple", "experience_bottle", "Chaque rang débloque les capacités 2 niveaux plus tôt (10 niveaux au rang 5).")]
+TRI = {0: 0, 1: 1, 2: 3, 3: 6, 4: 10, 5: 15}
+def points(k):
+    """#pt = points de dressage libres du compagnon k."""
+    L_ = [f"{S} operation #pt cp.t = @s cp.l{k}"]
+    for v, *_ in VOIES:
+        L_ += [f"execute if score @s cp.{v}{k} matches {r} run {S} remove #pt cp.t {TRI[r]}" for r in range(1, 6)]
+    return L_
+for k, (_, cle, nom, col, ent, ico, req, suit, combat) in T.items():
+    P_ = [f"{S} add @s cp.{v}{k} 0" for v, *_ in VOIES] + points(k) + \
+         [f"execute store result storage {NS}:a pt int 1 run {S} get #pt cp.t"]
+    for v, vn, vc, vi, vd in VOIES:
+        P_ += [f"execute store result storage {NS}:a {v} int 1 run {S} get @s cp.{v}{k}",
+               f'data modify storage {NS}:a c{v} set value "{vc}"', f'execute if score @s cp.{v}{k} matches 5.. run data modify storage {NS}:a c{v} set value "dark_gray"',
+               f'data modify storage {NS}:a p{v} set value "max"']
+        for r in range(0, 5):
+            P_.append(f'execute if score @s cp.{v}{k} matches {r} run data modify storage {NS}:a p{v} set value "{r + 1} pt + {1500 * (r + 1):,} Écus"'.replace(",", " "))
+    P_ += [f"execute store result storage {NS}:a e int 1 run {S} get @s c.ecus", f"function {NS}:menu/amel_{k}_d with storage {NS}:a"]
+    w(F + f"menu/amel_{k}.mcfunction", P_)
+    acts_ = [btn(f'[{IC(vi)},{{text:"  {vn} $({v})/5",color:"$(c{v})",bold:true}}]', 100 + 10 * k + i, 140, f"{vd}\\nProchain rang : $(p{v}).")
+             for i, (v, vn, vc, vi, vd) in enumerate(VOIES, 1)]
+    w(F + f"menu/amel_{k}_d.mcfunction",
+      f'$dialog show @s {{type:"minecraft:multi_action",title:[{IC(ico)},{{text:"  {nom} : améliorations",color:"{col}",bold:true}}],can_close_with_escape:true,pause:false,'
+      f'body:[{BAN},{{type:"minecraft:plain_message",width:440,contents:[{{text:"Points de dressage libres : ",color:"gray"}},{{text:"$(pt)",color:"yellow",bold:true}},'
+      f'{{text:"   ·   ton compte : $(e) Écus\\n",color:"gray"}},{{text:"1 point par niveau du compagnon. Un rang coûte autant de points que son numéro, plus 1 500 Écus par rang. 30 points pour 45 au total : choisis ta voie.",color:"dark_gray"}}]}}],'
+      f'actions:[{",".join(acts_)}],columns:3,'
+      f'exit_action:{{label:"Retour",width:200,action:{{type:"run_command",command:"trigger compagnons set {10 + k}"}}}}}}')
+    for i, (v, vn, vc, vi, vd) in enumerate(VOIES, 1):
+        A_ = [f"execute if score @s cp.{v}{k} matches 5.. run return run " + tr(f"{vn} est déjà au maximum.", "red")] + points(k) + [
+              f"{S} operation #c cp.t = @s cp.{v}{k}", f"{S} add #c cp.t 1",
+              f"execute if score #pt cp.t < #c cp.t run return run " + tr("Pas assez de points de dressage : fais monter ton compagnon de niveau.", "red"),
+              f"{S} operation #e cp.t = #c cp.t", f"{S} set #1500 cp.t 1500", f"{S} operation #e cp.t *= #1500 cp.t",
+              f"{S} set #ok cp.t 0", f"execute if score @s c.ecus >= #e cp.t run {S} set #ok cp.t 1",
+              f"execute if score #ok cp.t matches 0 run return run " + tr("Pas assez d’Écus sur ton compte.", "red"),
+              f"{S} operation @s c.ecus -= #e cp.t", f"{S} add @s cp.{v}{k} 1",
+              f"execute if score @s cp.out matches {k} run function {NS}:invoquer/maj",
+              "playsound minecraft:block.enchantment_table.use neutral @s ~ ~ ~ 1 1.2",
+              tr(f"{vn} de ton {nom} : un rang de plus !", vc)]
+        w(F + f"amel/{k}_{v}.mcfunction", A_)
+        w(F + f"amel/{k}_{v}_menu.mcfunction", [f"function {NS}:amel/{k}_{v}", f"function {NS}:menu/amel_{k}"])
+
 ENT = [f"{S} operation #v cp.t = @s compagnons", f"{S} set @s compagnons 0", "scoreboard players enable @s compagnons",
        f"execute if score #v cp.t matches 1 run return run function {NS}:menu/accueil",
        f"execute if score #v cp.t matches 2 run return run function {NS}:ranger",
@@ -494,6 +684,8 @@ for k in T:
             f"execute if score #v cp.t matches {40 + k} run return run function {NS}:renommer/{k}"]
     if k in VARIANTES:
         ENT.append(f"execute if score #v cp.t matches {30 + k} run return run function {NS}:apparence/{k}")
+    ENT.append(f"execute if score #v cp.t matches {50 + k} run return run function {NS}:menu/amel_{k}")
+    ENT += [f"execute if score #v cp.t matches {100 + 10 * k + i} run return run function {NS}:amel/{k}_{v}_menu" for i, (v, *_) in enumerate(VOIES, 1)]
 w(F + "menu/entree.mcfunction", ENT)
 for k in T:
     w(F + f"menu/agir_{k}.mcfunction", [f"function {NS}:invoquer/{k}", f"function {NS}:menu/page_{k}"])
@@ -514,7 +706,7 @@ A.append(f"function {NS}:menu/accueil_b with storage {NS}:m")
 w(F + "menu/accueil.mcfunction", A)
 acts = []
 for k, (_, cle, nom, col, ent, ico, (j, n, jn), suit, combat) in T.items():
-    tip = f"{nom} : {BASE[k]}\\nSe débloque au niveau {n} {DE(jn)}" + (" (ou Bâtisseur 30)" if k == 6 else "") + "."
+    tip = f"{nom} : {BASE[k]}\\nSe débloque au {COND(k)}."
     acts.append(btn(f'[{IC(ico)},$(b{k}),{{text:"$(s{k})",color:"yellow"}}]', 10 + k, 150, tip))
 acts += [btn(f'[{IC("lead")},{txt("  Ranger", "gray")}]', 2, 150, "Fait rentrer ton compagnon."),
          btn(f'[{IC("compass_00")},{txt("  Suivre / Rester", "aqua")}]', 3, 150, "Il te suit, ou il reste là où il est pour garder la zone."),
@@ -522,7 +714,7 @@ acts += [btn(f'[{IC("lead")},{txt("  Ranger", "gray")}]', 2, 150, "Fait rentrer 
 w(F + "menu/accueil_b.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Compagnons",color:"#E0A040",bold:true},can_close_with_escape:true,pause:false,'
   f'body:[{BAN},{{type:"minecraft:plain_message",width:460,contents:[{{text:"Compagnon dehors : ",color:"gray"}},{{text:"$(dehors)",color:"gold"}},'
-  '{text:"   ·   $(md)\\n",color:"gray"},{text:"Un compagnon à la fois. Il se débloque avec tes métiers, gagne ses propres niveaux et des capacités aux niveaux 5, 10, 20 et 30.",color:"dark_gray"}]}],'
+  '{text:"   ·   $(md)\\n",color:"gray"},{text:"Un compagnon à la fois. Il se débloque avec tes métiers (et les boss pour le dragon et le wither), gagne ses niveaux, ses capacités et des améliorations. Ghast, dragon et wither se montent : on vole !",color:"dark_gray"}]}],'
   f'actions:[{",".join(acts)}],columns:3,'
   'exit_action:{label:"Fermer",width:200}}')
 
@@ -548,10 +740,12 @@ for k, (_, cle, nom, col, ent, ico, (j, n, jn), suit, combat) in T.items():
         hp, dmg, spd, arm, sc = stats(k, lv)
         st = f"{hp // 2} cœurs" + (f" · {dmg:.1f} dégâts".replace(".", ",") if dmg else "") + (f" · armure {arm}" if arm else "")
         P.append(f'execute if score @s cp.l{k} matches {lv} run data modify storage {NS}:p st set value "{st}"')
+    P += [f"{S} operation #E cp.t = @s cp.l{k}", f"{S} operation #mm cp.t = @s cp.m{k}", f"{S} operation #mm cp.t *= #2 cp.t",
+          f"{S} operation #E cp.t += #mm cp.t"] + points(k) + [f"execute store result storage {NS}:p pt int 1 run {S} get #pt cp.t"]
     for i, (lvc, cn, ce) in enumerate(CAPS[k]):
         P += [f'data modify storage {NS}:p c{i} set value "dark_gray"', f'data modify storage {NS}:p m{i} set value "✖"',
-              f'execute if score @s cp.l{k} matches {lvc}.. run data modify storage {NS}:p c{i} set value "green"',
-              f'execute if score @s cp.l{k} matches {lvc}.. run data modify storage {NS}:p m{i} set value "✔"']
+              f'execute if score #E cp.t matches {lvc}.. run data modify storage {NS}:p c{i} set value "green"',
+              f'execute if score #E cp.t matches {lvc}.. run data modify storage {NS}:p m{i} set value "✔"']
     if k in VARIANTES:
         cleV, lst, pas = VARIANTES[k]
         P += [f'execute if score @s cp.v{k} matches {i} run data modify storage {NS}:p ap set value "{vn}"' for i, (_, vn) in enumerate(lst)]
@@ -560,13 +754,15 @@ for k, (_, cle, nom, col, ent, ico, (j, n, jn), suit, combat) in T.items():
     w(F + f"menu/page_{k}.mcfunction", P)
     caps = ",".join(f'{{text:"$(m{i}) {cn}",color:"$(c{i})",bold:true}},{{text:"  niv. {lvc} · {ce}\\n",color:"gray",bold:false}}'
                     for i, (lvc, cn, ce) in enumerate(CAPS[k]))
-    body = (f'{{type:"minecraft:item",item:{{id:"minecraft:{ent}_spawn_egg"}},show_decorations:false,show_tooltip:false,'
+    body = (f'{{type:"minecraft:item",item:{{id:"minecraft:{OEUF.get(k, ent)}_spawn_egg"}},show_decorations:false,show_tooltip:false,'
             f'description:{{width:280,contents:[{{text:"{nom}\\n",color:"{col}",bold:true}},{{text:"Niveau $(lv)   ",color:"yellow",bold:false}},'
             f'{{text:"$(bar)",font:"metiers:icones",color:"white"}},{{text:"  $(xp) / $(need) XP\\n",color:"gray"}},{{text:"$(st)",color:"white"}}]}}}},'
             f'{{type:"minecraft:plain_message",width:420,contents:[{{text:"{BASE[k]}\\n\\n",color:"white"}},{caps}]}}')
     acts = [btn(f'[{IC(ico)},{{text:"  $(act)",color:"$(actc)",bold:true}}]', 20 + k, 130, "Invoquer ce compagnon (l’autre rentre), ou le ranger."),
             btn(f'[{IC("compass_00")},{{text:"  $(mdl)",color:"aqua"}}]', 3, 130, "Il te suit, ou il reste là où il est pour garder la zone."),
-            btn(f'[{IC("name_tag")},{txt("  Renommer", "yellow")}]', 40 + k, 130, "Tiens en main un objet renommé à l’enclume, puis clique.")]
+            btn(f'[{IC("name_tag")},{txt("  Renommer", "yellow")}]', 40 + k, 130, "Tiens en main un objet renommé à l’enclume, puis clique."),
+            btn(f'[{IC("experience_bottle")},{{text:"  Améliorer ($(pt))",color:"green",bold:true}}]', 50 + k, 130,
+                "Robustesse, Puissance, Maîtrise : 5 rangs chacune, payés en points de dressage et en Écus.")]
     if k in VARIANTES:
         cleV, lst, pas = VARIANTES[k]
         acts.append(btn(f'[{IC("painting")},{{text:"  $(ap)",color:"light_purple"}}]', 30 + k, 130,
@@ -578,7 +774,7 @@ for k, (_, cle, nom, col, ent, ico, (j, n, jn), suit, combat) in T.items():
       f'body:[{body}],actions:[{",".join(acts)}],columns:3,'
       'exit_action:{label:"Retour",width:200,action:{type:"run_command",command:"trigger compagnons set 1"}}}')
     w(F + f"menu/verrou_{k}.mcfunction", [
-        tr(f"{LE(nom)} se débloque au niveau {n} {DE(jn)}" + (" (ou Bâtisseur 30)" if k == 6 else "") + ". Le prestige du métier compte aussi.", "red"),
+        tr(f"{LE(nom)} se débloque au {COND(k)}. Le prestige du métier compte aussi.", "red"),
         f"function {NS}:menu/accueil"])
 
 w(F + "menu/aide.mcfunction",
@@ -587,6 +783,8 @@ w(F + "menu/aide.mcfunction",
   "Déblocage : chaque compagnon vient d’un métier (loup Chasseur 10, chat Fermier 10, perroquet Explorateur 15, bonhomme de neige Pêcheur 20, allay Enchanteur 25, golem Mineur ou Bâtisseur 30). Le prestige compte comme le niveau 100.\\n\\n"
   "Niveaux : 5 XP par monstre qu’il achève, 1 par monstre que tu tues pendant qu’il est dehors, 2 par minute passée ensemble. +1 % par niveau d’Éleveur. À chaque niveau il gagne de la vie, des dégâts, de l’armure, et parfois grandit. Niveau maximum 30.\\n\\n"
   "Capacités : 4 par compagnon, aux niveaux 5, 10, 20 et 30. Apparences : une nouvelle régulièrement (loup, chat, perroquet). Le loup porte une armure dès le niveau 15.\\n\\n"
+  "Montures : ghast joyeux (Explorateur 40), dragon de l’Ender (Chasseur 50 et l’Ender Dragon vaincu), wither (Chasseur 70 et un Wither affronté). Clic droit pour monter, regarde où tu veux aller et avance. En descendant en plein vol, tu tombes doucement.\\n\\n"
+  "Améliorations : 1 point de dressage par niveau, à placer dans Robustesse (vie), Puissance (dégâts et vitesse) ou Maîtrise (capacités plus tôt), 5 rangs chacune, avec des Écus.\\n\\n"
   "K.O. : à court de vie, il rentre se reposer 60 secondes, il ne meurt jamais. Il te suit d’une dimension à l’autre et rentre quand tu te déconnectes."
   '",color:"white"}]}],action:{label:"Retour",width:200,action:{type:"run_command",command:"trigger compagnons set 1"}}}')
 
@@ -598,17 +796,24 @@ if os.path.exists(MENU):
     wj("data/minecraft/tags/dialog/pause_screen_additions.json", {"values": ["serveur:menu"]})
 
 # ---------------------------------------------------------------- admin
-w(F + "version.mcfunction", tr("Version 1 : 6 compagnons (loup, chat, perroquet, bonhomme de neige, allay, golem), niveaux 1 à 30, 24 capacités, apparences.", "gold"))
+w(F + "version.mcfunction", tr("Version 2 : 9 compagnons dont 3 montures volantes (ghast joyeux, dragon de l’Ender, wither), niveaux 1 à 30, 36 capacités, améliorations, apparences.", "gold"))
 w(F + "admin/max.mcfunction", [f"{S} set @s cp.l{k} {LMAX}" for k in T] + [f"{S} set @s cp.x{k} 0" for k in T] +
   [f"execute if score @s cp.out matches 1.. run function {NS}:invoquer/maj", tr("Tous tes compagnons passent niveau 30 (test).", "gold")])
 w(F + "admin/zero.mcfunction", [f"{S} set @s cp.l{k} 1" for k in T] + [f"{S} set @s cp.x{k} 0" for k in T] +
   [f"execute if score @s cp.out matches 1.. run function {NS}:invoquer/maj", tr("Tous tes compagnons repassent niveau 1.", "gray")])
-w(F + "desinstaller.mcfunction", ["tp @e[tag=cp.c] ~ -1000 ~", "kill @e[tag=cp.c]", "tp @e[tag=cp.renfort] ~ -1000 ~", "kill @e[tag=cp.renfort]",
+w(F + "desinstaller.mcfunction", ["tp @e[tag=cp.c] ~ -1000 ~", "kill @e[tag=cp.c]", "kill @e[tag=cp.vis]", "tp @e[tag=cp.renfort] ~ -1000 ~", "kill @e[tag=cp.renfort]",
                                   f"schedule clear {NS}:seconde"] + [f"scoreboard objectives remove {o}" for o in OBJ] +
-  ["scoreboard objectives remove compagnons", "scoreboard objectives remove cp.mk", f"data remove storage {NS}:noms J",
+  ["scoreboard objectives remove compagnons", "scoreboard objectives remove cp.mk", "scoreboard objectives remove cp.kwi", f"data remove storage {NS}:noms J",
    'tellraw @s {"text":"[Compagnons] Désinstallé. Désactive maintenant le pack : /datapack disable \\"file/compagnons.zip\\"","color":"gray"}'])
 
 wj("pack.mcmeta", {"pack": {"description": "Compagnons : loup, chat, golem... qui progressent avec toi", "min_format": 84, "max_format": 200}})
+
+# ---------------------------------------------------------------- resource pack (fusionné par labo/outils/fusion_rp.py)
+RP = os.path.join(ICI, "..", "build", "compagnons_rp")
+if os.path.exists(RP):
+    shutil.rmtree(RP)
+os.makedirs(os.path.join(RP, "assets", NS, "equipment"))
+json.dump({"layers": {}}, open(os.path.join(RP, "assets", NS, "equipment", "vide.json"), "w"))
 
 # ---------------------------------------------------------------------------------------------
 n = 0

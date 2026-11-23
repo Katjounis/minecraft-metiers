@@ -1,8 +1,8 @@
 # Compagnons
 
-Datapack vanilla (Minecraft Java 26.x) : chaque joueur a un compagnon qui le suit, se bat avec lui et gagne ses propres niveaux. Branché sur Métiers (déblocage par les niveaux de métier, bonus de l'Éleveur) et sur le menu G commun. Généré par `sources/datapack.py`.
+Datapack vanilla (Minecraft Java 26.x) : chaque joueur a un compagnon qui le suit, se bat avec lui et gagne ses propres niveaux. Trois d'entre eux sont des montures volantes (ghast joyeux, dragon de l'Ender, wither). Branché sur Métiers (déblocage par les niveaux de métier, bonus de l'Éleveur) et sur le menu G commun. Généré par `sources/datapack.py`.
 
-## Les 6 compagnons
+## Les 9 compagnons
 
 | Compagnon | Déblocage | Rôle | Capacités (niveaux 5, 10, 20, 30) |
 |---|---|---|---|
@@ -12,8 +12,19 @@ Datapack vanilla (Minecraft Java 26.x) : chaque joueur a un compagnon qui le sui
 | Bonhomme de neige | Pêcheur 20 | Tir à distance, ne fond plus | Givre, Cœur de glace, Blizzard, Hiver éternel |
 | Allay | Enchanteur 25 | Ramassage, soin | Aimant (objets ramenés), Chant apaisant, Fortune, Ange gardien |
 | Golem de fer | Mineur 30 ou Bâtisseur 30 | Tank | Rempart, Frappe sismique, Peau de fer, Titan |
+| Ghast joyeux | Explorateur 40 | Monture volante, 4 passagers | Nuage protecteur, Rafale (+25 % de vol), Vol de nuit, Nuée |
+| Dragon de l'Ender | Chasseur 50 et progrès « Libérer l'End » | Monture volante | Souffle, Écailles, Envergure (+30 % de vol), Colère du dragon |
+| Wither | Chasseur 70 et un Wither invoqué ou tué | Monture volante | Crânes, Armure de Wither, Aura noire, Explosion (sans casser de blocs) |
 
 Le prestige d'un métier compte comme son niveau 100. Un seul compagnon dehors à la fois.
+
+## Montures
+
+Le ghast joyeux est un vrai ghast joyeux harnaché : vol du jeu (clic droit pour monter, regarder et avancer), harnais de couleur selon l'apparence. Le dragon et le wither sont portés par un ghast joyeux invisible dont le harnais n'a pas de rendu (équipement `compagnons:vide` du resource pack, `build/compagnons_rp/`) ; le vrai boss, figé (`NoAI`, invulnérable, réduit par l'attribut `scale`), est replacé sur lui à chaque tick et tourné comme lui. La barre de boss du wither prend le nom du compagnon. Le dragon ne vole pas dans l'End (le combat du dragon du jeu pourrait le prendre pour le vrai). En descendant en plein vol : chute lente 8 s. Seul le propriétaire conduit ; des amis peuvent monter derrière lui.
+
+## Améliorations
+
+Trois voies par compagnon, 5 rangs chacune : Robustesse (+10 % de vie par rang), Puissance (+15 % de dégâts, +5 % de vitesse, +10 % de vol par rang), Maîtrise (capacités débloquées 2 niveaux plus tôt par rang). Un rang n coûte n points de dressage (1 par niveau du compagnon, 30 au maximum alors que tout acheter en coûte 45) et 1 500 x n Écus du Commerce.
 
 ## Progression
 
