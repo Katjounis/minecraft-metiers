@@ -11,7 +11,7 @@ from catalogue import ACHAT, CATEGORIES, ITEMS, RARES
 ROOT = os.path.join(HERE, "..", "build", "commerce_datapack")
 NS = "commerce"
 F = f"data/{NS}/function/"
-VERSION = 11
+VERSION = 12
 if os.path.exists(ROOT):
     shutil.rmtree(ROOT)
 
@@ -103,7 +103,7 @@ wj("data/minecraft/tags/function/tick.json", {"values": [f"{NS}:tick"]})
 
 PLAYER_OBJ = ["c.ecus", "c.cts", "c.deb", "c.cmpt", "c.ser", "c.own", "c.nom", "c.init", "c.vu", "c.tv", "c.ta", "c.ncr"]
 PLAYER_OBJ += [f"c.pp_{j}" for j, *_ in JOBS] + [f"c.dd_{j}" for j, *_ in JOBS] + ["c.dall", "c.wd", "c.wk", "c.bk", "c.init2"]
-ITEM_OBJ = ["c.p", "c.h", "c.vs", "c.as", "c.ev", "c.x"]
+ITEM_OBJ = ["c.p", "c.h", "c.vs", "c.as", "c.ev", "c.x", "c.jv", "c.ja"]
 LD = [f"scoreboard objectives add {o} dummy" for o in PLAYER_OBJ + ITEM_OBJ + ["c.t", "c.g"]]
 LD += ["scoreboard objectives add commerce trigger",
        "scoreboard objectives add c.oeuf minecraft.used:minecraft.villager_spawn_egg",
@@ -124,6 +124,9 @@ LD += [f'execute unless data storage {NS}:g evtxt run data modify storage {NS}:g
 LD += ["execute unless score #tableau c.g matches 0..1 run scoreboard players set #tableau c.g 1",
        f"execute if score #tableau c.g matches 1 run function {NS}:tableau/on"]
 LD.append(f"function {NS}:prive/load")
+LD.append(f"function {NS}:hud/load")
+LD.append(f"function {NS}:stat/load")
+LD.append(f"function {NS}:spawner/load")
 w(F + "load.mcfunction", LD)
 # Barre latérale : le seul affichage permanent fiable en vanilla. Elle montre le solde de chaque joueur,
 # trié du plus riche au moins riche (les fortunes sont publiques), avec le préfixe de titre de Métiers.
@@ -140,6 +143,8 @@ w(F + "tick.mcfunction", [
     f"execute as @e[type=minecraft:interaction,tag=commerce.clic] if data entity @s interaction run function {NS}:comptoir/clic_i",
     "execute as @e[type=minecraft:interaction,tag=commerce.clic] if data entity @s attack run data remove entity @s attack",
     "scoreboard players set @a[scores={c.oeuf=1..}] c.oeuf 0",
+    f"execute as @a run function {NS}:hud/joueur",
+    f"function {NS}:spawner/tick",
     "scoreboard players add #pt c.g 1",
     f"execute if score #pt c.g matches 2.. run function {NS}:prive/tick",
     "execute if entity @a run scoreboard players add #t c.g 1",
@@ -148,6 +153,8 @@ w(F + "tick.mcfunction", [
 w(F + "seconde.mcfunction", [
     "scoreboard players set #t c.g 0",
     f"function {NS}:prive/seconde",
+    f"function {NS}:stat/seconde",
+    f"function {NS}:spawner/seconde",
     f"execute as @a at @s run function {NS}:joueur/seconde",
     "execute as @e[type=minecraft:villager,tag=commerce.comptoir] at @s run rotate @s facing entity @p[distance=..6,gamemode=!spectator] eyes",
     "scoreboard players add #cv c.g 1",
@@ -161,7 +168,7 @@ w(F + "seconde.mcfunction", [
     "execute store result score #semp c.g run scoreboard players get #semaine m.defi",
     f"execute if score #semp c.g < #sem c.t run function {NS}:marche/semaine"])
 
-w(F + "version.mcfunction", say(f"Version {VERSION} : Écus, comptoirs, marché de {NIT} objets à prix dynamiques, bourse, fortunes, cristaux, coffres privés.", "gold"))
+w(F + "version.mcfunction", say(f"Version {VERSION} : Écus, comptoirs, marché de {NIT} objets à prix dynamiques, bourse, graphiques, fortunes, cristaux, spawners, coffres privés.", "gold"))
 
 # =====================================================================
 # JOUEURS : arrivée, nom, primes de palier
@@ -479,7 +486,7 @@ w(F + "op/vendre.mcfunction", [
     "scoreboard players operation #p c.t += #d c.t",
     "execute if score #p c.t matches 701.. run scoreboard players set #p c.t 700",
     "scoreboard players operation #vs c.t += #q c.t",
-    f"function {NS}:item/sauver", f"function {NS}:op/crediter",
+    f"function {NS}:item/sauver", f"function {NS}:op/crediter", f"function {NS}:stat/vente with storage {NS}:t it",
     "scoreboard players operation #x c.t = #tot c.t"] + fmt(f"{NS}:t", "m.") + [
     f"data modify storage {NS}:t m.q set from storage {NS}:t it.q",
     f"function {NS}:op/msg_vente with storage {NS}:t m",
@@ -511,7 +518,7 @@ w(F + "op/acheter.mcfunction", [
     "scoreboard players operation #p c.t += #d c.t",
     "execute if score #p c.t matches ..-301 run scoreboard players set #p c.t -300",
     "scoreboard players operation #as c.t += #q c.t",
-    f"function {NS}:item/sauver",
+    f"function {NS}:item/sauver", f"function {NS}:stat/achat with storage {NS}:t it",
     f"function {NS}:op/msg_achat with storage {NS}:t m",
     "playsound minecraft:entity.villager.trade master @s ~ ~ ~ 0.8 1",
     "playsound minecraft:entity.item.pickup master @s ~ ~ ~ 0.6 0.8"])
@@ -578,7 +585,7 @@ w(F + "marche/evt_fin.mcfunction", [
     "scoreboard players set #evi c.g 0",
     f'data modify storage {NS}:g evtxt set value ""',
     f"tellraw @a {L(PREFIX, T('Bourse : le cours de ', 'light_purple'), '{storage:\"commerce:t\",nbt:\"it.n\",color:\"white\"}', T(' revient à la normale.', 'light_purple'))}"])
-SEM = []
+SEM = [f"function {NS}:stat/semaine"]
 for it in ITL:
     SEM += [f"scoreboard players set {H(it)} c.vs 0", f"scoreboard players set {H(it)} c.as 0"]
 SEM += ["scoreboard players reset * c.ncr", say("Nouvelle semaine de bourse : le prix des cristaux redescend, les tops repartent à zéro.", "light_purple", "@a")]
@@ -687,7 +694,7 @@ RP = os.path.join(HERE, "..", "build", "commerce_rp", "assets", "commerce")
 PANNEAU = ""
 RECETTE = {"E": "emerald_block", "D": "diamond_block", "G": "gold_block", "N": "netherite_ingot", "C": "barrel_side"}
 GRID = ["EDE", "GNG", "ECE"]
-BANNIERES = [("COMMERCE", "emerald"), ("MARCHÉ", "emerald"), ("BOURSE", "bell"), ("FORTUNES", "gold_ingot"), ("CRISTAUX", "diamond")]
+BANNIERES = [("COMMERCE", "emerald"), ("MARCHÉ", "emerald"), ("BOURSE", "bell"), ("FORTUNES", "gold_ingot"), ("CRISTAUX", "diamond"), ("SPAWNERS", "spawner"), ("GRAPHIQUES", "clock")]
 # bandeau k : glyphe chr(0xE020 + k), 27 px de haut, soit 3 lignes de texte
 BAN = lambda k: f'{{type:"minecraft:plain_message",width:310,contents:[{{text:""}},{{text:"{chr(0xE020 + k)}",font:"commerce:recette",color:"white",shadow_color:0}},{{text:"\\n\\n"}}]}}'
 
@@ -782,6 +789,7 @@ def dessiner_rp():
 if os.path.exists(os.path.join(HERE, "..", "build", "commerce_rp")):
     shutil.rmtree(os.path.join(HERE, "..", "build", "commerce_rp"))
 dessiner_rp()
+exec(open(os.path.join(HERE, "hud.py"), encoding="utf-8").read())
 # l'image occupe 88 px, soit 10 lignes de texte : la ligne qui la porte est suivie de 10 retours à la ligne
 GRILLE_SNBT = L(f'{{text:"{PANNEAU}",font:"commerce:recette",color:"white",shadow_color:0}}', T("\\n" * 10, "white"),
                 T("Émeraude : 4 blocs · Diamant : 1 bloc · Or : 2 blocs · Netherite : 1 lingot · Tonneau : 1", "gray"))
@@ -816,13 +824,20 @@ for it in ITL:
 TR = ["scoreboard players operation #v c.t = @s commerce", "scoreboard players set @s commerce 0",
       "scoreboard players enable @s commerce",
       f"execute if score #v c.t matches 60 run return run function {NS}:page/aide",
+      f"execute if score #v c.t matches 7000 run return run function {NS}:spawner/aide",
       f"execute unless score @s c.deb matches 1 run return run function {NS}:page/verrou",
       f"execute if score #v c.t matches 1 run return run function {NS}:page/accueil",
       f"execute if score #v c.t matches 9 run return run function {NS}:page/marche",
       f"execute if score #v c.t matches 20 run return run function {NS}:page/bourse",
       f"execute if score #v c.t matches 21 run return run function {NS}:page/fortunes",
       f"execute if score #v c.t matches 22 run return run function {NS}:page/cristaux",
-      f"execute if score #v c.t matches 50 run return run function {NS}:comptoir/deplacer"]
+      f"execute if score #v c.t matches 50 run return run function {NS}:comptoir/deplacer",
+      f"execute if score #v c.t matches 81..84 run return run function {NS}:stat/global",
+      f"execute if score #v c.t matches 70 run return run function {NS}:spawner/entree",
+      f"execute if score #v c.t matches 700..799 run return run function {NS}:spawner/entree",
+      f"execute if score #v c.t matches 7100..7399 run return run function {NS}:spawner/entree",
+      f"execute if score #v c.t matches 4000000..4999999 run return run function {NS}:stat/item_entree",
+      f"execute if score #v c.t matches 5000000..5999999 run return run function {NS}:stat/jour_entree"]
 TR += [f"execute if score #v c.t matches {PG(c, p)} run return run function {NS}:page/cat_{c}_{p}" for c in ITEMS for p in range(NPAGES[c])]
 TR += [f"execute if score #v c.t matches {400 + JIDX[j]} run return run function {NS}:page/cristal_{j}" for j, *_ in JOBS]
 TR += [f"execute if score #v c.t matches 10001..{10000 + NIT} run return run function {NS}:page/item_depuis",
@@ -850,6 +865,8 @@ AIDE = [
     ("Bonus", "+0,5 % par niveau du métier lié à l’objet, +25 % pendant l’heure du métier."),
     ("Cristaux", "2 500 Écus le premier, +5 % à chaque achat de la semaine."),
     ("Comptoir", "Un par joueur, clic droit pour ouvrir. Mon comptoir le range pour le reposer ailleurs."),
+    ("Spawners", "Accueil, Spawners. Très chers, améliorables par clic droit. Leurs créatures donnent la moitié de l’XP de Chasseur."),
+    ("Graphiques", "Accueil, Graphiques, ou bouton Graphiques d’un objet : cours, ventes par jour et par semaine. Clique un jour pour son détail."),
     ("Coffre privé", "Pose un panneau sur ton coffre ou ton tonneau et écris [Privé] : toi seul l’ouvres, et il se reconstruit s’il est cassé. Casse le panneau pour le libérer."),
 ]
 w(F + "page/aide.mcfunction", dlg(
@@ -871,6 +888,8 @@ w(F + "page/accueil_d.mcfunction", "$" + dlg(
      btn(L(spr("diamond"), T("  Bourse", "light_purple", True)), 20, 160, "Évènements, tendances, tops."),
      btn(L(spr("gold_ingot"), T("  Fortunes", "gold")), 21, 160, "Le solde de tout le monde."),
      btn(L(G("cristal_m"), T("  Cristaux de métier", "aqua")), 22, 160, "Hors de prix, mais c'est le but."),
+     btn(L('{object:"atlas",atlas:"minecraft:blocks",sprite:"minecraft:block/spawner"}', T("  Spawners", "light_purple", True)), 70, 160, "Des spawners à acheter et à améliorer. Très chers."),
+     btn(L('{object:"atlas",atlas:"minecraft:items",sprite:"minecraft:item/clock_00"}', T("  Graphiques", "aqua", True)), 81, 160, "Courbes et flux du marché, jour par jour."),
      btn(L(spr("barrel"), T("  Mon comptoir", "white")), 50, 160, "Range ton comptoir dans ton inventaire pour le reposer ailleurs."),
      btn(T("Aide", "gray"), 60, 160)]))
 
@@ -1041,10 +1060,11 @@ for kind in ("a", "v"):
     tout = btn_cmd(L(T("Tout vendre ($(have))  ", "gold", True), T(f"$(stoute),$(stoutz)$(stoutc) {ECU}", "white")), "trigger commerce set 3$(i3)000",
                    "Vend tout ce que tu as de cet objet (10 stacks au plus par clic).")
     retour = btn_cmd(T("Retour : $(cn)", "white"), "trigger commerce set $(cb)")
+    graph = btn_cmd(L('{object:"atlas",atlas:"minecraft:items",sprite:"minecraft:item/clock_00"}', T("  Graphiques", "aqua", True)), "trigger commerce set 4003$(i3)", "Ventes par jour et par semaine, cours sur 24 h et sur 14 jours.")
     if kind == "a":
-        acts = [vend(1), ach(1), vend(16), ach(16), vend(64), ach(64), tout, retour]
+        acts = [vend(1), ach(1), vend(16), ach(16), vend(64), ach(64), tout, graph, retour, btn_cmd(T("Marché", "yellow"), "trigger commerce set 9")]
     else:
-        acts = [vend(1), vend(16), vend(64), tout, retour, btn_cmd(T("Marché", "yellow"), "trigger commerce set 9")]
+        acts = [vend(1), vend(16), vend(64), tout, graph, retour]
     w(F + f"page/item_{kind}.mcfunction", "$" + dlg('{text:"$(n)",color:"gold",bold:true}', body, acts))
 
 # ---------------------------------------------------------------- bourse (tops de 3 pour tenir sans défiler)
@@ -1082,7 +1102,7 @@ top = lambda key, col: ",".join(T(f"{k}. ", "gray") + "," + T(f"$({key}{k}n)", c
 w(F + "page/bourse_d.mcfunction", "$" + dlg(
     T("Bourse", "light_purple", True),
     [BAN(2), f'{{type:"minecraft:plain_message",width:310,contents:{L(T("Indice du marché  ", "white", True), T("$(ind) %  ", "gold", True), "{text:\"\",color:\"$(varc)\",extra:$(sp)}", "{text:\"$(var)\",color:\"$(varc)\",bold:true}", T("\\n$(ev)\\n\\n", "light_purple"), T("Plus vendus cette semaine\\n", "gold", True), top("tv", "white"), T("\\n\\nPlus achetés cette semaine\\n", "yellow", True), top("ta", "white"), T("\\n\\nPlus gros marchands\\n", "green", True))[:-1]},{{text:"",extra:$(C)}}]}}'],
-    [btn(T("Marché", "yellow"), 9, 110), btn(T("Fortunes", "gold"), 21, 110), btn(T("Accueil", "white"), 1, 110)], 3))
+    [btn(T("Marché", "yellow"), 9, 150), btn(T("Graphiques", "aqua"), 81, 150), btn(T("Fortunes", "gold"), 21, 150), btn(T("Accueil", "white"), 1, 150)], 2))
 
 # ---------------------------------------------------------------- fortunes
 w(F + "page/fortunes.mcfunction", [f'function {NS}:rang/calcul {{obj:"c.ecus",n:10}}'] + SOLDE(f"{NS}:r") + [
@@ -1115,8 +1135,14 @@ w(F + "admin/evenement.mcfunction", f"function {NS}:marche/evt_debut")
 w(F + "desinstaller.mcfunction", [f"scoreboard objectives remove {o}" for o in PLAYER_OBJ + ITEM_OBJ + ["c.t", "c.g", "commerce", "c.oeuf", "c.craft"]] + ["kill @e[type=minecraft:interaction,tag=commerce.clic]"] + [
     f"data remove storage {NS}:{s} x" for s in ()] + [
     f"data modify storage {NS}:g evtxt set value \"\"",
-    f"function {NS}:prive/desinstaller",
+    f"function {NS}:prive/desinstaller", f"function {NS}:spawner/desinstaller",
     say("Commerce désinstallé (les comptoirs posés restent des villageois). Retire commerce.zip puis redémarre.", "gold")])
+
+# =====================================================================
+# GRAPHIQUES, SPAWNERS
+# =====================================================================
+exec(open(os.path.join(HERE, "grafiques.py"), encoding="utf-8").read())
+exec(open(os.path.join(HERE, "spawners.py"), encoding="utf-8").read())
 
 # =====================================================================
 # COFFRES PRIVÉS

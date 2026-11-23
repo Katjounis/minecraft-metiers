@@ -34,11 +34,14 @@ def fusionner():
         print("Aucun resource pack a fusionner (lancer d'abord sources/datapack.py du pack).")
         return None
     retires = tuple(f"assets/{nom}/" for nom, _ in rps)
+    # fichiers qu'un pack remplace hors de son dossier (ex. shaders dans assets/minecraft/) : l'ancienne copie saute
+    remplaces = {os.path.relpath(os.path.join(dp, fn), rp).replace(os.sep, "/")
+                 for _, rp in rps for dp, _, fs in os.walk(rp) for fn in fs}
     sortie = io.BytesIO()
     ajoutes = 0
     with zipfile.ZipFile(sortie, "w", zipfile.ZIP_DEFLATED) as z:
         for info in ancien.infolist():
-            if info.filename.startswith(retires):
+            if info.filename.startswith(retires) or info.filename in remplaces:
                 continue
             data = ancien.read(info)
             if info.filename == "pack.mcmeta":

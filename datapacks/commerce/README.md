@@ -22,6 +22,7 @@ Les prix de base et les volumes sont dans `sources/catalogue.py`. `sources/coher
 
 ## Historique
 
+- v12 (23/11/2026) : solde permanent en haut à gauche, spawners, graphiques. Le solde s'affiche dans un petit cadre en haut à gauche de l'écran, seul, sans barre de boss : c'est le « title » vanilla écrit dans la police `commerce:hud`, que le shader de texte du resource pack ramène dans le coin à l'échelle 1 (`sources/hud.py`, contrôle avec `sources/verifier_shaders.py`). Ses glyphes ont 9 % d'opacité, le shader les remet à 100 % : avec un shaderpack qui remplace ce shader (Oculus, Iris), le cadre n'apparaît simplement pas, rien ne s'affiche au milieu de l'écran. Le tableau de la barre latérale est retiré une fois (`tableau/on` pour le remettre). Spawners (`sources/spawners.py`) : 35 créatures (pas de boss), de 20 000 à 500 000 Écus, achetés depuis Accueil, Spawners. Clic droit sur le spawner posé : menu d'amélioration (Vitesse, Quantité, Portée, Capacité, 3 niveaux, de 40 à 150 % du prix chacun) réservé au propriétaire, qui seul peut aussi le ramasser avec ses améliorations. Personne ne peut le miner (entité interaction autour), il se reconstruit s'il explose. Ses créatures donnent la moitié de l'XP de Chasseur (dette retirée de `m.c_bal`, Métiers n'est pas modifié), les animaux naissent adultes sans pouvoir se reproduire et les moutons restent tondus : pas d'XP d'Éleveur. Graphiques (`sources/grafiques.py`, police `commerce:graph`) : courbes de cours sur 24 h et 14 jours, histogrammes des quantités vendues et achetées par jour (14) et par semaine (8) pour chaque objet, et pour tout le marché l'indice sur 24 h et les Écus échangés par jour et par semaine. Chaque colonne a une infobulle, un clic sur un jour ouvre son détail (pour le marché : les 5 objets les plus vendus et achetés ce jour-là, cliquables). Le jour et la semaine sont ceux des défis de Métiers.
 - v11 (23/11/2026) : coffres privés. Un panneau « [Privé] » (ou [Prive], [privé]…) sur un coffre, un coffre piégé ou un tonneau le réserve à celui qui l'a posé : verrou vanilla levé seulement si le propriétaire est à moins de 6 blocs et personne d'autre à moins de 8, coffre et panneau reconstruits avec leur contenu s'ils sont cassés ou explosés, entonnoir dessous mis en pause, wagonnet à entonnoir désactivé, coffre double protégé en entier. Le propriétaire casse le panneau pour retirer la protection. Code dans `sources/prive.py`.
 - v10 (22/11/2026) : solde de tous les joueurs affiché en permanence dans la barre latérale (à droite, trié du plus riche au moins riche), achats payés au centime près (le prix affiché pour 1 vitre n'est plus arrondi à 1 Écu).
 - v9 (22/11/2026) : bandeaux de titre au style de l'interface Forge (Commerce, Marché, Bourse, Fortunes, Cristaux), courbe du cours sur 24 h de jeu sur chaque objet, indice du marché avec sa courbe dans la Bourse, libellés de boutons raccourcis (nom complet en infobulle), « d’acajou » au lieu de « de acajou ».
@@ -34,7 +35,7 @@ Les prix de base et les volumes sont dans `sources/catalogue.py`. `sources/coher
 
 ## Resource pack
 
-Commerce ajoute `assets/commerce/` (police `commerce:recette` : fond d'établi et pièce d'Écu) au resource pack commun : `python sources/datapack.py` puis `python labo/outils/fusion_rp.py` depuis la racine du dépôt. Le SHA-1 affiché va dans `resource-pack-sha1` du `server.properties` une fois le zip poussé sur main.
+Commerce ajoute `assets/commerce/` (polices `commerce:recette`, `commerce:hud` et `commerce:graph`) et `assets/minecraft/shaders/core/text.vsh|fsh` (cadre du solde) au resource pack commun : `python sources/datapack.py` puis `python labo/outils/fusion_rp.py` depuis la racine du dépôt. Le SHA-1 affiché va dans `resource-pack-sha1` du `server.properties` une fois le zip poussé sur main.
 
 ## Fichiers
 
@@ -47,6 +48,8 @@ Commerce ajoute `assets/commerce/` (police `commerce:recette` : fond d'établi e
 | `sources/donnees_26.1.json` | Liste des objets et recettes de la 26.1 |
 | `sources/sprites_26.1.json` | Texture de chaque objet du catalogue (atlas et chemin), pour les icônes des boutons |
 | `sources/textures_recette/` | Les 6 textures vanilla collées dans l'image de la recette de l'oeuf |
+| `sources/hud.py`, `sources/spawners.py`, `sources/grafiques.py`, `sources/prive.py` | Modules exécutés par `datapack.py` : solde en haut à gauche, spawners, graphiques, coffres privés |
+| `sources/verifier_shaders.py`, `sources/shaders_26.3/` | Compile le shader de texte modifié dans chaque variante du jeu (glslangValidator) |
 | `sources/verifier.py` | Contrôle statique du pack généré (JSON, macros, fonctions, SNBT des dialogues). Demande `pip install nbtlib` |
 
 ## Liens avec Métiers
@@ -73,10 +76,14 @@ Avec deux packs dans la touche G, le jeu affiche d'abord la liste « Métiers / 
 | `/function commerce:admin/evenement` | Lance un évènement de marché |
 | `/function commerce:admin/marche_reset` | Remet tous les prix au calme |
 | `/function commerce:tableau/off` | Retire le tableau des Écus de la barre latérale (`tableau/on` pour le remettre) |
+| `/function commerce:admin/spawner` | Donne un spawner de zombie (tests) |
 | `/function commerce:desinstaller` | Supprime les scores avant de retirer le zip |
 
 ## À tester en priorité au labo
 
+- Solde en haut à gauche : cadre visible sans shaderpack, à la bonne place à toutes les échelles d'interface ; rien au milieu de l'écran avec un shaderpack.
+- Spawners : pose par un joueur non op (le bloc doit se remplir dans le tick), clic droit, amélioration, ramassage, reconstruction après une explosion de creeper, XP de Chasseur divisée par deux.
+- Graphiques : infobulles et clics sur les colonnes et les repères dans les dialogues.
 - Coffres privés : que le texte du panneau soit bien reconnu en 26.3 (texte simple ou composant), que le verrou (`lock`) bloque l'ouverture, et que la reconstruction remette le contenu sans doublon.
 
 - Le nom du comptoir et le classement des fortunes : le pseudo est lu sur une tête de joueur générée (`profile.name`). Si le comptoir s'appelle « Comptoir de Joueur », ce chemin a changé en 26.x.
