@@ -11,7 +11,7 @@ from catalogue import ACHAT, CATEGORIES, ITEMS, RARES
 ROOT = os.path.join(HERE, "..", "build", "commerce_datapack")
 NS = "commerce"
 F = f"data/{NS}/function/"
-VERSION = 12
+VERSION = 13
 if os.path.exists(ROOT):
     shutil.rmtree(ROOT)
 
@@ -171,7 +171,7 @@ w(F + "seconde.mcfunction", [
     "execute store result score #semp c.g run scoreboard players get #semaine m.defi",
     f"execute if score #semp c.g < #sem c.t run function {NS}:marche/semaine"])
 
-w(F + "version.mcfunction", say(f"Version {VERSION} : Écus, comptoirs, marché de {NIT} objets à prix dynamiques, bourse, graphiques, fortunes, cristaux, spawners, coffres privés.", "gold"))
+w(F + "version.mcfunction", say(f"Version {VERSION} : Écus, comptoirs, marché de {NIT} objets à prix dynamiques, bourse, graphiques, fortunes, cristaux, spawners, coffres privés, banque, hôtel des ventes, magasins.", "gold"))
 
 # =====================================================================
 # JOUEURS : arrivée, nom, primes de palier
