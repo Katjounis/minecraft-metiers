@@ -44,6 +44,8 @@ Boss : butin refait (2 tirages par niveau de difficulté, +1 au plus gros dégâ
 
 Forge : un objet forgé (marteau, faux, arc triple, lasso, parchemin, aimant, cape) se récupère gratuitement dans la boutique s'il est perdu, comme les outils de métier : il ne doit être ni sur le joueur ni dans son coffre de l'Ender, une fois toutes les 10 minutes. Un joueur qui a déjà l'objet sur lui est noté comme propriétaire automatiquement ; pour un objet perdu avant la mise à jour, voir `admin/forge_<objet>` dans le guide admin.
 
+Barème d'XP : touche G, « Barème d’XP » (ou le bouton en haut de la page d'un métier). Une page par métier, ce que rapporte chaque action avec les images du jeu (œufs d'apparition pour les créatures, textures des blocs et des objets). Les valeurs sont lues dans les tables de `datapack.py`, le barème suit si un poids change (`sources/ref_bareme.py`).
+
 ## Interface « Forge »
 
 Le resource pack recolore toute l'interface vanilla (inventaire, conteneurs, barre d'action, info-bulles, curseurs, boutons) au style de la Forge. Script : `sources/resourcepack/interface_forge.py <textures gui vanilla 26.x> metiers_resourcepack.zip`, puis `sources/resourcepack/correctifs_rp.py metiers_resourcepack.zip`.

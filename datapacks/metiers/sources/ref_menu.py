@@ -63,7 +63,8 @@ acts += [btn(f'[{gs("forge_marteau")},{txt("  Forger l’outil en main", "gold",
          btn(f'[{gs("forge_cristal_sagesse")},{txt("  Skins", "light_purple", True)}]', 420, 200, "Apparence de tes outils et de ton armure."),
          btn(f'[{gs("cadre_dore_g")},{txt("Cadres de titre", "gold", True)},{gs("cadre_dore_d")}]', 472, 200, "Le cadre autour de ton titre."),
          btn(txt("Défis du jour", "aqua", True), 4, 200), btn(txt("Armure des Guildes", "#F1CF4E", True), 6, 200),
-         btn(txt("Classement", "gold"), 5, 200), btn(txt("Aide", "white"), 460, 200, "Cristaux, éclats, Forge, défis, boss : comment ça marche.")]
+         btn(txt("Classement", "gold"), 5, 200), btn(txt("Barème d’XP", "aqua", True), 480, 200, "Ce que rapporte chaque action, métier par métier, avec les images."),
+         btn(txt("Aide", "white"), 460, 200, "Cristaux, éclats, Forge, défis, boss : comment ça marche.")]
 w(F + "menu_dialog.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Mes métiers",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
   'body:[{type:"minecraft:plain_message",width:400,contents:[{text:"Score total ",color:"gray"},{text:"$(score)",color:"yellow"},'
@@ -163,7 +164,8 @@ for j, d in jobs.items():
         sbtn.append(f'{{label:{{text:"$(l{k})",color:"$(c{k})"}},width:200,tooltip:{{text:"{tip}"}},action:{{type:"run_command",command:"trigger metiers set {100 + 10 * d["idx"] + k}"}}}}')
     sp = SPECIAL[j]
     sep = [f'{{label:{bandeau("OUTIL ET", "droite")},width:200}}', f'{{label:{bandeau("MÉTIER", "gauche")},width:200}}']
-    abtn = [btn(txt("Récupérer l'outil", "aqua"), 300 + d["idx"], 200, "Redonne ton outil à son palier (une fois toutes les 10 minutes)."),
+    abtn = [btn(txt("Barème d’XP", "gold"), 480 + d["idx"], 200, f"Ce que rapporte chaque action en {d['name']}, avec les images du jeu."),
+            btn(txt("Récupérer l'outil", "aqua"), 300 + d["idx"], 200, "Redonne ton outil à son palier (une fois toutes les 10 minutes)."),
             btn(txt("Réparer · 5 niv.", "green"), 330 + d["idx"], 200, "Seule façon de réparer ton outil de métier. Incassable dès le palier 5."),
             f'{{label:{{text:"$(rl)",color:"$(rc)"}},width:200,action:{{type:"run_command",command:"trigger metiers set {200 + d["idx"]}"}}}}',
             f'{{label:{{text:"$(tl)",color:"$(tc)"}},width:200,tooltip:{{text:"Affiche ton titre de {d["name"]} devant ton pseudo. Le cadre se choisit à la Forge."}},action:{{type:"run_command",command:"trigger metiers set {600 + d["idx"]}"}}}}',
