@@ -449,7 +449,7 @@ w(F + "fmt/tendance.mcfunction", [
 # =====================================================================
 # OPÉRATIONS : vendre, acheter, créditer
 # =====================================================================
-FILTRE = "[!minecraft:custom_data,!minecraft:custom_name]"
+FILTRE = "[!minecraft:custom_data,!minecraft:custom_name,!minecraft:lore]"   # ni objets de pack (outils, trophées du Bestiaire...), ni objets renommés
 w(F + "op/compter.mcfunction", f"$return run clear @s minecraft:$(id){FILTRE} 0")
 w(F + "op/retirer.mcfunction", f"$clear @s minecraft:$(id){FILTRE} $(q)")
 w(F + "op/donner.mcfunction", "$give @s minecraft:$(id) $(q)")

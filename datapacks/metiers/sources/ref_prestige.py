@@ -136,7 +136,7 @@ w(F + "c/execution.mcfunction", "\n".join([
     "tag @s add metiers.exec", "scoreboard players set #thr m.tmp 10",
     "execute if entity @s[tag=metiers.sk.pc3] run scoreboard players set #thr m.tmp 15",
     "execute if entity @s[tag=metiers.sk.pc5] run scoreboard players set #thr m.tmp 20",
-    f"execute as @e[type=#{NS}:executables,distance=..12,tag=!metiers.boss] if data entity @s {{HurtTime:10s}} run function {NS}:c/execution_mob",
+    f"execute as @e[type=#{NS}:executables,distance=..12,tag=!metiers.boss,tag=!hr.c] if data entity @s {{HurtTime:10s}} run function {NS}:c/execution_mob",
     "tag @s remove metiers.exec"]))
 w(F + "c/execution_mob.mcfunction", "\n".join([
     "scoreboard players set #ok m.tmp 0",
