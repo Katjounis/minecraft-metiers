@@ -11,7 +11,7 @@ from catalogue import ACHAT, CATEGORIES, ITEMS, RARES
 ROOT = os.path.join(HERE, "..", "build", "commerce_datapack")
 NS = "commerce"
 F = f"data/{NS}/function/"
-VERSION = 10
+VERSION = 11
 if os.path.exists(ROOT):
     shutil.rmtree(ROOT)
 
@@ -123,6 +123,7 @@ LD += [f'execute unless data storage {NS}:g evtxt run data modify storage {NS}:g
        f'data modify storage {NS}:t msg set value ""']
 LD += ["execute unless score #tableau c.g matches 0..1 run scoreboard players set #tableau c.g 1",
        f"execute if score #tableau c.g matches 1 run function {NS}:tableau/on"]
+LD.append(f"function {NS}:prive/load")
 w(F + "load.mcfunction", LD)
 # Barre latérale : le seul affichage permanent fiable en vanilla. Elle montre le solde de chaque joueur,
 # trié du plus riche au moins riche (les fortunes sont publiques), avec le préfixe de titre de Métiers.
@@ -139,11 +140,14 @@ w(F + "tick.mcfunction", [
     f"execute as @e[type=minecraft:interaction,tag=commerce.clic] if data entity @s interaction run function {NS}:comptoir/clic_i",
     "execute as @e[type=minecraft:interaction,tag=commerce.clic] if data entity @s attack run data remove entity @s attack",
     "scoreboard players set @a[scores={c.oeuf=1..}] c.oeuf 0",
+    "scoreboard players add #pt c.g 1",
+    f"execute if score #pt c.g matches 2.. run function {NS}:prive/tick",
     "execute if entity @a run scoreboard players add #t c.g 1",
     f"execute if score #t c.g matches 20.. run function {NS}:seconde"])
 
 w(F + "seconde.mcfunction", [
     "scoreboard players set #t c.g 0",
+    f"function {NS}:prive/seconde",
     f"execute as @a at @s run function {NS}:joueur/seconde",
     "execute as @e[type=minecraft:villager,tag=commerce.comptoir] at @s run rotate @s facing entity @p[distance=..6,gamemode=!spectator] eyes",
     "scoreboard players add #cv c.g 1",
@@ -157,7 +161,7 @@ w(F + "seconde.mcfunction", [
     "execute store result score #semp c.g run scoreboard players get #semaine m.defi",
     f"execute if score #semp c.g < #sem c.t run function {NS}:marche/semaine"])
 
-w(F + "version.mcfunction", say(f"Version {VERSION} : Écus, comptoirs, marché de {NIT} objets à prix dynamiques, bourse, fortunes, cristaux.", "gold"))
+w(F + "version.mcfunction", say(f"Version {VERSION} : Écus, comptoirs, marché de {NIT} objets à prix dynamiques, bourse, fortunes, cristaux, coffres privés.", "gold"))
 
 # =====================================================================
 # JOUEURS : arrivée, nom, primes de palier
@@ -846,6 +850,7 @@ AIDE = [
     ("Bonus", "+0,5 % par niveau du métier lié à l’objet, +25 % pendant l’heure du métier."),
     ("Cristaux", "2 500 Écus le premier, +5 % à chaque achat de la semaine."),
     ("Comptoir", "Un par joueur, clic droit pour ouvrir. Mon comptoir le range pour le reposer ailleurs."),
+    ("Coffre privé", "Pose un panneau sur ton coffre ou ton tonneau et écris [Privé] : toi seul l’ouvres, et il se reconstruit s’il est cassé. Casse le panneau pour le libérer."),
 ]
 w(F + "page/aide.mcfunction", dlg(
     T("Commerce : comment ça marche", "gold", True),
@@ -1110,7 +1115,13 @@ w(F + "admin/evenement.mcfunction", f"function {NS}:marche/evt_debut")
 w(F + "desinstaller.mcfunction", [f"scoreboard objectives remove {o}" for o in PLAYER_OBJ + ITEM_OBJ + ["c.t", "c.g", "commerce", "c.oeuf", "c.craft"]] + ["kill @e[type=minecraft:interaction,tag=commerce.clic]"] + [
     f"data remove storage {NS}:{s} x" for s in ()] + [
     f"data modify storage {NS}:g evtxt set value \"\"",
+    f"function {NS}:prive/desinstaller",
     say("Commerce désinstallé (les comptoirs posés restent des villageois). Retire commerce.zip puis redémarre.", "gold")])
+
+# =====================================================================
+# COFFRES PRIVÉS
+# =====================================================================
+exec(open(os.path.join(HERE, "prive.py"), encoding="utf-8").read())
 
 # =====================================================================
 # ZIP

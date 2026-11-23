@@ -22,6 +22,7 @@ Les prix de base et les volumes sont dans `sources/catalogue.py`. `sources/coher
 
 ## Historique
 
+- v11 (23/11/2026) : coffres privés. Un panneau « [Privé] » (ou [Prive], [privé]…) sur un coffre, un coffre piégé ou un tonneau le réserve à celui qui l'a posé : verrou vanilla levé seulement si le propriétaire est à moins de 6 blocs et personne d'autre à moins de 8, coffre et panneau reconstruits avec leur contenu s'ils sont cassés ou explosés, entonnoir dessous mis en pause, wagonnet à entonnoir désactivé, coffre double protégé en entier. Le propriétaire casse le panneau pour retirer la protection. Code dans `sources/prive.py`.
 - v10 (22/11/2026) : solde de tous les joueurs affiché en permanence dans la barre latérale (à droite, trié du plus riche au moins riche), achats payés au centime près (le prix affiché pour 1 vitre n'est plus arrondi à 1 Écu).
 - v9 (22/11/2026) : bandeaux de titre au style de l'interface Forge (Commerce, Marché, Bourse, Fortunes, Cristaux), courbe du cours sur 24 h de jeu sur chaque objet, indice du marché avec sa courbe dans la Bourse, libellés de boutons raccourcis (nom complet en infobulle), « d’acajou » au lieu de « de acajou ».
 - v8 (22/11/2026) : menus compacts, sans défilement pour trouver les boutons : marché en boutons avec la texture de chaque catégorie, catégories en pages de 10 objets (prix au survol), page d'un objet avec le prix total écrit sur chaque bouton (vendre et acheter 1, 16, 64, tout vendre). Recette de l'oeuf en une seule image (texture d'établi Forge et vraies textures des ingrédients). Clic droit sur le comptoir corrigé (le joueur était effacé avant d'être lu).
@@ -75,6 +76,8 @@ Avec deux packs dans la touche G, le jeu affiche d'abord la liste « Métiers / 
 | `/function commerce:desinstaller` | Supprime les scores avant de retirer le zip |
 
 ## À tester en priorité au labo
+
+- Coffres privés : que le texte du panneau soit bien reconnu en 26.3 (texte simple ou composant), que le verrou (`lock`) bloque l'ouverture, et que la reconstruction remette le contenu sans doublon.
 
 - Le nom du comptoir et le classement des fortunes : le pseudo est lu sur une tête de joueur générée (`profile.name`). Si le comptoir s'appelle « Comptoir de Joueur », ce chemin a changé en 26.x.
 - Le clic droit sur le comptoir ouvre bien le menu (entité `interaction` posée sur le villageois, lue chaque tick).
