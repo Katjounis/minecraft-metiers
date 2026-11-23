@@ -28,6 +28,8 @@ OBJ = ["m.ecl", "m.skin_a", "m.skt", "m.cadre", "m.bk1", "m.bk2", "m.bk3", "m.bk
        "m.sacp", "m.saco", "m.sact", "m.own", "m.ax", "m.mene", "m.arcser", "m.forgecd", "m.cadres", "m.hp",
        "m.wk", "m.wd", "m.wp", "m.cc"]
 OBJ += [f"m.cd_{i}" for i in range(1, 7)]
+FKEYS = ["marteau", "faux", "arc3", "lasso", "parchemin", "aimant", "cape"]
+OBJ += [f"m.fo_{k}" for k in FKEYS] + [f"m.fcd_{k}" for k in FKEYS]   # objet de Forge déjà forgé, attente avant de le récupérer
 for j in JL:
     OBJ += [f"m.cr_{j}", f"m.ceff_{j}", f"m.cfor_{j}", f"m.csag_{j}", f"m.ceco_{j}", f"m.skin_{j}"]
 for t in ["a"] + JL:
@@ -665,4 +667,11 @@ RJ = [f"execute unless entity @s[tag=metiers.v24] run function {NS}:refonte/migr
       f"execute if entity @s[tag=metiers.lasso_plein] run function {NS}:forge/lasso_retour",
       f"execute if items entity @s weapon.offhand {FSEL('aimant')} run tp @e[type=minecraft:item,distance=1.5..8,nbt=!{{PickupDelay:32767s}}] @s",
       f"execute if items entity @s weapon.offhand {FSEL('aimant')} run tp @e[type=minecraft:experience_orb,distance=1.5..8] @s"]
+# objets de la Forge : le joueur qui en a un sur lui est noté comme propriétaire (achats d'avant la v25 compris),
+# pour pouvoir le récupérer gratuitement depuis la boutique s'il le perd (mort, lave...)
+FPOS = lambda k: [f"container.* {FSEL(k)}", f"weapon.offhand {FSEL(k)}", f"armor.chest {FSEL(k)}"] + (
+    [f"container.* {FSEL('lasso_plein')}", f"weapon.offhand {FSEL('lasso_plein')}"] if k == "lasso" else [])
+for _k in FKEYS:
+    RJ += [f"execute unless score @s m.fo_{_k} matches 1 if items entity @s {pos} run scoreboard players set @s m.fo_{_k} 1" for pos in FPOS(_k)]
+    RJ.append(f"execute if score @s m.fcd_{_k} matches 1.. run scoreboard players remove @s m.fcd_{_k} 1")
 w(F + "refonte/joueur.mcfunction", "\n".join(RJ))

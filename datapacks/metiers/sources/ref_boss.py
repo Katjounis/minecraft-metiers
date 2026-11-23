@@ -36,9 +36,18 @@ w(F + "boss/alerte.mcfunction", "\n".join([
 AP = ["execute store result score #n m.boss if entity @a[gamemode=!spectator]",
       "scoreboard players operation #max m.boss = #n m.boss", "scoreboard players operation #max m.boss *= #200 m.const",
       "scoreboard players add #max m.boss 350",
-      f"execute store result storage {NS}:boss hp int 1 run scoreboard players get #max m.boss"]
-AP += [f"execute if score #type m.boss matches {k} run function {NS}:boss/apparaitre_{k} with storage {NS}:boss" for k in BOSS]
-AP += [f"spreadplayers ~ ~ 6 14 false {B}", "scoreboard players set #actif m.boss 1", "scoreboard players set #temps m.boss 0",
+      # le jeu plafonne les PV max à 1 024 : au-delà de 1 000, la Résistance prend le relais (4 joueurs et plus)
+      "scoreboard players set #res m.boss 0",
+      "execute if score #max m.boss matches 1100.. run scoreboard players set #res m.boss 1",
+      "execute if score #max m.boss matches 1500.. run scoreboard players set #res m.boss 2",
+      "execute if score #max m.boss matches 1001.. run scoreboard players set #max m.boss 1000",
+      f"execute store result storage {NS}:boss hp int 1 run scoreboard players get #max m.boss",
+      f"function {NS}:boss/lieu"]
+AP += [f"execute if score #type m.boss matches {k} at @e[type=minecraft:marker,tag=metiers.blieu,limit=1] run function {NS}:boss/apparaitre_{k} with storage {NS}:boss" for k in BOSS]
+AP += ["kill @e[type=minecraft:marker,tag=metiers.blieu]",
+       f"execute if score #res m.boss matches 1 run effect give {B} minecraft:resistance infinite 0 true",
+       f"execute if score #res m.boss matches 2 run effect give {B} minecraft:resistance infinite 1 true",
+       "scoreboard players set #actif m.boss 1", "scoreboard players set #temps m.boss 0",
        "scoreboard players set #phase m.boss 0", "scoreboard players set #atk m.boss 0", "scoreboard players set #tue m.boss 0",
        "scoreboard players set #mk m.boss 0",
        "scoreboard players operation #last m.boss = #max m.boss", "scoreboard players set @a m.dmg 0", "scoreboard players set @a m.bdmg 0",
@@ -51,6 +60,34 @@ AP += [f"spreadplayers ~ ~ 6 14 false {B}", "scoreboard players set #actif m.bos
        f'tellraw @a {PREFIX},{{"text":"Le boss est apparu près de ","color":"red","bold":true}},{{"selector":"@s"}},{{"text":" en ","color":"white"}},{{"score":{{"name":"#x","objective":"m.boss"}},"color":"yellow"}},{{"text":" ","color":"white"}},{{"score":{{"name":"#y","objective":"m.boss"}},"color":"yellow"}},{{"text":" ","color":"white"}},{{"score":{{"name":"#z","objective":"m.boss"}},"color":"yellow"}},{{"text":". PV : ","color":"white"}},{{"score":{{"name":"#max","objective":"m.boss"}},"color":"red"}},{{"text":". Chaque participant gagne un éclat de boss.","color":"white"}}]',
        "execute as @a at @s run playsound minecraft:entity.ravager.roar master @s ~ ~ ~ 1 0.6"]
 w(F + "boss/apparaitre.mcfunction", "\n".join(AP))
+wj(f"data/{NS}/tags/block/boss_vide.json", {"values": ["minecraft:air", "minecraft:cave_air", "minecraft:void_air", "minecraft:short_grass",
+   "minecraft:tall_grass", "minecraft:fern", "minecraft:large_fern", "minecraft:dead_bush", "minecraft:dandelion", "minecraft:poppy"]})
+wj(f"data/{NS}/tags/block/boss_pas_sol.json", {"values": ["minecraft:water", "minecraft:lava", "minecraft:fire", "minecraft:soul_fire",
+   "minecraft:powder_snow", "minecraft:cactus", "minecraft:magma_block", "minecraft:sweet_berry_bush", "minecraft:bedrock", "#minecraft:leaves"]})
+w(F + "boss/place_ok.mcfunction", "\n".join(
+    [f"execute if block ~ ~-1 ~ #{NS}:boss_vide run return 0", f"execute if block ~ ~-1 ~ #{NS}:boss_pas_sol run return 0"] +
+    [f"execute unless block ~ ~{h} ~ #{NS}:boss_vide run return 0" for h in range(6)] + ["return 1"]))
+w(F + "boss/lieu.mcfunction", "\n".join([
+    "kill @e[type=minecraft:marker,tag=metiers.blieu]",
+    'summon minecraft:marker ~ ~ ~ {Tags:["metiers.blieu"]}',
+    "scoreboard players set #trouve m.boss 0", "scoreboard players set #essai m.boss 0",
+    f"function {NS}:boss/lieu_essai",
+    # rien trouvé autour du joueur : à la surface, comme avant
+    "execute if score #trouve m.boss matches 0 run spreadplayers ~ ~ 4 12 false @e[type=minecraft:marker,tag=metiers.blieu]"]))
+w(F + "boss/lieu_essai.mcfunction", "\n".join([
+    "scoreboard players add #essai m.boss 1",
+    "execute if score #essai m.boss matches 41.. run return 0",
+    "execute store result score #dx m.boss run random value -12..12",
+    "execute store result score #dz m.boss run random value -12..12",
+    f"execute if score #dx m.boss matches -3..3 if score #dz m.boss matches -3..3 run return run function {NS}:boss/lieu_essai",
+    f"execute store result storage {NS}:boss l.dx int 1 run scoreboard players get #dx m.boss",
+    f"execute store result storage {NS}:boss l.dz int 1 run scoreboard players get #dz m.boss",
+    f"function {NS}:boss/lieu_m with storage {NS}:boss l",
+    f"execute if score #trouve m.boss matches 0 run function {NS}:boss/lieu_essai"]))
+w(F + "boss/lieu_m.mcfunction", f"$execute positioned ~$(dx) ~ ~$(dz) align xyz positioned ~0.5 ~ ~0.5 run function {NS}:boss/lieu_col")
+w(F + "boss/lieu_col.mcfunction", "\n".join(
+    [f"execute if score #trouve m.boss matches 0 positioned ~ ~{dy} ~ if function {NS}:boss/place_ok run function {NS}:boss/lieu_ok" for dy in range(4, -9, -1)]))
+w(F + "boss/lieu_ok.mcfunction", "scoreboard players set #trouve m.boss 1\ntp @e[type=minecraft:marker,tag=metiers.blieu,limit=1] ~ ~ ~")
 for k, b in BOSS.items():
     attrs = (f'attributes:[{{id:"minecraft:max_health",base:$(hp)d}},{{id:"minecraft:attack_damage",base:{b["atk"]}d}},{{id:"minecraft:armor",base:{b["arm"]}d}},'
              f'{{id:"minecraft:knockback_resistance",base:1d}},{{id:"minecraft:movement_speed",base:{b["spd"]}d}},{{id:"minecraft:follow_range",base:64d}},'
@@ -120,7 +157,7 @@ A = {
                f"execute as @a[distance=..9,{PL}] run damage @s 8 minecraft:mob_attack by @e[tag=metiers.boss,limit=1]",
                f"effect give @a[distance=..9,{PL}] minecraft:levitation 1 3 true",
                ANN("Le Colosse frappe le sol !", "dark_red")],
-    "bond": [f"execute as @p[distance=4..30,{PL}] at @s run tp @e[tag=metiers.boss,limit=1] ~ ~ ~",
+    "bond": [f"execute as @p[distance=4..30,{PL}] at @s if function {NS}:boss/place_ok run tp @e[tag=metiers.boss,limit=1] ~ ~ ~",
              "playsound minecraft:entity.ravager.attack hostile @a ~ ~ ~ 2 0.6",
              f"execute at @s as @a[distance=..4,{PL}] run damage @s 6 minecraft:mob_attack by @e[tag=metiers.boss,limit=1]"],
     "venin": ["particle minecraft:item_slime ~ ~1 ~ 4 1 4 0 60", f"effect give @a[distance=..10,{PL}] minecraft:poison 6 1",
@@ -133,7 +170,7 @@ A = {
     "blizzard": [f"execute as @a[distance=..16,{PL}] at @s run particle minecraft:snowflake ~ ~2 ~ 1 1 1 0.02 40",
                  f"execute as @a[distance=..16,{PL}] run damage @s 5 minecraft:freeze", f"effect give @a[distance=..16,{PL}] minecraft:slowness 3 1",
                  "playsound minecraft:block.powder_snow.break hostile @a ~ ~ ~ 2 0.5"],
-    "clignement": [f"execute as @r[distance=..40,{PL}] at @s run tp @e[tag=metiers.boss,limit=1] ^ ^ ^-4",
+    "clignement": [f"execute as @r[distance=..40,{PL}] at @s rotated ~ 0 positioned ^ ^ ^-4 align xyz positioned ~0.5 ~ ~0.5 if function {NS}:boss/place_ok run tp @e[tag=metiers.boss,limit=1] ~ ~ ~",
                    "particle minecraft:reverse_portal ~ ~1 ~ 1 1 1 0.2 60", "playsound minecraft:entity.enderman.teleport hostile @a ~ ~ ~ 2 0.5"],
     "pluie_feu": [f"execute as @a[distance=..20,{PL}] at @s run particle minecraft:flame ~ ~3 ~ 1 0.5 1 0.02 40",
                   f"execute as @a[distance=..20,{PL}] at @s run particle minecraft:lava ~ ~1 ~ 1 0.5 1 0 10",
@@ -185,7 +222,7 @@ w(F + "boss/recompense.mcfunction", "\n".join(RC))
 # le Brasier ne met pas le feu au décor : ses boules de feu sont supprimées
 add_lines(F + "refonte/tick.mcfunction", ["execute if score #actif m.boss matches 1 if score #type m.boss matches 4 run kill @e[type=minecraft:small_fireball]"])
 add_lines(F + "refonte/load.mcfunction", ["scoreboard players add #type m.boss 0", "scoreboard players add #mk m.boss 0", "scoreboard players add #tue m.boss 0"] +
-          [f"scoreboard players set #{c} m.const {c}" for c in (2, 3, 5, 10, 50, 100, 150, 200, 300, 7200)])
+          [f"scoreboard players set #{c} m.const {c}" for c in (2, 3, 5, 10, 15, 50, 100, 150, 200, 300, 7200)])
 
 
 # ---------------------------------------------------------------- butin des boss : une table par boss, tirée 1 fois en facile,
@@ -197,27 +234,63 @@ def E(n, w, a=1, b=1, extra=None):
     if extra: mods.append(extra)
     if mods: e["modifier"] = mods
     return e
+def EN(n, w, a=1, b=1, ench=None, niv=None, nom=None, col="gold", lore=None):
+    """Entrée de butin : quantité, enchantements fixes ou au hasard (niveau d'enchantement), nom et description de relique."""
+    mods = []
+    if (a, b) != (1, 1): mods.append({"type": "minecraft:set_count", "count": {"type": "minecraft:uniform", "min": a, "max": b}})
+    if niv: mods.append({"type": "minecraft:enchant_with_levels", "levels": niv})
+    if ench: mods.append({"type": "minecraft:set_enchantments", "enchantments": {f"minecraft:{k}": v for k, v in ench.items()}})
+    if nom:
+        mods.append({"type": "minecraft:set_name", "target": "custom_name", "name": {"text": nom, "color": col, "bold": True, "italic": False}})
+        mods.append({"type": "minecraft:set_lore", "mode": "replace_all", "lore": [{"text": lore, "color": "gray", "italic": False},
+                                                                                {"text": "Relique de boss", "color": "light_purple", "italic": False}]})
+        mods.append({"type": "minecraft:set_components", "components": {"minecraft:rarity": "epic"}})
+    e = {"type": "minecraft:item", "name": f"minecraft:{n}", "weight": w}
+    if mods: e["modifier"] = mods
+    return e
+# butin courant, tiré 1 fois en facile, 2 en normal, 3 en difficile, +1 pour le plus gros dégât
 BUTIN = {
-    1: [E("iron_ingot", 20, 4, 10), E("gold_ingot", 15, 3, 8), E("emerald", 10, 3, 8), E("diamond", 8, 1, 3), E("iron_block", 4)],
-    2: [E("string", 20, 8, 16), E("spider_eye", 15, 4, 8), E("ender_pearl", 10, 2, 4), E("slime_ball", 8, 4, 8), E("cobweb", 8, 2, 4), E("diamond", 6, 1, 2)],
-    3: [E("bone", 20, 8, 16), E("experience_bottle", 15, 4, 12), E("lapis_lazuli", 12, 6, 16), E("packed_ice", 6, 4, 8), E("diamond", 6, 1, 2),
-        E("book", 8, 1, 1, {"type": "minecraft:enchant_randomly"})],
-    4: [E("blaze_rod", 20, 3, 8), E("quartz", 12, 8, 16), E("magma_cream", 12, 3, 6), E("fire_charge", 10, 4, 8), E("gold_block", 5), E("netherite_scrap", 3)],
-    5: [E("gunpowder", 20, 8, 16), E("firework_rocket", 10, 8, 16), E("emerald", 10, 4, 8), E("tnt", 8, 2, 4), E("diamond", 6, 1, 2), E("music_disc_cat", 4)],
+    1: [EN("diamond", 12, 3, 6), EN("iron_block", 12, 2, 5), EN("gold_block", 10, 1, 3), EN("emerald_block", 8, 1, 3),
+        EN("netherite_scrap", 6, 1, 2), EN("ancient_debris", 5, 1, 2), EN("diamond_chestplate", 4, niv=30), EN("diamond_axe", 4, niv=30),
+        EN("netherite_upgrade_smithing_template", 3), EN("anvil", 3)],
+    2: [EN("ender_pearl", 12, 4, 8), EN("diamond", 10, 2, 4), EN("enchanted_book", 10, niv=30), EN("golden_apple", 8, 2, 4),
+        EN("name_tag", 6, 1, 2), EN("string", 8, 16, 32), EN("cobweb", 5, 4, 8), EN("saddle", 4), EN("ominous_bottle", 4), EN("bow", 4, niv=30)],
+    3: [EN("experience_bottle", 14, 16, 32), EN("enchanted_book", 12, niv=30), EN("diamond", 10, 2, 4), EN("lapis_block", 10, 3, 6),
+        EN("amethyst_shard", 6, 8, 16), EN("blue_ice", 6, 8, 16), EN("echo_shard", 3, 1, 2), EN("trident", 3, niv=30), EN("diamond_helmet", 4, niv=30)],
+    4: [EN("blaze_rod", 14, 8, 16), EN("gold_block", 10, 2, 5), EN("netherite_scrap", 8, 1, 3), EN("ancient_debris", 6, 1, 3),
+        EN("golden_apple", 8, 2, 4), EN("magma_cream", 6, 6, 12), EN("fire_charge", 5, 8, 16), EN("netherite_ingot", 2), EN("diamond_sword", 4, niv=30)],
+    5: [EN("diamond", 10, 2, 4), EN("emerald_block", 8, 2, 4), EN("tnt", 10, 4, 8), EN("gunpowder", 12, 16, 32), EN("firework_rocket", 8, 32, 64),
+        EN("heart_of_the_sea", 2), EN("crossbow", 4, niv=30)] +
+       [EN(f"music_disc_{d}", 2) for d in ("cat", "blocks", "chirp", "far", "mall", "mellohi", "stal", "strad", "ward", "wait")] +
+       [EN("music_disc_pigstep", 1), EN("music_disc_otherside", 1)],
 }
+# reliques : un objet unique par boss, dans le butin rare
+RELIQUE = {
+    1: EN("netherite_axe", 4, ench={"sharpness": 5, "efficiency": 5, "unbreaking": 3, "mending": 1}, nom="Hache du Colosse", col="dark_red",
+          lore="Arrachée au Colosse des Métiers."),
+    2: EN("bow", 4, ench={"power": 5, "punch": 2, "flame": 1, "infinity": 1, "unbreaking": 3}, nom="Arc de la Reine", col="dark_green",
+          lore="Tendu avec la soie de la Reine arachnide."),
+    3: EN("trident", 4, ench={"impaling": 5, "loyalty": 3, "unbreaking": 3, "mending": 1}, nom="Trident du givre", col="aqua",
+          lore="Taillé dans la glace de la Liche."),
+    4: EN("netherite_chestplate", 4, ench={"protection": 4, "thorns": 3, "unbreaking": 3, "mending": 1}, nom="Plastron du Brasier", col="gold",
+          lore="Encore tiède du Brasier ancestral."),
+    5: EN("crossbow", 4, ench={"multishot": 1, "quick_charge": 3, "unbreaking": 3, "mending": 1}, nom="Arbalète du Creeper", col="green",
+          lore="Gonflée à bloc, comme le Creeper géant."),
+}
+RARE = [EN("enchanted_golden_apple", 3), EN("totem_of_undying", 3), EN("netherite_ingot", 3), EN("heart_of_the_sea", 2),
+        EN("shulker_shell", 2, 2, 4), EN("nether_star", 1)]
 for k, ent in BUTIN.items():
-    wj(f"data/{NS}/loot_table/boss/{k}.json", {"type": "minecraft:generic", "pools": [{"rolls": 3, "entries": ent}]})
-wj(f"data/{NS}/loot_table/boss/rare.json", {"type": "minecraft:generic", "pools": [{"rolls": 1, "entries": [
-    E("enchanted_golden_apple", 2), E("totem_of_undying", 3), E("netherite_scrap", 4, 1, 2), E("diamond_block", 3), E("heart_of_the_sea", 2)]}]})
+    wj(f"data/{NS}/loot_table/boss/{k}.json", {"type": "minecraft:generic", "pools": [{"rolls": 2, "entries": ent}]})
+    wj(f"data/{NS}/loot_table/boss/rare_{k}.json", {"type": "minecraft:generic", "pools": [{"rolls": 1, "entries": RARE + [RELIQUE[k]]}]})
 BT = ["execute store result score #diff m.boss run difficulty", "scoreboard players operation #tirs m.boss = #diff m.boss",
       "execute if entity @s[tag=metiers.btop] run scoreboard players add #tirs m.boss 1"]
 for k in BUTIN:
     for n in range(1, 5):
         BT.append(f"execute if score #type m.boss matches {k} if score #tirs m.boss matches {n}.. run loot give @s loot {NS}:boss/{k}")
-BT += ["scoreboard players operation #chance m.boss = #diff m.boss", "scoreboard players operation #chance m.boss *= #10 m.const",
-       "execute if entity @s[tag=metiers.btop] run scoreboard players add #chance m.boss 10",
+BT += ["scoreboard players operation #chance m.boss = #diff m.boss", "scoreboard players operation #chance m.boss *= #15 m.const",
+       "execute if entity @s[tag=metiers.btop] run scoreboard players add #chance m.boss 15",
        "execute store result score #r m.boss run random value 1..100",
-       f"execute if score #r m.boss <= #chance m.boss run loot give @s loot {NS}:boss/rare",
+       *[f"execute if score #type m.boss matches {k} if score #r m.boss <= #chance m.boss run loot give @s loot {NS}:boss/rare_{k}" for k in BUTIN],
        f'execute if score #r m.boss <= #chance m.boss run tellraw @a {PREFIX},{{"selector":"@s","color":"white"}},{{"text":" obtient un butin rare du boss !","color":"light_purple","bold":true}}]',
        f'tellraw @s {PREFIX},{{"text":"Butin du boss dans ton inventaire (difficulté : plus de butin en difficile).","color":"gold"}}]']
 w(F + "boss/butin.mcfunction", "\n".join(BT))
@@ -227,7 +300,7 @@ add_lines(F + "boss/recompense.mcfunction", [f"function {NS}:boss/butin"])
 # ---------------------------------------------------------------- Brasier : rien ne brûle
 # Pendant le combat, la règle mob_griefing passe à false (les boules de feu ne posent plus de feu), puis reprend sa valeur.
 # En plus, le feu éventuel autour du boss est éteint toutes les 0,5 s.
-add_lines(F + "boss/apparaitre_4.mcfunction", ["execute store result score #mg m.boss run gamerule mob_griefing",
+add_lines(F + "boss/apparaitre_4.mcfunction", ["weather clear 1800s", "execute store result score #mg m.boss run gamerule mob_griefing",
                                                "scoreboard players set #mgset m.boss 1", "gamerule mob_griefing false"])
 add_lines(F + "boss/fin.mcfunction", ["execute if score #mgset m.boss matches 1 if score #mg m.boss matches 1 run gamerule mob_griefing true",
                                       "scoreboard players set #mgset m.boss 0"])

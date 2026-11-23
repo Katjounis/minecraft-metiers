@@ -241,6 +241,10 @@ for key, (j, p, e, lv) in CRP.items():
            f'execute unless score @s m.{j}_lvl matches {lv}.. run data modify storage {NS}:fg c_{key} set value "dark_gray"']
 for key, e in COMMUN.items():
     FG += [f'data modify storage {NS}:fg c_{key} set value "red"', f'execute if score @s m.ecl matches {e}.. run data modify storage {NS}:fg c_{key} set value "yellow"']
+for key in list(CRP) + list(COMMUN):
+    FG += [f'data modify storage {NS}:fg r_{key} set value ""',
+           f'execute if score @s m.fo_{key} matches 1 run data modify storage {NS}:fg r_{key} set value "  ✔ récupérer"',
+           f'execute if score @s m.fo_{key} matches 1 run data modify storage {NS}:fg c_{key} set value "green"']
 # outil tenu en main pour les cristaux d'amélioration
 FG += [f'data modify storage {NS}:fg g set value ""', f"data modify storage {NS}:fg sl set value 0", f"data modify storage {NS}:fg us set value 0", "scoreboard players set #hj m.tmp 0", f'data modify storage {NS}:fg outil set value "Tiens ton outil de métier en main pour sertir un cristal."']
 for j, d in jobs.items():
@@ -295,12 +299,12 @@ NOMF = {"marteau": "Marteau du Mineur", "faux": "Faux du Fermier", "arc3": "Arc 
 fb = []
 for i, (key, (j, p, e, lv)) in enumerate(CRP.items(), 1):
     lab = f'[{gs(ICON[key])},{{text:" {NOMF[key]}  ",color:"$(c_{key})",italic:false}},{gs("cristal_" + j)},{{text:" {p}",color:"$(c_{key})"}}' + \
-          (f',{{text:"  "}},{gs("eclat")},{{text:" {e}",color:"$(c_{key})"}}' if e else "") + "]"
+          (f',{{text:"  "}},{gs("eclat")},{{text:" {e}",color:"$(c_{key})"}}' if e else "") + f',{{text:"$(r_{key})",color:"green",bold:true}}]'
     fb.append(f'{{label:{lab},width:320,tooltip:{{text:"{FORGE_IT[key][4]}\\nPrix : {p} cristaux de {jobs[j]["name"]}' + (f' + {e} éclats de boss' if e else '') +
-              f' · {jobs[j]["name"]} niveau {lv}"}},action:{{type:"run_command",command:"trigger metiers set {400 + i}"}}}}')
+              f' · {jobs[j]["name"]} niveau {lv}\\nDéjà forgé ? Clique pour le récupérer gratuitement s’il est perdu (une fois toutes les 10 minutes)."}},action:{{type:"run_command",command:"trigger metiers set {400 + i}"}}}}')
 for i, (key, e) in enumerate(COMMUN.items(), 6):
-    lab = f'[{gs(ICON[key])},{{text:" {NOMF[key]}  ",color:"$(c_{key})",italic:false}},{gs("eclat")},{{text:" {e}",color:"$(c_{key})"}}]'
-    fb.append(f'{{label:{lab},width:320,tooltip:{{text:"{FORGE_IT[key][4]}\\nPrix : {e} éclats de boss"}},action:{{type:"run_command",command:"trigger metiers set {400 + i}"}}}}')
+    lab = f'[{gs(ICON[key])},{{text:" {NOMF[key]}  ",color:"$(c_{key})",italic:false}},{gs("eclat")},{{text:" {e}",color:"$(c_{key})"}},{{text:"$(r_{key})",color:"green",bold:true}}]'
+    fb.append(f'{{label:{lab},width:320,tooltip:{{text:"{FORGE_IT[key][4]}\\nPrix : {e} éclats de boss\\nDéjà forgé ? Clique pour le récupérer gratuitement s’il est perdu (une fois toutes les 10 minutes)."}},action:{{type:"run_command",command:"trigger metiers set {400 + i}"}}}}')
 fo = []
 for i, (kk, ic, tipc) in enumerate((("sag", "forge_cristal_sagesse", "+10 % d’XP de métier avec cet outil."),
                                     ("for", "forge_cristal_fortune", "+1 Fortune, Butin ou Chance de la mer."),
@@ -337,17 +341,37 @@ w(F + "forge/menu_dialog.mcfunction",
 # achats
 for i, (key, (j, p, e, lv)) in enumerate(CRP.items(), 1):
     w(F + f"forge/acheter_{key}.mcfunction", "\n".join([
+        f"execute if score @s m.fo_{key} matches 1 run return run function {NS}:forge/recup_{key}",
         f"execute unless score @s m.{j}_lvl matches {lv}.. run return run {tr(f'Il faut être niveau {lv} en {jobs[j][chr(110)+chr(97)+chr(109)+chr(101)]}.', 'red')}",
         f"execute unless score @s m.cr_{j} matches {p}.. run return run {tr('Pas assez de cristaux.', 'red')}",
         f"execute unless score @s m.ecl matches {e}.. run return run {tr('Pas assez d’éclats de boss.', 'red')}",
         f"scoreboard players remove @s m.cr_{j} {p}", f"scoreboard players remove @s m.ecl {e}",
-        f"function {NS}:forge/donner_{key}", "playsound minecraft:block.anvil.use master @s ~ ~ ~ 1 1",
+        f"function {NS}:forge/donner_{key}", f"scoreboard players set @s m.fo_{key} 1", "playsound minecraft:block.anvil.use master @s ~ ~ ~ 1 1",
         tr(f"Tu as forgé : {NOMF[key]}.", "gold"), f"function {NS}:forge/boutique"]))
 for key, e in COMMUN.items():
     w(F + f"forge/acheter_{key}.mcfunction", "\n".join([
+        f"execute if score @s m.fo_{key} matches 1 run return run function {NS}:forge/recup_{key}",
         f"execute unless score @s m.ecl matches {e}.. run return run {tr('Pas assez d’éclats de boss.', 'red')}",
-        f"scoreboard players remove @s m.ecl {e}", f"function {NS}:forge/donner_{key}",
+        f"scoreboard players remove @s m.ecl {e}", f"function {NS}:forge/donner_{key}", f"scoreboard players set @s m.fo_{key} 1",
         "playsound minecraft:block.anvil.use master @s ~ ~ ~ 1 1", tr(f"Tu as forgé : {NOMF[key]}.", "gold"), f"function {NS}:forge/boutique"]))
+# récupération d'un objet de la Forge perdu : gratuit, s'il n'est ni sur le joueur ni dans son coffre de l'Ender,
+# une fois toutes les 10 minutes (même règle que les outils de métier)
+for key in list(CRP) + list(COMMUN):
+    poss = [f"container.* {FSEL(key)}", f"weapon.offhand {FSEL(key)}", f"armor.chest {FSEL(key)}", f"enderchest.* {FSEL(key)}"]
+    if key == "lasso":
+        poss += [f"container.* {FSEL('lasso_plein')}", f"weapon.offhand {FSEL('lasso_plein')}", f"enderchest.* {FSEL('lasso_plein')}"]
+    RC_ = [f"execute if items entity @s {p_} run return run {tr(f'Tu as déjà ton objet sur toi ou dans ton coffre de l’Ender : {NOMF[key]}.')}" for p_ in poss]
+    RC_ += ["scoreboard players operation @s m.tmp = @s m.fcd_" + key, "scoreboard players operation @s m.tmp /= #60 m.const",
+            "scoreboard players operation @s m.tmp /= #2 m.const", "scoreboard players add @s m.tmp 1",
+            f'execute if score @s m.fcd_{key} matches 1.. run return run tellraw @s ' + PREFIX + ',{"text":"Patiente encore ","color":"red"},{"score":{"name":"@s","objective":"m.tmp"},"color":"yellow"},{"text":" min avant de le récupérer.","color":"red"}]',
+            f"scoreboard players set @s m.fcd_{key} 1200"]
+    if key == "lasso":
+        RC_.append("tag @s remove metiers.lasso_plein")
+    RC_ += [f"function {NS}:forge/donner_{key}", "playsound minecraft:block.anvil.use master @s ~ ~ ~ 1 1.4",
+            tr(f"Voici ton objet de la Forge : {NOMF[key]}. Pas besoin de le repayer.", "green"), f"function {NS}:forge/boutique"]
+    w(F + f"forge/recup_{key}.mcfunction", "\n".join(RC_))
+    w(F + f"admin/forge_{key}.mcfunction", "\n".join([f"scoreboard players set @s m.fo_{key} 1",
+                                                       tr(f"Tu peux récupérer gratuitement : {NOMF[key]} (G, Forge, Boutique).", "green")]))
 for c, (pr, lv, sc, only) in CRIS.items():
     D = [f"execute if items entity @s weapon.mainhand {SEL(j)} run return run function {NS}:forge/sertir_{c}_{j}" for j in JL]
     D.append(tr("Tiens ton outil de métier en main.", "red"))

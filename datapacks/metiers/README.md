@@ -38,6 +38,12 @@ Touche G (ou menu Échap) pour ouvrir le menu des métiers, ou `/trigger metiers
 
 Commandes admin : `/function metiers:boss/alerte` (boss suivant de la rotation dans 2 min), `/function metiers:heure/lancer`, `/function metiers:defis/nouveaux`, `/function metiers:defis/semaine`.
 
+## Mise à jour 24.1 (23/11/2026)
+
+Boss : butin refait (2 tirages par niveau de difficulté, +1 au plus gros dégât, objets enchantés au niveau 30, débris antiques, minerais en blocs, disques), butin rare à 15 % par niveau de difficulté (+15 % au plus gros dégât) avec une relique propre à chaque boss (Hache du Colosse, Arc de la Reine, Trident du givre, Plastron du Brasier, Arbalète du Creeper). Corrections : le boss apparaît à 4 à 12 blocs du joueur, à sa hauteur, sur un sol avec 6 blocs d'air (avant, à la surface au-dessus d'un joueur en grotte ou sur le toit du Nether) ; PV plafonnés à 1 000 (le jeu bloque à 1 024, la barre de boss ne partait plus pleine à 4 joueurs et plus) et Résistance pour les gros groupes ; bond et clignement seulement vers un endroit libre (le boss restait coincé dans les murs) ; beau temps pendant le Brasier (la pluie lui retirait des PV).
+
+Forge : un objet forgé (marteau, faux, arc triple, lasso, parchemin, aimant, cape) se récupère gratuitement dans la boutique s'il est perdu, comme les outils de métier : il ne doit être ni sur le joueur ni dans son coffre de l'Ender, une fois toutes les 10 minutes. Un joueur qui a déjà l'objet sur lui est noté comme propriétaire automatiquement ; pour un objet perdu avant la mise à jour, voir `admin/forge_<objet>` dans le guide admin.
+
 ## Interface « Forge »
 
 Le resource pack recolore toute l'interface vanilla (inventaire, conteneurs, barre d'action, info-bulles, curseurs, boutons) au style de la Forge. Script : `sources/resourcepack/interface_forge.py <textures gui vanilla 26.x> metiers_resourcepack.zip`, puis `sources/resourcepack/correctifs_rp.py metiers_resourcepack.zip`.
