@@ -247,7 +247,7 @@ FG += [f"execute store result storage {NS}:fg cr_{j} int 1 run scoreboard player
 for key, (j, p, e, lv) in CRP.items():
     FG += [f'data modify storage {NS}:fg c_{key} set value "red"',
            f'execute if score @s m.cr_{j} matches {p}.. if score @s m.ecl matches {e}.. run data modify storage {NS}:fg c_{key} set value "yellow"',
-           f'execute unless score @s m.{j}_lvl matches {lv}.. run data modify storage {NS}:fg c_{key} set value "dark_gray"']
+           f'execute unless score @s m.{j}_lvl matches {lv}.. unless score @s m.{j}_pr matches 1.. run data modify storage {NS}:fg c_{key} set value "dark_gray"']
 for key, e in COMMUN.items():
     FG += [f'data modify storage {NS}:fg c_{key} set value "red"', f'execute if score @s m.ecl matches {e}.. run data modify storage {NS}:fg c_{key} set value "yellow"']
 for key in list(CRP) + list(COMMUN):
@@ -285,8 +285,8 @@ for j, d in jobs.items():
             continue
         I += [f'data modify storage {NS}:fg l_{kk} set value "{lab} · {pr}"', f'data modify storage {NS}:fg k_{kk} set value "red"',
               f'execute if score @s m.cr_{j} matches {pr}.. if score #us m.tmp < #sl m.tmp run data modify storage {NS}:fg k_{kk} set value "yellow"',
-              f'execute unless score @s m.{j}_lvl matches {lv}.. run data modify storage {NS}:fg l_{kk} set value "✖ {lab} · niv. {lv}"',
-              f'execute unless score @s m.{j}_lvl matches {lv}.. run data modify storage {NS}:fg k_{kk} set value "dark_gray"',
+              f'execute unless score @s m.{j}_lvl matches {lv}.. unless score @s m.{j}_pr matches 1.. run data modify storage {NS}:fg l_{kk} set value "✖ {lab} · niv. {lv}"',
+              f'execute unless score @s m.{j}_lvl matches {lv}.. unless score @s m.{j}_pr matches 1.. run data modify storage {NS}:fg k_{kk} set value "dark_gray"',
               f'execute if score @s m.{sc}_{j} matches 1 run data modify storage {NS}:fg l_{kk} set value "✔ {lab} serti · clic pour le retirer"',
               f'execute if score @s m.{sc}_{j} matches 1 run data modify storage {NS}:fg k_{kk} set value "green"']
     if j in EFF_J:
@@ -296,8 +296,8 @@ for j, d in jobs.items():
             I += [f'execute if score @s m.ceff_{j} matches {n} run data modify storage {NS}:fg l_eff set value "Efficacité {rom} · {EFFC[n]}"',
                   f'execute if score @s m.ceff_{j} matches {n} run data modify storage {NS}:fg k_eff set value "red"',
                   f'execute if score @s m.ceff_{j} matches {n} if score @s m.cr_{j} matches {EFFC[n]}.. run data modify storage {NS}:fg k_eff set value "yellow"',
-                  f'execute if score @s m.ceff_{j} matches {n} unless score @s m.{j}_lvl matches {EFFL[n]}.. run data modify storage {NS}:fg l_eff set value "✖ Efficacité {rom} · niv. {EFFL[n]}"',
-                  f'execute if score @s m.ceff_{j} matches {n} unless score @s m.{j}_lvl matches {EFFL[n]}.. run data modify storage {NS}:fg k_eff set value "dark_gray"']
+                  f'execute if score @s m.ceff_{j} matches {n} unless score @s m.{j}_lvl matches {EFFL[n]}.. unless score @s m.{j}_pr matches 1.. run data modify storage {NS}:fg l_eff set value "✖ Efficacité {rom} · niv. {EFFL[n]}"',
+                  f'execute if score @s m.ceff_{j} matches {n} unless score @s m.{j}_lvl matches {EFFL[n]}.. unless score @s m.{j}_pr matches 1.. run data modify storage {NS}:fg k_eff set value "dark_gray"']
     else:
         I.append(f'data modify storage {NS}:fg l_eff set value "Efficacité : pas pour cet outil"')
     w(F + f"forge/infos_{j}.mcfunction", "\n".join(I))
@@ -351,7 +351,7 @@ w(F + "forge/menu_dialog.mcfunction",
 for i, (key, (j, p, e, lv)) in enumerate(CRP.items(), 1):
     w(F + f"forge/acheter_{key}.mcfunction", "\n".join([
         f"execute if score @s m.fo_{key} matches 1 run return run function {NS}:forge/recup_{key}",
-        f"execute unless score @s m.{j}_lvl matches {lv}.. run return run {tr(f'Il faut être niveau {lv} en {jobs[j][chr(110)+chr(97)+chr(109)+chr(101)]}.', 'red')}",
+        f"execute unless score @s m.{j}_lvl matches {lv}.. unless score @s m.{j}_pr matches 1.. run return run {tr(f'Il faut être niveau {lv} en {jobs[j][chr(110)+chr(97)+chr(109)+chr(101)]}.', 'red')}",
         f"execute unless score @s m.cr_{j} matches {p}.. run return run {tr('Pas assez de cristaux.', 'red')}",
         f"execute unless score @s m.ecl matches {e}.. run return run {tr('Pas assez d’éclats de boss.', 'red')}",
         f"scoreboard players remove @s m.cr_{j} {p}", f"scoreboard players remove @s m.ecl {e}",
@@ -391,7 +391,7 @@ for c, (pr, lv, sc, only) in CRIS.items():
             continue
         w(F + f"forge/sertir_{c}_{j}.mcfunction", "\n".join([
             f"execute if score @s m.{sc}_{j} matches 1 run return run function {NS}:forge/desertir_{c}_{j}",
-            f"execute unless score @s m.{j}_lvl matches {lv}.. run return run {tr(f'Il faut être niveau {lv} dans ce métier.', 'red')}",
+            f"execute unless score @s m.{j}_lvl matches {lv}.. unless score @s m.{j}_pr matches 1.. run return run {tr(f'Il faut être niveau {lv} dans ce métier.', 'red')}",
             "scoreboard players set #sl m.tmp 0",
             f"execute if score @s m.{j}_out matches 3.. run scoreboard players add #sl m.tmp 1",
             f"execute if score @s m.{j}_out matches 6.. run scoreboard players add #sl m.tmp 1",
@@ -417,7 +417,7 @@ for j in JL:
         w(F + f"forge/eff_{j}.mcfunction", tr("L’Efficacité ne va pas sur cet outil.", "red")); continue
     E = [f"execute if score @s m.ceff_{j} matches 7.. run return run {tr('Efficacité déjà au maximum.', 'red')}"]
     for n in range(7):
-        E += [f"execute if score @s m.ceff_{j} matches {n} unless score @s m.{j}_lvl matches {EFFL[n]}.. run return run {tr(f'Il faut être niveau {EFFL[n]} dans ce métier.', 'red')}",
+        E += [f"execute if score @s m.ceff_{j} matches {n} unless score @s m.{j}_lvl matches {EFFL[n]}.. unless score @s m.{j}_pr matches 1.. run return run {tr(f'Il faut être niveau {EFFL[n]} dans ce métier.', 'red')}",
               f"execute if score @s m.ceff_{j} matches {n} unless score @s m.cr_{j} matches {EFFC[n]}.. run return run {tr('Pas assez de cristaux.', 'red')}",
               f"execute if score @s m.ceff_{j} matches {n} run scoreboard players remove @s m.cr_{j} {EFFC[n]}"]
     E += [f"scoreboard players add @s m.ceff_{j} 1", f"function {NS}:{j}/outil_donner",

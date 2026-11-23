@@ -8,12 +8,12 @@ Inspiration : *Spooky Scary Creatures*. Aucun asset n'en est repris : textures e
 
 | Créature | Où, quand | Ce qu'elle fait |
 |---|---|---|
-| **SlenderMan** | Forêts et taïgas, la nuit | Silhouette immobile au loin. Il se rapproche quand on ne le regarde pas. Le fixer donne obscurité puis nausée ; ensuite il disparaît, ou il se réveille et attaque. |
+| **SlenderMan** | Surface la nuit, surtout forêts et taïgas | Silhouette immobile au loin. Il se rapproche quand on ne le regarde pas. Le fixer donne obscurité puis nausée ; ensuite il disparaît, ou il se réveille et attaque. |
 | **Herobrine** | Surface, la nuit | Observe de loin et s'évanouit quand on approche. Une fois sur quatre, il surgit dans le dos du joueur et se bat. |
-| **Siren Head** | Plaines, prairies, savanes, la nuit (très rare) | Géant de 8 m, lent. Ses sirènes s'entendent de très loin. |
-| **La Nonne** | Grottes sous la couche 40, dans le noir | Apparaît dans le dos du joueur. Ses coups aveuglent et affaiblissent. |
-| **Le Clown** | Sous terre, dans le noir | On entend son rire. Ses coups ralentissent. À sa mort, son ballon rouge s'envole. |
-| **Pinhead** | Nether, ou en surface vers minuit (très rare) | Ses chaînes attirent et ralentissent. Sous la moitié de sa vie, il appelle deux cénobites. |
+| **Siren Head** | Surface la nuit, surtout plaines, prairies, savanes (rare) | Géant de 8 m, lent. Ses sirènes s'entendent de très loin. |
+| **La Nonne** | Sous terre, sous la couche 62 | Apparaît dans le dos du joueur. Ses coups aveuglent et affaiblissent. |
+| **Le Clown** | Sous terre, sous la couche 62 | On entend son rire. Ses coups ralentissent. À sa mort, son ballon rouge s'envole. |
+| **Pinhead** | Nether, ou en surface la nuit (rare) | Ses chaînes attirent et ralentissent. Sous la moitié de sa vie, il appelle deux cénobites. |
 
 Le pack est « effrayant mais équitable » : aucun bloc n'est cassé ni modifié.
 
@@ -22,6 +22,8 @@ Chaque créature est un mob vanilla **invisible** (zombie ou husk) qui fournit l
 - Slender, Siren Head et le ballon sont des **statues** (`item_display` passager du mob).
 
 ## Apparitions
+
+Réglages du 23/11/2026 (Samuel) : environ une rencontre par nuit et par joueur en surface (4,8 % par tirage, 7,8 % en forêt, 6,8 % en plaine), une toutes les 20 min environ sous terre (5 %). Plus de condition de lumière sous terre (une torche n'empêche plus rien), Nonne dès la couche 62, Pinhead toute la nuit. Les nouvelles chances remplacent une fois les anciennes au chargement (`#ver hr.cfg`). Un message discret « Quelque chose rôde près d'ici... » prévient les joueurs à 64 blocs. SlenderMan et Herobrine : le regard est détecté par un rayon depuis les yeux (le prédicat `looking_at` ne voyait pas la statue), SlenderMan fait face au joueur, et les téléportations le tournent vers lui. Butin corrigé au format 26.x (`modifier` et `type` : avec `functions`, aucune créature ne lâchait rien) et enrichi, avec une chance sur 4 d'un objet rare.
 
 - Un tirage toutes les 30 s par joueur, s'il est dans le bon lieu. Les chances sont exprimées pour mille.
 - Il n'y a qu'une créature à la fois dans un rayon de 128 blocs, et 10 min d'attente par joueur entre deux apparitions.

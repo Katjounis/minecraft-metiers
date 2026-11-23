@@ -89,10 +89,9 @@ wj(f"data/{NS}/predicate/lieu/plaine.json", {"type": "minecraft:all_of", "terms"
     {"type": "minecraft:any_of", "terms": [
         loc(biomes="#minecraft:is_savanna"),
         loc(biomes=["minecraft:plains", "minecraft:sunflower_plains", "minecraft:meadow", "minecraft:snowy_plains"])]}]})
-wj(f"data/{NS}/predicate/lieu/grotte.json",
-   loc(**OW, can_see_sky=False, position={"y": {"max": 40}}, light={"light": {"max": 7}}))
-wj(f"data/{NS}/predicate/lieu/sous_terre.json",
-   loc(**OW, can_see_sky=False, position={"y": {"max": 62}}, light={"light": {"max": 7}}))
+# sous terre : plus de condition de lumière (une torche n'empêche plus rien), dès la couche 62
+wj(f"data/{NS}/predicate/lieu/grotte.json", loc(**OW, can_see_sky=False, position={"y": {"max": 62}}))
+wj(f"data/{NS}/predicate/lieu/sous_terre.json", loc(**OW, can_see_sky=False, position={"y": {"max": 62}}))
 wj(f"data/{NS}/predicate/lieu/nether.json", loc(dimension="minecraft:the_nether"))
 for nom, a, b in (("nuit", 13000, 23000), ("minuit", 17500, 18500)):
     wj(f"data/{NS}/predicate/{nom}.json", {"type": "minecraft:time_check", "clock": "minecraft:overworld",
@@ -105,7 +104,7 @@ LIEU = {  # lignes de la fonction lieu/<id> (renvoie 1 si le joueur est dans le 
     "grotte": ["execute if predicate horreur:lieu/grotte run return 1"],
     "sous_terre": ["execute if predicate horreur:lieu/sous_terre run return 1"],
     "enfer": ["execute if predicate horreur:lieu/nether run return 1",
-              "execute if score #minuit hr.tmp matches 1 if predicate horreur:lieu/surface run return 1"],
+              "execute if score #nuit hr.tmp matches 1 if predicate horreur:lieu/surface run return 1"],
 }
 for c in CREATURES:
     w(F + f"lieu/{c['id']}.mcfunction", "\n".join(LIEU[c["lieu"]] + ["return fail"]))
@@ -121,11 +120,13 @@ w(F + "load.mcfunction", "\n".join(
     [f"scoreboard objectives add {o} dummy" for o in objs]
     + ["scoreboard objectives add bestiaire trigger",
        "execute unless score #init hr.cfg matches 1 run function horreur:config/defaut",
+       # version 2 des réglages (apparitions plus fréquentes) : remplace les anciennes chances une fois
+       "execute unless score #ver hr.cfg matches 2.. run function horreur:config/defaut",
        "schedule function horreur:seconde 20t replace"]))
 w(F + "config/defaut.mcfunction", "\n".join(
     [f"scoreboard players set #ch_{c['id']} hr.cfg {c['chance']}" for c in CREATURES]
     + ["scoreboard players set #cd hr.cfg 600", "scoreboard players set #actif hr.cfg 1",
-       "scoreboard players set #init hr.cfg 1"]))
+       "scoreboard players set #init hr.cfg 1", "scoreboard players set #ver hr.cfg 2"]))
 w(F + "config/debug.mcfunction", "\n".join(
     ["# Test : apparitions tres frequentes (toutes les 30 s, sans delai). Revenir avec horreur:config/defaut"]
     + [f"scoreboard players set #ch_{c['id']} hr.cfg 500" for c in CREATURES]
@@ -210,6 +211,8 @@ tenter = ["# Une seule creature a la fois autour d'un joueur",
           "execute store result score #r hr.tmp run random value 1..1000"]
 for c in CREATURES:
     k = c["id"]
+    if c.get("bonus"):   # plus de chances dans son biome de prédilection
+        tenter.append(f"execute if function horreur:lieu/{k} if predicate horreur:lieu/{c['bonus'][0]} run scoreboard players remove #r hr.tmp {c['bonus'][1]}")
     tenter += [f"execute if function horreur:lieu/{k} run scoreboard players operation #r hr.tmp -= #ch_{k} hr.cfg",
                f"execute if score #r hr.tmp matches ..0 run return run function horreur:spawn/{k}"]
 w(F + "spawn/tenter.mcfunction", "\n".join(tenter))
@@ -244,7 +247,8 @@ execute if score #surf hr.tmp matches 1 as @e[type=minecraft:marker,tag=hr.pt,li
 execute as @e[type=minecraft:marker,tag=hr.pt,limit=1] at @s run function horreur:sol/trouver
 execute unless score #ok hr.tmp matches 1 run return run function horreur:spawn/essai with storage horreur:t s
 scoreboard players operation @s hr.cd = #cd hr.cfg
-$execute at @e[type=minecraft:marker,tag=hr.pt,limit=1] run function horreur:invoquer/$(c)""")
+$execute at @e[type=minecraft:marker,tag=hr.pt,limit=1] run function horreur:invoquer/$(c)
+execute at @e[type=minecraft:marker,tag=hr.pt,limit=1] run tellraw @a[distance=..64,gamemode=!spectator] {"text":"Quelque chose rôde près d'ici...","color":"dark_gray","italic":true}""")
 
 # Recherche du sol a partir de la position de l'entite executante (marqueur) : #lim pas max, #h blocs libres
 w(F + "sol/trouver.mcfunction", """
@@ -358,11 +362,22 @@ execute unless score #ok hr.tmp matches 1 run tp @e[type=minecraft:marker,tag=hr
 $execute at @e[type=minecraft:marker,tag=hr.pt,limit=1] align xz positioned ~0.5 ~ ~0.5 run function horreur:invoquer/$(c)
 kill @e[type=minecraft:marker,tag=hr.pt]""")
 
-# Butin
+# Butin (format 26.x : « modifier » et « type ») : chaque objet courant tombe, plus une chance sur 4 d'un objet rare
+def entree(it, a, b, poids=1):
+    e = {"type": "minecraft:item", "name": f"minecraft:{it}", "weight": poids}
+    mods = []
+    if (a, b) != (1, 1):
+        mods.append({"type": "minecraft:set_count", "count": {"type": "minecraft:uniform", "min": a, "max": b}})
+    if it == "enchanted_book":
+        mods.append({"type": "minecraft:enchant_with_levels", "levels": 30})
+    if mods:
+        e["modifier"] = mods
+    return e
 for c in CREATURES:
-    pools = [{"rolls": 1, "entries": [{"type": "minecraft:item", "name": it, "functions": [
-        {"function": "minecraft:set_count", "count": {"type": "minecraft:uniform", "min": a, "max": b}}]}]}
-        for it, a, b in c["butin"]]
+    pools = [{"rolls": 1, "entries": [entree(it, a, b)]} for it, a, b, _ in c["butin"]]
+    rares = [entree(it, a, b, p) for it, a, b, p in c.get("rare", [])]
+    if rares:
+        pools.append({"rolls": 1, "entries": rares + [{"type": "minecraft:empty", "weight": 3 * sum(p for *_, p in c["rare"])}]})
     wj(f"data/{NS}/loot_table/creature/{c['id']}.json", {"type": "minecraft:entity", "pools": pools})
 
 # ---------------------------------------------------------------------------------------------
@@ -371,20 +386,40 @@ w(F + "c/comportement.mcfunction", "\n".join(
     f"execute if entity @s[tag=hr.c.{k}] run return run function horreur:c/{k}" for k in IDS))
 
 JOUEUR = "gamemode=!spectator"
+# Regard : rayon depuis les yeux de chaque joueur proche, arrêté par les blocs pleins ; les joueurs qui voient
+# la créature (@s, taguée hr.cible) reçoivent le tag hr.voit et #vu passe à 1
+w(F + "c/vu.mcfunction", f"""
+tag @a remove hr.voit
+scoreboard players set #vu hr.tmp 0
+tag @s add hr.cible
+execute as @a[distance=..64,{JOUEUR}] at @s anchored eyes positioned ^ ^ ^1 run function horreur:c/rayon
+tag @s remove hr.cible""")
+w(F + "c/rayon.mcfunction", """
+scoreboard players set #p hr.tmp 0
+function horreur:c/rayon_pas""")
+w(F + "c/rayon_pas.mcfunction", """
+execute if entity @e[tag=hr.cible,distance=..1.8] run return run function horreur:c/voit
+execute positioned ~ ~-1.6 ~ if entity @e[tag=hr.cible,distance=..1.4] run return run function horreur:c/voit
+execute unless block ~ ~ ~ #horreur:passable run return 0
+scoreboard players add #p hr.tmp 1
+execute if score #p hr.tmp matches ..63 positioned ^ ^ ^1 run function horreur:c/rayon_pas""")
+w(F + "c/voit.mcfunction", "tag @s add hr.voit\nscoreboard players set #vu hr.tmp 1")
 w(F + "c/slender.mcfunction", f"""
 particle minecraft:portal ~ ~1.6 ~ 0.3 1 0.3 0.4 4
 execute unless entity @a[distance=..64,{JOUEUR}] run return 0
 execute if score @s hr.etat matches 2 run return run function horreur:c/slender_chasse
-execute if entity @a[distance=..64,{JOUEUR},predicate=horreur:regarde/slender] run return run function horreur:c/slender_fixe
+rotate @s facing entity @p[{JOUEUR}] feet
+function horreur:c/vu
+execute if score #vu hr.tmp matches 1 run return run function horreur:c/slender_fixe
 scoreboard players set @s hr.r 0
 scoreboard players add @s hr.t 5
 execute if score @s hr.t matches 60.. run function horreur:c/slender_approche""")
 w(F + "c/slender_fixe.mcfunction", f"""
 scoreboard players add @s hr.r 5
-execute if score @s hr.r matches 20 as @a[distance=..64,predicate=horreur:regarde/slender] run effect give @s minecraft:darkness 8 0 true
-execute if score @s hr.r matches 20 as @a[distance=..64,predicate=horreur:regarde/slender] at @s run playsound {son('slender_statique', 'minecraft:block.portal.ambient')} hostile @s ~ ~ ~ 0.8 1
-execute if score @s hr.r matches 40 as @a[distance=..64,predicate=horreur:regarde/slender] at @s run playsound {son('slender_statique', 'minecraft:entity.enderman.stare')} hostile @s ~ ~ ~ 1 0.8
-execute if score @s hr.r matches 40 as @a[distance=..64,predicate=horreur:regarde/slender] run effect give @s minecraft:nausea 8 0 true
+execute if score @s hr.r matches 20 as @a[tag=hr.voit] run effect give @s minecraft:darkness 8 0 true
+execute if score @s hr.r matches 20 as @a[tag=hr.voit] at @s run playsound {son('slender_statique', 'minecraft:block.portal.ambient')} hostile @s ~ ~ ~ 0.8 1
+execute if score @s hr.r matches 40 as @a[tag=hr.voit] at @s run playsound {son('slender_statique', 'minecraft:entity.enderman.stare')} hostile @s ~ ~ ~ 1 0.8
+execute if score @s hr.r matches 40 as @a[tag=hr.voit] run effect give @s minecraft:nausea 8 0 true
 execute if score @s hr.r matches 60.. run function horreur:c/slender_decide""")
 w(F + "c/slender_decide.mcfunction", """
 execute store result score #r hr.tmp run random value 1..2
@@ -413,13 +448,15 @@ kill @e[type=minecraft:marker,tag=hr.pt2]""")
 w(F + "c/teleporter.mcfunction", """
 particle minecraft:portal ~ ~1.5 ~ 0.3 1 0.3 0.6 30
 tp @s @e[type=minecraft:marker,tag=hr.pt2,limit=1]
+execute at @s run rotate @s facing entity @p[gamemode=!spectator] feet
 execute at @s run particle minecraft:portal ~ ~1.5 ~ 0.3 1 0.3 0.6 30""")
 
 w(F + "c/herobrine.mcfunction", f"""
 execute unless entity @a[distance=..64,{JOUEUR}] run return 0
 execute if score @s hr.etat matches 2 run return 0
 execute if entity @a[distance=..14,{JOUEUR}] run return run function horreur:c/herobrine_decide
-execute if entity @a[distance=..64,{JOUEUR},predicate=horreur:regarde/herobrine] run scoreboard players add @s hr.r 5
+function horreur:c/vu
+execute if score #vu hr.tmp matches 1 run scoreboard players add @s hr.r 5
 execute if score @s hr.r matches 60.. run function horreur:c/herobrine_decide""")
 w(F + "c/herobrine_decide.mcfunction", f"""
 execute store result score #r hr.tmp run random value 1..4
