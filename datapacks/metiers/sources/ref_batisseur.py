@@ -67,3 +67,29 @@ _font["providers"] = [p for p in _font["providers"] if not (set("".join(p.get("c
 json.dump(_font, open(os.path.join(_A, "font", "icones.json"), "w", encoding="utf-8"), ensure_ascii=False)
 
 w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 25 : 10e métier Bâtisseur, quêtes, guildes, synergies, boss plus durs, barème illustré, menu G commun aux trois packs","color":"gold"}')
+
+# ---------------------------------------------------------------- 25.1 : un id d'objet invalide (« chain », renommé
+# « iron_chain » en 1.21.9) faisait refuser tout load.mcfunction par le jeu : les scores du Bâtisseur n'existaient pas,
+# niveau 0, et chaque test de niveau échouait en silence, ce qui laissait acheter toutes les compétences.
+# Migration unique : on retire ce qui a pu être pris ainsi (personne n'a pu gagner de vrai niveau de Bâtisseur avant).
+add_lines(F + "joueur.mcfunction", [f'execute unless entity @s[tag=metiers.v25] run function {NS}:k/migration25'])
+w(F + "k/migration25.mcfunction", "\n".join(
+    ["tag @s add metiers.v25"] + [f"tag @s remove metiers.sk.k{n}" for n in range(1, 7)] +
+    [f"advancement revoke @s only {NS}:k/competence_{n}" for n in range(1, 7)] +
+    [f"function {NS}:k/init", "clear @s *[minecraft:custom_data~{metiers_outil:\"k\"}]"]))
+
+# Garde-fou : tout critère de statistique sur un OBJET (used, crafted, picked_up, dropped) doit exister en 26.1,
+# sinon le jeu refuse la fonction entière qui le contient (liste officielle tirée de minecraft-data, dans Commerce).
+_dn = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "commerce", "sources", "donnees_26.1.json")
+if os.path.exists(_dn):
+    import re as _re
+    _it = json.load(open(_dn, encoding="utf-8"))["items"]
+    _ids = {i.replace("minecraft:", "") for i in (_it if isinstance(_it, list) else _it.keys())}
+    _bad = set()
+    for _dp, _, _fs in os.walk(ROOT):
+        for _fn in _fs:
+            if _fn.endswith(".mcfunction"):
+                for _m in _re.finditer(r"minecraft\.(?:used|crafted|picked_up|dropped):minecraft\.([a-z0-9_]+)", open(os.path.join(_dp, _fn), encoding="utf-8").read()):
+                    if _m.group(1) not in _ids:
+                        _bad.add(_m.group(1))
+    assert not _bad, f"objets inconnus en 26.1 dans des critères de statistiques : {sorted(_bad)}"
