@@ -46,6 +46,10 @@ Forge : un objet forgé (marteau, faux, arc triple, lasso, parchemin, aimant, ca
 
 Barème d'XP : touche G, « Barème d’XP » (ou le bouton en haut de la page d'un métier). Une page par métier, ce que rapporte chaque action avec les images du jeu (œufs d'apparition pour les créatures, textures des blocs et des objets). Les valeurs sont lues dans les tables de `datapack.py`, le barème suit si un poids change (`sources/ref_bareme.py`).
 
+## Prestige (24.2, 23/11/2026)
+
+Au niveau 100 d'un métier, le prestige remet le niveau à 1 mais garde les compétences, et la progression continue : le niveau suivant demande 40 + 10 x (niveau + 100 x étoiles) XP, donc le niveau 1 d'une étoile demande plus que le niveau 100 d'avant. Les points de compétence des niveaux passés restent acquis et toutes les compétences restent achetables. Chaque étoile n donne 100 x n cristaux du métier, 2 x n éclats de boss et 5 000 x n Écus (score `c.ecus` de Commerce), l'outil regagne ses étoiles dorées et un reflet, une annonce et un feu d'artifice. Une capacité de prestige par métier, débloquée à 1 étoile et renforcée à 3 et 5 (`sources/ref_prestige.py`, tags `metiers.sk.p<métier><1|3|5>`) : Sève dorée, Moisson, Filon, Exécution, Appât, Jumeaux, Érudit, Pas léger, Négociant. Aura de particules (bouton dans le menu G pour la couper) et cadre de titre Étoilé à 5 étoiles dans un métier.
+
 ## Interface « Forge »
 
 Le resource pack recolore toute l'interface vanilla (inventaire, conteneurs, barre d'action, info-bulles, curseurs, boutons) au style de la Forge. Script : `sources/resourcepack/interface_forge.py <textures gui vanilla 26.x> metiers_resourcepack.zip`, puis `sources/resourcepack/correctifs_rp.py metiers_resourcepack.zip`.

@@ -77,7 +77,7 @@ def note(t):
 
 BONUS = ('{text:"\\n\\nBonus : ",color:"aqua",bold:true},{text:"x2 pendant l’heure du métier, +10 % par étoile de prestige, '
          '+10 % avec le cristal de Sagesse sur l’outil. Poser ou jeter ce que tu viens de récolter retire l’XP gagnée. '
-         'Niveau suivant : 40 + 10 x ton niveau en XP (53 500 XP pour aller au niveau 100).",color:"gray"}')
+         'Niveau suivant : 40 + 10 x (niveau + 100 par étoile de prestige) en XP.",color:"gray"}')
 DEFI = note("Défi du jour réussi : la moitié d’un niveau du métier, 2 diamants et 16 fioles d’expérience.")
 
 PAGES = {}
@@ -144,7 +144,8 @@ BAREME_INTRO = {"b": "Tout ce qui sort d’un tronc.", "f": "Les cultures, ramas
                 "c": "Chaque créature tuée.", "p": "Chaque prise, avec des multiplicateurs.", "e": "Les naissances et la laine.",
                 "n": "Les niveaux dépensés à la table.", "x": "La distance parcourue et les découvertes.", "t": "Les échanges avec les villageois."}
 for j, d in jobs.items():
-    contenu = [f'{{text:"{BAREME_INTRO[j]}",color:"white"}}'] + PAGES[j] + [BONUS]
+    contenu = [f'{{text:"{BAREME_INTRO[j]}",color:"white"}}'] + PAGES[j] + [BONUS,
+               f'{{text:"\\n\\nPrestige ",color:"gold",bold:true}},{{text:"(niveau 100, 5 étoiles) : tu gardes tes compétences, la progression continue, +10 % d’XP par étoile et la capacité ",color:"gray"}},{{text:"{PCAP[j][0]}",color:"gold",bold:true}},{{text:" : {PCAP[j][1]}",color:"gray"}}']
     w(F + f"bareme/{j}.mcfunction",
       f'dialog show @s {{type:"minecraft:multi_action",title:[{gs("metier_" + j)},{{text:" Barème d’XP : {d["name"]}",color:"{d["color"]}",bold:true}}],'
       f'can_close_with_escape:true,pause:false,body:[{{type:"minecraft:plain_message",width:420,contents:[{{text:""}},{",".join(contenu)}]}}],'

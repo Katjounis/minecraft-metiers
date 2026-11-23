@@ -155,7 +155,7 @@ w(F + "defis/menu_dialog.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Défis",color:"aqua",bold:true},can_close_with_escape:true,pause:false,'
   'body:[' + ",".join(db) + '],actions:[{label:{text:"Afficher / masquer la barre",color:"white"},width:200,action:{type:"run_command",command:"trigger metiers set 7"}}],'
   'columns:1,exit_action:{label:"Retour",width:150,action:{type:"run_command",command:"trigger metiers set 1"}}}')
-w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 24.1 : refonte (outils 11 paliers, Forge, skins, 5 boss, défis de la semaine et collectifs), butin et reliques des boss, objets de la Forge récupérables","color":"gold"}')
+w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 24.2 : refonte (outils 11 paliers, Forge, skins, 5 boss, défis de la semaine et collectifs), butin et reliques des boss, objets de la Forge récupérables, prestige refait (compétences gardées, capacités de prestige)","color":"gold"}')
 
 # ---------------------------------------------------------------- objectifs des défis recréés une fois
 # Les listes de défis ont changé : certains objectifs dq.* existaient déjà sous le même nom avec l'ancien critère

@@ -70,7 +70,9 @@ for l in LOGS:
 for l in WOOD_ALL:
     jobs["b"]["src"].append((f"minecraft.mined:minecraft.{l}", 1, 1, f"b.mi.{l}",
                              [("b1", "chance_20", f"give @s minecraft:{l} 1"),
-                              ("b5", "chance_10", "give @s minecraft:charcoal 1")]))
+                              ("b5", "chance_10", "give @s minecraft:charcoal 1"),
+                              ("pb1", "chance_01", "give @s minecraft:golden_apple 1"), ("pb3", "chance_01", "give @s minecraft:golden_apple 1"),
+                              ("pb5", "chance_01", "give @s minecraft:golden_apple 1")]))
     jobs["b"]["src"].append((f"minecraft.used:minecraft.{l}", 1, -1, f"b.us.{l}", []))
 for s, x in STONES.items():
     jobs["m"]["src"].append((f"minecraft.mined:minecraft.{s}", x, 1, f"m.mi.{s}", []))
@@ -107,10 +109,11 @@ for b, x in BOSSES.items():
     jobs["c"]["src"].append((f"minecraft.killed:minecraft.{b}", x, 1, f"c.k.{b}", []))
 jobs["p"]["src"].append(("minecraft.custom:minecraft.fish_caught", 8, 1, "p.fish",
                          [("p3", "chance_20", "loot give @s loot minecraft:gameplay/fishing/fish"),
-                          ("p5", "chance_08", "loot give @s loot minecraft:gameplay/fishing/treasure")]))
+                          ("p5", "chance_08", "loot give @s loot minecraft:gameplay/fishing/treasure"),
+                          ("pp5", "chance_25", "loot give @s loot minecraft:gameplay/fishing/fish")]))
 # Éleveur : 2 points = 1 XP ; naissance 6 XP, laine ramassée 1/2 XP (poser ou jeter la laine la retire)
 jobs["e"]["src"].append(("minecraft.custom:minecraft.animals_bred", 16, 1, "e.bred",
-                         [("e3", "chance_30", "give @s minecraft:leather 2")]))
+                         [("e3", "chance_30", "give @s minecraft:leather 2"), ("pe1", None, "function metiers:e/jumeaux")]))
 for wl in ("white", "black", "gray", "light_gray", "brown", "red", "orange", "yellow", "lime", "green", "cyan",
            "light_blue", "blue", "purple", "magenta", "pink"):
     jobs["e"]["src"].append((f"minecraft.picked_up:minecraft.{wl}_wool", 1, 1, f"e.pu.{wl}",
@@ -806,7 +809,9 @@ title @s actionbar [{{"text":"+","color":"green"}},{{"score":{{"name":"@s","obje
 """)
 
     w(F + f"{j}/check.mcfunction", f"""
-scoreboard players operation @s m.{j}_need = @s m.{j}_lvl
+scoreboard players operation @s m.{j}_need = @s m.{j}_pr
+scoreboard players operation @s m.{j}_need *= #100 m.const
+scoreboard players operation @s m.{j}_need += @s m.{j}_lvl
 scoreboard players operation @s m.{j}_need *= #10 m.const
 scoreboard players operation @s m.{j}_need += #40 m.const
 execute if score @s m.{j}_lvl matches ..{MAXLVL-1} if score @s m.{j}_xp >= @s m.{j}_need run function {NS}:{j}/levelup
@@ -884,6 +889,9 @@ execute if score @s m.{j}_lvl matches ..{MAXLVL-1} if score @s m.{j}_xp >= @s m.
 scoreboard players operation @s m.tmp = @s m.{j}_lvl
 scoreboard players remove @s m.tmp 1
 scoreboard players operation @s m.tmp -= @s m.{j}_spent
+scoreboard players operation #ppr m.tmp = @s m.{j}_pr
+scoreboard players operation #ppr m.tmp *= #99 m.const
+scoreboard players operation @s m.tmp += #ppr m.tmp
 """)
 
     sk = SKILLS[j]
@@ -938,8 +946,8 @@ scoreboard players operation @s m.tmp -= @s m.{j}_spent
 
     for k, (name, cost, req, desc) in enumerate(sk, 1):
         B = [f"execute if entity @s[tag=metiers.sk.{j}{k}] run return run function {NS}:{j}/basculer_{k}",
-             f'execute unless score @s m.{j}_lvl matches {SKILL_LVL[k-1]}.. run tellraw @s ' + PREFIX + f',{{"text":"Il faut être niveau {SKILL_LVL[k-1]} en {d["name"]}.","color":"red"}}]',
-             f"execute unless score @s m.{j}_lvl matches {SKILL_LVL[k-1]}.. run return run function {NS}:{j}/arbre",
+             f'execute unless score @s m.{j}_lvl matches {SKILL_LVL[k-1]}.. unless score @s m.{j}_pr matches 1.. run tellraw @s ' + PREFIX + f',{{"text":"Il faut être niveau {SKILL_LVL[k-1]} en {d["name"]}.","color":"red"}}]',
+             f"execute unless score @s m.{j}_lvl matches {SKILL_LVL[k-1]}.. unless score @s m.{j}_pr matches 1.. run return run function {NS}:{j}/arbre",
              f"function {NS}:{j}/points"]
         if req:
             B += [f'execute unless entity @s[{reqsel(req)}] run tellraw @s ' + PREFIX + f',{{"text":"Il faut d\'abord débloquer : {" + ".join(sk[r-1][0] for r in req)}.","color":"red"}}]',
@@ -1276,6 +1284,7 @@ def outil_give(j, k):
         iid, ench, name, color, unb = it["iid"], dict(it["ench"]), it["name"], it["color"], it["unb"]
     if "efficiency" in ench: ench["efficiency"] = "$(eff)"
     if j in FORT_KEY: ench[FORT_KEY[j]] = "$(fort)"
+    if "lure" in ench: ench["lure"] = "$(lure)"
     e = ",".join(f'"minecraft:{a}":{v}' for a, v in ench.items())
     if j == "m": e = e.replace('"minecraft:fortune":$(fort)', '"minecraft:$(fk)":$(fort)')   # pioche : Fortune ou Toucher de soie
     lore = (f'[{{text:"Outil de {d["name"]}",color:"{d["color"]}",italic:false}},'
@@ -1283,13 +1292,13 @@ def outil_give(j, k):
             {"e": ',{text:"Clic droit : les animaux proches te suivent",color:"light_purple",italic:false}',
              "n": ',{text:"Clic droit : points de téléportation",color:"light_purple",italic:false}'}.get(j, "") + ']')
     comps = [f"minecraft:enchantments={{{e}}}",
-             f'minecraft:custom_name={{text:"{name}",color:"{color}",bold:true,italic:false}}',
+             f'minecraft:custom_name=[{{text:"$(et)",color:"gold",bold:true,italic:false}},{{text:"{name}",color:"{color}",bold:true,italic:false}}]',
              f"minecraft:lore={lore}",
              (f'minecraft:custom_data={{metiers_outil:"{j}",palier:{k},o:$(o),s:$(s)}}' if j in ("n", "t", "e") else
               f'minecraft:custom_data={{metiers_outil:"{j}",palier:{k},max:{ {"fishing_rod": 64, "carrot_on_a_stick": 25}.get(iid, MAXDUR.get(iid.split("_")[0], 250))},o:$(o),s:$(s)}}'),
              f'minecraft:item_model="metiers:{j}_{k}"',
              'minecraft:custom_model_data={strings:["$(skin)"]}',
-             "minecraft:enchantment_glint_override=false",
+             "minecraft:enchantment_glint_override=$(gl)",
              "minecraft:repair_cost=1000", "!minecraft:repairable", "minecraft:max_stack_size=1",
              'minecraft:rarity="epic"']
     if unb:
@@ -1423,24 +1432,33 @@ function {NS}:defis/creer_barre with storage {NS}:tmp
 # =====================================================================
 # PRESTIGE
 # =====================================================================
+# capacités de prestige : débloquées à 1 étoile, renforcées à 3 et 5 (code dans ref_prestige.py)
+PCAP = {"b": ("Sève dorée", "chaque bûche a 1 % de chance de donner une pomme dorée (2 % à 3 étoiles, 3 % à 5)."),
+        "f": ("Moisson", "en marchant, les cultures mûres autour de toi sont récoltées et replantées (rayon 1, puis 2, puis 3)."),
+        "m": ("Filon", "casser un minerai casse toute la veine d’un coup, avec ta pioche (8 blocs, puis 16, puis 32)."),
+        "c": ("Exécution", "un monstre que tu frappes sous 10 % de ses PV meurt sur le coup (15 % à 3 étoiles, 20 % à 5), hors boss."),
+        "p": ("Appât", "ta canne gagne Appât IV, puis V (le maximum utile du jeu), puis 25 % de chance d’une prise en plus."),
+        "e": ("Jumeaux", "une naissance a 20 % de chance de donner un deuxième petit (35 %, puis 50 %)."),
+        "n": ("Érudit", "20 % de chance que les niveaux dépensés à la table te soient rendus (35 %, puis 50 %)."),
+        "x": ("Pas léger", "Vitesse I, puis plus aucun dégât de chute, puis Vitesse II."),
+        "t": ("Négociant", "effet Héros du village I en permanence, puis III, puis V.")}
 for j, d in jobs.items():
     w(F + f"{j}/prestige_confirmer.mcfunction", "\n".join([
         f"execute if score @s m.{j}_lvl matches ..99 run return run {tr('Le prestige se débloque au niveau 100 du métier.', 'red')}",
         f"execute if score @s m.{j}_pr matches 5.. run return run {tr('Tu as déjà les 5 étoiles de prestige, bravo !', 'gold')}",
         f'dialog show @s {{type:"minecraft:confirmation",title:{{text:"★ Prestige {d["name"]}",color:"gold",bold:true}},can_close_with_escape:true,pause:false,'
-        f'body:[{{type:"minecraft:plain_message",width:300,contents:[{{text:"Ton métier repart au niveau 1 et tes compétences sont remises à zéro (tu regagnes les points en remontant).\\n\\n",color:"white"}},'
-        f'{{text:"Tu gardes :",color:"green",bold:true}},{{text:" ton outil au palier atteint.\\n",color:"white"}},'
-        f'{{text:"Tu gagnes :",color:"gold",bold:true}},{{text:" une étoile devant ton titre et +10 % d\'XP dans ce métier, pour toujours (5 étoiles max). Les récompenses de palier peuvent être regagnées.",color:"white"}}]}}],'
+        f'body:[{{type:"minecraft:plain_message",width:300,contents:[{{text:"Ton métier repart au niveau 1 et la progression continue : le niveau 1 du prestige demande plus d’XP que le niveau 100 d’avant.\\n\\n",color:"white"}},'
+        f'{{text:"Tu gardes :",color:"green",bold:true}},{{text:" toutes tes compétences, ton outil au palier atteint.\\n",color:"white"}},'
+        f'{{text:"Tu gagnes :",color:"gold",bold:true}},{{text:" une étoile devant ton titre et ton outil, +10 % d\'XP dans ce métier, 100 cristaux, 2 éclats et 5 000 Écus par numéro d\'étoile, et la capacité de prestige ",color:"white"}},{{text:"{PCAP[j][0]}",color:"gold",bold:true}},{{text:" : {PCAP[j][1]}\\nLes récompenses de palier peuvent être regagnées.",color:"white"}}]}}],'
         f'yes:{{label:{{text:"Passer prestige",color:"gold",bold:true}},width:150,action:{{type:"run_command",command:"trigger metiers set {320 + d["idx"]}"}}}},'
         f'no:{{label:{{text:"Annuler",color:"gray"}},width:150}}}}']))
     PR = [f"execute if score @s m.{j}_lvl matches ..99 run return 0",
           f"execute if score @s m.{j}_pr matches 5.. run return 0",
           f"scoreboard players add @s m.{j}_pr 1",
           f"scoreboard players set @s m.{j}_lvl 1", f"scoreboard players set @s m.{j}_xp 0",
-          f"scoreboard players set @s m.{j}_need 50", f"scoreboard players set @s m.{j}_spent 0",
-          f"scoreboard players set @s m.{j}_pal 0"]
-    PR += [f"tag @s remove metiers.sk.{j}{k}" for k in range(1, 7)]
-    PR += [f"advancement revoke @s from {NS}:{j}/competence_1", f"advancement revoke @s from {NS}:{j}/niveau_10",
+          f"scoreboard players set @s m.{j}_pal 0", f"function {NS}:{j}/check"]
+    PR += [f"function {NS}:prestige/gain_{j}"]
+    PR += [f"advancement revoke @s from {NS}:{j}/niveau_10",
            "tag @s add metiers.maj",
            'tellraw @a ' + PREFIX + f',{{"selector":"@s","color":"white"}},{{"text":" passe ","color":"gray"}},{{"text":"★ Prestige ","color":"gold","bold":true}},{{"score":{{"name":"@s","objective":"m.{j}_pr"}},"color":"gold","bold":true}},{{"text":" en {d["name"]} !","color":"{d["color"]}","bold":true}}]',
            "playsound minecraft:ui.toast.challenge_complete master @a ~ ~ ~ 1 0.8",
@@ -2108,7 +2126,7 @@ playsound minecraft:ui.toast.in master @s ~ ~ ~ 0.6 1.4
 """)
 
 # REFONTE (v24) : objets, armure 11 paliers, compétences, menus, Forge, skins, boss, défis
-for _mod in ("ref_base.py", "ref_skills.py", "ref_menu.py", "ref_boss.py", "ref_defis.py", "ref_bareme.py"):
+for _mod in ("ref_base.py", "ref_skills.py", "ref_menu.py", "ref_boss.py", "ref_defis.py", "ref_bareme.py", "ref_prestige.py"):
     exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), _mod), encoding="utf-8").read())
 
 # Compétences désactivables : une compétence achetée garde son tag metiers.sk.XN (achat, prérequis, menus),

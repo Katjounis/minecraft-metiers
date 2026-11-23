@@ -11,7 +11,7 @@ Dépôt : https://github.com/Katjounis/minecraft-metiers
 | `metiers.zip` | `world/datapacks/` sur le serveur | Toute la logique : métiers, niveaux, menus, défis, boss, etc. |
 | `metiers_resourcepack.zip` | Hébergé sur le GitHub, imposé par `server.properties` | Textures des outils évolutifs (64x64 animées), de l'armure (portée et icônes) et modèle 3D du heaume |
 
-Version actuelle du datapack : **24.1** (refonte : outils et armure sur 11 paliers, Forge, skins, 5 boss, défis de la semaine et collectifs ; depuis le 23/11/2026, butin et reliques des boss, apparition des boss corrigée, objets de la Forge récupérables). Pour vérifier en jeu : `/function metiers:version`.
+Version actuelle du datapack : **24.2** (refonte : outils et armure sur 11 paliers, Forge, skins, 5 boss, défis de la semaine et collectifs ; depuis le 23/11/2026, butin et reliques des boss, apparition des boss corrigée, objets de la Forge récupérables ; prestige refait). Pour vérifier en jeu : `/function metiers:version`.
 
 ### Réglages dans `server.properties`
 

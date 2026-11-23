@@ -64,6 +64,7 @@ acts += [btn(f'[{gs("forge_marteau")},{txt("  Forger l’outil en main", "gold",
          btn(f'[{gs("cadre_dore_g")},{txt("Cadres de titre", "gold", True)},{gs("cadre_dore_d")}]', 472, 200, "Le cadre autour de ton titre."),
          btn(txt("Défis du jour", "aqua", True), 4, 200), btn(txt("Armure des Guildes", "#F1CF4E", True), 6, 200),
          btn(txt("Classement", "gold"), 5, 200), btn(txt("Barème d’XP", "aqua", True), 480, 200, "Ce que rapporte chaque action, métier par métier, avec les images."),
+         btn(txt("Aura de prestige", "gold"), 490, 200, "Active ou coupe les particules autour de toi (joueurs passés par le prestige)."),
          btn(txt("Aide", "white"), 460, 200, "Cristaux, éclats, Forge, défis, boss : comment ça marche.")]
 w(F + "menu_dialog.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Mes métiers",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
@@ -128,17 +129,19 @@ for j, d in jobs.items():
     P += [f'execute if score @s m.tmp matches {k} run data modify storage {NS}:pg bar set value "{GLY["barre_" + str(k)]}"' for k in range(11)]
     def reqsel2(req):
         return ",".join(f"tag=metiers.sk.{j}{r}" for r in req)
+    # niveau pris en compte pour débloquer une compétence : 100 dès qu'on est passé par le prestige
+    P += [f"scoreboard players operation #lve m.tmp = @s m.{j}_lvl", f"execute if score @s m.{j}_pr matches 1.. run scoreboard players set #lve m.tmp 100"]
     for k, (name, cost, req, desc) in enumerate(sk, 1):
         lv = SKILL_LVL[k - 1]
         cond = f"execute if entity @s[{reqsel2(req)}]" if req else "execute if entity @s"
         P += [f'data modify storage {NS}:pg l{k} set value "✖ {name}"', f'data modify storage {NS}:pg c{k} set value "dark_gray"',
-              f'execute unless score @s m.{j}_lvl matches {lv}.. run data modify storage {NS}:pg l{k} set value "✖ {name} · niv. {lv}"',
-              f'execute if score @s m.{j}_lvl matches {lv}.. {cond[8:]} run data modify storage {NS}:pg l{k} set value "{name} · {cost} pts"'
-              if req else f'execute if score @s m.{j}_lvl matches {lv}.. run data modify storage {NS}:pg l{k} set value "{name} · {cost} pts"',
-              (f'execute if score @s m.{j}_lvl matches {lv}.. {cond[8:]} run data modify storage {NS}:pg c{k} set value "yellow"' if req else
-               f'execute if score @s m.{j}_lvl matches {lv}.. run data modify storage {NS}:pg c{k} set value "yellow"'),
-              (f'execute if score @s m.{j}_lvl matches {lv}.. {cond[8:]} if score #pts m.tmp matches ..{cost - 1} run data modify storage {NS}:pg c{k} set value "red"' if req else
-               f'execute if score @s m.{j}_lvl matches {lv}.. if score #pts m.tmp matches ..{cost - 1} run data modify storage {NS}:pg c{k} set value "red"'),
+              f'execute unless score #lve m.tmp matches {lv}.. run data modify storage {NS}:pg l{k} set value "✖ {name} · niv. {lv}"',
+              f'execute if score #lve m.tmp matches {lv}.. {cond[8:]} run data modify storage {NS}:pg l{k} set value "{name} · {cost} pts"'
+              if req else f'execute if score #lve m.tmp matches {lv}.. run data modify storage {NS}:pg l{k} set value "{name} · {cost} pts"',
+              (f'execute if score #lve m.tmp matches {lv}.. {cond[8:]} run data modify storage {NS}:pg c{k} set value "yellow"' if req else
+               f'execute if score #lve m.tmp matches {lv}.. run data modify storage {NS}:pg c{k} set value "yellow"'),
+              (f'execute if score #lve m.tmp matches {lv}.. {cond[8:]} if score #pts m.tmp matches ..{cost - 1} run data modify storage {NS}:pg c{k} set value "red"' if req else
+               f'execute if score #lve m.tmp matches {lv}.. if score #pts m.tmp matches ..{cost - 1} run data modify storage {NS}:pg c{k} set value "red"'),
               f'execute if entity @s[tag=metiers.sk.{j}{k}] run data modify storage {NS}:pg l{k} set value "✔ {name}"',
               f'execute if entity @s[tag=metiers.sk.{j}{k}] run data modify storage {NS}:pg c{k} set value "green"',
               f'execute if entity @s[tag=metiers.sk.{j}{k},tag=metiers.skoff.{j}{k}] run data modify storage {NS}:pg l{k} set value "○ {name} · désactivée"',
@@ -207,13 +210,17 @@ def team_prefix2(j, t, st, fr):
     parts = [{"text": "", "color": "white"}]
     if st:
         parts.append({"text": "★" * st + " ", "color": "gold", "bold": False})
-    if fr:
+    if fr == 7:                                   # cadre Étoilé (prestige 5) : en texte, sans glyphe
+        parts.append({"text": "✦ ", "color": "gold", "bold": True})
+    elif fr:
         parts.append(gj(f"cadre_{CADRES[fr - 1]}_g"))
     sty = dict(tier_style(j, t)); sty["text"] = f"{TIERS[t][0]}"
     parts.append(gj(f"metier_{j}"))
     parts.append({"text": " ", "color": "white"})
     parts.append(sty)
-    if fr:
+    if fr == 7:
+        parts.append({"text": " ✦", "color": "gold", "bold": True})
+    elif fr:
         parts.append(gj(f"cadre_{CADRES[fr - 1]}_d"))
     parts.append({"text": " ", "color": "white", "bold": False})
     return json.dumps(parts, ensure_ascii=False)
@@ -223,14 +230,14 @@ for j in jobs:
         E2.append(f"team remove m.{j}{t}")
         for st in range(6):
             E2.append(f"team remove m.{j}{t}_{st}")
-            for fr in range(7):
+            for fr in range(8):
                 E2 += [f"team add m.{j}{t}_{st}_{fr}", f"team modify m.{j}{t}_{st}_{fr} prefix {team_prefix2(j, t, st, fr)}"]
 w(F + "prefixe/equipes.mcfunction", "\n".join(E2))
 MJ2 = ["tag @s remove metiers.maj", "scoreboard players add @s m.cadre 0"]
 for j, d in jobs.items():
     for t, (_, rng) in enumerate(TIERS):
         for st in range(6):
-            for fr in range(7):
+            for fr in range(8):
                 MJ2.append(f"execute if score @s m.pref matches {d['idx']} if score @s m.{j}_lvl matches {rng} if score @s m.{j}_pr matches {st} if score @s m.cadre matches {fr} run team join m.{j}{t}_{st}_{fr} @s")
 w(F + "prefixe/maj.mcfunction", "\n".join(MJ2))
 
@@ -451,6 +458,11 @@ for ci, cn in enumerate(CADRE_NOM, 1):
     SK += [f'data modify storage {NS}:sk e{ci} set value ""',
            f'execute if score @s m.cd_{ci} matches 1 run data modify storage {NS}:sk f{ci} set value "green"',
            f'execute if score @s m.cadre matches {ci} run data modify storage {NS}:sk e{ci} set value " ★"']
+SK += ["scoreboard players set #p5 m.tmp 0"] + [f"execute if score @s m.{j}_pr matches 5.. run scoreboard players set #p5 m.tmp 1" for j in JL]
+SK += [f'data modify storage {NS}:sk f7 set value "dark_gray"', f'execute if score #p5 m.tmp matches 1 run data modify storage {NS}:sk f7 set value "yellow"',
+       f'data modify storage {NS}:sk e7 set value ""', "scoreboard players add @s m.cd_7 0",
+       f'execute if score @s m.cd_7 matches 1 run data modify storage {NS}:sk f7 set value "green"',
+       f'execute if score @s m.cadre matches 7 run data modify storage {NS}:sk e7 set value " ★"']
 w(F + "skins/calcul.mcfunction", "\n".join(SK))
 w(F + "skins/menu.mcfunction", f"function {NS}:skins/calcul\nfunction {NS}:skins/menu_dialog with storage {NS}:sk")
 w(F + "skins/cadres.mcfunction", f"function {NS}:skins/calcul\nfunction {NS}:skins/cadres_dialog with storage {NS}:sk")
@@ -498,6 +510,8 @@ CAD += [f'{{label:[{gs("cadre_" + CADRES[ci - 1] + "_g")},{{text:"{cn}",color:"$
         f'tooltip:{{text:"{tip}"}},action:{{type:"run_command",command:"trigger metiers set {440 + ci}"}}}}'
         for ci, (cn, tip) in enumerate(zip(CADRE_NOM, ["Offert.", "3 éclats de boss.", "6 éclats de boss.", "10 éclats de boss.",
                                                        "Trophée : vaincre 5 fois le Brasier ancestral.", "3 prestiges au total."]), 1)]
+CAD.append('{label:[{text:"✦ ",color:"gold",bold:true},{text:"Étoilé",color:"$(f7)"},{text:" ✦",color:"gold",bold:true},{text:"$(e7)",color:"gold"}],width:200,'
+           'tooltip:{text:"Prestige : 5 étoiles dans un métier."},action:{type:"run_command",command:"trigger metiers set 447"}}')
 w(F + "skins/cadres_dialog.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Cadres de titre",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
   f'body:{{type:"minecraft:plain_message",width:380,contents:[{{text:"Le cadre entoure ton titre de métier devant ton pseudo. Le titre affiché se choisit sur la page d’un métier.\\n",color:"gray"}},{gs("eclat")},{{text:" $(ecl) éclats",color:"light_purple"}}]}},'
