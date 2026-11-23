@@ -76,7 +76,13 @@ add_lines(F + "joueur.mcfunction", [f'execute unless entity @s[tag=metiers.v25] 
 w(F + "k/migration25.mcfunction", "\n".join(
     ["tag @s add metiers.v25"] + [f"tag @s remove metiers.sk.k{n}" for n in range(1, 7)] +
     [f"advancement revoke @s only {NS}:k/competence_{n}" for n in range(1, 7)] +
-    [f"function {NS}:k/init", "clear @s *[minecraft:custom_data~{metiers_outil:\"k\"}]"]))
+    [f"function {NS}:k/init", "clear @s *[minecraft:custom_data~{metiers_outil:\"k\"}]"] +
+    # le même bug gonflait le score total (calcul fait avec un score absent) : Armure des Guildes Céleste pour tout le
+    # monde. On reprend l'armure (inventaire et coffre de l'Ender), puis on la redonne au vrai palier.
+    [f"execute if items entity @s enderchest.{i} *[minecraft:custom_data~{{metiers_armure:1b}}] run item replace entity @s enderchest.{i} with minecraft:air" for i in range(27)] +
+    ["scoreboard players set @s m.arm 0", "tag @s add metiers.avait_armure", f"function {NS}:classement/maj",
+     "execute if score @s m.arm matches 0 run clear @s *[minecraft:custom_data~{metiers_armure:1b}]",
+     tr("Correctif 25.1 : ton Armure des Guildes est revenue à ton vrai palier (un bug du Bâtisseur gonflait le score).", "yellow")]))
 
 # Garde-fou : tout critère de statistique sur un OBJET (used, crafted, picked_up, dropped) doit exister en 26.1,
 # sinon le jeu refuse la fonction entière qui le contient (liste officielle tirée de minecraft-data, dans Commerce).
