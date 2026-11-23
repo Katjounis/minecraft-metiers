@@ -238,15 +238,182 @@ def herobrine_apparition():
     return out
 
 
+# --- voix synthetisees (source glottale + formants) -------------------------------------------
+def glotte(f0s, souffle=0.15, graine=1):
+    """Train d'impulsions glottales (dent de scie adoucie) qui suit la courbe de hauteur f0s (Hz par echantillon)."""
+    r = random.Random(graine)
+    out, ph = [], 0.0
+    for f in f0s:
+        ph += f / SR
+        ph -= int(ph)
+        v = (1 - ph) ** 3 * 2 - 0.5  # impulsion plus riche qu'une dent de scie
+        out.append(v + souffle * r.uniform(-1, 1))
+    return out
+
+
+def formants(s, fs, q=(6, 8, 10), g=(1.0, 0.5, 0.25)):
+    out = [0.0] * len(s)
+    for f, qq, gg in zip(fs, q, g):
+        for i, v in enumerate(passe_bande(s, f, qq)):
+            out[i] += v * gg
+    return out
+
+
+def reverb(s, salle=0.6):
+    """Petite reverberation : quatre echos croises de durees premieres entre elles."""
+    out = list(s) + [0.0] * int(1.5 * SR)
+    for d, fb in ((0.0297, 0.7), (0.0371, 0.68), (0.0411, 0.66), (0.0437, 0.64)):
+        k = int(d * SR)
+        ligne = [0.0] * len(out)
+        for i in range(len(out)):
+            x = out[i] if i < len(s) else 0.0
+            ligne[i] = x + (ligne[i - k] * fb * salle if i >= k else 0.0)
+        out = [a + 0.25 * b for a, b in zip(out, ligne)]
+    return passe_bas(out, 5000)
+
+
+# --- Clown -------------------------------------------------------------------------------------
+def clown_rire():
+    """Rire de clown hysterique : « ha ha ha... » qui descend, un « haaa » final tordu, une boite a musique faussee dessous."""
+    r = random.Random(31)
+    out = silence(4.2)
+    t, f = 0.15, 420.0
+    for k in range(9):
+        lg = r.uniform(0.11, 0.15)
+        n = int(lg * SR)
+        f0 = [f * (1 + 0.06 * math.sin(2 * math.pi * 7 * i / SR)) * (1 - 0.15 * i / n) for i in range(n)]
+        v = formants(glotte(f0, 0.25, k), (820, 1250, 2600))
+        h = formants(bruit(0.05, 50 + k), (900, 1400, 2700), (2, 2, 2))  # l'aspiration du « h »
+        syl = mixer(enveloppe(h, 0.005, 0.03), enveloppe(v, 0.015, 0.05), 0.03)
+        mixer(out, syl, t, 1.0 - 0.04 * k)
+        t += lg + r.uniform(0.04, 0.07)
+        f *= r.uniform(0.93, 0.98)
+    n = int(1.2 * SR)  # haaaa final qui monte puis s'effondre, avec un vibrato malade
+    f0 = [330 * (1 + 0.35 * math.sin(math.pi * i / n)) * (1 + 0.05 * math.sin(2 * math.pi * 9 * i / SR)) for i in range(n)]
+    mixer(out, enveloppe(formants(glotte(f0, 0.3, 99), (760, 1150, 2500)), 0.05, 0.5), t + 0.1, 1.1)
+    boite = silence(4.0)  # boite a musique desaccordee, ralentie
+    for i, note in enumerate((784, 659, 523, 659, 784, 698, 587, 494)):
+        mixer(boite, tintement(note * 0.97, 0.6, 400 + i), 0.1 + i * 0.45, 0.25)
+    mixer(out, boite, 0)
+    return enveloppe(reverb(out, 0.5), 0.01, 0.6)
+
+
+# --- Nonne -------------------------------------------------------------------------------------
+def nonne_murmure():
+    """Priere chuchotee (souffle filtre en voyelles, sifflantes) sur un bourdon de choeur lointain, dans une nef."""
+    r = random.Random(41)
+    d = 5.0
+    out = silence(d)
+    voyelles = [(600, 1000), (400, 1700), (300, 2200), (450, 800), (550, 1500)]
+    t = 0.2
+    while t < d - 0.5:
+        lg = r.uniform(0.12, 0.28)
+        f1, f2 = r.choice(voyelles)
+        syl = formants(bruit(lg, int(t * 1000)), (f1, f2, 2800), (10, 12, 14), (1.0, 0.8, 0.3))
+        mixer(out, enveloppe(syl, 0.03, 0.06), t, 1.6)
+        if r.random() < 0.3:  # « s » chuchote
+            mixer(out, enveloppe(passe_haut(bruit(0.09, int(t * 999)), 4500), 0.01, 0.05), t + lg, 0.5)
+        t += lg + r.choice((0.03, 0.05, 0.08, 0.4))
+    choeur = []
+    for i in range(int(d * SR)):
+        x = i / SR
+        vib = 1 + 0.004 * math.sin(2 * math.pi * 5 * x)
+        choeur.append(sum(a * math.sin(2 * math.pi * f * vib * x) for f, a in ((110, 0.5), (165, 0.35), (220.7, 0.25), (277.5, 0.15))))
+    mixer(out, enveloppe(choeur, 1.2, 1.5), 0, 0.12)
+    return enveloppe(reverb(out, 0.85), 0.2, 0.8)
+
+
+# --- Dame blanche ------------------------------------------------------------------------------
+def dame_pleurs():
+    """Plainte de femme qui glisse vers le grave, coupee de sanglots, tres reverberee."""
+    d = 5.0
+    out = silence(d)
+    for k, (t0, lg, fa, fb) in enumerate(((0.1, 1.6, 620, 470), (1.9, 0.25, 520, 500), (2.25, 0.22, 500, 480), (2.6, 2.0, 560, 380))):
+        n = int(lg * SR)
+        f0 = [(fa + (fb - fa) * (i / n) ** 1.5) * (1 + 0.012 * math.sin(2 * math.pi * 5.5 * i / SR)) for i in range(n)]
+        v = formants(glotte(f0, 0.12, 60 + k), (450, 850, 2700), (8, 9, 10), (1.0, 0.6, 0.15))
+        mixer(out, enveloppe(v, 0.15 if lg > 1 else 0.02, 0.6 if lg > 1 else 0.08), t0)
+    return enveloppe(reverb(passe_bas(out, 3500), 0.9), 0.1, 1.0)
+
+
+# --- Loup-garou --------------------------------------------------------------------------------
+def loup_hurlement():
+    """Hurlement : la voix monte, tient avec un vibrato, puis retombe ; un second loup repond au loin."""
+    def hurle(lg, f_bas, f_haut, graine):
+        n = int(lg * SR)
+        f0 = []
+        for i in range(n):
+            x = i / n
+            f = f_bas + (f_haut - f_bas) * min(1, x / 0.2) if x < 0.75 else f_haut - (f_haut - f_bas) * 0.7 * (x - 0.75) / 0.25
+            f0.append(f * (1 + 0.015 * math.sin(2 * math.pi * 6 * i / SR)))
+        v = formants(glotte(f0, 0.2, graine), (380, 900, 2400), (7, 8, 9), (1.0, 0.45, 0.12))
+        return enveloppe(v, 0.25, 0.5)
+    out = silence(6.0)
+    mixer(out, hurle(3.4, 280, 560, 71), 0.05)
+    mixer(out, passe_bas(hurle(2.6, 250, 480, 72), 1500), 2.9, 0.35)
+    return enveloppe(reverb(out, 0.7), 0.05, 0.8)
+
+
+# --- Feu follet --------------------------------------------------------------------------------
+def feu_crepitement():
+    """Sifflement aerien qui ondule, crepitements de petites flammes, carillon de verre."""
+    r = random.Random(81)
+    d = 3.5
+    out = []
+    for i in range(int(d * SR)):
+        x = i / SR
+        f = 1400 + 250 * math.sin(2 * math.pi * 0.7 * x)
+        out.append(0.3 * math.sin(2 * math.pi * f * x + 2 * math.sin(2 * math.pi * 3 * x)) * (0.6 + 0.4 * math.sin(2 * math.pi * 4 * x)))
+    out = mixer(out, passe_bande(bruit(d, 82), 2500, 1.5), 0, 0.15)
+    t = 0.0
+    while t < d - 0.05:
+        mixer(out, enveloppe(passe_haut(bruit(0.008, int(t * 7919)), 2000), 0.0005, 0.006), t, r.uniform(0.5, 1.2))
+        t += r.expovariate(14)
+    for i, note in enumerate((1568, 1976, 2349)):
+        mixer(out, tintement(note, 1.0, 90 + i), 0.4 + i * 0.9, 0.25)
+    return enveloppe(reverb(out, 0.5), 0.3, 0.8)
+
+
+# --- Rodeur ------------------------------------------------------------------------------------
+def rodeur_pas():
+    """Des pas lourds dans les feuilles, juste derriere toi, qui s'arretent ; puis une respiration."""
+    r = random.Random(91)
+    out = silence(4.0)
+    for k in range(5):
+        t = 0.2 + k * 0.48 + r.uniform(-0.03, 0.03)
+        coup = [math.sin(2 * math.pi * 70 * i / SR) * math.exp(-30 * i / SR) for i in range(int(0.15 * SR))]
+        mixer(out, coup, t, 0.9 - 0.1 * k)
+        mixer(out, enveloppe(passe_bande(bruit(0.12, 92 + k), 1800, 1.2), 0.003, 0.08), t, 0.5)  # feuilles
+    souffle = formants(bruit(1.2, 99), (500, 1200, 2500), (4, 5, 6))
+    souffle = [v * (0.5 - 0.5 * math.cos(2 * math.pi * i / len(souffle))) for i, v in enumerate(souffle)]
+    mixer(out, souffle, 2.7, 0.6)
+    return enveloppe(out, 0.01, 0.3)
+
+
+# --- Croque-mitaine ----------------------------------------------------------------------------
+def croque_grondement():
+    """Grognement tres grave qui racle (modulation a 25 Hz), formants de gorge, sature."""
+    d = 4.0
+    n = int(d * SR)
+    f0 = [(48 + 10 * math.sin(math.pi * i / n)) * (1 + 0.03 * math.sin(2 * math.pi * 1.3 * i / SR)) for i in range(n)]
+    v = glotte(f0, 0.35, 101)
+    v = [x * (0.55 + 0.45 * math.sin(2 * math.pi * 25 * i / SR)) for i, x in enumerate(v)]
+    v = formants(v, (300, 650, 1800), (3, 4, 5), (1.0, 0.7, 0.3))
+    v = mixer(v, passe_bas(bruit(d, 102), 200), 0, 0.6)
+    return enveloppe(reverb(sature(v, 2.5), 0.6), 0.4, 1.2)
+
+
 SONS = {
     "slender_statique": slender_statique, "slender_presence": slender_presence, "slender_reveil": slender_reveil,
     "siren_sirene": siren_sirene, "siren_voix": siren_voix,
     "pinhead_chaines": pinhead_chaines, "pinhead_cloche": pinhead_cloche,
     "herobrine_apparition": herobrine_apparition,
+    "clown_rire": clown_rire, "nonne_murmure": nonne_murmure, "dame_pleurs": dame_pleurs, "loup_hurlement": loup_hurlement,
+    "feu_crepitement": feu_crepitement, "rodeur_pas": rodeur_pas, "croque_grondement": croque_grondement,
 }
 
-# Sons fournis a la main (datapacks/horreur/sons/<nom>.wav|.mp3|.ogg|.flac) : absents -> sons vanilla en jeu
-MANUELS = ("clown_rire", "nonne_murmure")
+# Un fichier depose dans datapacks/horreur/sons/<nom>.wav|.mp3|.ogg|.flac remplace le son de synthese du meme nom
+MANUELS = tuple(SONS)
 SOUS_TITRES = {
     "slender_statique": ("Grésillement", "Static crackles"),
     "slender_presence": ("Une présence…", "Something is near"),
@@ -258,6 +425,11 @@ SOUS_TITRES = {
     "herobrine_apparition": ("Un souffle", "A rush of air"),
     "clown_rire": ("Un clown rit", "A clown laughs"),
     "nonne_murmure": ("Une voix murmure", "A voice whispers"),
+    "dame_pleurs": ("Une femme pleure", "A woman weeps"),
+    "loup_hurlement": ("Un loup hurle", "A wolf howls"),
+    "feu_crepitement": ("Un sifflement dans l’air", "Something whistles"),
+    "rodeur_pas": ("Des pas derrière toi", "Footsteps behind you"),
+    "croque_grondement": ("Un grondement sous le lit", "A deep growl"),
 }
 DOSSIER_MANUELS = os.path.join(ICI, "..", "sons")
 
@@ -284,7 +456,7 @@ def disponibles():
     """Noms des sons presents dans le resource pack (le datapack choisit sinon un son vanilla)."""
     if not ffmpeg():
         return set()
-    return set(SONS) | {n for n in MANUELS if manuel(n)}
+    return set(SONS)
 
 
 def generer_rp(assets):
@@ -297,15 +469,13 @@ def generer_rp(assets):
     os.makedirs(os.path.join(assets, "sounds"), exist_ok=True)
     sources = {}
     for nom, f in SONS.items():
-        ecrire(nom, f())
-        sources[nom] = os.path.join(OUT, nom + ".wav")
-    for nom in MANUELS:
         p = manuel(nom)
-        if p:
+        if p:  # un vrai enregistrement depose a la main passe avant la synthese
             sources[nom] = p
             print(f"  {nom} : fichier fourni ({os.path.basename(p)})")
-        else:
-            print(f"  {nom} : absent de datapacks/horreur/sons/ -> son vanilla en jeu")
+            continue
+        ecrire(nom, f())
+        sources[nom] = os.path.join(OUT, nom + ".wav")
     evenements, fr, en = {}, {}, {}
     for nom, src in sources.items():
         dst = os.path.join(assets, "sounds", nom + ".ogg")

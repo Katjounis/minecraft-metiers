@@ -33,7 +33,9 @@ def fusionner():
     if not rps:
         print("Aucun resource pack a fusionner (lancer d'abord sources/datapack.py du pack).")
         return None
-    retires = tuple(f"assets/{nom}/" for nom, _ in rps)
+    # Métiers est le pack de base du zip : son build/metiers_rp n'apporte que des fichiers ajoutés ou remplacés
+    # (ex. le Bâtisseur), on ne retire donc jamais assets/metiers/ en entier.
+    retires = tuple(f"assets/{nom}/" for nom, _ in rps if nom != "metiers")
     # fichiers qu'un pack remplace hors de son dossier (ex. shaders dans assets/minecraft/) : l'ancienne copie saute
     remplaces = {os.path.relpath(os.path.join(dp, fn), rp).replace(os.sep, "/")
                  for _, rp in rps for dp, _, fs in os.walk(rp) for fn in fs}

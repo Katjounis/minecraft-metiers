@@ -17,6 +17,11 @@ import sons
 SONS_OK = sons.disponibles()
 
 
+def P(nom, p_vanilla):
+    """Hauteur du playsound : 1 pour un son maison (deja a la bonne hauteur), sinon celle choisie pour le son vanilla."""
+    return "1" if nom in SONS_OK else str(p_vanilla)
+
+
 def son(nom, vanilla):
     """'horreur:slender.statique' si le son existe, sinon le son vanilla de secours (meme ligne playsound)."""
     return "horreur:" + nom.replace("_", ".", 1) if nom in SONS_OK else vanilla
@@ -168,6 +173,13 @@ execute as @e[tag=hr.c] on passengers run tag @s add hr.ok
 execute as @e[type=item_display,tag=hr.vis,tag=!hr.ok] at @s run function horreur:vis/orphelin
 execute as @e[type=item_display,tag=hr.envol] at @s run function horreur:vis/envol
 execute as @e[tag=hr.statue] run function horreur:vis/tourner
+# Statues animees : 4 poses par cycle de 4 s, le jeu interpole entre elles (balancement, respiration, rotation)
+scoreboard players add #anim hr.tmp 1
+execute if score #anim hr.tmp matches 80.. run scoreboard players set #anim hr.tmp 0
+execute if score #anim hr.tmp matches 0 run function horreur:vis/anim_0
+execute if score #anim hr.tmp matches 20 run function horreur:vis/anim_1
+execute if score #anim hr.tmp matches 40 run function horreur:vis/anim_2
+execute if score #anim hr.tmp matches 60 run function horreur:vis/anim_3
 # Comportements toutes les 5 ticks
 scoreboard players add #t5 hr.tmp 1
 execute if score #t5 hr.tmp matches 5.. run scoreboard players set #t5 hr.tmp 0
@@ -333,6 +345,31 @@ def display(modele, tags, s, t, x=0.0, portee=2.0, lumineux=False):
             + f'translation:[{x:.3f}f,{t:.3f}f,0f],scale:[{s}f,{s}f,{s}f]}}}}')
 
 
+# ---------------------------------------------------------------- animation des statues (item_display passager)
+# (axe, angle en degres, decalage vertical en blocs, facteur d'echelle) pour les 4 poses du cycle
+POSES = {
+    "slender": [("z", 2.5, 0.00, 1.00), ("z", 0.0, 0.03, 1.015), ("z", -2.5, 0.00, 1.00), ("z", 0.0, 0.03, 1.015)],  # oscille, respire
+    "siren": [("z", 4.0, 0.00, 1.00), ("x", 3.0, 0.05, 1.00), ("z", -4.0, 0.00, 1.00), ("x", -3.0, 0.05, 1.00)],     # la tete-sirene cherche
+    "feu": [("y", 0.0, 0.00, 1.00), ("y", 90.0, 0.18, 1.08), ("y", 180.0, 0.00, 0.95), ("y", 270.0, 0.18, 1.08)],   # flotte et tourne
+}
+
+
+def quat(axe, deg):
+    import math
+    a = math.radians(deg) / 2
+    q = {"x": [math.sin(a), 0, 0], "y": [0, math.sin(a), 0], "z": [0, 0, math.sin(a)]}[axe] + [math.cos(a)]
+    return "[" + ",".join(f"{v:.4f}f" for v in q) + "]"
+
+
+def pose(c, i):
+    s0 = c["statue_echelle"]
+    t0 = 1.5 * s0 - HAUT[c["base"]] * c["echelle"]
+    axe, deg, dy, f = POSES[c["id"]][i]
+    s = s0 * f
+    return (f'{{start_interpolation:0,interpolation_duration:20,transformation:{{left_rotation:{quat(axe, deg)},right_rotation:[0f,0f,0f,1f],'
+            f'translation:[0f,{t0 + dy:.3f}f,0f],scale:[{s:.3f}f,{s:.3f}f,{s:.3f}f]}}}}')
+
+
 def summon(c):
     k = c["id"]
     tags = ["hr.e", "hr.c", "hr.c." + k, "hr.neuf"]
@@ -359,7 +396,7 @@ def summon(c):
         s = c["statue_echelle"]
         # Le passager est accroche au sommet du mob : on redescend le modele (pieds du modele a y = -16 px)
         t = 1.5 * s - HAUT[c["base"]] * c["echelle"]
-        passagers.append(display(k, ["hr.statue_vis"], s, t, portee=4.0 if c["echelle"] > 2 else 2.0, lumineux=(k == "feu")))
+        passagers.append(display(k, ["hr.statue_vis", "hr.vis." + k], s, t, portee=4.0 if c["echelle"] > 2 else 2.0, lumineux=(k == "feu")))
     if c.get("ballon"):
         passagers.append(display("ballon", ["hr.ballon"], 1.0, 0.9 + 1.0 - HAUT[c["base"]] * c["echelle"], x=0.45))
     if passagers:
@@ -375,11 +412,11 @@ INIT_EXTRA = {
     "clown": [f"playsound {son('clown_rire', 'minecraft:entity.witch.celebrate')} hostile @a[distance=..32] ~ ~ ~ 1.5 " + ("1" if "clown_rire" in SONS_OK else "1.4")],
     "pinhead": [f"playsound {son('pinhead_cloche', 'minecraft:block.bell.resonate')} hostile @a[distance=..48] ~ ~ ~ 2 " + ("1" if "pinhead_cloche" in SONS_OK else "0.5"),
                 "execute if dimension minecraft:overworld run tag @s add hr.nuit"],
-    "dame": ["playsound minecraft:ambient.cave hostile @a[distance=..32] ~ ~ ~ 1 0.6"],
-    "loup": ["playsound minecraft:entity.wolf.howl hostile @a[distance=..96] ~ ~ ~ 3 0.6"],
-    "feu": ["playsound minecraft:block.amethyst_block.chime hostile @a[distance=..24] ~ ~ ~ 1 0.6"],
+    "dame": [f"playsound {son('dame_pleurs', 'minecraft:ambient.cave')} hostile @a[distance=..32] ~ ~ ~ 1.5 {P('dame_pleurs', 0.6)}"],
+    "loup": [f"playsound {son('loup_hurlement', 'minecraft:entity.wolf.howl')} hostile @a[distance=..96] ~ ~ ~ 3 {P('loup_hurlement', 0.6)}"],
+    "feu": [f"playsound {son('feu_crepitement', 'minecraft:block.amethyst_block.chime')} hostile @a[distance=..24] ~ ~ ~ 1 {P('feu_crepitement', 0.6)}"],
     "rodeur": [],
-    "croque": ["playsound minecraft:entity.warden.emerge hostile @a[distance=..64] ~ ~ ~ 2 0.7",
+    "croque": [f"playsound {son('croque_grondement', 'minecraft:entity.warden.emerge')} hostile @a[distance=..64] ~ ~ ~ 2.5 {P('croque_grondement', 0.7)}",
                "bossbar set horreur:boss visible true", "bossbar set horreur:boss players @a[distance=..96]",
                'tellraw @a {"text":"Le Croque-mitaine est sorti de l\'ombre...","color":"dark_red","bold":true}'],
 }
@@ -587,6 +624,7 @@ w(F + "c/dame_hurle.mcfunction", f"""
 scoreboard players set @s hr.etat 1
 scoreboard players set @s hr.t 0
 playsound minecraft:entity.ghast.scream hostile @a[distance=..48] ~ ~ ~ 2 0.5
+playsound {son('dame_pleurs', 'minecraft:ambient.cave')} hostile @a[distance=..32] ~ ~ ~ 2 {P('dame_pleurs', 0.5)}
 effect give @a[distance=..16,{JOUEUR}] minecraft:darkness 6 0 true
 particle minecraft:sonic_boom ~ ~1.4 ~ 0 0 0 0 1""")
 w(F + "c/dame_cri.mcfunction", """
@@ -599,16 +637,16 @@ attribute @s minecraft:movement_speed base set 0.33
 playsound minecraft:entity.vex.charge hostile @a[distance=..32] ~ ~ ~ 2 0.5""")
 w(F + "c/loup.mcfunction", f"""
 execute store result score #r hr.tmp run random value 1..60
-execute if score #r hr.tmp matches 1 run playsound minecraft:entity.wolf.howl hostile @a[distance=..96] ~ ~ ~ 3 0.6
+execute if score #r hr.tmp matches 1 run playsound {son('loup_hurlement', 'minecraft:entity.wolf.howl')} hostile @a[distance=..96] ~ ~ ~ 3 {P('loup_hurlement', 0.6)}
 execute if score #r hr.tmp matches 2 run playsound minecraft:entity.wolf.growl hostile @a[distance=..24] ~ ~ ~ 1.5 0.6""")
 w(F + "c/feu.mcfunction", f"""
 particle minecraft:soul_fire_flame ~ ~0.5 ~ 0.15 0.15 0.15 0.01 3
 execute if entity @a[distance=..5,{JOUEUR}] store result score #r hr.tmp run random value 1..6
 execute if entity @a[distance=..5,{JOUEUR}] if score #r hr.tmp matches 1 facing entity @p[{JOUEUR}] feet rotated ~180 0 positioned ^ ^1 ^6 run function horreur:c/feu_fuite""")
-w(F + "c/feu_fuite.mcfunction", """
+w(F + "c/feu_fuite.mcfunction", f"""
 particle minecraft:soul ~ ~ ~ 0.2 0.2 0.2 0.02 10
 tp @s ~ ~ ~
-playsound minecraft:block.amethyst_block.chime hostile @a[distance=..16] ~ ~ ~ 1 1.4""")
+playsound {son('feu_crepitement', 'minecraft:block.amethyst_block.chime')} hostile @a[distance=..16] ~ ~ ~ 1 {P('feu_crepitement', 1.4)}""")
 w(F + "c/rodeur.mcfunction", f"""
 execute unless entity @a[distance=..48,{JOUEUR}] run return 0
 rotate @s facing entity @p[{JOUEUR}] feet
@@ -617,7 +655,7 @@ execute unless score #vu hr.tmp matches 1 run scoreboard players set @s hr.r 0
 execute if score #vu hr.tmp matches 1 run scoreboard players add @s hr.r 5
 execute if score @s hr.r matches 10.. run function horreur:c/rodeur_cache
 execute store result score #r hr.tmp run random value 1..30
-execute if score #r hr.tmp matches 1 run playsound minecraft:entity.zombie.step hostile @a[distance=..12] ~ ~ ~ 0.4 0.6""")
+execute if score #r hr.tmp matches 1 run playsound {son('rodeur_pas', 'minecraft:entity.zombie.step')} hostile @a[distance=..12] ~ ~ ~ 0.7 {P('rodeur_pas', 0.6)}""")
 w(F + "c/rodeur_cache.mcfunction", f"""
 scoreboard players set @s hr.r 0
 particle minecraft:large_smoke ~ ~1 ~ 0.3 0.8 0.3 0.02 15
@@ -646,7 +684,7 @@ execute if score #r hr.tmp matches 2 run {OMBRE}
 execute if score #r hr.tmp matches 2 run tellraw @a[distance=..48] {{"text":"Le Croque-mitaine appelle ses ombres !","color":"dark_red"}}
 execute if score #r hr.tmp matches 3 run effect give @a[distance=..24,{JOUEUR}] minecraft:darkness 8 0 true
 execute if score #r hr.tmp matches 3 run effect give @a[distance=..24,{JOUEUR}] minecraft:slowness 4 1 true
-execute if score #r hr.tmp matches 3 run playsound minecraft:entity.warden.roar hostile @a[distance=..48] ~ ~ ~ 2 0.7""")
+execute if score #r hr.tmp matches 3 run playsound {son('croque_grondement', 'minecraft:entity.warden.roar')} hostile @a[distance=..48] ~ ~ ~ 2.5 {P('croque_grondement', 0.7)}""")
 
 # Coups recus par un joueur (progres « mob blesse joueur »)
 COUPS = {
@@ -835,8 +873,11 @@ wj(f"data/{NS}/dialog/bestiaire.json", {
     "can_close_with_escape": True, "pause": False,
     "body": [msg({"text": "Les créatures de la nuit que tu as affrontées. Tue une créature pour révéler sa fiche.", "color": "gray"})],
     "actions": [bouton({"text": "Ouvrir le bestiaire", "color": "red"}, 1, 200)], "columns": 1})
-wj("data/minecraft/tags/dialog/quick_actions.json", {"values": [f"{NS}:bestiaire"]})
-wj("data/minecraft/tags/dialog/pause_screen_additions.json", {"values": [f"{NS}:bestiaire"]})
+# menu G commun aux trois packs (Métiers, Commerce, Horreur) : même dialogue serveur:menu partout, recopié de Commerce
+_MENU = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "commerce", "sources", "menu_serveur.json"), encoding="utf-8"))
+wj("data/serveur/dialog/menu.json", _MENU)
+wj("data/minecraft/tags/dialog/quick_actions.json", {"values": ["serveur:menu"]})
+wj("data/minecraft/tags/dialog/pause_screen_additions.json", {"values": ["serveur:menu"]})
 
 w(F + "ui/trigger.mcfunction", "\n".join(
     ["scoreboard players operation #v hr.tmp = @s bestiaire", "scoreboard players set @s bestiaire 0",
@@ -865,7 +906,8 @@ liste += ["execute store result storage horreur:ui m.d int 1 run scoreboard play
           "function horreur:ui/liste_m with storage horreur:ui m"]
 w(F + "ui/liste.mcfunction", "\n".join(liste))
 d_liste = {"type": "minecraft:multi_action", "title": TITRE, "can_close_with_escape": True, "pause": False,
-           "body": [msg([{"text": f"§D / {len(CREATURES)} créatures découvertes   ·   §T victoires\n", "color": "gray"},
+           "body": [msg([{"text": ""}, {"text": "\ue02c", "font": "commerce:recette", "color": "white", "shadow_color": 0}, {"text": "\n\n"}], 310),
+                    msg([{"text": f"§D / {len(CREATURES)} créatures découvertes   ·   §T victoires\n", "color": "gray"},
                          {"text": "Contrat de la semaine : ", "color": "dark_red"}, {"text": "§CT", "color": "gold"}, {"text": "§OK", "color": "green"},
                          {"text": "§SG", "color": "red"}])],
            "actions": [bouton(f"§L{i}", 11 + i - 1) for i in range(1, len(CREATURES) + 1)]
@@ -940,6 +982,11 @@ w(F + "desinstaller.mcfunction", "\n".join(
        "data remove storage horreur:ui m", "data remove storage horreur:ui f",
        'tellraw @s {"text":"[Horreur] Désinstallé. Désactive maintenant le pack : /datapack disable \\"file/horreur.zip\\"","color":"gray"}']))
 
+for _i in range(4):
+    w(F + f"vis/anim_{_i}.mcfunction", "\n".join(
+        f"execute as @e[type=minecraft:item_display,tag=hr.vis.{k}] run data merge entity @s {pose(C[k], _i)}"
+        for k in POSES if k in C and C[k]["apparence"] == "statue"))
+
 # ---------------------------------------------------------------------------------------------
 n = 0
 zp = os.path.join(ICI, "..", "horreur.zip")
@@ -954,3 +1001,4 @@ print("fichiers :", n)
 # Le resource pack (assets/horreur) est regenere avec le datapack
 import resourcepack
 resourcepack.generer()
+

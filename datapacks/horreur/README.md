@@ -82,18 +82,25 @@ Si le pack Métiers est installé, chaque kill rapporte de l'XP au métier **Cha
 
 Les sons sont dans le resource pack, sous `horreur:<créature>.<son>`, avec des sous-titres en français et en anglais.
 
-- **Synthétisés par `sources/sons.py`** (100 % maison) :
+- **Synthétisés par `sources/sons.py`** (100 % maison, voix faites d'une source glottale filtrée en formants) :
   - Slender : grésillement quand on le fixe, présence, cri de réveil ;
   - Siren Head : sirène et radio brouillée ;
   - Pinhead : chaînes et glas ;
-  - Herobrine : souffle à l'apparition.
-- **Fournis à la main** dans `datapacks/horreur/sons/` (WAV, MP3, OGG ou FLAC, libres de droits) :
-  - `clown_rire` pour le rire du Clown ;
-  - `nonne_murmure` pour le murmure de la Nonne.
-
-  Tant qu'un de ces deux fichiers manque, la créature garde un son vanilla.
+  - Herobrine : souffle à l'apparition ;
+  - Clown : rire hystérique sur une boîte à musique faussée ;
+  - Nonne : prière chuchotée sur un chœur lointain ;
+  - Dame blanche : plainte coupée de sanglots ;
+  - Loup-garou : hurlement, un second loup répond au loin ;
+  - Feu follet : sifflement, crépitements, carillon ;
+  - Rôdeur : pas lourds dans les feuilles puis une respiration ;
+  - Croque-mitaine : grondement très grave.
+- **Remplacement à la main** : un fichier `datapacks/horreur/sons/<nom>.wav` (ou MP3, OGG, FLAC) du même nom passe avant la synthèse.
 
 Pour encoder en OGG Vorbis, il faut **ffmpeg** (`winget install Gyan.FFmpeg`). Sans lui, le pack se construit quand même, mais avec les sons vanilla. Pour écouter les sons synthétisés avant de les intégrer, lancer `python sources\sons.py` : il écrit les WAV dans `build/sons_wav/`.
+
+## Animations et textures (23/11/2026)
+
+Les statues bougent : Slender oscille et respire, la tête de Siren Head cherche à gauche et à droite, le Feu follet flotte et tourne. Quatre poses par cycle de 4 s, le jeu interpole entre elles (`POSES` dans `datapack.py`, fonctions `vis/anim_0..3`). Les habits sont redessinés en 128x64 (fonction `hd` de `resourcepack.py`) : dégradé de lumière sur chaque face, ombre au bord des faces, contours adoucis vers les détails sombres. Le bestiaire a son bandeau en tête (police `commerce:recette`, dessiné par Commerce).
 
 ## Fabrication
 

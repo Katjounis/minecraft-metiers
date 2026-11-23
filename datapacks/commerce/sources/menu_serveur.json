@@ -1,0 +1,102 @@
+{
+ "type": "minecraft:multi_action",
+ "title": {
+  "text": "Les Couillons",
+  "color": "gold",
+  "bold": true
+ },
+ "external_title": {
+  "text": "Menu du serveur"
+ },
+ "can_close_with_escape": true,
+ "pause": false,
+ "body": [
+  {
+   "type": "minecraft:plain_message",
+   "width": 300,
+   "contents": [
+    {
+     "text": "Métiers, Commerce, Bestiaire : tout est ici.",
+     "color": "gray"
+    }
+   ]
+  }
+ ],
+ "actions": [
+  {
+   "label": {
+    "text": "⚒ Métiers",
+    "color": "aqua",
+    "bold": true
+   },
+   "width": 150,
+   "tooltip": {
+    "text": "Niveaux, compétences, Forge, défis, classement."
+   },
+   "action": {
+    "type": "minecraft:run_command",
+    "command": "trigger metiers set 1"
+   }
+  },
+  {
+   "label": {
+    "text": "⚖ Commerce",
+    "color": "gold",
+    "bold": true
+   },
+   "width": 150,
+   "tooltip": {
+    "text": "Marché, bourse, banque, hôtel des ventes, spawners."
+   },
+   "action": {
+    "type": "minecraft:run_command",
+    "command": "trigger commerce set 1"
+   }
+  },
+  {
+   "label": {
+    "text": "☠ Bestiaire",
+    "color": "dark_red",
+    "bold": true
+   },
+   "width": 150,
+   "tooltip": {
+    "text": "Les créatures de la nuit, contrats, classement."
+   },
+   "action": {
+    "type": "minecraft:run_command",
+    "command": "trigger bestiaire set 1"
+   }
+  },
+  {
+   "label": {
+    "text": "★ Mon profil",
+    "color": "yellow",
+    "bold": true
+   },
+   "width": 150,
+   "tooltip": {
+    "text": "Tout ton parcours sur une page."
+   },
+   "action": {
+    "type": "minecraft:run_command",
+    "command": "trigger commerce set 30"
+   }
+  },
+  {
+   "label": {
+    "text": "? Guide du serveur",
+    "color": "white"
+   },
+   "width": 304,
+   "tooltip": {
+    "text": "Pour bien démarrer, en 5 pages."
+   },
+   "action": {
+    "type": "minecraft:run_command",
+    "command": "trigger commerce set 31"
+   }
+  }
+ ],
+ "columns": 2
+}

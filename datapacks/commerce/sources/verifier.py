@@ -64,7 +64,7 @@ for dp, _, fs in os.walk(ROOT):
             macro = line.startswith("$")
             body = line[1:] if macro else line
             if macro and "$(" not in body: err.append(f"{rel}:{n} ligne macro sans variable")
-            if not macro and re.search(r"\$\([a-z]", body) and 'set value "$(q)"' not in body:
+            if not macro and re.search(r"\$\([a-z]", body) and 'set value "$(' not in body and 'template:"' not in body:
                 err.append(f"{rel}:{n} variable de macro hors ligne macro")
             # structure des commandes scoreboard et des conditions de score
             OPS = {"=", "+=", "-=", "*=", "/=", "%=", "<", ">", "><"}

@@ -192,4 +192,4 @@ w(F + "skins/cadre_7.mcfunction", "\n".join(
      "scoreboard players set @s m.cd_7 1", f"function {NS}:skins/cadre {{i:7}}"]))
 add_lines(F + "trigger.mcfunction", [
     f'execute if score @s m.trig matches 447 run function {NS}:appel {{f:"skins/cadre_7"}}',
-    f'execute if score @s m.trig matches 490 run function {NS}:appel {{f:"prestige/aura_basculer"}}'])
+    f'execute if score @s m.trig matches 499 run function {NS}:appel {{f:"prestige/aura_basculer"}}'])

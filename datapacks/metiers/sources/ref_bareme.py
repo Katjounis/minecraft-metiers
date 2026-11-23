@@ -95,10 +95,12 @@ d_m = DIV["m"]
 PAGES["m"] = [titre("Minerais")] + groupes([(x / d_m, spr("b", TEX_BLOC.get(o, o)), nom_minerai(o)) for o, x in ORES.items()]) + \
     [titre("Pierres")] + groupes([(x / d_m, spr("b", TEX_BLOC.get(s, s)), NOM_PIERRE[s]) for s, x in STONES.items()]) + [DEFI]
 # ---------------------------------------------------------------- Chasseur
-PAGES["c"] = [titre("Créatures")] + groupes([(x, spr("i", f"{m}_spawn_egg"), NOM_MOB[m]) for m, x in MOBS.items()]) + \
+# Chasseur : deux onglets (créatures fortes / faibles et boss) pour ne pas faire défiler
+PAGES["c"] = [titre("Créatures à 5 XP et plus")] + groupes([(x, spr("i", f"{m}_spawn_egg"), NOM_MOB[m]) for m, x in MOBS.items() if x >= 5]) + [
+    note("Créatures d’un spawner acheté au Commerce : la moitié de l’XP. Pas d’XP quand tu es AFK."), DEFI]
+PAGES["c2"] = [titre("Créatures à moins de 5 XP")] + groupes([(x, spr("i", f"{m}_spawn_egg"), NOM_MOB[m]) for m, x in MOBS.items() if x < 5]) + \
     [titre("Boss du jeu")] + groupes([(x, spr("i", f"{b}_spawn_egg"), NOM_MOB[b]) for b, x in BOSSES.items()]) + [
-    note("Boss du serveur (Colosse, Reine, Liche, Brasier, Creeper géant) : la moitié d’un niveau de Chasseur pour chaque participant, plus butin et éclats."),
-    note("Créatures d’un spawner acheté au Commerce : la moitié de l’XP ci-dessus. Pas d’XP quand tu es AFK."), DEFI]
+    note("Boss du serveur (Colosse, Reine, Liche, Brasier, Creeper géant) : la moitié d’un niveau de Chasseur pour chaque participant, plus butin et éclats.")]
 # ---------------------------------------------------------------- Pêcheur
 w_peche = [s for s in jobs["p"]["src"] if s[0].endswith("fish_caught")][0][1]
 PAGES["p"] = [f'{{text:"\\n{w_peche} XP  ",color:"gold",bold:true}}', entree(spr("i", "cod"), "chaque prise (poisson, trésor ou déchet)"),
@@ -140,16 +142,41 @@ PAGES["x"] = [titre("1 XP tous les...")] + groupes(dist_items, "m") + [titre("D�
 w_trade = [s for s in jobs["t"]["src"] if s[0].endswith("traded_with_villager")][0][1]
 PAGES["t"] = groupes([(w_trade, spr("i", "emerald"), "échange avec un villageois (chaque échange)")]) + [DEFI]
 
+# ---------------------------------------------------------------- Bâtisseur (familles de blocs, valeur lue dans BLOCS_K)
+d_k = DIV["k"]
+FAM_K = [("quartz_block", "b", "quartz_block_side", "Quartz (bloc, briques, pilier, lisse)"),
+         ("end_stone_bricks", "b", "end_stone_bricks", "Briques de l’End"), ("prismarine_bricks", "b", "prismarine_bricks", "Prismarine taillée et sombre"),
+         ("white_glazed_terracotta", "b", "white_glazed_terracotta", "Terre cuite émaillée"),
+         ("stone_bricks", "b", "stone_bricks", "Briques de pierre (toutes)"), ("bricks", "b", "bricks", "Briques et briques de boue"),
+         ("white_concrete", "b", "white_concrete", "Béton (16 couleurs)"), ("terracotta", "b", "terracotta", "Terre cuite (et colorée)"),
+         ("glass", "b", "glass", "Verre et vitraux"), ("deepslate_tiles", "b", "deepslate_tiles", "Ardoise taillée et carrelage"),
+         ("polished_andesite", "b", "polished_andesite", "Pierres polies, tuf taillé"), ("oak_door", "i", "oak_door", "Porte en bois"),
+         ("lantern", "i", "lantern", "Lanterne"), ("oak_planks", "b", "oak_planks", "Planches (12 bois)"),
+         ("oak_slab", "b", "oak_planks", "Escaliers, dalles, barrières, trappes"), ("cobblestone", "b", "cobblestone", "Pierre taillée et pavés"),
+         ("glass_pane", "b", "glass", "Vitres"), ("ladder", "b", "ladder", "Échelles, chaînes, barreaux")]
+PAGES["k"] = [note("Chaque bloc de construction posé. Casser un de ces blocs retire autant d’XP : poser puis casser ne rapporte rien. "
+                   "Les blocs bruts (roche, bûches, laine) restent au Mineur, au Bûcheron et à l’Éleveur.")] + \
+    groupes([(BLOCS_K[b] / d_k, spr(kd, tex), nom) for b, kd, tex, nom in FAM_K]) + [DEFI]
+
 BAREME_INTRO = {"b": "Tout ce qui sort d’un tronc.", "f": "Les cultures, ramassées ou cassées.", "m": "Les minerais et les pierres cassés.",
                 "c": "Chaque créature tuée.", "p": "Chaque prise, avec des multiplicateurs.", "e": "Les naissances et la laine.",
-                "n": "Les niveaux dépensés à la table.", "x": "La distance parcourue et les découvertes.", "t": "Les échanges avec les villageois."}
+                "n": "Les niveaux dépensés à la table.", "x": "La distance parcourue et les découvertes.", "t": "Les échanges avec les villageois.",
+                "k": "Les blocs de construction posés."}
+BAN_B = '{type:"minecraft:plain_message",width:310,contents:[{text:""},{text:"\ue02b",font:"commerce:recette",color:"white",shadow_color:0},{text:"\\n\\n"}]}'
+w(F + "bareme/c2.mcfunction",
+  f'dialog show @s {{type:"minecraft:multi_action",title:[{gs("metier_c")},{{text:" Barème d’XP : Chasseur (2/2)",color:"red",bold:true}}],'
+  f'can_close_with_escape:true,pause:false,body:[{BAN_B},{{type:"minecraft:plain_message",width:420,contents:[{{text:""}},{",".join(PAGES["c2"])}]}}],'
+  f'actions:[{btn(txt("◀ Créatures fortes", "red", True), 484, 200)},{btn(txt("Tous les barèmes", "white"), 480, 200)}],columns:2,'
+  f'exit_action:{{label:"Fermer",width:200}}}}')
+add_lines(F + "trigger.mcfunction", [f'execute if score @s m.trig matches 491 run function {NS}:appel {{f:"bareme/c2"}}'])
 for j, d in jobs.items():
     contenu = [f'{{text:"{BAREME_INTRO[j]}",color:"white"}}'] + PAGES[j] + [BONUS,
                f'{{text:"\\n\\nPrestige ",color:"gold",bold:true}},{{text:"(niveau 100, 5 étoiles) : tu gardes tes compétences, la progression continue, +10 % d’XP par étoile et la capacité ",color:"gray"}},{{text:"{PCAP[j][0]}",color:"gold",bold:true}},{{text:" : {PCAP[j][1]}",color:"gray"}}']
     w(F + f"bareme/{j}.mcfunction",
       f'dialog show @s {{type:"minecraft:multi_action",title:[{gs("metier_" + j)},{{text:" Barème d’XP : {d["name"]}",color:"{d["color"]}",bold:true}}],'
-      f'can_close_with_escape:true,pause:false,body:[{{type:"minecraft:plain_message",width:420,contents:[{{text:""}},{",".join(contenu)}]}}],'
-      f'actions:[{btn(txt("Page du métier", d["color"]), 20 + d["idx"], 200)},{btn(txt("Tous les barèmes", "white"), 480, 200)}],columns:2,'
+      f'can_close_with_escape:true,pause:false,body:[{BAN_B},{{type:"minecraft:plain_message",width:420,contents:[{{text:""}},{",".join(contenu)}]}}],'
+      f'actions:[{btn(txt("Page du métier", d["color"]), 20 + d["idx"], 200)},{btn(txt("Tous les barèmes", "white"), 480, 200)}' +
+      (f',{btn(txt("Créatures faibles et boss ▶", "red", True), 491, 404)}' if j == "c" else "") + '],columns:2,'
       f'exit_action:{{label:"Fermer",width:200}}}}')
 hub = [btn(f'[{gs("metier_" + j)},{txt(" " + d["name"], d["color"])}]', 480 + d["idx"], 130, BAREME_INTRO[j]) for j, d in jobs.items()]
 w(F + "bareme/menu.mcfunction",

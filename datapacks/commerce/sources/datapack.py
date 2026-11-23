@@ -74,7 +74,7 @@ def say(txt, col="gray", who="@s"):
 
 JOBS = [("b", "Bûcheron", "gold"), ("f", "Fermier", "green"), ("m", "Mineur", "gray"), ("c", "Chasseur", "red"),
         ("p", "Pêcheur", "aqua"), ("e", "Éleveur", "light_purple"), ("n", "Enchanteur", "dark_purple"),
-        ("x", "Explorateur", "blue"), ("t", "Marchand", "dark_green")]
+        ("x", "Explorateur", "blue"), ("t", "Marchand", "dark_green"), ("k", "Bâtisseur", "#C08850")]
 JIDX = {j: k for k, (j, _, _) in enumerate(JOBS, 1)}
 JNAME = {j: n for j, n, _ in JOBS}
 
@@ -127,6 +127,8 @@ LD.append(f"function {NS}:prive/load")
 LD.append(f"function {NS}:hud/load")
 LD.append(f"function {NS}:stat/load")
 LD.append(f"function {NS}:spawner/load")
+LD += [f"function {NS}:banque/load", f"function {NS}:hdv/load", f"function {NS}:boutique/load", "scoreboard objectives add c.gd dummy",
+       "scoreboard players set #50 c.g 50", "scoreboard players set #95 c.g 95"]
 w(F + "load.mcfunction", LD)
 # Barre latérale : le seul affichage permanent fiable en vanilla. Elle montre le solde de chaque joueur,
 # trié du plus riche au moins riche (les fortunes sont publiques), avec le préfixe de titre de Métiers.
@@ -139,6 +141,7 @@ w(F + "tableau/off.mcfunction", ["scoreboard players set #tableau c.g 0", "score
 w(F + "tick.mcfunction", [
     "scoreboard players enable @a commerce",
     f"execute as @a[scores={{commerce=1..}}] at @s run function {NS}:trigger/entree",
+    f"execute as @a[scores={{commerce=..-1}}] at @s run function {NS}:trigger/entree",
     f"execute as @e[type=minecraft:villager,tag=commerce.nouveau] at @s run function {NS}:comptoir/pose",
     f"execute as @e[type=minecraft:interaction,tag=commerce.clic] if data entity @s interaction run function {NS}:comptoir/clic_i",
     "execute as @e[type=minecraft:interaction,tag=commerce.clic] if data entity @s attack run data remove entity @s attack",
@@ -182,7 +185,8 @@ w(F + "joueur/seconde.mcfunction", [
     f"execute unless score @s c.init2 matches 1 run function {NS}:joueur/evts_init",
     f"function {NS}:joueur/evts"])
 w(F + "joueur/arrivee.mcfunction", [f"scoreboard players add @s {o} 0" for o in PLAYER_OBJ] + [
-    f"recipe give @s {NS}:oeuf", "scoreboard players set @s c.vu 1"])
+    f"recipe give @s {NS}:oeuf", "scoreboard players set @s c.vu 1",
+    f"execute unless score @s c.gd matches 1 run function {NS}:serveur/bienvenue"])
 
 # Le nom du joueur n'existe dans aucune donnée lisible : on le récupère sur une tête de joueur générée
 # par une table de butin, posée un instant dans un item_display.
@@ -205,7 +209,7 @@ w(F + "joueur/registre.mcfunction", [
 
 PL = []
 for j, nom, col in JOBS:
-    PL += [f"scoreboard players set #k c.t 0", f"scoreboard players operation #k c.t = @s m.{j}_lvl",
+    PL += [f"scoreboard players add @s c.pp_{j} 0", f"scoreboard players set #k c.t 0", f"scoreboard players operation #k c.t = @s m.{j}_lvl",
            "scoreboard players operation #k c.t /= #10 c.g",
            f"execute if score #k c.t > @s c.pp_{j} run function {NS}:prime/palier_{j}",
            f"execute if score #k c.t < @s c.pp_{j} run scoreboard players operation @s c.pp_{j} = #k c.t"]
@@ -402,7 +406,9 @@ BO += [f"execute if score #mj c.t matches {JIDX[j]} run scoreboard players opera
 BO += ["execute if score #lv c.t matches 101.. run scoreboard players set #lv c.t 100",
        "execute if score #lv c.t matches ..-1 run scoreboard players set #lv c.t 0",
        "scoreboard players operation #lv c.t *= #5 c.g", "scoreboard players operation #bon c.t += #lv c.t",
-       "execute if score #mj c.t matches 1.. if score #mj c.t = #job m.heure run scoreboard players add #bon c.t 250"]
+       "execute if score #mj c.t matches 1.. if score #mj c.t = #job m.heure run scoreboard players add #bon c.t 250",
+       # synergie Négoce de Métiers (Mineur + Marchand niveau 50) : +5 %
+       "execute if score @s m.syn matches 1 run scoreboard players add #bon c.t 50"]
 w(F + "prix/bonus.mcfunction", BO)
 w(F + "prix/sans_bonus.mcfunction", "scoreboard players set #bon c.t 1000")
 
@@ -490,6 +496,8 @@ w(F + "op/vendre.mcfunction", [
     "scoreboard players operation #x c.t = #tot c.t"] + fmt(f"{NS}:t", "m.") + [
     f"data modify storage {NS}:t m.q set from storage {NS}:t it.q",
     f"function {NS}:op/msg_vente with storage {NS}:t m",
+    f"data modify storage {NS}:t m.n set from storage {NS}:t it.n", f"execute store result storage {NS}:t hl.id int 1 run scoreboard players get @s m.id",
+    f'data modify storage {NS}:t hl.col set value "green"', f"function {NS}:banque/hist_txt_vente",
     "playsound minecraft:entity.villager.yes master @s ~ ~ ~ 0.8 1.2",
     "playsound minecraft:block.chain.place master @s ~ ~ ~ 0.6 1.6"])
 w(F + "op/msg_vente.mcfunction", f'$data modify storage {NS}:t msg set value "Vendu : $(q) pour $(e),$(z)$(c) Écus."')
@@ -520,6 +528,8 @@ w(F + "op/acheter.mcfunction", [
     "scoreboard players operation #as c.t += #q c.t",
     f"function {NS}:item/sauver", f"function {NS}:stat/achat with storage {NS}:t it",
     f"function {NS}:op/msg_achat with storage {NS}:t m",
+    f"data modify storage {NS}:t m.n set from storage {NS}:t it.n", f"execute store result storage {NS}:t hl.id int 1 run scoreboard players get @s m.id",
+    f'data modify storage {NS}:t hl.col set value "red"', f"function {NS}:banque/hist_txt_achat",
     "playsound minecraft:entity.villager.trade master @s ~ ~ ~ 0.8 1",
     "playsound minecraft:entity.item.pickup master @s ~ ~ ~ 0.6 0.8"])
 w(F + "op/msg_achat.mcfunction", f'$data modify storage {NS}:t msg set value "Acheté : $(q) pour $(e),$(z)$(c) Écus."')
@@ -585,7 +595,7 @@ w(F + "marche/evt_fin.mcfunction", [
     "scoreboard players set #evi c.g 0",
     f'data modify storage {NS}:g evtxt set value ""',
     f"tellraw @a {L(PREFIX, T('Bourse : le cours de ', 'light_purple'), '{storage:\"commerce:t\",nbt:\"it.n\",color:\"white\"}', T(' revient à la normale.', 'light_purple'))}"])
-SEM = [f"function {NS}:stat/semaine"]
+SEM = [f"function {NS}:stat/semaine", f"function {NS}:banque/interets"]
 for it in ITL:
     SEM += [f"scoreboard players set {H(it)} c.vs 0", f"scoreboard players set {H(it)} c.as 0"]
 SEM += ["scoreboard players reset * c.ncr", say("Nouvelle semaine de bourse : le prix des cristaux redescend, les tops repartent à zéro.", "light_purple", "@a")]
@@ -694,7 +704,9 @@ RP = os.path.join(HERE, "..", "build", "commerce_rp", "assets", "commerce")
 PANNEAU = ""
 RECETTE = {"E": "emerald_block", "D": "diamond_block", "G": "gold_block", "N": "netherite_ingot", "C": "barrel_side"}
 GRID = ["EDE", "GNG", "ECE"]
-BANNIERES = [("COMMERCE", "emerald"), ("MARCHÉ", "emerald"), ("BOURSE", "bell"), ("FORTUNES", "gold_ingot"), ("CRISTAUX", "diamond"), ("SPAWNERS", "spawner"), ("GRAPHIQUES", "clock")]
+BANNIERES = [("COMMERCE", "emerald"), ("MARCHÉ", "emerald"), ("BOURSE", "bell"), ("FORTUNES", "gold_ingot"), ("CRISTAUX", "diamond"), ("SPAWNERS", "spawner"), ("GRAPHIQUES", "clock"),
+             # bandeaux des autres packs (même police, resource pack commun) : Métiers 7 à 11, Horreur 12
+             ("MÉTIERS", "iron_pickaxe"), ("FORGE", "anvil_top"), ("QUETES", "writable_book"), ("GUILDE", "name_tag"), ("BAREME", "book"), ("BESTIAIRE", "bone")]
 # bandeau k : glyphe chr(0xE020 + k), 27 px de haut, soit 3 lignes de texte
 BAN = lambda k: f'{{type:"minecraft:plain_message",width:310,contents:[{{text:""}},{{text:"{chr(0xE020 + k)}",font:"commerce:recette",color:"white",shadow_color:0}},{{text:"\\n\\n"}}]}}'
 
@@ -825,6 +837,8 @@ TR = ["scoreboard players operation #v c.t = @s commerce", "scoreboard players s
       "scoreboard players enable @s commerce",
       f"execute if score #v c.t matches 60 run return run function {NS}:page/aide",
       f"execute if score #v c.t matches 7000 run return run function {NS}:spawner/aide",
+      f"execute if score #v c.t matches 30 run return run function {NS}:serveur/profil"] + [
+      f"execute if score #v c.t matches {31 + i} run return run function {NS}:serveur/guide_{i + 1}" for i in range(5)] + [
       f"execute unless score @s c.deb matches 1 run return run function {NS}:page/verrou",
       f"execute if score #v c.t matches 1 run return run function {NS}:page/accueil",
       f"execute if score #v c.t matches 9 run return run function {NS}:page/marche",
@@ -832,6 +846,18 @@ TR = ["scoreboard players operation #v c.t = @s commerce", "scoreboard players s
       f"execute if score #v c.t matches 21 run return run function {NS}:page/fortunes",
       f"execute if score #v c.t matches 22 run return run function {NS}:page/cristaux",
       f"execute if score #v c.t matches 50 run return run function {NS}:comptoir/deplacer",
+      f"execute if score #v c.t matches ..-1 run return run function {NS}:saisie/entree",
+      f"execute if score #v c.t matches 90 run return run function {NS}:banque/page",
+      f"execute if score #v c.t matches 91 run return run function {NS}:banque/destinataires",
+      f"execute if score #v c.t matches 8100000..8199999 run return run function {NS}:banque/dest_choisi"] + [
+      f"execute if score #v c.t matches {940 + i} run return run function {NS}:banque/op_depot_{i}" for i in range(4)] + [
+      f"execute if score #v c.t matches {950 + i} run return run function {NS}:banque/op_retrait_{i}" for i in range(4)] + [
+      f"execute if score #v c.t matches {6000 + p} run return run function {NS}:hdv/page_{p}" for p in range(10)] + [
+      f"execute if score #v c.t matches 6100 run return run function {NS}:hdv/vendre",
+      f"execute if score #v c.t matches 6200 run return run function {NS}:hdv/mes",
+      f"execute if score #v c.t matches 9000000..9499999 run return run function {NS}:hdv/acheter",
+      f"execute if score #v c.t matches 9500000..9999999 run return run function {NS}:hdv/retirer",
+      f"execute if score #v c.t matches 7500000..7599999 run return run function {NS}:boutique/acheter",
       f"execute if score #v c.t matches 81..84 run return run function {NS}:stat/global",
       f"execute if score #v c.t matches 70 run return run function {NS}:spawner/entree",
       f"execute if score #v c.t matches 700..799 run return run function {NS}:spawner/entree",
@@ -867,6 +893,9 @@ AIDE = [
     ("Comptoir", "Un par joueur, clic droit pour ouvrir. Mon comptoir le range pour le reposer ailleurs."),
     ("Spawners", "Accueil, Spawners. Très chers, améliorables par clic droit. Leurs créatures donnent la moitié de l’XP de Chasseur."),
     ("Graphiques", "Accueil, Graphiques, ou bouton Graphiques d’un objet : cours, ventes par jour et par semaine. Clique un jour pour son détail."),
+    ("Banque", "Virements à un joueur, épargne à 2 % par semaine, tes 15 dernières opérations."),
+    ("Hôtel des ventes", "Prends un objet en main et mets-le en vente à ton prix ; 5 % de taxe à la vente."),
+    ("Magasin", "Un panneau [Vente] sur un coffre : tu choisis le prix, les clients achètent d’un clic droit sur le panneau."),
     ("Coffre privé", "Pose un panneau sur ton coffre ou ton tonneau et écris [Privé] : toi seul l’ouvres, et il se reconstruit s’il est cassé. Casse le panneau pour le libérer."),
 ]
 w(F + "page/aide.mcfunction", dlg(
@@ -890,6 +919,8 @@ w(F + "page/accueil_d.mcfunction", "$" + dlg(
      btn(L(G("cristal_m"), T("  Cristaux de métier", "aqua")), 22, 160, "Hors de prix, mais c'est le but."),
      btn(L('{object:"atlas",atlas:"minecraft:blocks",sprite:"minecraft:block/spawner"}', T("  Spawners", "light_purple", True)), 70, 160, "Des spawners à acheter et à améliorer. Très chers."),
      btn(L('{object:"atlas",atlas:"minecraft:items",sprite:"minecraft:item/clock_00"}', T("  Graphiques", "aqua", True)), 81, 160, "Courbes et flux du marché, jour par jour."),
+     btn(L(spr("gold_ingot"), T("  Banque", "yellow", True)), 90, 160, "Virements, épargne, historique."),
+     btn(L(spr("chest"), T("  Hôtel des ventes", "light_purple", True)), 6000, 160, "Achète et vends des objets entre joueurs."),
      btn(L(spr("barrel"), T("  Mon comptoir", "white")), 50, 160, "Range ton comptoir dans ton inventaire pour le reposer ailleurs."),
      btn(T("Aide", "gray"), 60, 160)]))
 
@@ -1143,6 +1174,8 @@ w(F + "desinstaller.mcfunction", [f"scoreboard objectives remove {o}" for o in P
 # =====================================================================
 exec(open(os.path.join(HERE, "grafiques.py"), encoding="utf-8").read())
 exec(open(os.path.join(HERE, "spawners.py"), encoding="utf-8").read())
+for _m in ("banque.py", "hdv.py", "boutiques.py", "serveur.py"):
+    exec(open(os.path.join(HERE, _m), encoding="utf-8").read())
 
 # =====================================================================
 # COFFRES PRIVÉS

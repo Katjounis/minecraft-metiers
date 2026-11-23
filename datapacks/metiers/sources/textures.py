@@ -169,6 +169,14 @@ def shape(tool):
         INLAY[tool] = near(head, [(9.5, 6), (18.5, 6)], 0.6)
         edge = near(head, [(19, 17), (27, 19), (28.5, 22)], 0.8)
         gem_c = (14, 13)
+    elif tool == "trowel":   # truelle du Bâtisseur : manche bois, col coudé, lame en losange
+        stroke(hand, line((3.5, 28.5), (10.5, 21.5)), lambda t: 1.45)
+        stroke(head, line((10.5, 21.5), (12.5, 17.5)), lambda t: 0.8)
+        stroke(head, line((12.5, 17.5), (15.5, 15.5)), lambda t: 0.8)
+        poly(head, [(14.0, 16.0), (16.5, 7.0), (29.0, 2.5), (24.5, 15.0)])
+        edge = near(head, [(16.5, 7.0), (29.0, 2.5), (24.5, 15.0)], 1.2)
+        INLAY[tool] = near(head, [(17.5, 13.5), (26.5, 5.0)], 0.5)
+        gem_c = (11, 20)
     elif tool == "bundle":
         poly(head, [(16 + 10.5 * math.cos(a / 40 * 2 * math.pi), 19.5 + 8.5 * math.sin(a / 40 * 2 * math.pi)) for a in range(40)])
         poly(head, [(12, 12.5), (20, 12.5), (21, 9), (11, 9)])

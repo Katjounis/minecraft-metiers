@@ -1,6 +1,6 @@
 # Métiers : datapack et resource pack
 
-Datapack vanilla de métiers (Bûcheron, Fermier, Mineur, Chasseur, Pêcheur, Éleveur, Enchanteur, Explorateur, Marchand) pour notre serveur, avec niveaux jusqu'à 100, arbres de compétences, outils et armure sur 11 paliers, Forge (cristaux et éclats), skins et cadres de titre, défis du jour, de la semaine et collectifs, classement, prestige, heure du métier et 5 boss de serveur en rotation.
+Datapack vanilla de métiers (Bûcheron, Fermier, Mineur, Chasseur, Pêcheur, Éleveur, Enchanteur, Explorateur, Marchand, Bâtisseur) pour notre serveur, avec niveaux jusqu'à 100, arbres de compétences, outils et armure sur 11 paliers, Forge (cristaux et éclats), skins et cadres de titre, défis du jour, de la semaine et collectifs, classement, prestige, heure du métier et 5 boss de serveur en rotation.
 
 ![Aperçu des outils](apercu/outils.png)
 
@@ -26,7 +26,7 @@ Dans `server.properties` :
 
 ```
 resource-pack=https://github.com/Katjounis/minecraft-metiers/raw/main/metiers_resourcepack.zip
-resource-pack-sha1=db78744b9895956bffce93eae8a5b981bbde63e6
+resource-pack-sha1=410acf42343a2be582c16630b01384ab45ea80aa
 require-resource-pack=true
 ```
 
@@ -37,6 +37,12 @@ Le SHA-1 doit être recalculé à chaque nouvelle version du resource pack.
 Touche G (ou menu Échap) pour ouvrir le menu des métiers, ou `/trigger metiers`.
 
 Commandes admin : `/function metiers:boss/alerte` (boss suivant de la rotation dans 2 min), `/function metiers:heure/lancer`, `/function metiers:defis/nouveaux`, `/function metiers:defis/semaine`.
+
+## Version 25 (23/11/2026)
+
+Bâtisseur (10e métier, lettre `k`, `sources/ref_batisseur.py`) : l'XP vient des blocs de construction posés (planches, escaliers, dalles, barrières, portes et trappes des 12 bois, briques, pierres polies et taillées, béton, terre cuite, verre, quartz, prismarine...), 4 points = 1 XP ; casser un de ces blocs retire autant de points, poser puis casser ne rapporte donc rien. Les blocs bruts restent au Mineur et au Bûcheron. Ses statistiques sont relevées toutes les 3 s (170 blocs suivis). Compétences : Bras long (portée +1), Pied sûr (chute /2), Échafaudeur (chute lente accroupi dans le vide), Cadence (Célérité I), Grand chantier (portée +3 en tout), Maître d'œuvre (Célérité II, Résistance I). Outil : la Truelle, incassable, qui donne +1 à +3 de portée tenue dans une main (textures 64 px pré-rendues dans `sources/textures_batisseur/` par la forme `trowel` de `textures.py`). Kit de chantier une fois par jour de jeu (niveau 20), capacité de prestige Architecte, synergie Charpentier avec le Bûcheron, quête en 10 étapes, barème illustré. Déclencheurs propres au 10e métier : compétences 1001 à 1006, titre 620, kit 614, barème 490. Le build écrit `build/metiers_rp/` (truelle, icônes, police `icones.json` complétée) que `fusion_rp.py` verse dans le zip sans jamais retirer `assets/metiers/`.
+
+Aussi dans la 25 (`sources/ref_v26.py`) : synergies (deux métiers au niveau 50), quêtes (10 étapes par métier), guildes (créer, inviter, défi de la semaine, classement), boss plus durs (attaque et armure selon le niveau moyen de Chasseur, phase finale, 5 nouvelles attaques), effets visuels de montée de niveau et de palier, bandeaux en tête des menus. La touche G ouvre le menu commun aux trois packs (dialogue `serveur:menu`, identique dans Métiers, Commerce et Horreur).
 
 ## Mise à jour 24.1 (23/11/2026)
 

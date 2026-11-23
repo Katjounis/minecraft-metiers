@@ -429,6 +429,51 @@ def trophee(c):
     return mod
 
 
+# ======================================================================================
+# Habits en HD : le patron 64x32 est redessine en 128x64 (le jeu adapte les UV a la taille de l'image).
+# Chaque pixel devient 4 sous-pixels : degrade de lumiere sur la face (haut eclaire, bas dans l'ombre), ombre
+# portee sur le bord de chaque face, contours adoucis vers les details sombres (yeux, bouches, coutures) et grain fin.
+# ======================================================================================
+def _lum(c):
+    return 0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2]
+
+
+def hd(im):
+    out = Image(im.w * 2, im.h * 2)
+    r = random.Random(4242)
+    for cube in (TETE, CHAPEAU, CORPS, BRAS, JAMBE):
+        for nom, (x, y, w, h) in cube.items():
+            for j in range(h):
+                for i in range(w):
+                    c = im.get(x + i, y + j)
+                    if not c[3]:
+                        continue
+                    if nom == "haut":
+                        g = 8
+                    elif nom == "bas":
+                        g = -14
+                    else:
+                        g = round(10 - 22 * (j + 0.5) / h)
+                    for b in (0, 1):
+                        for a in (0, 1):
+                            d = g + r.randint(-3, 3)
+                            sx, sy = 2 * i + a, 2 * j + b
+                            if sx in (0, 2 * w - 1) or sy in (0, 2 * h - 1):
+                                d -= 12
+                            for (di, dj) in ((1 if a else -1, 0), (0, 1 if b else -1)):
+                                ii, jj = i + di, j + dj
+                                if 0 <= ii < w and 0 <= jj < h:
+                                    v = im.get(x + ii, y + jj)
+                                    if v[3]:
+                                        ecart = _lum(v) - _lum(c)
+                                        if ecart < -40:
+                                            d -= 10
+                                        elif ecart > 40:
+                                            d += 6
+                            out.set(2 * (x + i) + a, 2 * (y + j) + b, nuance(c, d))
+    return out
+
+
 def generer():
     if os.path.exists(OUT):
         shutil.rmtree(OUT)
@@ -437,7 +482,7 @@ def generer():
     for c in CREATURES:
         k = c["id"]
         if c["apparence"] == "habit":
-            sauver(HABITS[k](), f"textures/entity/equipment/humanoid/{k}.png")
+            sauver(hd(HABITS[k]()), f"textures/entity/equipment/humanoid/{k}.png")
             ecrire_json(f"equipment/{k}.json", {"layers": {"humanoid": [{"texture": f"horreur:{k}"}]}})
         else:
             ecrire_json(f"models/item/{k}.json", globals()[k]().construire(64))

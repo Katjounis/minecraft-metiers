@@ -20,7 +20,7 @@ wj(f"data/{NS}/tags/block/protegeable.json", {"values": ["minecraft:chest", "min
 
 # ---------------------------------------------------------------- chargement
 LDP = [f"scoreboard objectives add {o} minecraft.used:minecraft.{it}" for o, it in SIGN_OBJ]
-LDP += [f"scoreboard objectives add {o} dummy" for o in ("c.psign", "c.lk", "c.grp", "c.st", "c.pown")]
+LDP += [f"scoreboard objectives add {o} dummy" for o in ("c.psign", "c.lk", "c.grp", "c.st", "c.pown", "c.gg")]
 LDP += ["scoreboard players add #gid c.g 0", "scoreboard players add #pt c.g 0"]
 w(P + "load.mcfunction", LDP)
 
@@ -55,6 +55,14 @@ for m in MOTS:
     for face in ("front_text", "back_text"):
         TXT.append(f'execute if block ~ ~ ~ #minecraft:all_signs{{{face}:{{messages:["{m}"]}}}} run scoreboard players set #pv c.t 1')
         TXT.append(f'execute if block ~ ~ ~ #minecraft:all_signs{{{face}:{{messages:[{{text:"{m}"}}]}}}} run scoreboard players set #pv c.t 1')
+for m in ["[Guilde]", "[guilde]", "[GUILDE]"]:    # coffre de guilde : ouvert à tous les membres (guilde de Métiers)
+    for face in ("front_text", "back_text"):
+        TXT.append(f'execute if block ~ ~ ~ #minecraft:all_signs{{{face}:{{messages:["{m}"]}}}} run scoreboard players set #pv c.t 3')
+        TXT.append(f'execute if block ~ ~ ~ #minecraft:all_signs{{{face}:{{messages:[{{text:"{m}"}}]}}}} run scoreboard players set #pv c.t 3')
+for m in ["[Vente]", "[vente]", "[VENTE]"]:      # magasin : même protection, puis le prix (boutiques.py)
+    for face in ("front_text", "back_text"):
+        TXT.append(f'execute if block ~ ~ ~ #minecraft:all_signs{{{face}:{{messages:["{m}"]}}}} run scoreboard players set #pv c.t 2')
+        TXT.append(f'execute if block ~ ~ ~ #minecraft:all_signs{{{face}:{{messages:[{{text:"{m}"}}]}}}} run scoreboard players set #pv c.t 2')
 w(P + "panneau.mcfunction", [
     "scoreboard players set #pv c.t 0"] + TXT + [
     "execute if score #pv c.t matches 0 run return 0",
@@ -75,6 +83,8 @@ w(P + "panneau.mcfunction", [
     "tag @e[type=minecraft:marker,tag=commerce.pnew] remove commerce.pnew",
     "data merge block ~ ~ ~ {is_waxed:1b}",
     "scoreboard players set @s c.psign 0",
+    f"execute if score #pv c.t matches 2 run function {NS}:boutique/creer",
+    f"execute if score #pv c.t matches 3 run function {NS}:prive/guilde",
     "playsound minecraft:block.iron_door.close master @s ~ ~ ~ 1 1.2",
     "particle minecraft:wax_on ~0.5 ~0.5 ~0.5 0.3 0.3 0.3 0 12"])
 
@@ -122,6 +132,12 @@ w(P + "creer_moitie.mcfunction", [
     f"execute as @e[type=minecraft:marker,tag=commerce.pnew] at @s run function {NS}:prive/verrouiller",
     "tag @e[type=minecraft:marker,tag=commerce.pnew] remove commerce.pnew"])
 
+w(P + "guilde.mcfunction", [
+    "execute unless score @s m.gid matches 1.. run return run " + say("Tu n’as pas de guilde : ce coffre reste privé (menu Métiers, Guilde).", "yellow"),
+    "scoreboard players operation #g c.t = @s m.gid",
+    "execute as @e[type=minecraft:marker,tag=commerce.prive] if score @s c.grp = #gid c.g run scoreboard players operation @s c.gg = #g c.t",
+    say("Coffre de guilde : tous les membres de ta guilde peuvent l’ouvrir.", "green")])
+
 # ---------------------------------------------------------------- verrou
 w(P + "verrouiller.mcfunction", [f"data merge block ~ ~ ~ {VERROU}", "scoreboard players set @s c.lk 1"])
 w(P + "deverrouiller.mcfunction", ["data remove block ~ ~ ~ lock", "scoreboard players set @s c.lk 0"])
@@ -157,10 +173,14 @@ for kind, k in KINDS:
             for ti, t_ in enumerate(("single", "left", "right")):
                 RS.append(f"execute if score @s c.st matches {k * 100 + fi * 10 + ti} run setblock ~ ~ ~ minecraft:{kind}[facing={f_},type={t_}]")
 JUGE = [  # #in = un autre joueur à moins de 8 blocs ; #ok = le propriétaire à moins de 6 blocs
+    # coffre de guilde (#gg = guilde) : « autre » = hors de la guilde, « propriétaire » = un membre
     "scoreboard players operation #own c.t = @s c.own",
+    "scoreboard players set #gg c.t 0", "scoreboard players operation #gg c.t = @s c.gg",
     "scoreboard players set #in c.t 0", "scoreboard players set #ok c.t 0",
-    "execute as @a[distance=..8,gamemode=!spectator] unless score @s m.id = #own c.t run scoreboard players set #in c.t 1",
-    "execute as @a[distance=..6] if score @s m.id = #own c.t run scoreboard players set #ok c.t 1"]
+    "execute unless score #gg c.t matches 1.. as @a[distance=..8,gamemode=!spectator] unless score @s m.id = #own c.t run scoreboard players set #in c.t 1",
+    "execute unless score #gg c.t matches 1.. as @a[distance=..6] if score @s m.id = #own c.t run scoreboard players set #ok c.t 1",
+    "execute if score #gg c.t matches 1.. as @a[distance=..8,gamemode=!spectator] unless score @s m.gid = #gg c.t run scoreboard players set #in c.t 1",
+    "execute if score #gg c.t matches 1.. as @a[distance=..6] if score @s m.gid = #gg c.t run scoreboard players set #ok c.t 1"]
 w(P + "conteneur.mcfunction", [
     f"execute unless block ~ ~ ~ #{NS}:protegeable run return run function {NS}:prive/disparu",
     # entonnoir dessous en pause, wagonnet à entonnoir désactivé

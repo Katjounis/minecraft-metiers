@@ -36,7 +36,7 @@ ORES = {"coal_ore": 8, "deepslate_coal_ore": 10, "copper_ore": 8, "deepslate_cop
         "redstone_ore": 12, "deepslate_redstone_ore": 14, "lapis_ore": 20, "deepslate_lapis_ore": 24,
         "diamond_ore": 80, "deepslate_diamond_ore": 90, "emerald_ore": 100, "deepslate_emerald_ore": 110,
         "nether_gold_ore": 6, "nether_quartz_ore": 6, "ancient_debris": 160}
-DIV = {"m": 4, "f": 2, "e": 2}
+DIV = {"m": 4, "f": 2, "e": 2, "k": 4}
 ORE_DROP = {"coal": "coal 1", "copper": "raw_copper 2", "iron": "raw_iron 1", "gold": "raw_gold 1",
             "redstone": "redstone 4", "lapis": "lapis_lazuli 4", "diamond": "diamond 1",
             "emerald": "emerald 1", "nether_gold": "gold_nugget 3", "nether_quartz": "quartz 1"}
@@ -59,7 +59,14 @@ jobs = {
     "n": {"name": "Enchanteur", "color": "dark_purple", "idx": 7, "icon": "✦", "src": []},
     "x": {"name": "Explorateur", "color": "blue", "idx": 8, "icon": "⛰", "src": []},
     "t": {"name": "Marchand", "color": "dark_green", "idx": 9, "icon": "⚖", "src": []},
+    "k": {"name": "Bâtisseur", "color": "#C08850", "idx": 10, "icon": "⌂", "src": []},
 }
+# Déclencheurs par métier : 100 + 10 x idx + n pour les compétences (1000 + n pour le 10e métier, 201..206 étant pris),
+# 600 + idx pour le titre (620 pour le 10e, 610..613 étant pris).
+def TSK(d, k):
+    return 100 + 10 * d["idx"] + k if d["idx"] < 10 else 1000 + k
+def TTI(d):
+    return 600 + d["idx"] if d["idx"] < 10 else 620
 # source : (critère, poids, signe, objectif, hooks)  ; hooks = [(compétence, prédicat chance, commande)]
 # Tout ce qui sort d'un tronc rapporte : bûche, bûche écorcée, bois, bois écorcé, tiges et hyphes du Nether
 WOOD_ALL = []
@@ -72,7 +79,7 @@ for l in WOOD_ALL:
                              [("b1", "chance_20", f"give @s minecraft:{l} 1"),
                               ("b5", "chance_10", "give @s minecraft:charcoal 1"),
                               ("pb1", "chance_01", "give @s minecraft:golden_apple 1"), ("pb3", "chance_01", "give @s minecraft:golden_apple 1"),
-                              ("pb5", "chance_01", "give @s minecraft:golden_apple 1")]))
+                              ("pb5", "chance_01", "give @s minecraft:golden_apple 1"), ("ybf", "chance_10", "give @s minecraft:apple 1")]))
     jobs["b"]["src"].append((f"minecraft.used:minecraft.{l}", 1, -1, f"b.us.{l}", []))
 for s, x in STONES.items():
     jobs["m"]["src"].append((f"minecraft.mined:minecraft.{s}", x, 1, f"m.mi.{s}", []))
@@ -100,7 +107,8 @@ for c, (x, placed, drop) in CROP_BLOCKS.items():
 MOBS = {'chicken': 1, 'cow': 1, 'pig': 1, 'sheep': 1, 'rabbit': 1, 'goat': 1, 'mooshroom': 1, 'silverfish': 1, 'slime': 1, 'magma_cube': 1, 'zombie': 3, 'husk': 3, 'zombie_villager': 3, 'spider': 3, 'piglin': 3, 'zombified_piglin': 1, 'drowned': 3, 'skeleton': 4, 'cave_spider': 4, 'vex': 4, 'stray': 5, 'bogged': 5, 'creeper': 5, 'phantom': 6, 'pillager': 6, 'witch': 5, 'enderman': 3, 'blaze': 5, 'guardian': 3, 'hoglin': 7, 'creaking': 8, 'vindicator': 9, 'shulker': 9, 'zoglin': 9, 'ghast': 11, 'wither_skeleton': 11, 'breeze': 11, 'piglin_brute': 13, 'evoker': 15, 'ravager': 21}
 for mob, x in MOBS.items():
     HEAD = {"zombie": "zombie_head", "skeleton": "skeleton_skull", "creeper": "creeper_head", "piglin": "piglin_head"}
-    hk = [("c3", "chance_25", f"loot give @s loot minecraft:entities/{mob}"), ("c6", None, "effect give @s minecraft:instant_health 1 0 true")]
+    hk = [("c3", "chance_25", f"loot give @s loot minecraft:entities/{mob}"), ("c6", None, "effect give @s minecraft:instant_health 1 0 true"),
+          ("ycn", "chance_30", "xp add @s 5 points")]
     if mob in HEAD: hk.append(("c5", "chance_03", f"give @s minecraft:{HEAD[mob]} 1"))
     jobs["c"]["src"].append((f"minecraft.killed:minecraft.{mob}", x, 1, f"c.k.{mob}", hk))
 jobs["c"]["src"].append(("minecraft.custom:minecraft.mob_kills", 0, 1, "c.kills",
@@ -128,6 +136,36 @@ jobs["n"]["src"].append(("minecraft.mined:minecraft.bookshelf", 2, -1, "n.shelfm
 jobs["t"]["src"].append(("minecraft.custom:minecraft.traded_with_villager", 6, 1, "t.trade",
                          [("t1", "chance_15", "give @s minecraft:emerald 1"), ("t3", "chance_03", "give @s minecraft:diamond 1"),
                           ("t6", "chance_01", "give @s minecraft:netherite_scrap 1")]))
+# Bâtisseur : 4 points = 1 XP par bloc de construction POSÉ (les blocs bruts restent au Mineur et au Bûcheron) ;
+# casser un de ces blocs retire le même nombre de points, donc poser puis casser ne rapporte rien.
+BOIS_K = ["oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "mangrove", "cherry", "pale_oak", "bamboo", "crimson", "warped"]
+COUL_K = ["white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "light_gray", "cyan", "purple",
+          "blue", "brown", "green", "red", "black"]
+BLOCS_K = {f"{b}_planks": 1 for b in BOIS_K}
+BLOCS_K.update({f"{b}_stairs": 1 for b in BOIS_K}); BLOCS_K.update({f"{b}_slab": 1 for b in BOIS_K})
+BLOCS_K.update({f"{b}_fence": 1 for b in BOIS_K}); BLOCS_K.update({f"{b}_door": 2 for b in BOIS_K})
+BLOCS_K.update({f"{b}_trapdoor": 1 for b in BOIS_K})
+for b, x in (("cobblestone", 1), ("mossy_cobblestone", 1), ("stone_bricks", 2), ("mossy_stone_bricks", 2), ("cracked_stone_bricks", 2),
+             ("chiseled_stone_bricks", 2), ("smooth_stone", 2), ("bricks", 2), ("mud_bricks", 2), ("deepslate_bricks", 2),
+             ("deepslate_tiles", 2), ("polished_deepslate", 2), ("cobbled_deepslate", 1), ("polished_andesite", 2), ("polished_diorite", 2),
+             ("polished_granite", 2), ("polished_blackstone", 2), ("polished_blackstone_bricks", 2), ("polished_tuff", 2), ("tuff_bricks", 2),
+             ("nether_bricks", 2), ("red_nether_bricks", 2), ("end_stone_bricks", 3), ("prismarine_bricks", 3), ("dark_prismarine", 3),
+             ("quartz_block", 3), ("quartz_bricks", 3), ("quartz_pillar", 3), ("smooth_quartz", 3), ("smooth_sandstone", 2),
+             ("cut_sandstone", 2), ("smooth_red_sandstone", 2), ("cut_red_sandstone", 2), ("glass", 2), ("glass_pane", 1),
+             ("terracotta", 2), ("lantern", 2), ("bookshelf", 0), ("iron_bars", 1), ("chain", 1), ("ladder", 1), ("scaffolding", 0),
+             ("cobblestone_stairs", 1), ("cobblestone_slab", 1), ("cobblestone_wall", 1), ("stone_brick_stairs", 2), ("stone_brick_slab", 1),
+             ("stone_brick_wall", 2), ("brick_stairs", 2), ("brick_slab", 1), ("brick_wall", 2), ("deepslate_brick_stairs", 2),
+             ("deepslate_brick_slab", 1), ("deepslate_tile_stairs", 2), ("deepslate_tile_slab", 1), ("quartz_stairs", 3), ("quartz_slab", 2),
+             ("smooth_stone_slab", 1), ("sandstone_stairs", 1), ("sandstone_slab", 1), ("polished_blackstone_brick_stairs", 2),
+             ("mud_brick_stairs", 2), ("nether_brick_stairs", 2), ("prismarine_brick_stairs", 3)):
+    if x: BLOCS_K[b] = x
+for c in COUL_K:
+    BLOCS_K[f"{c}_concrete"] = 2; BLOCS_K[f"{c}_terracotta"] = 2; BLOCS_K[f"{c}_stained_glass"] = 2
+    BLOCS_K[f"{c}_stained_glass_pane"] = 1; BLOCS_K[f"{c}_glazed_terracotta"] = 3
+for b, x in BLOCS_K.items():
+    jobs["k"]["src"].append((f"minecraft.used:minecraft.{b}", x, 1, f"k.us.{b}", []))
+    jobs["k"]["src"].append((f"minecraft.mined:minecraft.{b}", x, -1, f"k.mi.{b}", []))
+
 # Explorateur : distance parcourue, 1 XP tous les 10 m (traité à part)
 XDIST = ["walk_one_cm", "sprint_one_cm", "crouch_one_cm", "aviate_one_cm", "horse_one_cm", "climb_one_cm",
          "swim_one_cm", "boat_one_cm"]
@@ -213,6 +251,14 @@ SKILLS = {
         ("Colporteur", 12, [3], "Un marchand ambulant apparaît près de toi toutes les 40 minutes de jeu."),
         ("Magnat", 16, [4, 5], "Héros du village V et 1 % de chance d'un fragment de netherite par échange."),
     ],
+    "k": [
+        ("Bras long", 3, [], "Tu poses et casses les blocs 1 bloc plus loin."),
+        ("Pied sûr", 4, [1], "Dégâts de chute divisés par deux."),
+        ("Échafaudeur", 6, [1], "Accroupi dans le vide : chute lente, pour finir une façade sans échafaudage."),
+        ("Cadence", 8, [2], "Célérité I en permanence."),
+        ("Grand chantier", 12, [3], "Encore 2 blocs de portée (3 en tout)."),
+        ("Maître d'œuvre", 16, [4, 5], "Célérité II et Résistance I en permanence."),
+    ],
 }
 SKILL_LVL = [5, 20, 20, 45, 45, 70]
 
@@ -243,7 +289,7 @@ TOOL = {"b": ("axe", "Hache", "Hache du Dieu de la Forêt"), "m": ("pickaxe", "P
         "f": ("hoe", "Houe", "Faux du Dieu des Moissons"), "c": ("sword", "Lame", "Lame du Dieu de la Chasse"),
         "p": ("fishing_rod", "Canne", "Canne du Dieu des Mers"), "e": ("carrot_on_a_stick", "Houlette", "Houlette du Dieu des Troupeaux"),
         "n": ("carrot_on_a_stick", "Grimoire", "Grimoire du Dieu des Arcanes"), "x": ("shovel", "Pelle", "Pelle du Dieu Voyageur"),
-        "t": ("bundle", "Bourse", "Bourse du Dieu du Commerce")}
+        "t": ("bundle", "Bourse", "Bourse du Dieu du Commerce"), "k": ("brush", "Truelle", "Truelle du Dieu Bâtisseur")}
 MAT = ["diamond", "diamond", "netherite", "netherite", "netherite", "netherite", "netherite", "netherite", "netherite", "netherite", "netherite"]
 MAIN = [2, 3, 4, 4, 4, 5, 5, 5, 5, 5, 5]
 UNB = [1, 2, 3, 3, 3, None, None, None, None, None, None]
@@ -302,6 +348,11 @@ EXTRAS = {
           8: ["netherite_ingot 2", "emerald_block 24"], 9: ["netherite_ingot 3", "emerald_block 32"],
           10: ["enchanted_golden_apple 6", "beacon 1"]},
 }
+EXTRAS["k"] = {1: ["stone_bricks 64", "oak_planks 64"], 2: ["glass 64", "lantern 16"], 3: ["quartz_block 64", "experience_bottle 32"],
+               4: ["deepslate_tiles 64", "golden_apple 6"], 5: ["scaffolding 64", "enchanted_golden_apple 1"],
+               6: ["end_stone_bricks 64", "totem_of_undying 1"], 7: ["shulker_box 1", "experience_bottle 64"],
+               8: ["netherite_ingot 2", "quartz_block 64"], 9: ["elytra 1", "enchanted_golden_apple 3"],
+               10: ["enchanted_golden_apple 6", "beacon 1"]}
 UNSTACK = {"totem_of_undying", "saddle", "cake", "elytra", "diamond_horse_armor", "anvil", "bell", "shulker_box"}
 
 def mk_item(iid, ench, name, color, unbreak):
@@ -374,7 +425,7 @@ FORT_KEY = {"m": "fortune", "f": "fortune", "c": "looting", "p": "luck_of_the_se
 
 def tool_ench(j, k):
     """Enchantements de base de l'outil au palier k (efficacité et fortune sont ajustées par les cristaux de la Forge)."""
-    if j in ("n", "t", "e"):
+    if j in ("n", "t", "e", "k"):
         return {}
     ench = {}
     if j in EFF_J:
@@ -402,7 +453,7 @@ def rewards(j, k):
     tool, nom, dieu = TOOL[j]
     color = tier_style(j, k)["color"]
     name = dieu if k == 10 else f"{nom} {DE[k]}"
-    return [mk_item(tool_iid(j, k), tool_ench(j, k), name, color, k >= 5 or j in ("e", "n", "t"))]
+    return [mk_item(tool_iid(j, k), tool_ench(j, k), name, color, k >= 5 or j in ("e", "n", "t", "k"))]
 
 R = {j: {k: rewards(j, k) for k in range(1, 11)} for j in jobs}
 
@@ -470,8 +521,11 @@ if WITH_G:
         "actions": hub,
         "columns": 2,
     })
-    wj("data/minecraft/tags/dialog/quick_actions.json", {"values": [f"{NS}:ouvrir"]})
-    wj("data/minecraft/tags/dialog/pause_screen_additions.json", {"values": [f"{NS}:ouvrir"]})
+    # menu G commun aux trois packs (Métiers, Commerce, Horreur) : même dialogue serveur:menu partout, recopié de Commerce
+    _MENU = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "commerce", "sources", "menu_serveur.json"), encoding="utf-8"))
+    wj("data/serveur/dialog/menu.json", _MENU)
+    wj("data/minecraft/tags/dialog/quick_actions.json", {"values": ["serveur:menu"]})
+    wj("data/minecraft/tags/dialog/pause_screen_additions.json", {"values": ["serveur:menu"]})
 
 
 DEFIS = {
@@ -537,8 +591,19 @@ DEFIS = {
           ("Fais 16 échanges", 16, ["minecraft.custom:minecraft.traded_with_villager"], 1),
           ("Fais 24 échanges", 24, ["minecraft.custom:minecraft.traded_with_villager"], 1),
           ("Parle à 15 villageois", 15, ["minecraft.custom:minecraft.talked_to_villager"], 1)],
+    "k": [("Pose 200 planches", 200, [f"minecraft.used:minecraft.{b}_planks" for b in BOIS_K], 1),
+          ("Pose 150 briques de pierre", 150, ["minecraft.used:minecraft.stone_bricks", "minecraft.used:minecraft.mossy_stone_bricks",
+                                               "minecraft.used:minecraft.cracked_stone_bricks", "minecraft.used:minecraft.chiseled_stone_bricks"], 1),
+          ("Pose 100 vitres", 100, ["minecraft.used:minecraft.glass", "minecraft.used:minecraft.glass_pane"]
+           + [f"minecraft.used:minecraft.{c}_stained_glass" for c in COUL_K], 1),
+          ("Pose 120 blocs de béton", 120, [f"minecraft.used:minecraft.{c}_concrete" for c in COUL_K], 1),
+          ("Pose 100 escaliers", 100, [f"minecraft.used:minecraft.{b}_stairs" for b in BOIS_K]
+           + ["minecraft.used:minecraft.stone_brick_stairs", "minecraft.used:minecraft.cobblestone_stairs", "minecraft.used:minecraft.brick_stairs"], 1),
+          ("Pose 80 blocs de quartz", 80, ["minecraft.used:minecraft.quartz_block", "minecraft.used:minecraft.quartz_bricks",
+                                           "minecraft.used:minecraft.quartz_pillar", "minecraft.used:minecraft.smooth_quartz"], 1),
+          ("Pose 12 portes", 12, [f"minecraft.used:minecraft.{b}_door" for b in BOIS_K], 1)],
 }
-BARCOL = {"b": "yellow", "f": "green", "m": "white", "c": "red", "p": "blue", "e": "pink", "n": "purple", "x": "blue", "t": "green"}
+BARCOL = {"b": "yellow", "f": "green", "m": "white", "c": "red", "p": "blue", "e": "pink", "n": "purple", "x": "blue", "t": "green", "k": "yellow"}
 NJ = len(jobs)
 
 
@@ -670,7 +735,8 @@ J += [f'execute if score #quatre m.timer matches 0 run function {NS}:appel {{f:"
 for j in jobs:
     J.append(f"execute unless score @s m.{j}_lvl matches 1.. run function {NS}:{j}/init")
 for j in jobs:
-    J.append(f"function {NS}:{j}/stats")
+    # Bâtisseur : ~170 blocs suivis, on dépouille ses statistiques toutes les 3 s seulement (rien ne se perd, ça s'additionne)
+    J.append(f"execute if score #soixante m.timer matches 0 run function {NS}:{j}/stats" if j == "k" else f"function {NS}:{j}/stats")
 J += [f"function {NS}:bonus", "scoreboard players add @s m.pref 0",
       "scoreboard players enable @s metiers",
       f"execute if entity @s[tag=metiers.maj] run function {NS}:prefixe/maj"]
@@ -684,7 +750,7 @@ for j in jobs:
 for _, _, _, obj, _ in ALL_STATS:
     I.append(f"scoreboard players set @s s.{obj} 0")
 I += ["tag @s add metiers.ok",
-      'tellraw @s ' + PREFIX + ',{"text":"Bienvenue ! 5 métiers jusqu\'au niveau 50, avec compétences et titres. Tape ","color":"gray"},{"text":"/trigger metiers","color":"yellow"}]']
+      'tellraw @s ' + PREFIX + ',{"text":"Bienvenue ! 10 métiers jusqu\'au niveau 100, avec compétences, titres et prestige. Touche G ou ","color":"gray"},{"text":"/trigger metiers","color":"yellow"}]']
 w(F + "init.mcfunction", "\n".join(I))
 for j in jobs:
     w(F + f"{j}/init.mcfunction", "\n".join(
@@ -710,7 +776,7 @@ T = ["scoreboard players operation @s m.trig = @s metiers",
      f"execute if score @s m.trig matches 1 run function {NS}:menu",
      f"execute if score @s m.trig matches 2 run function {NS}:prefixe/menu",
      f"execute if score @s m.trig matches 3 unless function {NS}:recompenses run tellraw @s " + PREFIX + ',{"text":"Aucune récompense en attente.","color":"gray"}]',
-     f"execute if score @s m.trig matches 10..19 run function {NS}:prefixe/choisir",
+     f"execute if score @s m.trig matches 10..20 run function {NS}:prefixe/choisir",
      f'execute if score @s m.trig matches 4 run function {NS}:appel {{f:"defis/menu"}}',
      f'execute if score @s m.trig matches 5 run function {NS}:appel {{f:"classement/menu"}}',
      f'execute if score @s m.trig matches 7 run function {NS}:appel {{f:"defis/basculer"}}',
@@ -727,7 +793,7 @@ for j, d in jobs.items():
     T.append(f"execute if score @s m.trig matches {20 + d['idx']} run function {NS}:{j}/arbre")
     T.append(f"execute if score @s m.trig matches {200 + d['idx']} run function {NS}:{j}/reclamer")
     for k in range(1, 7):
-        T.append(f"execute if score @s m.trig matches {100 + 10 * d['idx'] + k} run function {NS}:{j}/acheter_{k}")
+        T.append(f"execute if score @s m.trig matches {TSK(d, k)} run function {NS}:{j}/acheter_{k}")
 w(F + "trigger.mcfunction", "\n".join(T))
 
 POS = {1: "Base", 2: "Branche A", 3: "Branche B", 4: "Branche A", 5: "Branche B", 6: "Ultime"}
@@ -919,7 +985,7 @@ scoreboard players operation @s m.tmp += #ppr m.tmp
         rq = " + ".join(sk[r-1][0] for r in req) if req else "rien"
         btns[k] = (f'{{label:{{text:"$(l{k})",color:"$(c{k})"}},'
                     f'tooltip:{{text:"{desc}\\nCoût : {cost} points\\nRequiert : {rq}"}},width:300,'
-                    f'action:{{type:"run_command",command:"trigger metiers set {100 + 10*d["idx"] + k}"}}}}').replace("width:300", "width:130")
+                    f'action:{{type:"run_command",command:"trigger metiers set {TSK(d, k)}"}}}}').replace("width:300", "width:130")
     def vide(t=""):
         return f'{{label:{{text:"{t}",color:"dark_gray"}},width:130}}'
     liste = [btns[i].replace("width:130", "width:280") for i in (1, 2, 4, 3, 5, 6)]
@@ -1135,14 +1201,15 @@ ICONS_SK = {"b": ["iron_axe", "apple", "oak_log", "golden_axe", "diamond_axe", "
             "e": ["shears", "leather", "golden_carrot", "milk_bucket", "wheat", "saddle"],
             "n": ["lapis_lazuli", "bookshelf", "experience_bottle", "enchanting_table", "enchanted_book", "nether_star"],
             "x": ["leather_boots", "rabbit_foot", "ender_eye", "feather", "elytra", "compass"],
-            "t": ["emerald", "bell", "diamond", "emerald_block", "map", "totem_of_undying"]}
+            "t": ["emerald", "bell", "diamond", "emerald_block", "map", "totem_of_undying"],
+            "k": ["stone_bricks", "feather", "scaffolding", "iron_pickaxe", "spyglass", "beacon"]}
 BG = {"b": "minecraft:block/oak_planks", "f": "minecraft:block/hay_block_side", "m": "minecraft:block/stone",
       "c": "minecraft:block/nether_bricks", "p": "minecraft:block/prismarine_bricks"}
 ROOT_ICON = {"b": "oak_log", "f": "wheat", "m": "iron_ore", "c": "skeleton_skull", "p": "cod",
-             "e": "lead", "n": "enchanting_table", "x": "filled_map", "t": "emerald"}
+             "e": "lead", "n": "enchanting_table", "x": "filled_map", "t": "emerald", "k": "bricks"}
 BG.update({"e": "minecraft:block/hay_block_top", "n": "minecraft:block/bookshelf", "x": "minecraft:block/moss_block",
-           "t": "minecraft:block/emerald_block"})
-LVL_FIXE = {"p": "fishing_rod", "e": "shears", "n": "book", "x": "compass", "t": "emerald"}
+           "t": "minecraft:block/emerald_block", "k": "minecraft:block/stone_bricks"})
+LVL_FIXE = {"p": "fishing_rod", "e": "shears", "n": "book", "x": "compass", "t": "emerald", "k": "brush"}
 LVL_ICON = ["wooden", "stone", "iron", "iron", "golden", "golden", "diamond", "diamond", "netherite", "netherite"]
 TOOLI = {"b": "axe", "f": "hoe", "m": "pickaxe", "c": "sword"}
 IMP = {"debloque": {"trigger": "minecraft:impossible"}}
@@ -1278,7 +1345,7 @@ BASE_TOOL = {j: tool_iid(j, 0) for j in jobs}
 def outil_give(j, k):
     d = jobs[j]
     if k == 0:
-        iid, ench, name, color, unb = BASE_TOOL[j], tool_ench(j, 0), f"{TOOL[j][1]} {DE[0]}", "gray", j in ("e", "n", "t")
+        iid, ench, name, color, unb = BASE_TOOL[j], tool_ench(j, 0), f"{TOOL[j][1]} {DE[0]}", "gray", j in ("e", "n", "t", "k")
     else:
         it = R[j][k][0]
         iid, ench, name, color, unb = it["iid"], dict(it["ench"]), it["name"], it["color"], it["unb"]
@@ -1290,11 +1357,12 @@ def outil_give(j, k):
     lore = (f'[{{text:"Outil de {d["name"]}",color:"{d["color"]}",italic:false}},'
             f'{{text:"Palier {k}/10, il évolue tous les 10 niveaux",color:"gray",italic:false}}' +
             {"e": ',{text:"Clic droit : les animaux proches te suivent",color:"light_purple",italic:false}',
-             "n": ',{text:"Clic droit : points de téléportation",color:"light_purple",italic:false}'}.get(j, "") + ']')
+             "n": ',{text:"Clic droit : points de téléportation",color:"light_purple",italic:false}',
+             "k": f',{{text:"Tenue dans une main : portée +{1 + k // 5} pour poser et casser",color:"#C08850",italic:false}}'}.get(j, "") + ']')
     comps = [f"minecraft:enchantments={{{e}}}",
              f'minecraft:custom_name=[{{text:"$(et)",color:"gold",bold:true,italic:false}},{{text:"{name}",color:"{color}",bold:true,italic:false}}]',
              f"minecraft:lore={lore}",
-             (f'minecraft:custom_data={{metiers_outil:"{j}",palier:{k},o:$(o),s:$(s)}}' if j in ("n", "t", "e") else
+             (f'minecraft:custom_data={{metiers_outil:"{j}",palier:{k},o:$(o),s:$(s)}}' if j in ("n", "t", "e", "k") else
               f'minecraft:custom_data={{metiers_outil:"{j}",palier:{k},max:{ {"fishing_rod": 64, "carrot_on_a_stick": 25}.get(iid, MAXDUR.get(iid.split("_")[0], 250))},o:$(o),s:$(s)}}'),
              f'minecraft:item_model="metiers:{j}_{k}"',
              'minecraft:custom_model_data={strings:["$(skin)"]}',
@@ -1303,6 +1371,8 @@ def outil_give(j, k):
              'minecraft:rarity="epic"']
     if unb:
         comps.append("minecraft:unbreakable={}")
+    if j == "k":   # truelle : portée de pose et de casse, quelle que soit la main
+        comps.append(f'minecraft:attribute_modifiers=[{{type:"minecraft:block_interaction_range",id:"metiers:truelle",amount:{1 + k // 5},operation:"add_value",slot:"hand"}}]')
     return f"minecraft:{iid}[{','.join(comps)}] 1"
 
 CHK = []
@@ -1442,7 +1512,8 @@ PCAP = {"b": ("Sève dorée", "chaque bûche a 1 % de chance de donner une pomme
         "e": ("Jumeaux", "une naissance a 20 % de chance de donner un deuxième petit (35 %, puis 50 %)."),
         "n": ("Érudit", "20 % de chance que les niveaux dépensés à la table te soient rendus (35 %, puis 50 %)."),
         "x": ("Pas léger", "Vitesse I, puis plus aucun dégât de chute, puis Vitesse II."),
-        "t": ("Négociant", "effet Héros du village I en permanence, puis III, puis V.")}
+        "t": ("Négociant", "effet Héros du village I en permanence, puis III, puis V."),
+        "k": ("Architecte", "portée +1 pour poser et casser, puis +2 et Résistance I, puis +3 et Célérité II.")}
 for j, d in jobs.items():
     w(F + f"{j}/prestige_confirmer.mcfunction", "\n".join([
         f"execute if score @s m.{j}_lvl matches ..99 run return run {tr('Le prestige se débloque au niveau 100 du métier.', 'red')}",
@@ -2127,7 +2198,7 @@ playsound minecraft:ui.toast.in master @s ~ ~ ~ 0.6 1.4
 """)
 
 # REFONTE (v24) : objets, armure 11 paliers, compétences, menus, Forge, skins, boss, défis
-for _mod in ("ref_base.py", "ref_skills.py", "ref_menu.py", "ref_boss.py", "ref_defis.py", "ref_bareme.py", "ref_prestige.py"):
+for _mod in ("ref_base.py", "ref_skills.py", "ref_menu.py", "ref_boss.py", "ref_defis.py", "ref_bareme.py", "ref_prestige.py", "ref_v26.py", "ref_batisseur.py"):
     exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), _mod), encoding="utf-8").read())
 
 # Compétences désactivables : une compétence achetée garde son tag metiers.sk.XN (achat, prérequis, menus),
