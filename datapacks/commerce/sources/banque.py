@@ -45,17 +45,19 @@ PG = SOLDE(BQ) + [f"execute store result storage {BQ} ep int 1 run scoreboard pl
                   f"function {NS}:banque/hist_lire with storage {BQ} o"] + msg_line(BQ) + [f"function {NS}:banque/page_d with storage {BQ}"]
 w(B_ + "page.mcfunction", PG)
 w(B_ + "hist_lire.mcfunction", f"$execute if data storage {NS}:h p$(id)[0] run data modify storage {BQ} hl set from storage {NS}:h p$(id)")
+_IC = lambda p: f'{{object:"atlas",atlas:"minecraft:{"blocks" if p.startswith("block/") else "items"}",sprite:"minecraft:{p}"}}'
 w(B_ + "page_d.mcfunction", "$" + dlg(
     T("Banque", "gold", True),
     [f'{{type:"minecraft:plain_message",width:320,contents:{L(SOLDE_TXT, T("   ·   épargne : ", "gray"), T("$(ep) " + ECU, "aqua", True), T("\\nL’épargne rapporte 2 % par semaine de jeu (5 000 " + ECU + " au plus). Elle est à l’abri des achats.", "gray"), T("\\n$(msg)", "yellow"))}}}',
      f'{{type:"minecraft:plain_message",width:320,contents:[{{text:"Dernières opérations\\n",color:"gold",bold:true}},{{text:"",extra:$(hl)}}]}}'],
-    [btn(T("Envoyer des Écus", "yellow", True), 91, 160, "Virement à un autre joueur."),
-     btn(T("Hôtel des ventes", "light_purple", True), 6000, 160),
-     btn(T("Déposer 100", "aqua"), 940, 160), btn(T("Retirer 100", "white"), 950, 160),
-     btn(T("Déposer 1 000", "aqua"), 941, 160), btn(T("Retirer 1 000", "white"), 951, 160),
-     btn(T("Déposer 10 000", "aqua"), 942, 160), btn(T("Retirer 10 000", "white"), 952, 160),
-     btn(T("Tout déposer", "aqua", True), 943, 160), btn(T("Tout retirer", "white", True), 953, 160),
-     btn(T("Accueil", "white"), 1, 160)]))
+    [btn(L(_IC("item/paper"), T("  Virement", "yellow", True)), 91, 130, "Envoyer des Écus à un autre joueur."),
+     btn(L(_IC("item/emerald"), T("  Hôtel des ventes", "light_purple")), 6000, 130),
+     btn(L(_IC("item/compass_00"), T("  Accueil", "white")), 1, 130),
+     btn(L(_IC("item/gold_nugget"), T("  Déposer 100", "aqua")), 940, 130), btn(L(_IC("item/gold_ingot"), T("  Déposer 1 000", "aqua")), 941, 130),
+     btn(L(_IC("block/gold_block"), T("  Déposer 10 000", "aqua")), 942, 130),
+     btn(L(_IC("item/gold_nugget"), T("  Retirer 100", "white")), 950, 130), btn(L(_IC("item/gold_ingot"), T("  Retirer 1 000", "white")), 951, 130),
+     btn(L(_IC("block/gold_block"), T("  Retirer 10 000", "white")), 952, 130),
+     btn(T("Tout déposer", "aqua", True), 943, 130), btn(T("Tout retirer", "white", True), 953, 130)], 3))
 
 # dépôts et retraits
 for i, (q, lib) in enumerate(((100, "100"), (1000, "1 000"), (10000, "10 000"), (None, "tout"))):
@@ -91,11 +93,15 @@ w(B_ + "destinataires.mcfunction", [
     f'data modify storage {BQ} D set value [{{text:""}}]', f"data modify storage {NS}:t W set from storage {NS}:j l",
     f"function {NS}:banque/dest_boucle", f"function {NS}:banque/dest_d with storage {BQ}"])
 w(B_ + "dest_boucle.mcfunction", [f"execute unless data storage {NS}:t W[0] run return 0",
+                                  # valeur du clic calculée (8100000 + id) : « 81 » collé devant l'id donnait 815 pour l'id 5
+                                  "scoreboard players set #dv c.t 8100000", f"execute store result score #di c.t run data get storage {NS}:t W[0].id",
+                                  "scoreboard players operation #dv c.t += #di c.t",
+                                  f"execute store result storage {NS}:t W[0].v int 1 run scoreboard players get #dv c.t",
                                   f"function {NS}:banque/dest_m with storage {NS}:t W[0]",
                                   f"data remove storage {NS}:t W[0]", f"function {NS}:banque/dest_boucle"])
 w(B_ + "dest_m.mcfunction", [
     "$execute if score @s m.id matches $(id) run return 0",
-    f'$data modify storage {BQ} D append value {{text:"$(nom)",color:"yellow",underlined:true,click_event:{{action:"run_command",command:"trigger commerce set 81$(id)"}},hover_event:{{action:"show_text",value:"Envoyer des Écus à $(nom)"}}}}',
+    f'$data modify storage {BQ} D append value {{text:"$(nom)",color:"yellow",underlined:true,click_event:{{action:"run_command",command:"trigger commerce set $(v)"}},hover_event:{{action:"show_text",value:"Envoyer des Écus à $(nom)"}}}}',
     f'data modify storage {BQ} D append value {{text:"     "}}'])
 w(B_ + "dest_d.mcfunction", "$" + dlg(
     T("Envoyer des Écus", "gold", True),

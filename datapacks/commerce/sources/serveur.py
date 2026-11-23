@@ -8,6 +8,7 @@ import json as _json
 S = "scoreboard players"
 G_ = F + "serveur/"
 
+_ic = lambda i: {"object": "atlas", "atlas": "minecraft:items", "sprite": "minecraft:item/" + i}
 MENU_SERVEUR = {
     "type": "minecraft:multi_action",
     "title": {"text": "Les Couillons", "color": "gold", "bold": True},
@@ -16,15 +17,15 @@ MENU_SERVEUR = {
     "body": [{"type": "minecraft:plain_message", "width": 300, "contents": [
         {"text": "Métiers, Commerce, Bestiaire : tout est ici.", "color": "gray"}]}],
     "actions": [
-        {"label": {"text": "⚒ Métiers", "color": "aqua", "bold": True}, "width": 150, "tooltip": {"text": "Niveaux, compétences, Forge, défis, classement."},
+        {"label": [_ic("iron_pickaxe"), {"text": "  Métiers", "color": "aqua", "bold": True}], "width": 150, "tooltip": {"text": "Niveaux, compétences, Forge, défis, classement."},
          "action": {"type": "minecraft:run_command", "command": "trigger metiers set 1"}},
-        {"label": {"text": "⚖ Commerce", "color": "gold", "bold": True}, "width": 150, "tooltip": {"text": "Marché, bourse, banque, hôtel des ventes, spawners."},
+        {"label": [_ic("emerald"), {"text": "  Commerce", "color": "gold", "bold": True}], "width": 150, "tooltip": {"text": "Marché, bourse, banque, hôtel des ventes, spawners."},
          "action": {"type": "minecraft:run_command", "command": "trigger commerce set 1"}},
-        {"label": {"text": "☠ Bestiaire", "color": "dark_red", "bold": True}, "width": 150, "tooltip": {"text": "Les créatures de la nuit, contrats, classement."},
+        {"label": [_ic("bone"), {"text": "  Bestiaire", "color": "dark_red", "bold": True}], "width": 150, "tooltip": {"text": "Les créatures de la nuit, contrats, classement."},
          "action": {"type": "minecraft:run_command", "command": "trigger bestiaire set 1"}},
-        {"label": {"text": "★ Mon profil", "color": "yellow", "bold": True}, "width": 150, "tooltip": {"text": "Tout ton parcours sur une page."},
+        {"label": [_ic("name_tag"), {"text": "  Mon profil", "color": "yellow", "bold": True}], "width": 150, "tooltip": {"text": "Tout ton parcours sur une page."},
          "action": {"type": "minecraft:run_command", "command": "trigger commerce set 30"}},
-        {"label": {"text": "? Guide du serveur", "color": "white"}, "width": 304, "tooltip": {"text": "Pour bien démarrer, en 5 pages."},
+        {"label": [_ic("book"), {"text": "  Guide du serveur", "color": "white"}], "width": 304, "tooltip": {"text": "Pour bien démarrer, en 5 pages."},
          "action": {"type": "minecraft:run_command", "command": "trigger commerce set 31"}}],
     "columns": 2}
 wj("data/serveur/dialog/menu.json", MENU_SERVEUR)

@@ -157,6 +157,9 @@ AB += ["execute if score @s m.arm matches 3.. run effect give @s minecraft:haste
        "execute if score @s m.arm matches 9.. run effect give @s minecraft:regeneration 3 0 true",
        "execute if score @s m.arm matches 11.. run effect give @s minecraft:strength 2 0 true"]
 w(F + "armure/bonus.mcfunction", "\n".join(AB))
+# libellés courts des paliers pour tenir sur 3 colonnes (le nom complet reste dans l'infobulle et en tête de page)
+ARM_COURT = [n.replace("Netherite d'", "").replace("Netherite de ", "").replace("Netherite du ", "").replace("Netherite ", "").capitalize()
+             if n.startswith("Netherite ") else n for n in ARM_NOM]
 AMN = ["scoreboard players add @s m.arm 0", "scoreboard players add @s m.total 0",
        f"execute store result storage {NS}:arm score int 1 run scoreboard players get @s m.total",
        f'data modify storage {NS}:arm nom set value "Pas encore débloquée"', f'data modify storage {NS}:arm col set value "gray"',
@@ -173,10 +176,10 @@ for p in range(11):
             f"execute if score @s m.arm matches {p + 1} run scoreboard players set #lo m.tmp {ARM_SEUIL[p]}",
             f"execute if score @s m.arm matches {p + 1} run scoreboard players set #hi m.tmp {ARM_SEUIL[p + 1] if p < 10 else ARM_SEUIL[p]}"]
     # état de chaque palier : atteint, actuel ou verrouillé
-    AMN += [f'data modify storage {NS}:arm t{p} set value "{p}. {ARM_NOM[p]}"', f'data modify storage {NS}:arm c{p} set value "dark_gray"',
-            f'execute if score @s m.arm matches {p + 2}.. run data modify storage {NS}:arm t{p} set value "✔ {ARM_NOM[p]}"',
+    AMN += [f'data modify storage {NS}:arm t{p} set value "{ARM_COURT[p]}"', f'data modify storage {NS}:arm c{p} set value "dark_gray"',
+            f'execute if score @s m.arm matches {p + 2}.. run data modify storage {NS}:arm t{p} set value "✔ {ARM_COURT[p]}"',
             f'execute if score @s m.arm matches {p + 2}.. run data modify storage {NS}:arm c{p} set value "{ARM_COL[p]}"',
-            f'execute if score @s m.arm matches {p + 1} run data modify storage {NS}:arm t{p} set value "★ {ARM_NOM[p]}"',
+            f'execute if score @s m.arm matches {p + 1} run data modify storage {NS}:arm t{p} set value "★ {ARM_COURT[p]}"',
             f'execute if score @s m.arm matches {p + 1} run data modify storage {NS}:arm c{p} set value "{ARM_COL[p]}"']
 AMN += ["scoreboard players operation #d m.tmp = #hi m.tmp", "scoreboard players operation #d m.tmp -= #lo m.tmp",
         "scoreboard players operation #v m.tmp = @s m.total", "scoreboard players operation #v m.tmp -= #lo m.tmp",
@@ -190,9 +193,9 @@ AMN.append(f"function {NS}:armure/menu_dialog with storage {NS}:arm")
 w(F + "armure/menu.mcfunction", "\n".join(AMN))
 pal = []
 for p in range(11):
-    tip = f"{ARM_SEUIL[p]} points de score total" + (f"\\nSet complet (4 pièces) : {ARM_BON[p]}" if p in ARM_BON else "")
+    tip = f"{ARM_NOM[p]} : {ARM_SEUIL[p]} points de score total" + (f"\\nSet complet (4 pièces) : {ARM_BON[p]}" if p in ARM_BON else "")
     bon = f',{{text:"  +",color:"gold"}}' if p in ARM_BON else ""
-    pal.append(f'{{label:[{{text:"$(t{p})",color:"$(c{p})"}},{{text:"  {ARM_SEUIL[p]}",color:"gray"}}{bon}],width:190,tooltip:{{text:"{tip}"}}}}')
+    pal.append(f'{{label:[{{text:"$(t{p})",color:"$(c{p})"}},{{text:"  {ARM_SEUIL[p]}",color:"gray"}}{bon}],width:130,tooltip:{{text:"{tip}"}}}}')
 w(F + "armure/menu_dialog.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Armure des Guildes",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
   'body:[{type:"minecraft:item",item:{id:"minecraft:paper",components:{"minecraft:item_model":"metiers:$(model)"}},show_decorations:false,show_tooltip:false,'
@@ -201,8 +204,8 @@ w(F + "armure/menu_dialog.mcfunction",
   '{type:"minecraft:plain_message",width:380,contents:[{text:"Score = somme de tes niveaux, +100 par prestige.  ",color:"dark_gray"},'
   '{text:"+",color:"gold"},{text:" = bonus quand tu portes les 4 pièces (survole un palier).",color:"dark_gray"}]}],'
   f'actions:[{",".join(pal)},'
-  '{label:{text:"Récupérer mon armure",color:"green",bold:true},width:390,tooltip:{text:"Une fois toutes les 10 minutes."},action:{type:"run_command",command:"trigger metiers set 8"}}],'
-  'columns:2,exit_action:{label:"Retour",width:200,action:{type:"run_command",command:"trigger metiers set 1"}}}')
+  '{label:[{object:"atlas",atlas:"minecraft:items",sprite:"minecraft:item/golden_chestplate"},{text:"  Récupérer",color:"green",bold:true}],width:130,tooltip:{text:"Une fois toutes les 10 minutes."},action:{type:"run_command",command:"trigger metiers set 8"}}],'
+  'columns:3,exit_action:{label:"Retour",width:200,action:{type:"run_command",command:"trigger metiers set 497"}}}')
 
 # ---------------------------------------------------------------- arc évolutif du Chasseur
 PW = [1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 5]
@@ -554,17 +557,17 @@ w(F + "tp/lister.mcfunction", "\n".join(LI))
 w(F + "tp/etiquette.mcfunction", f'$data modify storage {NS}:tp b.l$(n) set value "$(n). $(nom) : $(x) $(y) $(z)"')
 btn = []
 for i in range(1, 11):
-    btn.append(f'{{label:{{text:"$(l{i})",color:"light_purple"}},width:240,tooltip:{{text:"Clique pour t’y téléporter (3 secondes sans bouger)."}},action:{{type:"run_command",command:"trigger metiers set {720 + i}"}}}}')
-    btn.append(f'{{label:{{text:"✎ Nommer",color:"yellow"}},width:80,tooltip:{{text:"Renomme ce point : tiens en main un objet renommé à l’enclume (un papier, par exemple), puis clique ici."}},action:{{type:"run_command",command:"trigger metiers set {740 + i}"}}}}')
+    btn.append(f'{{label:{{text:"$(l{i})",color:"light_purple"}},width:160,tooltip:{{text:"Clique pour t’y téléporter (3 secondes sans bouger)."}},action:{{type:"run_command",command:"trigger metiers set {720 + i}"}}}}')
+    btn.append(f'{{label:{{text:"✎ Nommer",color:"yellow"}},width:66,tooltip:{{text:"Renomme ce point : tiens en main un objet renommé à l’enclume (un papier, par exemple), puis clique ici."}},action:{{type:"run_command",command:"trigger metiers set {740 + i}"}}}}')
 w(F + "tp/menu.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Grimoire de téléportation",color:"dark_purple",bold:true},can_close_with_escape:true,pause:false,'
   'body:[{type:"minecraft:plain_message",width:330,contents:[{text:"Points : $(max) au maximum à ton palier.   ",color:"gray"},{text:"Recharge : $(cd) s\\n",color:"yellow"},'
   '{text:"Pour nommer un point : renomme un papier à l’enclume (Maison, Mine, Ferme...), tiens-le en main et clique sur ✎ Nommer.\\n",color:"aqua"},'
   '{text:"Les autres dimensions s’ouvrent au palier 8.",color:"dark_gray"}]}],'
-  'actions:[{label:{text:"Enregistrer ma position ici",color:"green",bold:true},width:240,action:{type:"run_command",command:"trigger metiers set 701"}},'
-  '{label:{text:"✖ Effacer",color:"red"},width:80,tooltip:{text:"Efface le dernier point enregistré."},action:{type:"run_command",command:"trigger metiers set 702"}},'
+  'actions:[{label:[{object:"atlas",atlas:"minecraft:items",sprite:"minecraft:item/ender_pearl"},{text:"  Enregistrer ici",color:"green",bold:true}],width:160,action:{type:"run_command",command:"trigger metiers set 701"}},'
+  '{label:{text:"✖ Effacer",color:"red"},width:66,tooltip:{text:"Efface le dernier point enregistré."},action:{type:"run_command",command:"trigger metiers set 702"}},'
   + ",".join(btn) + '],'
-  'columns:2,exit_action:{label:"Fermer",width:150}}')
+  'columns:4,exit_action:{label:"Fermer",width:150}}')
 # renommer un point avec le nom de l'objet tenu en main
 w(F + "tp/renommer.mcfunction", "\n".join([
     f"execute unless data entity @s SelectedItem.components.\"minecraft:custom_name\" run return run {tr('Tiens en main un objet renommé à l’enclume (un papier par exemple), puis clique sur Nommer.', 'red')}",

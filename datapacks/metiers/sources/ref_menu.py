@@ -10,6 +10,17 @@ def btn(label, action=None, width=150, tooltip=None):
 def txt(t, col="white", bold=False):
     return f'{{text:"{t}",color:"{col}",bold:{"true" if bold else "false"},italic:false}}'
 
+# Icônes des boutons : textures du jeu par le composant de texte « object » (atlas items ou blocks), comme dans Commerce.
+UI_SPRITES = set()
+def IC(p):
+    UI_SPRITES.add(p)
+    return f'{{object:"atlas",atlas:"minecraft:{"blocks" if p.startswith("block/") else "items"}",sprite:"minecraft:{p}"}}'
+def ib(icone, label, col, action, width=130, tip=None, bold=False):
+    """Bouton avec une icône du jeu devant le libellé."""
+    return btn(f'[{IC(icone)},{txt("  " + label, col, bold)}]', action, width, tip)
+OUTIL_IC = {"b": "item/iron_axe", "f": "item/iron_hoe", "m": "item/iron_pickaxe", "c": "item/iron_sword", "p": "item/fishing_rod",
+            "e": "item/carrot_on_a_stick", "n": "item/enchanted_book", "x": "item/iron_shovel", "t": "item/bundle", "k": "item/brush"}
+
 CRP = {"marteau": ("m", 260, 4, 50), "faux": ("f", 220, 3, 50), "arc3": ("c", 300, 5, 60), "lasso": ("e", 140, 1, 40), "parchemin": ("n", 60, 0, 40)}
 COMMUN = {"aimant": 6, "cape": 12}
 EFFC = [40, 70, 110, 150, 200, 260, 330]
@@ -48,33 +59,41 @@ for j, d in jobs.items():
     MN += [f'execute if score @s m.tmp matches {k} run data modify storage {NS}:mn {j}_b set value "{GLY["barre_" + str(k)]}"' for k in range(11)]
     MN += [f'data modify storage {NS}:mn {j}_d set value ""',
            f"function {NS}:{j}/points",
-           f'execute if score @s m.tmp matches 6.. unless entity @s[tag=metiers.sk.{j}1,tag=metiers.sk.{j}2,tag=metiers.sk.{j}3,tag=metiers.sk.{j}4,tag=metiers.sk.{j}5,tag=metiers.sk.{j}6] if score @s m.{j}_lvl matches 5.. run data modify storage {NS}:mn {j}_d set value " ●"',
+           f'execute if score @s m.tmp matches 6.. unless entity @s[tag=metiers.sk.{j}1,tag=metiers.sk.{j}2,tag=metiers.sk.{j}3,tag=metiers.sk.{j}4,tag=metiers.sk.{j}5,tag=metiers.sk.{j}6] if score @s m.{j}_lvl matches 5.. run data modify storage {NS}:mn {j}_d set value "●"',
            f"scoreboard players operation @s m.tmp = @s m.{j}_lvl", "scoreboard players operation @s m.tmp /= #10 m.const",
-           f'execute if score @s m.{j}_pal < @s m.tmp run data modify storage {NS}:mn {j}_d set value " ●"']
+           f'execute if score @s m.{j}_pal < @s m.tmp run data modify storage {NS}:mn {j}_d set value "●"']
 MN.append(f"function {NS}:menu_dialog with storage {NS}:mn")
 w(F + "menu.mcfunction", "\n".join(MN))
 acts = []
 for j, d in jobs.items():
-    lab = f'[{gs("metier_" + j)},{txt(" " + d["name"] + " ", d["color"])},{txt("$(" + j + "_l) ", "yellow")},{{text:"$({j}_b)",font:"metiers:icones",color:"white"}},{txt("$(" + j + "_d)", "red")}]'
-    acts.append(btn(lab, 20 + d["idx"], 200, f"Ouvre la page {d['name']} : outil, compétences, récompenses, titre."))
-forge_lab = f'[{gs("forge_marteau")},{txt("  Forge  ", "gold", True)},{gs("eclat")},{txt(" $(ecl) éclats", "gray")}]'
-acts += [btn(f'[{gs("forge_marteau")},{txt("  Forger l’outil en main", "gold", True)}]', 470, 200, "Sertis des cristaux dans l’outil de métier que tu tiens."),
-         btn(f'[{gs("forge_cape")},{txt("  Boutique de la Forge", "yellow", True)}]', 471, 200, "Marteau, faux, arc triple, lasso, parchemin, aimant, cape-planeur."),
-         btn(f'[{gs("forge_cristal_sagesse")},{txt("  Skins", "light_purple", True)}]', 420, 200, "Apparence de tes outils et de ton armure."),
-         btn(f'[{gs("cadre_dore_g")},{txt("Cadres de titre", "gold", True)},{gs("cadre_dore_d")}]', 472, 200, "Le cadre autour de ton titre."),
-         btn(txt("Défis du jour", "aqua", True), 4, 200), btn(txt("Armure des Guildes", "#F1CF4E", True), 6, 200),
-         btn(txt("Classement", "gold"), 5, 200), btn(txt("Barème d’XP", "aqua", True), 480, 200, "Ce que rapporte chaque action, métier par métier, avec les images."),
-         btn(txt("Quêtes", "yellow", True), 495, 200, "Une quête de 10 étapes par métier."),
-         btn(txt("Guilde", "gold", True), 700, 200, "Fonder ou rejoindre une guilde, défi de la semaine, classement."),
-         btn(txt("Synergies", "green"), 496, 200, "Bonus quand deux métiers atteignent le niveau 50."),
-         btn(txt("Aura de prestige", "gold"), 499, 200, "Active ou coupe les particules autour de toi (joueurs passés par le prestige)."),
-         btn(txt("Aide", "white"), 460, 200, "Cristaux, éclats, Forge, défis, boss : comment ça marche.")]
+    lab = f'[{gs("metier_" + j)},{txt(" " + d["name"], d["color"])},{txt(" $(" + j + "_l) ", "yellow")},{{text:"$({j}_b)",font:"metiers:icones",color:"white"}},{txt("$(" + j + "_d)", "red")}]'
+    acts.append(btn(lab, 20 + d["idx"], 150, f"Ouvre la page {d['name']} : outil, compétences, récompenses, titre."))
+acts += [ib("item/netherite_upgrade_smithing_template", "Forge", "gold", 471, 150, "Boutique de la Forge : marteau, faux, arc triple, lasso, aimant, cape... et sertissage des cristaux.", True),
+         ib("item/compass_00", "Activités", "aqua", 497, 150, "Défis, quêtes, guilde, classement, synergies, barème, skins, cadres, armure, aide.", True)]
 w(F + "menu_dialog.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Mes métiers",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
-  'body:[{type:"minecraft:plain_message",width:310,contents:[{text:""},{text:"\ue027",font:"commerce:recette",color:"white",shadow_color:0},{text:"\\n\\n"}]},{type:"minecraft:plain_message",width:400,contents:[{text:"Score total ",color:"gray"},{text:"$(score)",color:"yellow"},'
-  '{text:"   ·   Armure des Guildes : ",color:"gray"},{text:"$(arm)",color:"gold"},{text:"\\nUn point rouge : des points de compétence ou une récompense t\'attendent.",color:"dark_gray"}]}],'
-  f'actions:[{",".join(acts)}],columns:2,'
+  'body:[{type:"minecraft:plain_message",width:310,contents:[{text:""},{text:"\ue027",font:"commerce:recette",color:"white",shadow_color:0},{text:"\\n\\n"}]},{type:"minecraft:plain_message",width:460,contents:[{text:"Score total ",color:"gray"},{text:"$(score)",color:"yellow"},'
+  '{text:"   ·   Armure des Guildes : ",color:"gray"},{text:"$(arm)",color:"gold"},{text:"   ·   ",color:"gray"},' + gs("eclat") + ',{text:" $(ecl) éclats",color:"gray"},{text:"\\n● : des points de compétence ou une récompense t\'attendent",color:"dark_gray"}]}],'
+  f'actions:[{",".join(acts)}],columns:3,'
   f'exit_action:{{label:"Fermer",width:200}}}}')
+# hub « Activités » (497) : tout ce qui n'est pas un métier, en icônes sur 3 colonnes
+hub = [ib("item/clock_00", "Défis du jour", "aqua", 4, 150, "Un défi par métier, chaque jour."),
+       ib("item/writable_book", "Quêtes", "yellow", 495, 150, "Une quête de 10 étapes par métier."),
+       ib("item/name_tag", "Guilde", "gold", 770, 150, "Fonder ou rejoindre une guilde, défi de la semaine, classement."),
+       ib("item/gold_ingot", "Classement", "gold", 5, 150, "Les meilleurs joueurs, métier par métier."),
+       ib("item/emerald", "Synergies", "green", 496, 150, "Bonus quand deux métiers atteignent le niveau 50."),
+       ib("item/book", "Barème d’XP", "aqua", 480, 150, "Ce que rapporte chaque action, métier par métier, avec les images."),
+       ib("item/netherite_upgrade_smithing_template", "Forger l’outil", "gold", 470, 150, "Sertis des cristaux dans l’outil de métier que tu tiens."),
+       ib("item/golden_chestplate", "Armure", "#F1CF4E", 6, 150, "L’Armure des Guildes, qui monte avec ton score total."),
+       ib("item/painting", "Skins", "light_purple", 420, 150, "Apparence de tes outils et de ton armure."),
+       ib("item/item_frame", "Cadres de titre", "gold", 472, 150, "Le cadre autour de ton titre."),
+       ib("item/glowstone_dust", "Aura", "gold", 499, 150, "Active ou coupe les particules de prestige autour de toi."),
+       ib("item/paper", "Aide", "white", 460, 150, "Cristaux, éclats, Forge, défis, boss : comment ça marche.")]
+w(F + "activites.mcfunction",
+  'dialog show @s {type:"minecraft:multi_action",title:{text:"Activités",color:"aqua",bold:true},can_close_with_escape:true,pause:false,'
+  'body:[{type:"minecraft:plain_message",width:310,contents:[{text:""},{text:"\ue027",font:"commerce:recette",color:"white",shadow_color:0},{text:"\\n\\n"}]}],'
+  f'actions:[{",".join(hub)}],columns:3,'
+  'exit_action:{label:"Retour",width:200,action:{type:"run_command",command:"trigger metiers set 1"}}}')
 
 # ================================================================ page métier (remplace l'ancien écran de l'arbre)
 NEXTTXT = {}
@@ -98,6 +117,8 @@ TDESC = {
     "k": "Truelle : tenue dans une main, elle allonge ta portée (+1, +2 au palier 5, +3 au palier 10). Poser des blocs de construction rapporte l’XP.",
 }
 FITEM = {"m": "marteau", "f": "faux", "c": "arc3", "e": "lasso", "n": "parchemin"}
+SPECIAL_COURT = {"f": "Saison", "n": "Surpuissance", "x": "Sac à dos", "c": "Mon arc", "p": "Carnet", "b": "Forger l’outil",
+                 "m": "Marteau 3x3", "e": "Lasso", "t": "Forger l’outil", "k": "Kit de chantier"}
 SPECIAL = {"f": (610, "Saison des moissons", "green", "Une fois par jour de jeu : toutes les cultures à 12 blocs mûrissent (compétence ultime)."),
            "n": (611, "Surpuissance", "light_purple", "Objet enchanté en main : +1 niveau à tous ses enchantements, 30 niveaux d’XP (compétence ultime)."),
            "x": (612, "Récupérer mon sac à dos", "blue", "Sac à dos : 18 cases au niveau 20, 27 au niveau 50, 2 pages au niveau 80."),
@@ -140,45 +161,51 @@ for j, d in jobs.items():
         lv = SKILL_LVL[k - 1]
         cond = f"execute if entity @s[{reqsel2(req)}]" if req else "execute if entity @s"
         P += [f'data modify storage {NS}:pg l{k} set value "✖ {name}"', f'data modify storage {NS}:pg c{k} set value "dark_gray"',
-              f'execute unless score #lve m.tmp matches {lv}.. run data modify storage {NS}:pg l{k} set value "✖ {name} · niv. {lv}"',
-              f'execute if score #lve m.tmp matches {lv}.. {cond[8:]} run data modify storage {NS}:pg l{k} set value "{name} · {cost} pts"'
-              if req else f'execute if score #lve m.tmp matches {lv}.. run data modify storage {NS}:pg l{k} set value "{name} · {cost} pts"',
+              f'execute unless score #lve m.tmp matches {lv}.. run data modify storage {NS}:pg l{k} set value "✖ {name}"',
+              f'execute if score #lve m.tmp matches {lv}.. {cond[8:]} run data modify storage {NS}:pg l{k} set value "{name}"'
+              if req else f'execute if score #lve m.tmp matches {lv}.. run data modify storage {NS}:pg l{k} set value "{name}"',
               (f'execute if score #lve m.tmp matches {lv}.. {cond[8:]} run data modify storage {NS}:pg c{k} set value "yellow"' if req else
                f'execute if score #lve m.tmp matches {lv}.. run data modify storage {NS}:pg c{k} set value "yellow"'),
               (f'execute if score #lve m.tmp matches {lv}.. {cond[8:]} if score #pts m.tmp matches ..{cost - 1} run data modify storage {NS}:pg c{k} set value "red"' if req else
                f'execute if score #lve m.tmp matches {lv}.. if score #pts m.tmp matches ..{cost - 1} run data modify storage {NS}:pg c{k} set value "red"'),
               f'execute if entity @s[tag=metiers.sk.{j}{k}] run data modify storage {NS}:pg l{k} set value "✔ {name}"',
               f'execute if entity @s[tag=metiers.sk.{j}{k}] run data modify storage {NS}:pg c{k} set value "green"',
-              f'execute if entity @s[tag=metiers.sk.{j}{k},tag=metiers.skoff.{j}{k}] run data modify storage {NS}:pg l{k} set value "○ {name} · désactivée"',
+              f'execute if entity @s[tag=metiers.sk.{j}{k},tag=metiers.skoff.{j}{k}] run data modify storage {NS}:pg l{k} set value "○ {name}"',
               f'execute if entity @s[tag=metiers.sk.{j}{k},tag=metiers.skoff.{j}{k}] run data modify storage {NS}:pg c{k} set value "gold"']
     P += ["scoreboard players operation @s m.tmp = @s m.{0}_lvl".format(j), "scoreboard players operation @s m.tmp /= #10 m.const",
-          f'data modify storage {NS}:pg rl set value "Aucune récompense"', f'data modify storage {NS}:pg rc set value "dark_gray"',
-          f'execute if score @s m.{j}_pal < @s m.tmp run data modify storage {NS}:pg rl set value "Récompense à prendre ●"',
+          f'data modify storage {NS}:pg rl set value "Pas de récompense"', f'data modify storage {NS}:pg rc set value "dark_gray"',
+          f'execute if score @s m.{j}_pal < @s m.tmp run data modify storage {NS}:pg rl set value "Récompense ●"',
           f'execute if score @s m.{j}_pal < @s m.tmp run data modify storage {NS}:pg rc set value "light_purple"',
-          f'data modify storage {NS}:pg tl set value "Afficher ce titre"', f'data modify storage {NS}:pg tc set value "yellow"',
+          f'data modify storage {NS}:pg tl set value "Afficher le titre"', f'data modify storage {NS}:pg tc set value "yellow"',
           f'execute if score @s m.pref matches {d["idx"]} run data modify storage {NS}:pg tl set value "Titre affiché ✔"',
           f'execute if score @s m.pref matches {d["idx"]} run data modify storage {NS}:pg tc set value "green"',
-          f'data modify storage {NS}:pg pl set value "Prestige au niveau 100"', f'data modify storage {NS}:pg pc set value "dark_gray"',
-          f'execute if score @s m.{j}_lvl matches {MAXLVL}.. run data modify storage {NS}:pg pl set value "★ Prestige disponible"',
+          f'data modify storage {NS}:pg pl set value "Prestige (niv. 100)"', f'data modify storage {NS}:pg pc set value "dark_gray"',
+          f'execute if score @s m.{j}_lvl matches {MAXLVL}.. run data modify storage {NS}:pg pl set value "★ Prestige prêt"',
           f'execute if score @s m.{j}_lvl matches {MAXLVL}.. run data modify storage {NS}:pg pc set value "gold"',
-          f'data modify storage {NS}:pg sk_mode set value "Pioche : Fortune  ⇄"',
-          f'execute if score @s m.silk matches 1 run data modify storage {NS}:pg sk_mode set value "Pioche : Toucher de soie  ⇄"',
+          f'data modify storage {NS}:pg sk_mode set value "Fortune ⇄ Soie"',
+          f'execute if score @s m.silk matches 1 run data modify storage {NS}:pg sk_mode set value "Soie ⇄ Fortune"',
+          f'data modify storage {NS}:pg mc set value "aqua"',
           f"function {NS}:{j}/page_dialog with storage {NS}:pg"]
     w(F + f"{j}/arbre.mcfunction", "\n".join(P))
     sbtn = []
     for k, (name, cost, req, desc) in enumerate(sk, 1):
         rq = " + ".join(sk[r - 1][0] for r in req) if req else "rien"
-        tip = f"{desc}\\nCoût : {cost} points · niveau {SKILL_LVL[k - 1]} · requiert : {rq}\\nUne fois acquise : clic pour l’activer ou la désactiver."
-        sbtn.append(f'{{label:{{text:"$(l{k})",color:"$(c{k})"}},width:200,tooltip:{{text:"{tip}"}},action:{{type:"run_command",command:"trigger metiers set {TSK(d, k)}"}}}}')
+        tip = (f"{desc}\\nCoût : {cost} points · niveau {SKILL_LVL[k - 1]} · requiert : {rq}\\nUne fois acquise : clic pour l’activer ou la désactiver."
+               "\\n\\nVert ✔ acquise · jaune disponible · rouge points manquants · gris ✖ niveau trop bas · ○ désactivée")
+        sbtn.append(f'{{label:{{text:"$(l{k})",color:"$(c{k})"}},width:130,tooltip:{{text:"{tip}"}},action:{{type:"run_command",command:"trigger metiers set {TSK(d, k)}"}}}}')
     sp = SPECIAL[j]
-    sep = [f'{{label:{bandeau("OUTIL ET", "droite")},width:200}}', f'{{label:{bandeau("MÉTIER", "gauche")},width:200}}']
-    abtn = [btn(txt("Barème d’XP", "gold"), 480 + d["idx"], 200, f"Ce que rapporte chaque action en {d['name']}, avec les images du jeu."),
-            btn(txt("Récupérer l'outil", "aqua"), 300 + d["idx"], 200, "Redonne ton outil à son palier (dès le niveau 10, une fois toutes les 10 minutes)."),
-            btn(txt("Réparer · 5 niv.", "green"), 330 + d["idx"], 200, "Seule façon de réparer ton outil de métier. Incassable dès le palier 5."),
-            f'{{label:{{text:"$(rl)",color:"$(rc)"}},width:200,action:{{type:"run_command",command:"trigger metiers set {200 + d["idx"]}"}}}}',
-            f'{{label:{{text:"$(tl)",color:"$(tc)"}},width:200,tooltip:{{text:"Affiche ton titre de {d["name"]} devant ton pseudo. Le cadre se choisit à la Forge."}},action:{{type:"run_command",command:"trigger metiers set {TTI(d)}"}}}}',
-            btn(txt(sp[1], sp[2]), sp[0], 200, sp[3]),
-            f'{{label:{{text:"$(pl)",color:"$(pc)"}},width:200,tooltip:{{text:"Au niveau 100 : repars au niveau 1 avec une étoile et +10 % d’XP par étoile (5 max)."}},action:{{type:"run_command",command:"trigger metiers set {310 + d["idx"]}"}}}}'] + ([f'{{label:{{text:"$(sk_mode)",color:"aqua"}},width:200,tooltip:{{text:"Change l’enchantement de ta pioche : Fortune (plus de minerais) ou Toucher de soie (récupère le bloc tel quel). Ta pioche est remplacée tout de suite."}},action:{{type:"run_command",command:"trigger metiers set 761"}}}}'] if j == "m" else [])
+    ICL = lambda ic, lab, col: f'[{IC(ic)},{{text:"  {lab}",color:"{col}",italic:false}}]'
+    ICV = lambda ic, var, col: f'[{IC(ic)},{{text:"  $({var})",color:"$({col})",italic:false}}]'
+    def cb(label, val, tip=None):
+        return f'{{label:{label},width:130' + (f',tooltip:{{text:"{tip}"}}' if tip else "") + f',action:{{type:"run_command",command:"trigger metiers set {val}"}}}}'
+    abtn = [cb(ICL(OUTIL_IC[j], "Mon outil", "aqua"), 300 + d["idx"], "Redonne ton outil à son palier (dès le niveau 10, une fois toutes les 10 minutes)."),
+            cb(ICL("item/experience_bottle", "Réparer", "green"), 330 + d["idx"], "Seule façon de réparer ton outil de métier : 5 niveaux d’XP. Incassable dès le palier 5."),
+            cb(ICV("item/gold_ingot", "rl", "rc"), 200 + d["idx"], "Ce que tu gagnes à chaque palier de 10 niveaux."),
+            cb(ICV("item/name_tag", "tl", "tc"), TTI(d), f"Affiche ton titre de {d['name']} devant ton pseudo. Le cadre se choisit dans Activités."),
+            cb(ICL("item/amethyst_shard", SPECIAL_COURT[j], sp[2]), sp[0], sp[3]),
+            cb(ICV("item/totem_of_undying", "pl", "pc"), 310 + d["idx"], "Au niveau 100 : repars au niveau 1 avec une étoile, tu gardes tes compétences (5 étoiles max)."),
+            cb(ICL("item/book", "Barème d’XP", "gold"), 480 + d["idx"], f"Ce que rapporte chaque action en {d['name']}, avec les images du jeu.")] + \
+           ([cb(ICV("item/enchanted_book", "sk_mode", "mc"), 761, "Change l’enchantement de ta pioche : Fortune (plus de minerais) ou Toucher de soie (le bloc tel quel). Ta pioche est remplacée tout de suite.")] if j == "m" else [])
     body = ('[{type:"minecraft:item",item:{id:"minecraft:paper",components:{"minecraft:item_model":"metiers:$(model)","minecraft:custom_model_data":{strings:["$(skin)"]}}},'
             'show_decorations:false,show_tooltip:false,description:{width:260,contents:['
             f'{{text:"$(titre) {d["name"]}\\n",color:"{d["color"]}",bold:true}},{{text:"Niveau $(lvl)   ",color:"yellow",bold:false}},'
@@ -186,13 +213,13 @@ for j, d in jobs.items():
             f'{{text:"Outil au palier $(out) sur 10",color:"gray"}}]}}}},'
             '{type:"minecraft:plain_message",width:380,contents:[{text:"$(next)\\n",color:"gold"},'
             f'{{text:"Points de compétence : ",color:"gray"}},{{text:"$(pts)",color:"yellow"}},{{text:"   ·   ",color:"gray"}},{gs("cristal_" + j)},{{text:" $(cr) cristaux\\n",color:"aqua"}},'
-            '{text:"Survole une compétence pour voir son effet.",color:"dark_gray"}]},'
+            '{text:"Survole un bouton pour voir son effet et son coût.",color:"dark_gray"}]},'
             f'{{type:"minecraft:plain_message",width:380,contents:[{{text:"Ton outil  ",color:"{d["color"]}",bold:true}},{{text:"{TDESC[j]}\\n",color:"white",bold:false}}' +
             (f',{{text:"Objet de Forge  ",color:"gold",bold:true}},{{text:"{NOMF_J[j]}\\n",color:"white",bold:false}}' if j in FITEM else "") +
-            ',{text:"✔ acquis   ",color:"green"},{text:"jaune : disponible   ",color:"yellow"},{text:"rouge : il manque des points   ",color:"red"},{text:"gris : niveau trop bas   ",color:"dark_gray"},{text:"○ désactivée (clic pour réactiver)",color:"gold"}]}]')
+            ']}]')
     w(F + f"{j}/page_dialog.mcfunction",
       f'$dialog show @s {{type:"minecraft:multi_action",title:[{gs("metier_" + j)},{{text:" {d["name"]}",color:"{d["color"]}",bold:true}}],'
-      f'can_close_with_escape:true,pause:false,body:{body},actions:[{",".join(sbtn + sep + abtn)}],columns:2,'
+      f'can_close_with_escape:true,pause:false,body:{body},actions:[{",".join(sbtn + abtn)}],columns:3,'
       f'exit_action:{{label:"Retour",width:200,action:{{type:"run_command",command:"trigger metiers set 1"}}}}}}')
     for k, (name, cost, req, desc) in enumerate(sk, 1):
         w(F + f"{j}/basculer_{k}.mcfunction", "\n".join([
@@ -594,6 +621,7 @@ TRG += [f'execute if score @s m.trig matches 411 run function {NS}:appel {{f:"fo
 TRG += [f'execute if score @s m.trig matches {430 + i} run function {NS}:appel {{f:"skins/choix_{i}"}}' for i in range(7)]
 TRG += [f'execute if score @s m.trig matches {440 + i} run function {NS}:appel {{f:"skins/cadre_{i}"}}' for i in range(7)]
 TRG += [f'execute if score @s m.trig matches {TTI(d)} run function {NS}:appel {{f:"{j}/titre"}}' for j, d in jobs.items()]
+TRG += [f'execute if score @s m.trig matches 497 run function {NS}:appel {{f:"activites"}}']
 TRG += [f'execute if score @s m.trig matches 614 run function {NS}:appel {{f:"k/kit"}}',
         f'execute if score @s m.trig matches 610 run function {NS}:appel {{f:"f/saison"}}',
         f'execute if score @s m.trig matches 611 run function {NS}:appel {{f:"n/surpuissance"}}',

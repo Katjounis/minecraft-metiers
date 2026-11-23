@@ -24,11 +24,18 @@
  ],
  "actions": [
   {
-   "label": {
-    "text": "⚒ Métiers",
-    "color": "aqua",
-    "bold": true
-   },
+   "label": [
+    {
+     "object": "atlas",
+     "atlas": "minecraft:items",
+     "sprite": "minecraft:item/iron_pickaxe"
+    },
+    {
+     "text": "  Métiers",
+     "color": "aqua",
+     "bold": true
+    }
+   ],
    "width": 150,
    "tooltip": {
     "text": "Niveaux, compétences, Forge, défis, classement."
@@ -39,11 +46,18 @@
    }
   },
   {
-   "label": {
-    "text": "⚖ Commerce",
-    "color": "gold",
-    "bold": true
-   },
+   "label": [
+    {
+     "object": "atlas",
+     "atlas": "minecraft:items",
+     "sprite": "minecraft:item/emerald"
+    },
+    {
+     "text": "  Commerce",
+     "color": "gold",
+     "bold": true
+    }
+   ],
    "width": 150,
    "tooltip": {
     "text": "Marché, bourse, banque, hôtel des ventes, spawners."
@@ -54,11 +68,18 @@
    }
   },
   {
-   "label": {
-    "text": "☠ Bestiaire",
-    "color": "dark_red",
-    "bold": true
-   },
+   "label": [
+    {
+     "object": "atlas",
+     "atlas": "minecraft:items",
+     "sprite": "minecraft:item/bone"
+    },
+    {
+     "text": "  Bestiaire",
+     "color": "dark_red",
+     "bold": true
+    }
+   ],
    "width": 150,
    "tooltip": {
     "text": "Les créatures de la nuit, contrats, classement."
@@ -69,11 +90,18 @@
    }
   },
   {
-   "label": {
-    "text": "★ Mon profil",
-    "color": "yellow",
-    "bold": true
-   },
+   "label": [
+    {
+     "object": "atlas",
+     "atlas": "minecraft:items",
+     "sprite": "minecraft:item/name_tag"
+    },
+    {
+     "text": "  Mon profil",
+     "color": "yellow",
+     "bold": true
+    }
+   ],
    "width": 150,
    "tooltip": {
     "text": "Tout ton parcours sur une page."
@@ -84,10 +112,17 @@
    }
   },
   {
-   "label": {
-    "text": "? Guide du serveur",
-    "color": "white"
-   },
+   "label": [
+    {
+     "object": "atlas",
+     "atlas": "minecraft:items",
+     "sprite": "minecraft:item/book"
+    },
+    {
+     "text": "  Guide du serveur",
+     "color": "white"
+    }
+   ],
    "width": 304,
    "tooltip": {
     "text": "Pour bien démarrer, en 5 pages."

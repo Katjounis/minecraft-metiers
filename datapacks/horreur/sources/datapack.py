@@ -867,6 +867,10 @@ def msg(contenu, larg=300):
     return {"type": "minecraft:plain_message", "width": larg, "contents": contenu}
 
 
+# icône de chaque créature dans le bestiaire (textures du jeu, composant « object »)
+ICONE = {"slender": "ender_eye", "herobrine": "diamond_pickaxe", "siren": "goat_horn", "nonne": "candle", "clown": "red_dye",
+         "pinhead": "iron_nugget", "dame": "ghast_tear", "loup": "bone", "feu": "soul_lantern", "rodeur": "rotten_flesh", "croque": "nether_star"}
+IC = lambda i: {"object": "atlas", "atlas": "minecraft:items", "sprite": "minecraft:item/" + i}
 TITRE = {"text": "☠ Bestiaire ☠", "color": "dark_red", "bold": True}
 wj(f"data/{NS}/dialog/bestiaire.json", {
     "type": "minecraft:multi_action", "title": TITRE, "external_title": {"text": "Bestiaire", "color": "dark_red"},
@@ -910,13 +914,13 @@ d_liste = {"type": "minecraft:multi_action", "title": TITRE, "can_close_with_esc
                     msg([{"text": f"§D / {len(CREATURES)} créatures découvertes   ·   §T victoires\n", "color": "gray"},
                          {"text": "Contrat de la semaine : ", "color": "dark_red"}, {"text": "§CT", "color": "gold"}, {"text": "§OK", "color": "green"},
                          {"text": "§SG", "color": "red"}])],
-           "actions": [bouton(f"§L{i}", 11 + i - 1) for i in range(1, len(CREATURES) + 1)]
-                      + [bouton({"text": "Classement", "color": "gold"}, 2, 140, "Les plus grands chasseurs de créatures."),
-                         bouton({"text": "Vendre mes trophées", "color": "yellow"}, 3, 140, "Le Commerce rachète chaque trophée 5 fois la prime de sa créature.")],
-           "columns": 2, "exit_action": {"label": {"text": "Fermer"}}}
+           "actions": [bouton(f"§L{i}", 11 + i - 1, 150) for i in range(1, len(CREATURES) + 1)]
+                      + [bouton([IC("gold_ingot"), {"text": "  Classement", "color": "gold"}], 2, 150, "Les plus grands chasseurs de créatures."),
+                         bouton([IC("emerald"), {"text": "  Vendre trophées", "color": "yellow"}], 3, 150, "Le Commerce rachète chaque trophée 5 fois la prime de sa créature.")],
+           "columns": 3, "exit_action": {"label": {"text": "Fermer"}}}
 s = snbt(d_liste).replace("§D", "$(d)").replace("§T", "$(tot)").replace("§CT", "$(ct)").replace("§OK", "$(ok)").replace("§SG", "$(sg)")
 for i in range(1, len(CREATURES) + 1):
-    s = s.replace(f'"§L{i}"', f"$(l{i})")
+    s = s.replace(f'"§L{i}"', "[" + snbt(IC(ICONE.get(CREATURES[i - 1]["id"], "bone"))) + ',{"text":"  "},' + f"$(l{i})]")
 w(F + "ui/liste_m.mcfunction", "$dialog show @s " + s)
 
 RETOUR = bouton({"text": "◀ Retour"}, 1, 120)

@@ -174,7 +174,7 @@ w(G_ + "nom.mcfunction", "\n".join([  # pseudo du joueur exécutant -> storage m
     f'data modify storage {NS}:gu moi set from entity @e[type=minecraft:item_display,tag=metiers.nomeur,limit=1] item.components."minecraft:custom_name".text',
     f'execute unless data entity @e[type=minecraft:item_display,tag=metiers.nomeur,limit=1] item.components."minecraft:custom_name".text run data modify storage {NS}:gu moi set from entity @e[type=minecraft:item_display,tag=metiers.nomeur,limit=1] item.components."minecraft:custom_name"',
     "kill @e[type=minecraft:item_display,tag=metiers.nomeur]"]))
-# créer (701) : nom = objet renommé tenu en main, sinon « Guilde de <pseudo> »
+# créer (771) : nom = objet renommé tenu en main, sinon « Guilde de <pseudo> »
 w(G_ + "creer.mcfunction", "\n".join([
     f"execute if score @s m.gid matches 1.. run return run {tr('Tu es déjà dans une guilde.', 'red')}",
     "scoreboard players add #gidn m.const 1", "scoreboard players operation @s m.gid = #gidn m.const",
@@ -196,7 +196,7 @@ w(G_ + "ajouter_moi.mcfunction", "\n".join([
     f"data modify storage {NS}:gu a.nom set from storage {NS}:gu moi",
     f"function {NS}:guilde/ajouter_m with storage {NS}:gu a"]))
 w(G_ + "ajouter_m.mcfunction", f'$data modify storage {NS}:gu L[{{id:$(g)}}].mem append value {{id:$(id),nom:"$(nom)"}}')
-# quitter (702)
+# quitter (772)
 w(G_ + "quitter.mcfunction", "\n".join([
     f"execute unless score @s m.gid matches 1.. run return run {tr('Tu n’es dans aucune guilde.', 'red')}",
     f"execute store result storage {NS}:gu a.g int 1 run scoreboard players get @s m.gid",
@@ -208,7 +208,7 @@ w(G_ + "oter_m.mcfunction", "\n".join([
     # plus personne : la guilde disparaît ; le chef part : le premier membre restant devient chef
     f"$execute unless data storage {NS}:gu L[{{id:$(g)}}].mem[0] run return run data remove storage {NS}:gu L[{{id:$(g)}}]",
     f"$execute if data storage {NS}:gu L[{{id:$(g),chef:$(id)}}] run data modify storage {NS}:gu L[{{id:$(g)}}].chef set from storage {NS}:gu L[{{id:$(g)}}].mem[0].id"]))
-# inviter (703 : liste des joueurs en ligne sans guilde, clic = 71xxxxx)
+# inviter (773 : liste des joueurs en ligne sans guilde, clic = 71xxxxx)
 w(G_ + "inviter_liste.mcfunction", "\n".join([
     f"execute unless function {NS}:guilde/suis_chef run return run {tr('Seul le chef de la guilde invite.', 'red')}",
     f"data modify storage {NS}:gu D set value [{{text:\"\"}}]",
@@ -223,13 +223,15 @@ w(G_ + "suis_chef.mcfunction", "\n".join([
 w(G_ + "suis_chef_m.mcfunction", f"$execute if data storage {NS}:gu L[{{id:$(g),chef:$(id)}}] run return 1\nreturn fail")
 w(G_ + "inviter_ligne.mcfunction", "\n".join([
     f"function {NS}:guilde/nom", f"execute store result storage {NS}:gu b.id int 1 run scoreboard players get @s m.id",
+    "scoreboard players set #tv m.tmp 7100000", "scoreboard players operation #tv m.tmp += @s m.id",
+    f"execute store result storage {NS}:gu b.v int 1 run scoreboard players get #tv m.tmp",
     f"data modify storage {NS}:gu b.nom set from storage {NS}:gu moi", f"function {NS}:guilde/inviter_ligne_m with storage {NS}:gu b"]))
 w(G_ + "inviter_ligne_m.mcfunction",
-  f'$data modify storage {NS}:gu D append value {{text:"$(nom)     ",color:"yellow",underlined:true,click_event:{{action:"run_command",command:"trigger metiers set 71$(id)"}},hover_event:{{action:"show_text",value:"Inviter $(nom)"}}}}')
+  f'$data modify storage {NS}:gu D append value {{text:"$(nom)     ",color:"yellow",underlined:true,click_event:{{action:"run_command",command:"trigger metiers set $(v)"}},hover_event:{{action:"show_text",value:"Inviter $(nom)"}}}}')
 w(G_ + "inviter_d.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Inviter dans la guilde",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
   'body:[{type:"minecraft:plain_message",width:320,contents:[{text:"Joueurs en ligne sans guilde (clic pour inviter) :\\n\\n",color:"gray"},{text:"",extra:$(D)}]}],'
-  'actions:[{label:{text:"Retour"},width:200,action:{type:"run_command",command:"trigger metiers set 700"}}],columns:1}')
+  'actions:[{label:{text:"Retour"},width:200,action:{type:"run_command",command:"trigger metiers set 770"}}],columns:1}')
 w(G_ + "inviter.mcfunction", "\n".join([  # #v = 7100000 + id du joueur invité
     f"execute unless function {NS}:guilde/suis_chef run return 0",
     "scoreboard players operation #cible m.tmp = @s m.trig", "scoreboard players remove #cible m.tmp 7100000",
@@ -238,7 +240,7 @@ w(G_ + "inviter.mcfunction", "\n".join([  # #v = 7100000 + id du joueur invité
     tr("Invitation envoyée.", "green")]))
 w(G_ + "invite_recu.mcfunction", "\n".join([
     "scoreboard players operation @s m.ginv = #g m.tmp",
-    'tellraw @s ' + PREFIX + ',{"text":"Tu es invité dans une guilde ! ","color":"gold"},{"text":"[Accepter]","color":"green","bold":true,"click_event":{"action":"run_command","command":"/trigger metiers set 705"}}]',
+    'tellraw @s ' + PREFIX + ',{"text":"Tu es invité dans une guilde ! ","color":"gold"},{"text":"[Accepter]","color":"green","bold":true,"click_event":{"action":"run_command","command":"/trigger metiers set 775"}}]',
     "playsound minecraft:block.note_block.bell master @s ~ ~ ~ 1 1.5"]))
 w(G_ + "accepter.mcfunction", "\n".join([
     f"execute if score @s m.gid matches 1.. run return run {tr('Quitte d’abord ta guilde.', 'red')}",
@@ -295,7 +297,7 @@ w(G_ + "objectif.mcfunction", "\n".join([  # #gx = XP de la semaine, #gobj = 5 0
 add_lines(F + "refonte/load.mcfunction", ["scoreboard objectives add m.gxpt dummy", f"{S} set #5000 m.const 5000"])
 add_lines(F + "refonte/joueur.mcfunction", [f"execute if score #quatre m.timer matches 0 run function {NS}:guilde/tick"])
 add_lines(F + "defis/semaine.mcfunction", ["scoreboard players add #gweek m.const 1", "scoreboard players reset * m.gxpt"])
-# page de la guilde (700)
+# page de la guilde (770)
 GP = [f"execute unless score @s m.gid matches 1.. run return run function {NS}:guilde/page_sans",
       f"execute store result storage {NS}:gu a.g int 1 run scoreboard players get @s m.gid",
       f"function {NS}:guilde/page_m with storage {NS}:gu a"]
@@ -313,10 +315,13 @@ w(G_ + "page_m.mcfunction", "\n".join([
     f"function {NS}:guilde/page_d with storage {NS}:gu p"]))
 w(G_ + "membres.mcfunction", "\n".join([
     f"execute unless data storage {NS}:gu W[0] run return 0",
+    "scoreboard players set #tv m.tmp 7200000",
+    f"execute store result score #ti m.tmp run data get storage {NS}:gu W[0].id", "scoreboard players operation #tv m.tmp += #ti m.tmp",
+    f"execute store result storage {NS}:gu W[0].v int 1 run scoreboard players get #tv m.tmp",
     f"function {NS}:guilde/membre_m with storage {NS}:gu W[0]",
     f"data remove storage {NS}:gu W[0]", f"function {NS}:guilde/membres"]))
 w(G_ + "membre_m.mcfunction",
-  f'$data modify storage {NS}:gu M append value {{text:"$(nom)   ",color:"white",click_event:{{action:"run_command",command:"trigger metiers set 72$(id)"}},hover_event:{{action:"show_text",value:"Chef : clic pour exclure $(nom)"}}}}')
+  f'$data modify storage {NS}:gu M append value {{text:"$(nom)   ",color:"white",click_event:{{action:"run_command",command:"trigger metiers set $(v)"}},hover_event:{{action:"show_text",value:"Chef : clic pour exclure $(nom)"}}}}')
 # classement des guildes (XP de toujours), 5 premières
 w(G_ + "classement.mcfunction", "\n".join([
     f"data modify storage {NS}:gu R set value [{{text:\"\"}}]", f"data modify storage {NS}:gu W set from storage {NS}:gu L",
@@ -343,8 +348,8 @@ w(G_ + "page_d.mcfunction",
   f'body:[{BANDEAU(BAN_GUILDE)},{{type:"minecraft:plain_message",width:380,contents:[{{text:"Défi de la semaine : ",color:"gold",bold:true}},{{text:"$(x) / $(o) XP de métier gagnée ensemble",color:"white"}},{{text:"$(ok)\\n",color:"green"}},'
   '{text:"Récompense : 3 éclats de boss pour chaque membre.\\n\\n",color:"gray"},{text:"Membres : ",color:"gold",bold:true},{text:"",extra:$(M)},'
   '{text:"\\n\\nClassement des guildes\\n",color:"gold",bold:true},{text:"",extra:$(R)}]}],'
-  'actions:[{label:{text:"Inviter",color:"green"},width:150,action:{type:"run_command",command:"trigger metiers set 703"}},'
-  '{label:{text:"Quitter la guilde",color:"red"},width:150,action:{type:"run_command",command:"trigger metiers set 702"}},'
+  'actions:[{label:{text:"Inviter",color:"green"},width:150,action:{type:"run_command",command:"trigger metiers set 773"}},'
+  '{label:{text:"Quitter la guilde",color:"red"},width:150,action:{type:"run_command",command:"trigger metiers set 772"}},'
   '{label:{text:"Retour"},width:150,action:{type:"run_command",command:"trigger metiers set 1"}}],columns:3}')
 w(G_ + "page_sans.mcfunction", "\n".join([
     f"function {NS}:guilde/classement", f"function {NS}:guilde/page_sans_d with storage {NS}:gu"]))
@@ -353,8 +358,8 @@ w(G_ + "page_sans_d.mcfunction",
   f'body:[{BANDEAU(BAN_GUILDE)},{{type:"minecraft:plain_message",width:380,contents:[{{text:"Fonde une guilde avec tes amis : un défi commun chaque semaine (3 éclats chacun), un coffre partagé (panneau [Guilde] sur un coffre, avec le Commerce) et un classement.\\n\\n",color:"gray"}},'
   '{text:"Le nom de la guilde est celui de l’objet renommé que tu tiens en main (une enclume suffit), sinon « Guilde de <ton pseudo> ».\\n\\n",color:"white"},'
   '{text:"Classement des guildes\\n",color:"gold",bold:true},{text:"",extra:$(R)}]}],'
-  'actions:[{label:{text:"Fonder une guilde",color:"gold",bold:true},width:150,action:{type:"run_command",command:"trigger metiers set 701"}},'
-  '{label:{text:"Accepter l’invitation",color:"green"},width:150,action:{type:"run_command",command:"trigger metiers set 705"}},'
+  'actions:[{label:{text:"Fonder une guilde",color:"gold",bold:true},width:150,action:{type:"run_command",command:"trigger metiers set 771"}},'
+  '{label:{text:"Accepter l’invitation",color:"green"},width:150,action:{type:"run_command",command:"trigger metiers set 775"}},'
   '{label:{text:"Retour"},width:150,action:{type:"run_command",command:"trigger metiers set 1"}}],columns:3}')
 
 # =====================================================================
@@ -438,10 +443,10 @@ w(F + "effet/palier.mcfunction", "\n".join([
 add_lines(F + "trigger.mcfunction", [
     f'execute if score @s m.trig matches 495 run function {NS}:appel {{f:"quete/page"}}',
     f'execute if score @s m.trig matches 496 run function {NS}:appel {{f:"synergie/page"}}',
-    f'execute if score @s m.trig matches 700 run function {NS}:appel {{f:"guilde/page"}}',
-    f'execute if score @s m.trig matches 701 run function {NS}:appel {{f:"guilde/creer"}}',
-    f'execute if score @s m.trig matches 702 run function {NS}:appel {{f:"guilde/quitter"}}',
-    f'execute if score @s m.trig matches 703 run function {NS}:appel {{f:"guilde/inviter_liste"}}',
-    f'execute if score @s m.trig matches 705 run function {NS}:appel {{f:"guilde/accepter"}}',
+    f'execute if score @s m.trig matches 770 run function {NS}:appel {{f:"guilde/page"}}',
+    f'execute if score @s m.trig matches 771 run function {NS}:appel {{f:"guilde/creer"}}',
+    f'execute if score @s m.trig matches 772 run function {NS}:appel {{f:"guilde/quitter"}}',
+    f'execute if score @s m.trig matches 773 run function {NS}:appel {{f:"guilde/inviter_liste"}}',
+    f'execute if score @s m.trig matches 775 run function {NS}:appel {{f:"guilde/accepter"}}',
     f'execute if score @s m.trig matches 7100000..7199999 run function {NS}:appel {{f:"guilde/inviter"}}',
     f'execute if score @s m.trig matches 7200000..7299999 run function {NS}:appel {{f:"guilde/exclure"}}'])
