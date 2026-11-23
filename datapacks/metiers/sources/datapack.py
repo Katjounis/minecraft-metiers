@@ -1348,6 +1348,7 @@ for j, d in jobs.items():
     OP += [f'execute if score @s m.skin_{j} matches {i} run data modify storage {NS}:tmp skin set value "{sk}"' for i, sk in enumerate(SKIN_IDS, 1)]
     w(F + f"{j}/outil_params.mcfunction", "\n".join(OP))
     w(F + f"{j}/outil_recup.mcfunction", "\n".join([
+        f"execute unless score @s m.{j}_lvl matches 10.. unless score @s m.{j}_pr matches 1.. run return run {tr('Ton outil de ' + d['name'] + ' se débloque au niveau 10 du métier.', 'red')}",
         f"execute if items entity @s container.* {sel} run return run {tr('Tu as déjà ton outil de ' + d['name'] + ' sur toi.')}",
         f"execute if items entity @s weapon.offhand {sel} run return run {tr('Tu as déjà ton outil de ' + d['name'] + ' sur toi.')}",
         f"scoreboard players operation @s m.tmp = @s m.{j}_cd",

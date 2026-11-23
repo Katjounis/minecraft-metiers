@@ -168,7 +168,7 @@ for j, d in jobs.items():
     sp = SPECIAL[j]
     sep = [f'{{label:{bandeau("OUTIL ET", "droite")},width:200}}', f'{{label:{bandeau("MÉTIER", "gauche")},width:200}}']
     abtn = [btn(txt("Barème d’XP", "gold"), 480 + d["idx"], 200, f"Ce que rapporte chaque action en {d['name']}, avec les images du jeu."),
-            btn(txt("Récupérer l'outil", "aqua"), 300 + d["idx"], 200, "Redonne ton outil à son palier (une fois toutes les 10 minutes)."),
+            btn(txt("Récupérer l'outil", "aqua"), 300 + d["idx"], 200, "Redonne ton outil à son palier (dès le niveau 10, une fois toutes les 10 minutes)."),
             btn(txt("Réparer · 5 niv.", "green"), 330 + d["idx"], 200, "Seule façon de réparer ton outil de métier. Incassable dès le palier 5."),
             f'{{label:{{text:"$(rl)",color:"$(rc)"}},width:200,action:{{type:"run_command",command:"trigger metiers set {200 + d["idx"]}"}}}}',
             f'{{label:{{text:"$(tl)",color:"$(tc)"}},width:200,tooltip:{{text:"Affiche ton titre de {d["name"]} devant ton pseudo. Le cadre se choisit à la Forge."}},action:{{type:"run_command",command:"trigger metiers set {600 + d["idx"]}"}}}}',

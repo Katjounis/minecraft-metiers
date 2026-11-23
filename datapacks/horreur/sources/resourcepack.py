@@ -152,7 +152,86 @@ def pinhead():
     return im
 
 
-HABITS = {"herobrine": herobrine, "nonne": nonne, "clown": clown, "pinhead": pinhead}
+def dame():
+    im = Image(64, 32)
+    robe, peau, cheveux = hexa("#ecebf4"), hexa("#e4e6ee"), hexa("#d8d8e2")
+    peindre(im, TETE, cheveux, 4, 1)
+    x, y = face(im, TETE, "face")
+    im.rect(x + 1, y + 2, 6, 6, peau, 3, 2)
+    im.rect(x, y, 8, 2, cheveux, 4, 3); im.rect(x, y + 2, 1, 6, cheveux); im.rect(x + 7, y + 2, 1, 6, cheveux)
+    im.rect(x + 2, y + 4, 1, 1, "#20202a"); im.rect(x + 5, y + 4, 1, 1, "#20202a")    # yeux vides
+    im.rect(x + 3, y + 6, 2, 1, "#9a9aa8")
+    peindre(im, CORPS, robe, 5, 4)
+    x, y = face(im, CORPS, "face"); im.rect(x + 2, y, 4, 1, "#c8c8d8")
+    peindre(im, BRAS, robe, 5, 5)
+    for n in ("droite", "face", "gauche", "dos"):
+        x, y = face(im, BRAS, n); im.rect(x, y + 10, 4, 2, peau, 3, 6)
+    peindre(im, JAMBE, robe, 5, 7)                          # la robe descend jusqu'au sol
+    for n in ("droite", "face", "gauche", "dos"):
+        x, y = face(im, JAMBE, n); im.rect(x, y + 10, 4, 2, "#b8b8c8", 4, 8)
+    return im
+
+
+def loup():
+    im = Image(64, 32)
+    poil, sombre, peau = hexa("#6e6052"), hexa("#3e342a"), hexa("#8a7a68")
+    peindre(im, TETE, poil, 14, 1)
+    x, y = face(im, TETE, "face")
+    im.rect(x + 2, y + 4, 4, 4, sombre, 8, 2)                # museau
+    im.rect(x + 3, y + 4, 2, 1, "#101010")                   # truffe
+    im.set(x + 1, y + 2, "#f0c020"); im.set(x + 6, y + 2, "#f0c020")   # yeux jaunes
+    im.rect(x + 2, y + 7, 4, 1, "#e8e0d0")                   # crocs
+    x, y = face(im, TETE, "haut"); im.rect(x, y, 2, 2, sombre); im.rect(x + 6, y, 2, 2, sombre)   # oreilles
+    peindre(im, CORPS, poil, 14, 3)
+    x, y = face(im, CORPS, "face"); im.rect(x + 1, y + 2, 6, 8, peau, 10, 4)
+    peindre(im, BRAS, poil, 14, 5)
+    for n in ("droite", "face", "gauche", "dos"):
+        x, y = face(im, BRAS, n); im.rect(x, y + 10, 4, 2, sombre, 6, 6)
+    peindre(im, JAMBE, poil, 14, 7)
+    for n in ("droite", "face", "gauche", "dos"):
+        x, y = face(im, JAMBE, n); im.rect(x, y + 10, 4, 2, sombre, 6, 8)
+    return im
+
+
+def rodeur():
+    im = Image(64, 32)
+    peau, ombre = hexa("#b8b2a8"), hexa("#7a746a")
+    peindre(im, TETE, peau, 6, 1)
+    x, y = face(im, TETE, "face")
+    im.rect(x + 1, y + 2, 2, 3, "#050505"); im.rect(x + 5, y + 2, 2, 3, "#050505")   # orbites noires
+    im.rect(x + 2, y + 6, 4, 2, "#1a0a0a"); im.set(x + 3, y + 6, "#d8d0c0"); im.set(x + 4, y + 7, "#d8d0c0")
+    peindre(im, CORPS, peau, 6, 2)
+    x, y = face(im, CORPS, "face")
+    for j in range(2, 10, 2):
+        im.rect(x + 1, y + j, 6, 1, ombre)                   # côtes
+    peindre(im, BRAS, peau, 6, 3)
+    for n in ("droite", "face", "gauche", "dos"):
+        x, y = face(im, BRAS, n); im.rect(x, y + 10, 4, 2, "#2a2420")   # griffes
+    peindre(im, JAMBE, ombre, 6, 4)
+    return im
+
+
+def croque():
+    im = Image(64, 32)
+    cape, ombre = hexa("#16101a"), hexa("#2a1420")
+    peindre(im, TETE, cape, 5, 1)
+    x, y = face(im, TETE, "face")
+    im.rect(x + 1, y + 1, 6, 7, "#08060a")
+    im.rect(x + 2, y + 3, 1, 1, "#f8f0f0"); im.rect(x + 5, y + 3, 1, 1, "#f8f0f0")   # yeux blancs
+    im.rect(x + 2, y + 6, 4, 1, "#701020")                   # sourire rouge
+    im.set(x + 1, y + 5, "#701020"); im.set(x + 6, y + 5, "#701020")
+    peindre(im, CORPS, cape, 5, 2)
+    x, y = face(im, CORPS, "face"); im.rect(x + 3, y, 2, 12, ombre)
+    peindre(im, BRAS, cape, 5, 3)
+    for n in ("droite", "face", "gauche", "dos"):
+        x, y = face(im, BRAS, n); im.rect(x, y + 9, 4, 3, "#d8d0d0", 3, 4)   # longues mains pâles
+    peindre(im, JAMBE, cape, 5, 5)
+    return im
+
+
+HABITS = {"herobrine": herobrine, "nonne": nonne, "clown": clown, "pinhead": pinhead,
+          "dame": dame, "loup": loup, "rodeur": rodeur, "croque": croque}
+
 
 
 # ======================================================================================
@@ -283,6 +362,14 @@ def siren():
     return m
 
 
+def feu():
+    m = Modele("feu")
+    m.boite((5, 5, 5), (11, 11, 11), uni("#7fd8ff", 18, 1))
+    m.boite((6.5, 11, 6.5), (9.5, 14, 9.5), uni("#c8f0ff", 10, 2))
+    m.boite((7.2, 14, 7.2), (8.8, 16, 8.8), uni("#ffffff", 4, 3))
+    return m
+
+
 def ballon():
     m = Modele("ballon")
     m.boite((5, 22, 5), (11, 29, 11), selon(uni("#d81818", 10, 1), north=lambda i, x, y, w, h, c: (
@@ -305,6 +392,8 @@ def trophee(c):
                 for i in range(w):
                     img.set(x + i, y + j, src.get(sx + i * sw // w, sy + j * sh // h))
         m.boite((0, 0, 0), (16, 16, 16), p)
+    elif c["id"] == "feu":
+        m.boite((4, 4, 4), (12, 12, 12), uni("#7fd8ff", 18, 1))
     elif c["id"] == "slender":
         m.boite((2, 0, 2), (14, 16, 14), uni("#eceae6", 5, 4))
     else:  # siren : un haut-parleur

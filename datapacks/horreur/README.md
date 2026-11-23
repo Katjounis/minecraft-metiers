@@ -14,6 +14,11 @@ Inspiration : *Spooky Scary Creatures*. Aucun asset n'en est repris : textures e
 | **La Nonne** | Sous terre, sous la couche 62 | Apparaît dans le dos du joueur. Ses coups aveuglent et affaiblissent. |
 | **Le Clown** | Sous terre, sous la couche 62 | On entend son rire. Ses coups ralentissent. À sa mort, son ballon rouge s'envole. |
 | **Pinhead** | Nether, ou en surface la nuit (rare) | Ses chaînes attirent et ralentissent. Sous la moitié de sa vie, il appelle deux cénobites. |
+| **La Dame blanche** | Surface la nuit, surtout au bord des chemins | Immobile au loin. Si on approche, elle hurle et éteint la vue, puis s'évanouit ou fond sur toi. |
+| **Le Loup-garou** | Surface, les nuits de pleine lune | Rapide, hurle avant de charger, ses morsures font saigner (Wither). |
+| **Le Feu follet** | Marais et mangroves, la nuit | Flamme bleue volante (vex), traverse les murs, s'enfuit quand on la suit, son contact glace. |
+| **Le Rôdeur des grottes** | Sous terre | Disparaît dès qu'on le regarde et réapparaît dans le dos du joueur. |
+| **Le Croque-mitaine** (boss) | Seulement pendant une Nuit de sang, vers minuit | 800 PV, barre de boss, se téléporte dans le dos, appelle des ombres, éteint la lumière. |
 
 Le pack est « effrayant mais équitable » : aucun bloc n'est cassé ni modifié.
 
@@ -29,6 +34,13 @@ Réglages du 23/11/2026 (Samuel) : environ une rencontre par nuit et par joueur 
 - Il n'y a qu'une créature à la fois dans un rayon de 128 blocs, et 10 min d'attente par joueur entre deux apparitions.
 - Une créature sans joueur à moins de 20 blocs disparaît au bout de 2 min. Toutes disparaissent après 15 min. Les créatures nocturnes s'évanouissent au lever du jour.
 
+## Nuit de sang, primes, contrats (23/11/2026)
+
+- **Nuit de sang** : une nuit sur huit, annoncée à tout le serveur. Créatures 4 fois plus fréquentes, 3 min d'attente au lieu de 10, butin doublé, pluie de particules rouges, et le Croque-mitaine sort vers minuit près d'un joueur au hasard. Admin : `/function horreur:sang`.
+- **Primes en Écus** (pack Commerce) à chaque victoire, de 100 (Feu follet) à 5 000 (Croque-mitaine) ; le bouton « Vendre mes trophées » du bestiaire les rachète 5 fois la prime.
+- **Contrat de chasse** : chaque semaine de jeu (2 h 48 avec des joueurs connectés), une créature recherchée ; la première victoire de chaque joueur paie 5 fois la prime.
+- **Classement** des victoires dans le bestiaire (pseudos lus dans le registre du pack Commerce).
+
 ## Bestiaire
 
 - **Ouvrir le bestiaire** : touche **G** (à côté de Métiers), le menu **Échap**, ou `/trigger bestiaire`.
@@ -36,7 +48,10 @@ Réglages du 23/11/2026 (Samuel) : environ une rencontre par nuit et par joueur 
 - **Paliers** :
   - 1 kill : la fiche se débloque, avec de l'XP ;
   - 10 kills : un **trophée** (tête décorative, se porte sur la tête) ;
-  - 50 kills : un **titre**, annoncé à tout le serveur.
+  - 50 kills : un **titre**, annoncé à tout le serveur ;
+  - 100 kills : une **relique** propre à la créature (arme ou armure enchantée).
+- **Bestiaire complet** (les 10 créatures hors boss) : titre « Chasseur de mythes », Lame des mythes et 10 000 Écus.
+- Chaque fiche montre la créature, sa vie, ses dégâts, son XP et sa prime.
 
 ## XP Chasseur (avec Métiers)
 
