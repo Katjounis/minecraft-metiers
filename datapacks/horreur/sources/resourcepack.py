@@ -327,38 +327,62 @@ def slender():
 
 
 def siren():
+    """Siren Head : corps décharné de 8 m, bras qui tombent sous les genoux, mât en guise de cou, deux sirènes."""
     m = Modele("siren")
-    chair, sombre = hexa("#8c7a62"), hexa("#4a3c2c")
+    chair, sombre, os_ = hexa("#8a7356"), hexa("#3e3022"), hexa("#cbb896")
 
-    def corps(img, x, y, w, h, c):
-        img.rect(x, y, w, h, chair, 14, 1)
-        r = random.Random(x * 31 + y)
-        for _ in range(w * h // 5):
-            img.set(x + r.randrange(w), y + r.randrange(h), nuance(sombre, r.randint(-10, 10)))
+    def peau(img, x, y, w, h, c):
+        img.rect(x, y, w, h, chair, 16, 1)
+        r = random.Random(x * 31 + y * 7)
+        for _ in range(w * h // 4):
+            img.set(x + r.randrange(w), y + r.randrange(h), nuance(sombre, r.randint(-12, 12)))
 
     def torse(img, x, y, w, h, c):
-        corps(img, x, y, w, h, c)
+        peau(img, x, y, w, h, c)
         if c in ("north", "south"):
-            for j in range(1, h - 2, 2):
-                img.rect(x + 1, y + j, w - 2, 1, "#3a2e22")            # cotes
+            img.rect(x + w // 2, y, 1, h, nuance(sombre, -10))              # colonne / sternum
+            for j in range(2, h - 3, 2):
+                img.rect(x, y + j, w, 1, nuance(os_, -20))                 # côtes saillantes
+                img.rect(x + w // 2, y + j, 1, 1, sombre)
 
-    def hautparleur(img, x, y, w, h, c):
-        img.rect(x, y, w, h, "#6a6a6e", 8, 2)
-        if c in ("north", "south"):
-            img.rect(x, y, w, h, "#1a1a1c", 3, 3)
-            for j in range(0, h, 2):
-                for i in range(j % 4 // 2, w, 2):
-                    img.set(x + i, y + j, "#3c3c40")                 # grille
+    def main(img, x, y, w, h, c):
+        img.rect(x, y, w, h, sombre, 10, 4)
+        if c in ("north", "south", "east", "west"):
+            for i in range(0, w, 2):
+                img.rect(x + i, y + h - 2, 1, 2, "#1a120c")                # doigts
 
-    for x0 in (5, 9):
-        m.boite((x0, -16, 7), (x0 + 2, 10, 9), corps)
-    m.boite((5, 10, 6.5), (11, 20, 9.5), torse)
-    m.boite((3.4, -4, 7.2), (5, 20, 8.8), corps)
-    m.boite((11, -4, 7.2), (12.6, 20, 8.8), corps)
-    m.boite((7.2, 20, 7.2), (8.8, 28, 8.8), corps)
-    m.boite((2, 27, 5.5), (7, 31, 10.5), hautparleur)
-    m.boite((9, 25, 5.5), (14, 29, 10.5), hautparleur)
-    m.boite((6.5, 27.5, 7.4), (9.5, 28.5, 8.6), uni("#3a3a3e", 4, 9))   # support
+    def metal(img, x, y, w, h, c):
+        img.rect(x, y, w, h, "#7a7a80", 10, 5)
+        r = random.Random(x + y * 13)
+        for _ in range(w * h // 5):
+            img.set(x + r.randrange(w), y + r.randrange(h), "#7a4a2a")    # rouille
+
+    def pavillon(img, x, y, w, h, c):
+        metal(img, x, y, w, h, c)
+        if c == "north":                                               # pavillon : bord, cône sombre, membrane
+            img.rect(x, y, w, h, "#9a9aa0", 6, 6)
+            img.rect(x + 1, y + 1, w - 2, h - 2, "#0c0c0e")
+            img.rect(x + w // 2 - 1, y + h // 2 - 1, 2, 2, "#4a4a52")
+            img.set(x + 1, y + 1, "#2a2a30"); img.set(x + w - 2, y + h - 2, "#2a2a30")
+
+    # jambes maigres, bassin, torse décharné, épaules
+    for x0 in (5.6, 8.8):
+        m.boite((x0, -16, 7.2), (x0 + 1.6, 6, 8.8), peau)
+    m.boite((5.4, 6, 6.8), (10.6, 8, 9.2), peau)
+    m.boite((5.8, 8, 6.9), (10.2, 19, 9.1), torse)
+    m.boite((3.4, 18, 7.0), (12.6, 19.6, 9.0), peau)
+    # bras très longs, mains qui pendent sous les genoux
+    for x0 in (2.3, 12.5):
+        m.boite((x0, -5, 7.3), (x0 + 1.2, 19, 8.7), peau)
+        m.boite((x0 - 0.3, -10, 7.0), (x0 + 1.5, -5, 9.0), main)
+    # mât et traverse
+    m.boite((7.4, 19.6, 7.4), (8.6, 27.6, 8.6), peau)
+    m.boite((2.5, 27.4, 7.5), (13.5, 28.4, 8.5), metal)
+    # deux sirènes : corps, cône, pavillon tourné vers l'avant
+    for cx in (4.5, 11.5):
+        m.boite((cx - 1.5, 28.4, 7), (cx + 1.5, 31.4, 10), metal)
+        m.boite((cx - 2, 27.9, 5.5), (cx + 2, 31.9, 7), metal)
+        m.boite((cx - 3, 26.6, 4.2), (cx + 3, 32, 5.5), pavillon)
     return m
 
 

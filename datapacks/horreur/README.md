@@ -10,7 +10,7 @@ Inspiration : *Spooky Scary Creatures*. Aucun asset n'en est repris : textures e
 |---|---|---|
 | **SlenderMan** | Surface la nuit, surtout forêts et taïgas | Silhouette immobile au loin. Il se rapproche quand on ne le regarde pas. Le fixer donne obscurité puis nausée ; ensuite il disparaît, ou il se réveille et attaque. |
 | **Herobrine** | Surface, la nuit | Observe de loin et s'évanouit quand on approche. Une fois sur quatre, il surgit dans le dos du joueur et se bat. |
-| **Siren Head** | Surface la nuit, surtout plaines, prairies, savanes (rare) | Géant de 8 m, lent. Ses sirènes s'entendent de très loin. |
+| **Siren Head** | Surface la nuit, surtout plaines, prairies, savanes (rare) | Géant de 8 m décharné, deux sirènes sur un mât. Accélère quand on le fuit, écrase tout à 6 blocs autour de lui toutes les 2 s (14 dégâts, recul, nausée). |
 | **La Nonne** | Sous terre, sous la couche 62 | Apparaît dans le dos du joueur. Ses coups aveuglent et affaiblissent. |
 | **Le Clown** | Sous terre, sous la couche 62 | On entend son rire. Ses coups ralentissent. À sa mort, son ballon rouge s'envole. |
 | **Pinhead** | Nether, ou en surface la nuit (rare) | Ses chaînes attirent et ralentissent. Sous la moitié de sa vie, il appelle deux cénobites. |

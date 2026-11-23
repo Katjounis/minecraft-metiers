@@ -517,10 +517,23 @@ execute at @s run playsound {son('herobrine_apparition', 'minecraft:entity.light
 execute at @s run effect give @a[distance=..6,{JOUEUR}] minecraft:blindness 2 0 true""")
 
 w(F + "c/siren.mcfunction", f"""
+# vitesse : il accélère quand personne n'est près de lui (on le fuit), ralentit au contact
+execute if entity @a[distance=..12,{JOUEUR}] run attribute @s minecraft:movement_speed base set 0.26
+execute unless entity @a[distance=..12,{JOUEUR}] run attribute @s minecraft:movement_speed base set 0.34
+# frappe : son attaque de zombie géant porte mal, il écrase tout autour de lui toutes les 2 s
+scoreboard players add @s hr.r 5
+execute if score @s hr.r matches 40.. if entity @a[distance=..6.5,{JOUEUR}] run function horreur:c/siren_frappe
 scoreboard players add @s hr.t 5
 execute store result score #r hr.tmp run random value 1..30
 execute if score #r hr.tmp matches 1 if entity @a[distance=..32,{JOUEUR}] run playsound {son('siren_voix', 'minecraft:entity.warden.ambient')} hostile @a[distance=..40] ~ ~6 ~ 2.5 1
 execute if score @s hr.t matches 120.. run function horreur:c/siren_cri""")
+w(F + "c/siren_frappe.mcfunction", f"""
+scoreboard players set @s hr.r 0
+particle minecraft:explosion ~ ~0.5 ~ 2 0.2 2 0 6
+playsound minecraft:entity.ravager.attack hostile @a[distance=..32] ~ ~ ~ 2 0.5
+execute as @a[distance=..6.5,{JOUEUR}] run damage @s 14 minecraft:mob_attack by @e[tag=hr.c.siren,sort=nearest,limit=1]
+execute as @a[distance=..6.5,{JOUEUR}] at @s facing entity @e[tag=hr.c.siren,sort=nearest,limit=1] feet rotated ~180 0 positioned ^ ^0.6 ^1.5 if block ~ ~ ~ #horreur:passable if block ~ ~1 ~ #horreur:passable run tp @s ~ ~ ~
+effect give @a[distance=..6.5,{JOUEUR}] minecraft:nausea 5 0 true""")
 w(F + "c/siren_cri.mcfunction", f"""
 scoreboard players set @s hr.t 0
 playsound {son('siren_sirene', 'minecraft:event.raid.horn')} hostile @a[distance=..160] ~ ~6 ~ 10 1""")
