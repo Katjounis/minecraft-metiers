@@ -102,7 +102,7 @@ wj("data/minecraft/tags/function/load.json", {"values": [f"{NS}:load"]})
 wj("data/minecraft/tags/function/tick.json", {"values": [f"{NS}:tick"]})
 
 PLAYER_OBJ = ["c.ecus", "c.cts", "c.deb", "c.cmpt", "c.ser", "c.own", "c.nom", "c.init", "c.vu", "c.tv", "c.ta", "c.ncr"]
-PLAYER_OBJ += [f"c.pp_{j}" for j, *_ in JOBS] + [f"c.dd_{j}" for j, *_ in JOBS] + ["c.dall", "c.wd", "c.wk", "c.bk", "c.init2"]
+PLAYER_OBJ += [f"c.pp_{j}" for j, *_ in JOBS] + [f"c.dd_{j}" for j, *_ in JOBS] + ["c.dall", "c.wd", "c.wk", "c.bk", "c.init2", "c.kb"]
 ITEM_OBJ = ["c.p", "c.h", "c.vs", "c.as", "c.ev", "c.x", "c.jv", "c.ja"]
 LD = [f"scoreboard objectives add {o} dummy" for o in PLAYER_OBJ + ITEM_OBJ + ["c.t", "c.g"]]
 LD += ["scoreboard objectives add commerce trigger",
@@ -354,11 +354,15 @@ w(F + "comptoir/clic.mcfunction", [
 # =====================================================================
 # OBJETS : chargement et sauvegarde des scores d'un objet (#i = numéro)
 # =====================================================================
+# blocs posables achetés : crédit c.kb lu par Métiers (Bâtisseur : +2 XP par bloc du shop posé)
+_BLOCS = set(json.load(open(os.path.join(HERE, "donnees_26.1.json"), encoding="utf-8")).get("blocs", []))
+POSABLE = lambda it: it["id"] in _BLOCS and it["cat"] not in (10, 11, 12, 13, 15)
 for it in ITL:
     cn = CATNAME[it["cat"]]
     w(F + f"i/{it['i']}/charger.mcfunction", [
         f"scoreboard players set #b c.t {it['b']}", f"scoreboard players set #V c.t {it['V']}",
         f"scoreboard players set #mj c.t {it['mj']}", f"scoreboard players set #rare c.t {1 if it['rare'] else 0}",
+        f"scoreboard players set #blk c.t {1 if POSABLE(it) else 0}",
         f'data modify storage {NS}:t it set value {{id:"{it["id"]}",n:"{it["n"]}",i3:"{it["i3"]}",cn:"{cn}",cb:{100 + it["cat"]}}}',
         f"scoreboard players operation #p c.t = {H(it)} c.p", f"scoreboard players operation #h c.t = {H(it)} c.h",
         f"scoreboard players operation #vs c.t = {H(it)} c.vs", f"scoreboard players operation #as c.t = {H(it)} c.as",
@@ -523,6 +527,7 @@ w(F + "op/acheter.mcfunction", [
     "execute if score @s c.cts matches ..-1 run scoreboard players add @s c.cts 100",
     "scoreboard players operation @s c.ta += #ce c.t",
     f"function {NS}:op/donner with storage {NS}:t it",
+    "execute if score #blk c.t matches 1 run scoreboard players operation @s c.kb += #q c.t",
     "scoreboard players operation #p c.t += #d c.t",
     "execute if score #p c.t matches ..-301 run scoreboard players set #p c.t -300",
     "scoreboard players operation #as c.t += #q c.t",

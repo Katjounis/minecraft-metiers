@@ -36,7 +36,7 @@ ORES = {"coal_ore": 8, "deepslate_coal_ore": 10, "copper_ore": 8, "deepslate_cop
         "redstone_ore": 12, "deepslate_redstone_ore": 14, "lapis_ore": 20, "deepslate_lapis_ore": 24,
         "diamond_ore": 80, "deepslate_diamond_ore": 90, "emerald_ore": 100, "deepslate_emerald_ore": 110,
         "nether_gold_ore": 6, "nether_quartz_ore": 6, "ancient_debris": 160}
-DIV = {"m": 4, "f": 2, "e": 2, "k": 4}
+DIV = {"m": 4, "f": 2, "e": 2, "k": 20}
 ORE_DROP = {"coal": "coal 1", "copper": "raw_copper 2", "iron": "raw_iron 1", "gold": "raw_gold 1",
             "redstone": "redstone 4", "lapis": "lapis_lazuli 4", "diamond": "diamond 1",
             "emerald": "emerald 1", "nether_gold": "gold_nugget 3", "nether_quartz": "quartz 1"}
@@ -162,6 +162,8 @@ for b, x in (("cobblestone", 1), ("mossy_cobblestone", 1), ("stone_bricks", 2), 
 for c in COUL_K:
     BLOCS_K[f"{c}_concrete"] = 2; BLOCS_K[f"{c}_terracotta"] = 2; BLOCS_K[f"{c}_stained_glass"] = 2
     BLOCS_K[f"{c}_stained_glass_pane"] = 1; BLOCS_K[f"{c}_glazed_terracotta"] = 3
+# 20 points = 1 XP : tout bloc posé vaut 1 point (k/pose, plafonné), les blocs de construction 5 à 15 de plus
+BLOCS_K = {b: 5 * x for b, x in BLOCS_K.items()}
 for b, x in BLOCS_K.items():
     jobs["k"]["src"].append((f"minecraft.used:minecraft.{b}", x, 1, f"k.us.{b}", []))
     jobs["k"]["src"].append((f"minecraft.mined:minecraft.{b}", x, -1, f"k.mi.{b}", []))

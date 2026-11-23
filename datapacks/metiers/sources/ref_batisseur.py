@@ -99,3 +99,24 @@ if os.path.exists(_dn):
                     if _m.group(1) not in _ids:
                         _bad.add(_m.group(1))
     assert not _bad, f"objets inconnus en 26.1 dans des critères de statistiques : {sorted(_bad)}"
+
+
+# ---------------------------------------------------------------- 25.2 : tout bloc posé rapporte un peu, bonus des blocs du shop
+# Progrès invisible « placed_block » sans condition : il se déclenche à chaque bloc posé, sa récompense est relancée.
+#  - 1 point (1/20 d'XP) par bloc, 40 points par minute au plus (poser puis casser de la terre ne mène pas loin) ;
+#  - bloc acheté au Commerce (crédit c.kb tenu par Commerce) : +2 XP, 256 blocs par jour de défis au plus.
+wj(f"data/{NS}/advancement/k/pose.json", {"criteria": {"pose": {"trigger": "minecraft:placed_block"}},
+                                          "rewards": {"function": f"{NS}:k/pose"}})
+add_lines(F + "refonte/load.mcfunction", ["scoreboard objectives add m.kcap dummy", "scoreboard objectives add m.kbj dummy",
+                                          f"schedule function {NS}:k/minute 60s replace"])
+w(F + "k/minute.mcfunction", "\n".join(["scoreboard players reset * m.kcap", f"schedule function {NS}:k/minute 60s replace"]))
+w(F + "k/pose.mcfunction", "\n".join([
+    f"advancement revoke @s only {NS}:k/pose",
+    "scoreboard players add @s m.kcap 0", "scoreboard players add @s m.kbj 0",
+    "execute if score @s m.kcap matches ..39 run scoreboard players add @s m.k_raw 1",
+    "execute if score @s m.kcap matches ..39 run scoreboard players add @s m.kcap 1",
+    f"execute if score @s c.kb matches 1.. if score @s m.kbj matches ..255 run function {NS}:k/pose_shop"]))
+w(F + "k/pose_shop.mcfunction", "\n".join([
+    "scoreboard players remove @s c.kb 1", "scoreboard players add @s m.kbj 1", "scoreboard players add @s m.k_raw 40",
+    "execute if score @s m.kbj matches 256 run " + tr("Bonus des blocs du shop : 256 blocs aujourd’hui, c’est le maximum. Il revient avec les défis de demain.", "yellow")]))
+add_lines(F + "defis/nouveaux.mcfunction", ["scoreboard players reset * m.kbj"])
