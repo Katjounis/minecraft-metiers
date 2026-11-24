@@ -997,6 +997,13 @@ for _i in range(4):
         for k in POSES if k in C and C[k]["apparence"] == "statue"))
 
 # ---------------------------------------------------------------------------------------------
+import resourcepack
+resourcepack.generer()
+# pastilles des boutons de navigation (labo/outils/badges.py, 24/11/2026)
+_BADGES_FICHIER = os.path.abspath(os.path.join(ICI, "..", "..", "..", "labo", "outils", "badges.py"))
+exec(open(_BADGES_FICHIER, encoding="utf-8").read())
+appliquer(ROOT, NS, os.path.join(ICI, "..", "build", "horreur_rp", "assets"), exclure=lambda rel: False)
+
 n = 0
 zp = os.path.join(ICI, "..", "horreur.zip")
 with zipfile.ZipFile(zp, "w", zipfile.ZIP_DEFLATED) as z:
@@ -1008,6 +1015,4 @@ with zipfile.ZipFile(zp, "w", zipfile.ZIP_DEFLATED) as z:
 print("fichiers :", n)
 
 # Le resource pack (assets/horreur) est regenere avec le datapack
-import resourcepack
-resourcepack.generer()
 

@@ -11,7 +11,8 @@ Ce dépôt sert à fabriquer des datapacks pour Minecraft Java 26.x (vanilla, sa
 | `datapacks/commerce/` | **Commerce** : Écus, comptoirs, marché à prix dynamiques, bourse, fortunes, cristaux. Dépend de Métiers. Voir son [README](datapacks/commerce/README.md) |
 | `datapacks/horreur/` | **Horreur** : créatures de cauchemar la nuit et bestiaire. Voir son [README](datapacks/horreur/README.md) |
 | `datapacks/compagnons/` | **Compagnons** : 6 compagnons qui se battent et progressent avec le joueur, débloqués par Métiers. Voir son [README](datapacks/compagnons/README.md) |
-| `metiers_resourcepack.zip` | Resource pack commun à tous les packs, car le serveur n'en impose qu'un. Il reste à la racine parce que son URL est utilisée par le serveur. `python labo\outils\fusion_rp.py` y verse les textures des autres packs (`build/<nom>_rp/`). |
+| `labo/outils/badges.py` | Pastilles des boutons de navigation des 4 packs : chaque icône suivie d'un texte coloré devient une pastille dessinée à la couleur du bouton (police `<pack>:badges`), appelé par chaque `datapack.py` avant le zip. Textures du jeu en cache dans `labo/outils/textures_cache/`. |
+| `metiers_resourcepack.zip` | Resource pack commun à tous les packs, car le serveur n'en impose qu'un. Il reste à la racine parce que son URL est utilisée par le serveur. `python labo\outils\fusion_rp.py` y verse les textures des autres packs (`build/<nom>_rp/`). Le fond des menus en jeu (pierre à rivets dorés à la place du flou) se pose avec `python datapacks\metiers\sources\resourcepack\fond_menus.py metiers_resourcepack.zip`. |
 | `labo/` | Scripts du serveur de test. Voir [labo/LISEZMOI.md](labo/LISEZMOI.md) |
 
 ## Ajouter un pack

@@ -2256,6 +2256,11 @@ for _dp, _, _fs in os.walk(ROOT):
             if _n != _t:
                 open(_p, "w", encoding="utf-8").write(_n)
 
+# pastilles des boutons de navigation (labo/outils/badges.py, 24/11/2026)
+_BADGES_FICHIER = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "labo", "outils", "badges.py"))
+exec(open(_BADGES_FICHIER, encoding="utf-8").read())
+appliquer(ROOT, NS, os.path.join(ROOT, "..", "metiers_rp", "assets"), exclure=lambda rel: False)
+
 zp = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "metiers.zip")
 if os.path.exists(zp):
     os.remove(zp)
