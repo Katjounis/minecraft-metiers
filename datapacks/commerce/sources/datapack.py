@@ -713,7 +713,13 @@ RECETTE = {"E": "emerald", "G": "gold_ingot", "C": "barrel_side"}
 GRID = ["GEG", "ECE", "GEG"]
 BANNIERES = [("COMMERCE", "emerald"), ("MARCHÉ", "emerald"), ("BOURSE", "bell"), ("FORTUNES", "gold_ingot"), ("CRISTAUX", "diamond"), ("SPAWNERS", "spawner"), ("GRAPHIQUES", "clock"),
              # bandeaux des autres packs (même police, resource pack commun) : Métiers 7 à 11, Horreur 12, Compagnons 13
-             ("MÉTIERS", "iron_pickaxe"), ("FORGE", "anvil_top"), ("QUETES", "writable_book"), ("GUILDE", "name_tag"), ("BAREME", "book"), ("BESTIAIRE", "bone"), ("COMPAGNONS", "lead")]
+             ("MÉTIERS", "iron_pickaxe"), ("FORGE", "anvil_top"), ("QUETES", "writable_book"), ("GUILDE", "name_tag"), ("BAREME", "book"), ("BESTIAIRE", "bone"), ("COMPAGNONS", "lead"),
+             ("LES COUILLONS", "gold_ingot")]   # 14 : menu G commun (plus large)
+# boutons du menu G (25.8) : chaque libellé est une image (icône + titre en police x2 dégradée), glyphe chr(0xE040 + k)
+MENU_BTN = [("MÉTIERS", "iron_pickaxe", (140, 255, 255), (20, 150, 190)), ("COMMERCE", "emerald", (255, 222, 90), (215, 120, 10)),
+            ("BESTIAIRE", "bone", (255, 110, 90), (150, 15, 15)), ("COMPAGNONS", "lead", (250, 200, 120), (180, 100, 30)),
+            ("MON PROFIL", "name_tag", (255, 245, 140), (200, 160, 20)), ("GUIDE", "book", (255, 255, 255), (170, 170, 180))]
+MENU_GLY = [chr(0xE040 + k) for k in range(len(MENU_BTN))]
 # bandeau k : glyphe chr(0xE020 + k), 27 px de haut, soit 3 lignes de texte
 BAN = lambda k: f'{{type:"minecraft:plain_message",width:310,contents:[{{text:""}},{{text:"{chr(0xE020 + k)}",font:"commerce:recette",color:"white",shadow_color:0}},{{text:"\\n\\n"}}]}}'
 
@@ -767,7 +773,7 @@ def dessiner_rp():
         return b
     provs = []
     for k, (txt, ico) in enumerate(BANNIERES):
-        Wb, Hb = 200, 27
+        Wb, Hb = (280 if k == 14 else 200), 27
         b = plaque(Wb, Hb)
         d2 = ImageDraw.Draw(b)
         # texte centré, deux fois la taille de la police, ombre portée
@@ -790,6 +796,32 @@ def dessiner_rp():
             t = tex(ico); b.paste(t, (ix, (Hb - 16) // 2), t)
         b.save(os.path.join(RP, "textures", "font", f"bandeau_{k}.png"))
         provs.append({"type": "bitmap", "file": f"commerce:font/bandeau_{k}.png", "height": Hb, "ascent": 7, "chars": [chr(0xE020 + k)]})
+    # libellés du menu G : 140 x 18, icône 16 px puis titre x2 (lettres de 14 px) en dégradé vertical, ombre sombre
+    for k, (txt, ico, haut, bas) in enumerate(MENU_BTN):
+        Wb, Hb = 140, 18
+        b = Image.new("RGBA", (Wb, Hb), (0, 0, 0, 0))
+        larg = sum(lettre("E" if ch == "É" else ch)[1] * 2 + 1 for ch in txt) - 1
+        x0 = (Wb - (16 + 4 + larg)) // 2
+        t = tex(ico); b.paste(t, (x0, 1), t)
+        ombre = tuple(int(c * 0.22) for c in bas)
+        for dx, dy, grad in ((2, 2, False), (0, 0, True)):
+            x = x0 + 20
+            for ch in txt:
+                cell, w_ = lettre("E" if ch == "É" else ch)
+                big = cell.resize((16, 16), Image.NEAREST)
+                pts = [(xx, yy) for yy in range(16) for xx in range(16) if big.getpixel((xx, yy))[3]]
+                if ch == "É":
+                    pts += [(8, -2), (9, -2), (6, -1), (7, -1)]
+                for xx, yy in pts:
+                    yy += 2   # accent compris
+                    f = min(1, max(0, (yy - 2) / 13))
+                    col = tuple(int(haut[i] + (bas[i] - haut[i]) * f) for i in range(3)) if grad else ombre
+                    X, Y = x + xx + dx, yy + dy
+                    if 0 <= X < Wb and 0 <= Y < Hb:
+                        b.putpixel((X, Y), col + (255,))
+                x += w_ * 2 + 1
+        b.save(os.path.join(RP, "textures", "font", f"menu_{k}.png"))
+        provs.append({"type": "bitmap", "file": f"commerce:font/menu_{k}.png", "height": Hb, "ascent": 13, "chars": [MENU_GLY[k]]})
     # barres de courbe : 8 hauteurs, blanches (la couleur du texte les teinte), 2 px de large, posées sur la ligne
     bar = Image.new("RGBA", (24, 9), (0, 0, 0, 0))
     for k in range(8):
@@ -848,6 +880,30 @@ w(F + "relique/ok.mcfunction", [
     f"scoreboard players add @s c.ecus {RELIQUE_PRIX}", f"scoreboard players add @s c.tv {RELIQUE_PRIX}",
     say(f"Relique vendue : +{RELIQUE_PRIX:,} Écus.".replace(",", " "), "gold"),
     "playsound minecraft:entity.experience_orb.pickup master @s ~ ~ ~ 1 0.8"])
+# « Tout vendre » du Butin de boss (25.8) : chaque objet de la catégorie 17 passe par la vente normale (prix du marché,
+# bonus de métier), puis toutes les reliques à prix fixe
+BT_ = ["scoreboard players set #btot c.t 0"]
+for it in ITL:
+    if it["cat"] == 17:
+        BT_ += [f"execute unless items entity @s container.* minecraft:{it['id']}{FILTRE} unless items entity @s weapon.offhand minecraft:{it['id']}{FILTRE} run scoreboard players set #i c.t 0",
+                f"execute if items entity @s container.* minecraft:{it['id']}{FILTRE} run scoreboard players set #i c.t {it['i']}",
+                f"execute if items entity @s weapon.offhand minecraft:{it['id']}{FILTRE} run scoreboard players set #i c.t {it['i']}",
+                "scoreboard players set #tot c.t 0", "scoreboard players set #act c.t 3", "scoreboard players set #q c.t 0",
+                f"execute if score #i c.t matches 1.. run function {NS}:op/vendre",
+                "scoreboard players operation #btot c.t += #tot c.t"]
+BT_ += ["scoreboard players operation #btot c.t /= #100 c.g",
+        f"execute store result score #nr c.t run clear @s *[minecraft:custom_data~{{metiers_relique:1b}}]"]
+for i, n, c in RELIQUES_NOM:
+    BT_ += [f'execute store result score #x c.t run clear @s minecraft:{i}[minecraft:custom_name={{text:"{n}",color:"{c}",bold:1b,italic:0b}}]',
+            "scoreboard players operation #nr c.t += #x c.t"]
+BT_ += ["scoreboard players set #k c.t " + str(RELIQUE_PRIX), "scoreboard players operation #x c.t = #nr c.t",
+        "scoreboard players operation #x c.t *= #k c.t", "scoreboard players operation @s c.ecus += #x c.t",
+        "scoreboard players operation @s c.tv += #x c.t", "scoreboard players operation #btot c.t += #x c.t",
+        f'execute if score #btot c.t matches ..0 run tellraw @s {L(PREFIX, T("Aucun butin de boss à vendre dans ton inventaire (les objets renommés à la main ne comptent pas).", "red"))}',
+        f'execute if score #btot c.t matches 1.. run tellraw @s {L(PREFIX, T("Butin de boss vendu : ", "gold"), "{score:{name:\"#btot\",objective:\"c.t\"},color:\"yellow\",bold:true}", T(" Écus, dont ", "gold"), "{score:{name:\"#nr\",objective:\"c.t\"},color:\"yellow\"}", T(" relique(s).", "gold"))}',
+        "execute if score #btot c.t matches 1.. run playsound minecraft:entity.player.levelup master @s ~ ~ ~ 0.7 1.4",
+        f"function {NS}:page/cat_17_0"]
+w(F + "relique/tout.mcfunction", BT_)
 PG = lambda c, p: 1000 + 10 * c + p         # valeur du trigger d'une page de catégorie
 for it in ITL:
     # retour vers la bonne page de la catégorie : on corrige la valeur stockée par i/<n>/charger
@@ -883,6 +939,7 @@ TR = ["scoreboard players operation #v c.t = @s commerce", "scoreboard players s
       f"execute if score #v c.t matches 7500000..7599999 run return run function {NS}:boutique/acheter",
       f"execute if score #v c.t matches 7700..7799 run return run function {NS}:guilde/entree",
       f"execute if score #v c.t matches 7800 run return run function {NS}:relique/vendre",
+      f"execute if score #v c.t matches 7801 run return run function {NS}:relique/tout",
       f"execute if score #v c.t matches 81..84 run return run function {NS}:stat/global",
       f"execute if score #v c.t matches 70 run return run function {NS}:spawner/entree",
       f"execute if score #v c.t matches 700..799 run return run function {NS}:spawner/entree",
@@ -1003,7 +1060,9 @@ for c in ITEMS:
             acts.append(VIDE)
         if c == 17:   # reliques de boss (objets nommés, refusés par la vente normale)
             acts += [btn(L(spr("nether_star"), T("  Vendre la relique en main", "gold", True)), 7800, 160,
-                         f"Une relique de boss (objet unique nommé) se vend {RELIQUE_PRIX:,} Écus. Prends-la en main puis clique.".replace(",", " ")), VIDE]
+                         f"Une relique de boss (objet unique nommé) se vend {RELIQUE_PRIX:,} Écus. Prends-la en main puis clique.".replace(",", " ")),
+                     btn(L(spr("chest") if "chest" in SPRITES else spr("nether_star"), T("  Tout vendre", "gold", True)), 7801, 160,
+                         "Vend d’un coup tout le butin de boss de ton inventaire (objets de cette page et reliques), au prix affiché.")]
         acts.append(btn(T("◀  Page précédente", "white"), PG(c, p - 1), 160) if p > 0 else VIDE)
         acts.append(btn(T("Page suivante  ▶", "white"), PG(c, p + 1), 160) if p < NPAGES[c] - 1 else VIDE)
         acts += [btn(T("Marché", "yellow"), 9, 160), btn(T("Accueil", "white"), 1, 160)]

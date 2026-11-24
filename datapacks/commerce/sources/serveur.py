@@ -9,25 +9,28 @@ S = "scoreboard players"
 G_ = F + "serveur/"
 
 _ic = lambda i: {"object": "atlas", "atlas": "minecraft:items", "sprite": "minecraft:item/" + i}
+_lb = lambda k: [{"text": ""}, {"text": MENU_GLY[k], "font": "commerce:recette", "color": "white", "shadow_color": 0}]
 MENU_SERVEUR = {
     "type": "minecraft:multi_action",
     "title": {"text": "Les Couillons", "color": "gold", "bold": True},
     "external_title": {"text": "Menu du serveur"},
     "can_close_with_escape": True, "pause": False,
-    "body": [{"type": "minecraft:plain_message", "width": 300, "contents": [
-        {"text": "Métiers, Commerce, Bestiaire, Compagnons : tout est ici.", "color": "gray"}]}],
+    "body": [{"type": "minecraft:plain_message", "width": 310, "contents": [
+        {"text": ""}, {"text": chr(0xE020 + 14), "font": "commerce:recette", "color": "white", "shadow_color": 0}, {"text": "\n\n"},
+        {"text": "\nMétiers, Commerce, Bestiaire, Compagnons : tout est ici.", "color": "gray"}]}],
+    # 25.8 : libellés dessinés (icône + titre en grosses lettres dégradées), glyphes MENU_GLY de la police commerce:recette
     "actions": [
-        {"label": [_ic("iron_pickaxe"), {"text": "  Métiers", "color": "aqua", "bold": True}], "width": 150, "tooltip": {"text": "Niveaux, compétences, Forge, défis, classement."},
+        {"label": _lb(0), "width": 150, "tooltip": {"text": "Niveaux, compétences, Forge, défis, classement."},
          "action": {"type": "minecraft:run_command", "command": "trigger metiers set 1"}},
-        {"label": [_ic("emerald"), {"text": "  Commerce", "color": "gold", "bold": True}], "width": 150, "tooltip": {"text": "Marché, bourse, banque, hôtel des ventes, spawners."},
+        {"label": _lb(1), "width": 150, "tooltip": {"text": "Marché, bourse, banque, hôtel des ventes, spawners."},
          "action": {"type": "minecraft:run_command", "command": "trigger commerce set 1"}},
-        {"label": [_ic("bone"), {"text": "  Bestiaire", "color": "dark_red", "bold": True}], "width": 150, "tooltip": {"text": "Les créatures de la nuit, contrats, classement."},
+        {"label": _lb(2), "width": 150, "tooltip": {"text": "Les créatures de la nuit, contrats, classement."},
          "action": {"type": "minecraft:run_command", "command": "trigger bestiaire set 1"}},
-        {"label": [_ic("lead"), {"text": "  Compagnons", "color": "#E0A040", "bold": True}], "width": 150, "tooltip": {"text": "Loup, chat, golem... qui combattent et progressent avec toi."},
+        {"label": _lb(3), "width": 150, "tooltip": {"text": "Loup, chat, golem... qui combattent et progressent avec toi."},
          "action": {"type": "minecraft:run_command", "command": "trigger compagnons set 1"}},
-        {"label": [_ic("name_tag"), {"text": "  Mon profil", "color": "yellow", "bold": True}], "width": 150, "tooltip": {"text": "Tout ton parcours sur une page."},
+        {"label": _lb(4), "width": 150, "tooltip": {"text": "Tout ton parcours sur une page."},
          "action": {"type": "minecraft:run_command", "command": "trigger commerce set 30"}},
-        {"label": [_ic("book"), {"text": "  Guide", "color": "white"}], "width": 150, "tooltip": {"text": "Pour bien démarrer, en 5 pages."},
+        {"label": _lb(5), "width": 150, "tooltip": {"text": "Pour bien démarrer, en 5 pages."},
          "action": {"type": "minecraft:run_command", "command": "trigger commerce set 31"}}],
     "columns": 2}
 wj("data/serveur/dialog/menu.json", MENU_SERVEUR)

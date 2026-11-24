@@ -249,19 +249,19 @@ def EN(n, w, a=1, b=1, ench=None, niv=None, nom=None, col="gold", lore=None):
     e = {"type": "minecraft:item", "name": f"minecraft:{n}", "weight": w}
     if mods: e["modifier"] = mods
     return e
-# butin courant, tiré 1 fois en facile, 2 en normal, 3 en difficile, +1 pour le plus gros dégât
+# butin courant (25.8 : plus aucun outil, arme ni armure, les métiers les donnent déjà), tiré 1 fois en facile, 2 en normal, 3 en difficile, +1 pour le plus gros dégât
 BUTIN = {
     1: [EN("diamond", 12, 3, 6), EN("iron_block", 12, 2, 5), EN("gold_block", 10, 1, 3), EN("emerald_block", 8, 1, 3),
-        EN("netherite_scrap", 6, 1, 2), EN("ancient_debris", 5, 1, 2), EN("diamond_pickaxe", 4, niv=30), EN("diamond_axe", 4, niv=30),
+        EN("netherite_scrap", 6, 1, 2), EN("ancient_debris", 5, 1, 2), EN("experience_bottle", 4, 16, 32), EN("enchanted_book", 4, niv=30),
         EN("netherite_upgrade_smithing_template", 3), EN("anvil", 3)],
     2: [EN("ender_pearl", 12, 4, 8), EN("diamond", 10, 2, 4), EN("enchanted_book", 10, niv=30), EN("golden_apple", 8, 2, 4),
-        EN("name_tag", 6, 1, 2), EN("string", 8, 16, 32), EN("cobweb", 5, 4, 8), EN("saddle", 4), EN("ominous_bottle", 4), EN("bow", 4, niv=30)],
+        EN("name_tag", 6, 1, 2), EN("string", 8, 16, 32), EN("cobweb", 5, 4, 8), EN("saddle", 4), EN("ominous_bottle", 4), EN("emerald_block", 4, 1, 3)],
     3: [EN("experience_bottle", 14, 16, 32), EN("enchanted_book", 12, niv=30), EN("diamond", 10, 2, 4), EN("lapis_block", 10, 3, 6),
-        EN("amethyst_shard", 6, 8, 16), EN("blue_ice", 6, 8, 16), EN("echo_shard", 3, 1, 2), EN("trident", 3, niv=30), EN("fishing_rod", 4, niv=30)],
+        EN("amethyst_shard", 6, 8, 16), EN("blue_ice", 6, 8, 16), EN("echo_shard", 3, 1, 2), EN("nautilus_shell", 3, 1, 3), EN("diamond", 4, 1, 3)],
     4: [EN("blaze_rod", 14, 8, 16), EN("gold_block", 10, 2, 5), EN("netherite_scrap", 8, 1, 3), EN("ancient_debris", 6, 1, 3),
-        EN("golden_apple", 8, 2, 4), EN("magma_cream", 6, 6, 12), EN("fire_charge", 5, 8, 16), EN("netherite_ingot", 2), EN("diamond_sword", 4, niv=30)],
+        EN("golden_apple", 8, 2, 4), EN("magma_cream", 6, 6, 12), EN("fire_charge", 5, 8, 16), EN("netherite_ingot", 2), EN("ghast_tear", 4, 2, 4)],
     5: [EN("diamond", 10, 2, 4), EN("emerald_block", 8, 2, 4), EN("tnt", 10, 4, 8), EN("gunpowder", 12, 16, 32), EN("firework_rocket", 8, 32, 64),
-        EN("heart_of_the_sea", 2), EN("crossbow", 4, niv=30)] +
+        EN("heart_of_the_sea", 2), EN("emerald", 4, 8, 16)] +
        [EN(f"music_disc_{d}", 2) for d in ("cat", "blocks", "chirp", "far", "mall", "mellohi", "stal", "strad", "ward", "wait")] +
        [EN("music_disc_pigstep", 1), EN("music_disc_otherside", 1)],
 }

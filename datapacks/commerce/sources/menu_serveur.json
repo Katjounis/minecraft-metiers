@@ -13,10 +13,22 @@
  "body": [
   {
    "type": "minecraft:plain_message",
-   "width": 300,
+   "width": 310,
    "contents": [
     {
-     "text": "Métiers, Commerce, Bestiaire, Compagnons : tout est ici.",
+     "text": ""
+    },
+    {
+     "text": "",
+     "font": "commerce:recette",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "\n\n"
+    },
+    {
+     "text": "\nMétiers, Commerce, Bestiaire, Compagnons : tout est ici.",
      "color": "gray"
     }
    ]
@@ -26,14 +38,13 @@
   {
    "label": [
     {
-     "object": "atlas",
-     "atlas": "minecraft:items",
-     "sprite": "minecraft:item/iron_pickaxe"
+     "text": ""
     },
     {
-     "text": "  Métiers",
-     "color": "aqua",
-     "bold": true
+     "text": "",
+     "font": "commerce:recette",
+     "color": "white",
+     "shadow_color": 0
     }
    ],
    "width": 150,
@@ -48,14 +59,13 @@
   {
    "label": [
     {
-     "object": "atlas",
-     "atlas": "minecraft:items",
-     "sprite": "minecraft:item/emerald"
+     "text": ""
     },
     {
-     "text": "  Commerce",
-     "color": "gold",
-     "bold": true
+     "text": "",
+     "font": "commerce:recette",
+     "color": "white",
+     "shadow_color": 0
     }
    ],
    "width": 150,
@@ -70,14 +80,13 @@
   {
    "label": [
     {
-     "object": "atlas",
-     "atlas": "minecraft:items",
-     "sprite": "minecraft:item/bone"
+     "text": ""
     },
     {
-     "text": "  Bestiaire",
-     "color": "dark_red",
-     "bold": true
+     "text": "",
+     "font": "commerce:recette",
+     "color": "white",
+     "shadow_color": 0
     }
    ],
    "width": 150,
@@ -92,14 +101,13 @@
   {
    "label": [
     {
-     "object": "atlas",
-     "atlas": "minecraft:items",
-     "sprite": "minecraft:item/lead"
+     "text": ""
     },
     {
-     "text": "  Compagnons",
-     "color": "#E0A040",
-     "bold": true
+     "text": "",
+     "font": "commerce:recette",
+     "color": "white",
+     "shadow_color": 0
     }
    ],
    "width": 150,
@@ -114,14 +122,13 @@
   {
    "label": [
     {
-     "object": "atlas",
-     "atlas": "minecraft:items",
-     "sprite": "minecraft:item/name_tag"
+     "text": ""
     },
     {
-     "text": "  Mon profil",
-     "color": "yellow",
-     "bold": true
+     "text": "",
+     "font": "commerce:recette",
+     "color": "white",
+     "shadow_color": 0
     }
    ],
    "width": 150,
@@ -136,13 +143,13 @@
   {
    "label": [
     {
-     "object": "atlas",
-     "atlas": "minecraft:items",
-     "sprite": "minecraft:item/book"
+     "text": ""
     },
     {
-     "text": "  Guide",
-     "color": "white"
+     "text": "",
+     "font": "commerce:recette",
+     "color": "white",
+     "shadow_color": 0
     }
    ],
    "width": 150,
