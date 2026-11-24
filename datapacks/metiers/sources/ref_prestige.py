@@ -103,7 +103,7 @@ w(F + "m/filon_tick.mcfunction", "\n".join([
     f"execute if score #fgo m.tmp matches 1.. at @e[type=minecraft:marker,tag=metiers.fgo,limit=1] run function {NS}:m/filon_depart",
     "tag @e[type=minecraft:marker,tag=metiers.fgo] remove metiers.fgo",
     # un seul repère par joueur, près de lui
-    f"execute as {MK}[distance=16..] if score @s m.own = #pid m.tmp run kill @s",
+    f"execute as @e[type=minecraft:marker,tag=metiers.fvise,distance=16..] if score @s m.own = #pid m.tmp run kill @s",
     "scoreboard players set #fm m.tmp 0",
     f"execute as {MK} if score @s m.own = #pid m.tmp run scoreboard players set #fm m.tmp 1",
     f'execute if score #fm m.tmp matches 0 run summon minecraft:marker ~ ~ ~ {{Tags:["metiers.fvise","metiers.fnew"]}}',
