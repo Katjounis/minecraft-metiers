@@ -2,7 +2,7 @@
 """Boutons dessinés des 4 packs (24/11/2026, refait le soir même : bouton entier et non plus une pastille).
 
 Chaque bouton de navigation dont le libellé est « icône du jeu + texte fixe coloré » reçoit une face dessinée qui couvre
-tout l'intérieur du bouton (W - 4 x 16 px d'interface) : fond dégradé dans la couleur du texte, motif de biais, grande icône en
+l'intérieur exact du bouton (W - 6 x 14 px, le cadre du bouton fait 3 px d'interface) : fond dégradé dans la couleur du texte, motif de biais, grande icône en
 filigrane à droite, l'icône nette à gauche sur un halo, liseré clair et coins coupés. Le texte reste écrit par le jeu
 (accents, ombre), posé sur la face grâce à des espaces négatifs : [face][recul][texte][avance] fait exactement la
 largeur de la face, donc le jeu centre le tout pile sur le bouton.
@@ -77,7 +77,7 @@ def _texture(sprite):
 
 # ---------------------------------------------------------------- dessin d'une face
 def _face(W, sprite, coul, fond=None, graine=0):
-    H = 16   # intérieur du bouton : 2 px de cadre en haut et en bas
+    H = 14   # intérieur du bouton : le cadre (nine_slice, border 3) fait 3 px tout autour
     rg = _brd.Random(graine)
     im = _BI.new("RGBA", (W, H), (0, 0, 0, 0)); px = im.load()
     clair = tuple(min(255, int(v * 1.1 + 40)) for v in coul)
@@ -85,7 +85,7 @@ def _face(W, sprite, coul, fond=None, graine=0):
         t = _texture(fond).resize((32, 32), _BI.NEAREST); tp = t.load()
     for y in range(H):
         for x in range(W):
-            coin = (x in (0, W - 1) and y in (0, H - 1))
+            coin = False   # pas de cadre propre : la face se fond dans celui du bouton
             if coin:
                 continue
             if fond:
@@ -103,22 +103,19 @@ def _face(W, sprite, coul, fond=None, graine=0):
             if d < 11:
                 a = (1 - d / 11) * 0.35
                 c = [c[i] * (1 - a) + coul[i] * a for i in range(3)]
-            bord = x in (0, W - 1) or y in (0, H - 1)
-            if bord:
-                c = [v * 0.25 for v in coul]
-            elif y == 1 or x == 1:
-                c = [min(255, v + 0.35 * (clair[i] - v) + 18) for i, v in enumerate(c)]
-            elif y == H - 2 or x == W - 2:
-                c = [v * 0.6 for v in c]
+            if y == 0:
+                c = [min(255, v + 0.30 * (clair[i] - v) + 14) for i, v in enumerate(c)]
+            elif y == H - 1:
+                c = [v * 0.65 for v in c]
             px[x, y] = tuple(max(0, min(255, int(v))) for v in c) + (255,)
     ic = _texture(sprite)
     # filigrane : grande icône à droite, coupée par le bord
     big = ic.resize((32, 32), _BI.NEAREST); bp = big.load()
-    ox, oy = W - 30, -7
+    ox, oy = W - 28, -9
     for x in range(32):
         for y in range(32):
             X, Y = ox + x, oy + y
-            if 2 <= X < W - 2 and 2 <= Y < H - 2 and bp[x, y][3]:
+            if 0 <= X < W and 0 <= Y < H and bp[x, y][3]:
                 r, g, b, a = px[X, Y]
                 s = bp[x, y]; al = 0.16
                 px[X, Y] = (int(r * (1 - al) + s[0] * al), int(g * (1 - al) + s[1] * al), int(b * (1 - al) + s[2] * al), 255)
@@ -128,21 +125,22 @@ def _face(W, sprite, coul, fond=None, graine=0):
         for y in range(16):
             if ip[x, y][3]:
                 op[x, y] = (0, 0, 0, 140)
-    im.alpha_composite(ombre, (3, 1)); im.alpha_composite(ic, (2, 0))
+    # icône 16 px dans une face de 14 : on rogne 1 px en haut et en bas (les icônes du jeu ont presque toujours ces lignes vides)
+    im.alpha_composite(ombre.crop((0, 1, 16, 15)), (3, 1)); im.alpha_composite(ic.crop((0, 1, 16, 15)), (2, 0))
     return im
 
 
 def face_manuelle(cle, W, sprite, couleur, fond=None):
     """Réserve une face (dessinée par appliquer) et renvoie son caractère."""
     if cle not in _FACES:
-        _FACES[cle] = (chr(0xE000 + len(_FACES)), W - 4, sprite, _rgb(couleur) if isinstance(couleur, str) else couleur, fond)
+        _FACES[cle] = (chr(0xE000 + len(_FACES)), W - 6, sprite, _rgb(couleur) if isinstance(couleur, str) else couleur, fond)
     return _FACES[cle][0]
 
 
 def libelle(ns, cle, W, sprite, couleur, composants, tw, fond=None):
     """Libellé complet : face, recul, composants (largeur tw estimée), avance. Le texte part après l'icône."""
     ch = face_manuelle(cle, W, sprite, couleur, fond)
-    F = W - 4   # face de W - 4 px, libellé total de W - 4 px pile (au-delà, le jeu fait défiler le texte) : la face couvre tout l'intérieur du cadre
+    F = W - 6   # face de W - 6 px ; libellé total de W - 6 px : le jeu le centre à x + 3, pile dans le cadre de 3 px
     x0 = 22 + max(0, (F - 26 - tw) // 2)
     return ('[{text:""},' + f'{{text:"{ch}",font:"{ns}:badges",color:"white",shadow_color:0}},'
             + f'{{text:"{besp(-F - 1 + x0)}",font:"{ns}:badges"}},' + ",".join(composants)
@@ -152,7 +150,7 @@ def libelle(ns, cle, W, sprite, couleur, composants, tw, fond=None):
 def libelle_json(ns, cle, W, sprite, couleur, composants, tw, fond=None):
     """Même chose en JSON (dialogues fixes comme le menu G) : composants = liste de dicts."""
     ch = face_manuelle(cle, W, sprite, couleur, fond)
-    F = W - 4
+    F = W - 6
     x0 = 22 + max(0, (F - 26 - tw) // 2)
     return ([{"text": ""}, {"text": ch, "font": f"{ns}:badges", "color": "white", "shadow_color": 0},
              {"text": besp(-F - 1 + x0), "font": f"{ns}:badges"}] + composants + [{"text": besp(F - x0 - tw), "font": f"{ns}:badges"}])
@@ -208,6 +206,6 @@ def appliquer(root, ns, rp_assets, exclure=lambda rel: False):
     for cle, (ch, F, sprite, rgb, fond) in sorted(_FACES.items(), key=lambda kv: kv[1][0]):
         k = ord(ch) - 0xE000
         _face(F, sprite, rgb, fond, graine=k).save(_bo.path.join(tex_dir, f"f{k}.png"))
-        provs.append({"type": "bitmap", "file": f"{ns}:font/boutons/f{k}.png", "height": 16, "ascent": 11, "chars": [ch]})
+        provs.append({"type": "bitmap", "file": f"{ns}:font/boutons/f{k}.png", "height": 14, "ascent": 10, "chars": [ch]})
     _bj.dump({"providers": provs}, open(_bo.path.join(rp_assets, ns, "font", "badges.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=0)
     print(f"boutons {ns} : {len(_FACES)} faces dessinées, {n} boutons automatiques")
