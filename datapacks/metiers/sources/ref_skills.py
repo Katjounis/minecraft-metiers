@@ -14,7 +14,7 @@ function {NS}:refonte/joueur
 
 # Fermier
 execute if entity @s[tag=metiers.sk.f2] run function {NS}:f/semeur
-execute if entity @s[tag=metiers.sk.f3] if score #t m.timer matches 120 run effect give @s minecraft:saturation 1 0 true
+execute if entity @s[tag=metiers.sk.f3] if score #vingt m.timer matches 0 run effect give @s minecraft:saturation 1 0 true
 execute if entity @s[tag=metiers.sk.f4] if score #soixante m.timer matches 0 run function {NS}:f/engrais
 execute if score @s m.saison matches 1.. run scoreboard players remove @s m.saison 1
 

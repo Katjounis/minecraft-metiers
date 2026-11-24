@@ -193,7 +193,7 @@ SKILLS = {
     "f": [
         ("Main verte", 3, [], "25 % de chance de récolte doublée."),
         ("Semeur", 4, [1], "Planter une graine plante aussi la terre labourée libre en 3x3 autour."),
-        ("Estomac solide", 6, [1], "Rassasiement toutes les 60 secondes."),
+        ("Estomac solide", 6, [1], "Rassasiement toutes les 10 secondes."),
         ("Engrais naturel", 8, [2], "Toutes les 30 s, les cultures à 4 blocs avancent d'un stade."),
         ("Récolte dorée", 12, [3], "2 % de chance de carotte dorée ou de pastèque scintillante en récoltant."),
         ("Saison des moissons", 16, [4, 5], "Une fois par jour, depuis le menu : toutes les cultures à 12 blocs mûrissent."),
@@ -450,15 +450,22 @@ def tool_iid(j, k):
     tool = TOOL[j][0]
     return f"{MAT[k]}_{tool}" if j in ("b", "m", "f", "c", "x") else tool
 
-CRIST = [0, 3, 6, 9, 12, 15, 25, 40, 60, 85, 120]   # cristaux du métier par palier (25.6 : paliers 6 à 10 bien plus généreux)
-ECL_PAL = {6: 1, 7: 2, 8: 3, 9: 4, 10: 6}            # éclats de boss en plus (25.6)
-ECUS_PAL = {6: 5000, 7: 10000, 8: 20000, 9: 35000, 10: 60000}   # Écus du Commerce en plus (25.6)
+CRIST_25_6 = [0, 3, 6, 9, 12, 15, 25, 40, 60, 85, 120]
+ECL_25_6 = {6: 1, 7: 2, 8: 3, 9: 4, 10: 6}
+ECUS_25_6 = {6: 5000, 7: 10000, 8: 20000, 9: 35000, 10: 60000}
+# 25.8 : récompenses de palier relevées (cristaux, éclats dès le palier 4, Écus à chaque palier, objets bonus de retour)
+CRIST = [0, 5, 10, 15, 20, 30, 45, 65, 90, 120, 160]
+ECL_PAL = {4: 1, 5: 1, 6: 2, 7: 3, 8: 4, 9: 5, 10: 8}
+ECUS_PAL = {1: 500, 2: 1000, 3: 2000, 4: 3500, 5: 5000, 6: 8000, 7: 15000, 8: 25000, 9: 40000, 10: 75000}
 
 def rewards(j, k):
     tool, nom, dieu = TOOL[j]
     color = tier_style(j, k)["color"]
     name = dieu if k == 10 else f"{nom} {DE[k]}"
-    return [mk_item(tool_iid(j, k), tool_ench(j, k), name, color, k >= 5 or j in ("e", "n", "t", "k"))]
+    out = [mk_item(tool_iid(j, k), tool_ench(j, k), name, color, k >= 5 or j in ("e", "n", "t", "k"))]
+    for spec in EXTRAS[j][k]:                      # 25.8 : objets bonus du palier
+        out += special(spec, color, k) if "{" in spec else simple(spec)
+    return out
 
 R = {j: {k: rewards(j, k) for k in range(1, 11)} for j in jobs}
 
@@ -702,6 +709,8 @@ scoreboard players operation #huit m.timer = #t m.timer
 scoreboard players operation #huit m.timer %= #8 m.const
 scoreboard players operation #soixante m.timer = #t m.timer
 scoreboard players operation #soixante m.timer %= #60 m.const
+scoreboard players operation #vingt m.timer = #t m.timer
+scoreboard players operation #vingt m.timer %= #20 m.const
 function {NS}:appel {{f:"heure/tick"}}
 function {NS}:appel {{f:"defis/tick"}}
 function {NS}:appel {{f:"boss/tick"}}
@@ -939,9 +948,9 @@ execute if score @s m.{j}_lvl matches ..{MAXLVL-1} if score @s m.{j}_xp >= @s m.
             else:
                 lignes.append(f'{{text:"\\n• {it["label"]}",color:"white",bold:false}}')
         lignes.append(f'{{text:"\\n• {CRIST[k]} cristaux de {d["name"]} ",color:"aqua",bold:true}},{{text:"(à dépenser à la Forge)",color:"gray",bold:false}}')
-        if k in ECL_PAL:
-            _e = f"{ECUS_PAL[k]:,}".replace(",", " ")
-            lignes.append(f'{{text:"\\n• {ECL_PAL[k]} éclat{"s" if ECL_PAL[k] > 1 else ""} de boss et {_e} Écus",color:"gold",bold:true}}')
+        _e = f"{ECUS_PAL[k]:,}".replace(",", " ")
+        _b = f'{ECL_PAL[k]} éclat{"s" if ECL_PAL[k] > 1 else ""} de boss et ' if k in ECL_PAL else ""
+        lignes.append(f'{{text:"\\n• {_b}{_e} Écus",color:"gold",bold:true}}')
         body.append('{type:"minecraft:plain_message",width:320,contents:[{text:""},' + ",".join(lignes) + ']}')
         dlg = (f'dialog show @s {{type:"minecraft:confirmation",title:{{text:"Palier {lv} : {TIERS[k][0]} {d["name"]}",color:"gold",bold:true}},'
                f'can_close_with_escape:true,pause:false,body:[{",".join(body)}],'
@@ -958,8 +967,8 @@ execute if score @s m.{j}_lvl matches ..{MAXLVL-1} if score @s m.{j}_xp >= @s m.
              f"scoreboard players set @s m.{j}_pal {k}",
              f"scoreboard players add @s m.cr_{j} {CRIST[k]}"]
         if k in ECL_PAL:
-            G += [f"scoreboard players add @s m.ecl {ECL_PAL[k]}",
-                  f"execute if score @s c.ecus matches -2147483648.. run scoreboard players add @s c.ecus {ECUS_PAL[k]}"]
+            G.append(f"scoreboard players add @s m.ecl {ECL_PAL[k]}")
+        G.append(f"execute if score @s c.ecus matches -2147483648.. run scoreboard players add @s c.ecus {ECUS_PAL[k]}")
         G += [f"give @s {it['give']}" for it in items[1:]]
         G += [f'tellraw @a ' + PREFIX + f',{{"selector":"@s","color":"white"}},{{"text":" récupère sa récompense","color":"gray"}},{{"text":" (palier {lv} {d["name"]})","color":"gray"}}]',
               "playsound minecraft:entity.player.levelup master @s ~ ~ ~ 1 0.6",
@@ -1466,7 +1475,8 @@ for j, d in jobs.items():
     for k in range(1, 11):
         its = R[j][k]
         tool = its[0]
-        extras = f"{CRIST[k]} cristaux de {d['name']}"
+        extras = ", ".join([f"{CRIST[k]} cristaux"] + ([f"{ECL_PAL[k]} éclat{'s' if ECL_PAL[k] > 1 else ''}"] if k in ECL_PAL else [])
+                           + [f"{ECUS_PAL[k]:,} Écus".replace(",", " ")] + [it["label"] if it.get("label") else it["name"] for it in its[1:]])
         rb.append(f'{{type:"minecraft:plain_message",width:330,contents:[{{text:"Palier {k} · niveau {10 * k}   ",color:"gold",bold:true}},'
                   f'{{text:"$(s{k})",color:"$(c{k})",bold:false}},'
                   f'{{text:"\\nOutil : ",color:"gray",bold:false}},{{text:"{tool["name"]}",color:"{tool["color"]}",bold:true}},'
@@ -2216,7 +2226,7 @@ playsound minecraft:ui.toast.in master @s ~ ~ ~ 0.6 1.4
 """)
 
 # REFONTE (v24) : objets, armure 11 paliers, compétences, menus, Forge, skins, boss, défis
-for _mod in ("ref_base.py", "ref_skills.py", "ref_menu.py", "ref_boss.py", "ref_defis.py", "ref_bareme.py", "ref_prestige.py", "ref_v26.py", "ref_batisseur.py", "ref_recalcul.py"):
+for _mod in ("ref_base.py", "ref_skills.py", "ref_menu.py", "ref_boss.py", "ref_defis.py", "ref_bareme.py", "ref_prestige.py", "ref_v26.py", "ref_batisseur.py", "ref_recalcul.py", "ref_paliers.py"):
     exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), _mod), encoding="utf-8").read())
 
 # Compétences désactivables : une compétence achetée garde son tag metiers.sk.XN (achat, prérequis, menus),
