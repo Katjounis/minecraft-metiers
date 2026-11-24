@@ -38,30 +38,14 @@
   {
    "label": [
     {
-     "text": ""
+     "object": "atlas",
+     "atlas": "minecraft:items",
+     "sprite": "minecraft:item/iron_pickaxe"
     },
     {
-     "text": "",
-     "font": "commerce:badges"
-    },
-    {
-     "text": "",
-     "font": "commerce:badges",
-     "color": "white",
-     "shadow_color": 0
-    },
-    {
-     "text": "",
-     "font": "commerce:badges"
-    },
-    {
-     "text": "Métiers",
+     "text": "  Métiers",
      "color": "aqua",
      "bold": true
-    },
-    {
-     "text": "",
-     "font": "commerce:badges"
     }
    ],
    "width": 150,
@@ -76,30 +60,14 @@
   {
    "label": [
     {
-     "text": ""
+     "object": "atlas",
+     "atlas": "minecraft:items",
+     "sprite": "minecraft:item/emerald"
     },
     {
-     "text": "",
-     "font": "commerce:badges"
-    },
-    {
-     "text": "",
-     "font": "commerce:badges",
-     "color": "white",
-     "shadow_color": 0
-    },
-    {
-     "text": "",
-     "font": "commerce:badges"
-    },
-    {
-     "text": "Commerce",
+     "text": "  Commerce",
      "color": "gold",
      "bold": true
-    },
-    {
-     "text": "",
-     "font": "commerce:badges"
     }
    ],
    "width": 150,
@@ -114,30 +82,14 @@
   {
    "label": [
     {
-     "text": ""
+     "object": "atlas",
+     "atlas": "minecraft:items",
+     "sprite": "minecraft:item/bone"
     },
     {
-     "text": "",
-     "font": "commerce:badges"
-    },
-    {
-     "text": "",
-     "font": "commerce:badges",
-     "color": "white",
-     "shadow_color": 0
-    },
-    {
-     "text": "",
-     "font": "commerce:badges"
-    },
-    {
-     "text": "Bestiaire",
-     "color": "red",
+     "text": "  Bestiaire",
+     "color": "dark_red",
      "bold": true
-    },
-    {
-     "text": "",
-     "font": "commerce:badges"
     }
    ],
    "width": 150,
@@ -152,30 +104,14 @@
   {
    "label": [
     {
-     "text": ""
+     "object": "atlas",
+     "atlas": "minecraft:items",
+     "sprite": "minecraft:item/lead"
     },
     {
-     "text": "",
-     "font": "commerce:badges"
-    },
-    {
-     "text": "",
-     "font": "commerce:badges",
-     "color": "white",
-     "shadow_color": 0
-    },
-    {
-     "text": "",
-     "font": "commerce:badges"
-    },
-    {
-     "text": "Compagnons",
+     "text": "  Compagnons",
      "color": "#E0A040",
      "bold": true
-    },
-    {
-     "text": "",
-     "font": "commerce:badges"
     }
    ],
    "width": 150,
@@ -190,30 +126,14 @@
   {
    "label": [
     {
-     "text": ""
+     "object": "atlas",
+     "atlas": "minecraft:items",
+     "sprite": "minecraft:item/name_tag"
     },
     {
-     "text": "",
-     "font": "commerce:badges"
-    },
-    {
-     "text": "",
-     "font": "commerce:badges",
-     "color": "white",
-     "shadow_color": 0
-    },
-    {
-     "text": "",
-     "font": "commerce:badges"
-    },
-    {
-     "text": "Mon profil",
+     "text": "  Mon profil",
      "color": "yellow",
      "bold": true
-    },
-    {
-     "text": "",
-     "font": "commerce:badges"
     }
    ],
    "width": 150,
@@ -228,30 +148,13 @@
   {
    "label": [
     {
-     "text": ""
+     "object": "atlas",
+     "atlas": "minecraft:items",
+     "sprite": "minecraft:item/book"
     },
     {
-     "text": "",
-     "font": "commerce:badges"
-    },
-    {
-     "text": "",
-     "font": "commerce:badges",
-     "color": "white",
-     "shadow_color": 0
-    },
-    {
-     "text": "",
-     "font": "commerce:badges"
-    },
-    {
-     "text": "Guide",
-     "color": "white",
-     "bold": true
-    },
-    {
-     "text": "",
-     "font": "commerce:badges"
+     "text": "  Guide",
+     "color": "white"
     }
    ],
    "width": 150,

@@ -3,9 +3,6 @@
 # Écrit le pack décompressé dans ../build/commerce_datapack et le zip dans ../commerce.zip.
 # Dépend du pack Métiers (scores m.id, m.<métier>_lvl, m.cr_<métier>, m.heure, police metiers:icones).
 import os, sys, json, shutil, zipfile
-# boutons dessinés (labo/outils/badges.py), chargé tôt pour le menu G (serveur.py)
-_BADGES_FICHIER = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "labo", "outils", "badges.py"))
-exec(open(_BADGES_FICHIER, encoding="utf-8").read())
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -1341,11 +1338,6 @@ exec(open(os.path.join(HERE, "prive.py"), encoding="utf-8").read())
 # =====================================================================
 # ZIP
 # =====================================================================
-# pastilles des boutons de navigation (labo/outils/badges.py, 24/11/2026)
-_BADGES_FICHIER = os.path.abspath(os.path.join(HERE, "..", "..", "..", "labo", "outils", "badges.py"))
-exec(open(_BADGES_FICHIER, encoding="utf-8").read())
-appliquer(ROOT, NS, os.path.dirname(RP), exclure=lambda rel: rel.split("/function/")[-1].startswith(("page/cat_", "page/item", "hdv/", "boutique/", "spawner/")))
-
 zp = os.path.join(HERE, "..", "commerce.zip")
 if os.path.exists(zp):
     os.remove(zp)

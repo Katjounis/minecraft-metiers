@@ -827,11 +827,6 @@ from PIL import Image as _Im
 _Im.new("RGBA", (128, 128), (0, 0, 0, 0)).save(os.path.join(RP, "assets", NS, "textures", "entity", "equipment", "happy_ghast_body", "vide.png"))
 
 # ---------------------------------------------------------------------------------------------
-# pastilles des boutons de navigation (labo/outils/badges.py, 24/11/2026)
-_BADGES_FICHIER = os.path.abspath(os.path.join(ICI, "..", "..", "..", "labo", "outils", "badges.py"))
-exec(open(_BADGES_FICHIER, encoding="utf-8").read())
-appliquer(ROOT, NS, os.path.join(RP, "assets"), exclure=lambda rel: False)
-
 n = 0
 zp = os.path.join(ICI, "..", "compagnons.zip")
 with zipfile.ZipFile(zp, "w", zipfile.ZIP_DEFLATED) as z:

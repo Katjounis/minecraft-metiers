@@ -11,7 +11,7 @@ Ce dépôt sert à fabriquer des datapacks pour Minecraft Java 26.x (vanilla, sa
 | `datapacks/commerce/` | **Commerce** : Écus, comptoirs, marché à prix dynamiques, bourse, fortunes, cristaux. Dépend de Métiers. Voir son [README](datapacks/commerce/README.md) |
 | `datapacks/horreur/` | **Horreur** : créatures de cauchemar la nuit et bestiaire. Voir son [README](datapacks/horreur/README.md) |
 | `datapacks/compagnons/` | **Compagnons** : 6 compagnons qui se battent et progressent avec le joueur, débloqués par Métiers. Voir son [README](datapacks/compagnons/README.md) |
-| `labo/outils/badges.py` | Boutons dessinés des 4 packs : chaque bouton « icône + texte fixe » reçoit une face qui couvre tout le bouton (dégradé à sa couleur, icône, filigrane, liseré), le texte du jeu posé dessus par espaces négatifs ; les boutons de métier ont le bloc du métier en fond. Police `<pack>:badges`, appelé par chaque `datapack.py` avant le zip. Textures du jeu en cache dans `labo/outils/textures_cache/`. |
+| `labo/outils/badges.py` | Faces dessinées des boutons (essai du 24/11/2026), débranché à la demande de Samuel : plus appelé par les packs, gardé pour mémoire. |
 | `metiers_resourcepack.zip` | Resource pack commun à tous les packs, car le serveur n'en impose qu'un. Il reste à la racine parce que son URL est utilisée par le serveur. `python labo\outils\fusion_rp.py` y verse les textures des autres packs (`build/<nom>_rp/`). Le décor des menus en jeu (paysage de nuit animé calculé par un shader à la place du flou, `decor_menu.fsh`) se pose avec `python datapacks\metiers\sources\resourcepack\fond_menus.py metiers_resourcepack.zip`. |
 | `labo/` | Scripts du serveur de test. Voir [labo/LISEZMOI.md](labo/LISEZMOI.md) |
 
