@@ -149,6 +149,19 @@ def libelle(ns, cle, W, sprite, couleur, composants, tw, fond=None):
             + f',{{text:"{besp(F + 1 - x0 - tw)}",font:"{ns}:badges"}}]')
 
 
+def libelle_json(ns, cle, W, sprite, couleur, composants, tw, fond=None):
+    """Même chose en JSON (dialogues fixes comme le menu G) : composants = liste de dicts."""
+    ch = face_manuelle(cle, W, sprite, couleur, fond)
+    F = W - 6
+    x0 = 22 + max(0, (F - 26 - tw) // 2)
+    return ([{"text": ""}, {"text": ch, "font": f"{ns}:badges", "color": "white", "shadow_color": 0},
+             {"text": besp(-F - 1 + x0), "font": f"{ns}:badges"}] + composants + [{"text": besp(F + 1 - x0 - tw), "font": f"{ns}:badges"}])
+
+
+POINT = chr(0xE7FF)      # pastille rouge de largeur fixe (6 px), pour les boutons à texte variable
+POINT_L = 6
+
+
 # ---------------------------------------------------------------- application automatique
 _K = lambda k: f'"?{k}"?'
 _RE = _bre.compile(rf'({_K("label")}:)\[(?:\{{{_K("text")}:""\}},)?\{{{_K("object")}:"atlas",{_K("atlas")}:"minecraft:(?:items|blocks)",'
@@ -185,6 +198,13 @@ def appliquer(root, ns, rp_assets, exclure=lambda rel: False):
     tex_dir = _bo.path.join(rp_assets, ns, "textures", "font", "boutons")
     _bo.makedirs(tex_dir, exist_ok=True); _bo.makedirs(_bo.path.join(rp_assets, ns, "font"), exist_ok=True)
     provs = [{"type": "space", "advances": {chr(0xE800 + 400 + k): k for k in range(-400, 401)}}]
+    pt = _BI.new("RGBA", (5, 5), (0, 0, 0, 0)); pp = pt.load()
+    for x_ in range(5):
+        for y_ in range(5):
+            if (x_ - 2) ** 2 + (y_ - 2) ** 2 <= 5:
+                pp[x_, y_] = (255, 70, 70, 255) if (x_, y_) != (1, 1) else (255, 170, 170, 255)
+    pt.save(_bo.path.join(tex_dir, "point.png"))
+    provs.append({"type": "bitmap", "file": f"{ns}:font/boutons/point.png", "height": 5, "ascent": 5, "chars": [POINT]})
     for cle, (ch, F, sprite, rgb, fond) in sorted(_FACES.items(), key=lambda kv: kv[1][0]):
         k = ord(ch) - 0xE000
         _face(F, sprite, rgb, fond, graine=k).save(_bo.path.join(tex_dir, f"f{k}.png"))

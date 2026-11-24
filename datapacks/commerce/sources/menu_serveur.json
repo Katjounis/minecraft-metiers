@@ -41,10 +41,23 @@
      "text": ""
     },
     {
-     "text": "",
-     "font": "commerce:recette",
+     "text": "",
+     "font": "commerce:badges",
      "color": "white",
      "shadow_color": 0
+    },
+    {
+     "text": "",
+     "font": "commerce:badges"
+    },
+    {
+     "text": "Métiers",
+     "color": "aqua",
+     "bold": true
+    },
+    {
+     "text": "",
+     "font": "commerce:badges"
     }
    ],
    "width": 150,
@@ -62,10 +75,23 @@
      "text": ""
     },
     {
-     "text": "",
-     "font": "commerce:recette",
+     "text": "",
+     "font": "commerce:badges",
      "color": "white",
      "shadow_color": 0
+    },
+    {
+     "text": "",
+     "font": "commerce:badges"
+    },
+    {
+     "text": "Commerce",
+     "color": "gold",
+     "bold": true
+    },
+    {
+     "text": "",
+     "font": "commerce:badges"
     }
    ],
    "width": 150,
@@ -83,10 +109,23 @@
      "text": ""
     },
     {
-     "text": "",
-     "font": "commerce:recette",
+     "text": "",
+     "font": "commerce:badges",
      "color": "white",
      "shadow_color": 0
+    },
+    {
+     "text": "",
+     "font": "commerce:badges"
+    },
+    {
+     "text": "Bestiaire",
+     "color": "red",
+     "bold": true
+    },
+    {
+     "text": "",
+     "font": "commerce:badges"
     }
    ],
    "width": 150,
@@ -104,10 +143,23 @@
      "text": ""
     },
     {
-     "text": "",
-     "font": "commerce:recette",
+     "text": "",
+     "font": "commerce:badges",
      "color": "white",
      "shadow_color": 0
+    },
+    {
+     "text": "",
+     "font": "commerce:badges"
+    },
+    {
+     "text": "Compagnons",
+     "color": "#E0A040",
+     "bold": true
+    },
+    {
+     "text": "",
+     "font": "commerce:badges"
     }
    ],
    "width": 150,
@@ -125,10 +177,23 @@
      "text": ""
     },
     {
-     "text": "",
-     "font": "commerce:recette",
+     "text": "",
+     "font": "commerce:badges",
      "color": "white",
      "shadow_color": 0
+    },
+    {
+     "text": "",
+     "font": "commerce:badges"
+    },
+    {
+     "text": "Mon profil",
+     "color": "yellow",
+     "bold": true
+    },
+    {
+     "text": "",
+     "font": "commerce:badges"
     }
    ],
    "width": 150,
@@ -146,10 +211,23 @@
      "text": ""
     },
     {
-     "text": "",
-     "font": "commerce:recette",
+     "text": "",
+     "font": "commerce:badges",
      "color": "white",
      "shadow_color": 0
+    },
+    {
+     "text": "",
+     "font": "commerce:badges"
+    },
+    {
+     "text": "Guide",
+     "color": "white",
+     "bold": true
+    },
+    {
+     "text": "",
+     "font": "commerce:badges"
     }
    ],
    "width": 150,

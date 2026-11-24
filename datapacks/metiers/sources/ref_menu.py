@@ -60,19 +60,24 @@ for j, d in jobs.items():
            f"execute if score @s m.{j}_lvl matches {MAXLVL}.. run scoreboard players set @s m.tmp 10"]
     MN += ["execute if score @s m.tmp matches 11.. run scoreboard players set @s m.tmp 10", "execute if score @s m.tmp matches ..-1 run scoreboard players set @s m.tmp 0"] + [f'data modify storage {NS}:mn {j}_b set value "{GLY["barre_0"]}"']
     MN += [f'execute if score @s m.tmp matches {k} run data modify storage {NS}:mn {j}_b set value "{GLY["barre_" + str(k)]}"' for k in range(11)]
-    MN += [f'data modify storage {NS}:mn {j}_d set value ""',
+    MN += [f'data modify storage {NS}:mn {j}_d set value "{besp(POINT_L)}"',
+           f'data modify storage {NS}:mn {j}_p set value "{besp(12)}"',
+           f'execute if score @s m.{j}_lvl matches 10.. run data modify storage {NS}:mn {j}_p set value "{besp(6)}"',
+           f'execute if score @s m.{j}_lvl matches 100.. run data modify storage {NS}:mn {j}_p set value "{besp(0)}"',
            f"function {NS}:{j}/points",
-           f'execute if score @s m.tmp matches 6.. unless entity @s[tag=metiers.sk.{j}1,tag=metiers.sk.{j}2,tag=metiers.sk.{j}3,tag=metiers.sk.{j}4,tag=metiers.sk.{j}5,tag=metiers.sk.{j}6] if score @s m.{j}_lvl matches 5.. run data modify storage {NS}:mn {j}_d set value "●"',
+           f'execute if score @s m.tmp matches 6.. unless entity @s[tag=metiers.sk.{j}1,tag=metiers.sk.{j}2,tag=metiers.sk.{j}3,tag=metiers.sk.{j}4,tag=metiers.sk.{j}5,tag=metiers.sk.{j}6] if score @s m.{j}_lvl matches 5.. run data modify storage {NS}:mn {j}_d set value "{POINT}"',
            f"scoreboard players operation @s m.tmp = @s m.{j}_lvl", "scoreboard players operation @s m.tmp /= #10 m.const",
-           f'execute if score @s m.{j}_pal < @s m.tmp run data modify storage {NS}:mn {j}_d set value "●"']
+           f'execute if score @s m.{j}_pal < @s m.tmp run data modify storage {NS}:mn {j}_d set value "{POINT}"']
 MN.append(f"function {NS}:menu_dialog with storage {NS}:mn")
 w(F + "menu.mcfunction", "\n".join(MN))
 acts = []
 for j, d in jobs.items():
     # 25.8 : bouton dessiné en entier (bloc du métier en fond, outil à gauche), texte du jeu posé dessus
-    _tw = blargeur(d["name"], True) + blargeur(" 100 ") + 7
+    # niveau complété à 3 chiffres et pastille toujours présente (vide ou rouge) : la largeur ne bouge pas, la face reste calée
+    _tw = blargeur(d["name"], True) + blargeur(" ") + 18 + blargeur(" ") + POINT_L
     lab = libelle(NS, ("metier", j), 150, OUTIL_IC[j], d["color"],
-                  [txt(d["name"], d["color"], True), txt(" $(" + j + "_l) ", "yellow"), txt("$(" + j + "_d)", "red")], _tw, FOND_J[j])
+                  [txt(d["name"], d["color"], True), txt(" $(" + j + "_l)", "yellow"),
+                   f'{{text:"$({j}_p){besp(4)}$({j}_d)",font:"{NS}:badges",color:"white"}}'], _tw, FOND_J[j])
     acts.append(btn(lab, 20 + d["idx"], 150, f"Ouvre la page {d['name']} : outil, compétences, récompenses, titre."))
 acts += [ib("item/netherite_upgrade_smithing_template", "Forge", "gold", 471, 150, "Boutique de la Forge : marteau, faux, arc triple, lasso, aimant, cape... et sertissage des cristaux.", True),
          ib("item/compass_00", "Activités", "aqua", 497, 150, "Défis, quêtes, guilde, classement, synergies, barème, skins, cadres, armure, aide.", True)]

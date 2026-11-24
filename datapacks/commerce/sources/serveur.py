@@ -9,7 +9,17 @@ S = "scoreboard players"
 G_ = F + "serveur/"
 
 _ic = lambda i: {"object": "atlas", "atlas": "minecraft:items", "sprite": "minecraft:item/" + i}
-_lb = lambda k: [{"text": ""}, {"text": MENU_GLY[k], "font": "commerce:recette", "color": "white", "shadow_color": 0}]
+# 24/11/2026 22 h 45 : boutons du menu G avec face dessinée (fond de bloc du thème, icône, liseré), texte du jeu en gras
+# par-dessus, marges respectées (labo/outils/badges.py). Remplace les grosses lettres dessinées, trop larges.
+MENU_FACES = [("Métiers", "aqua", "item/iron_pickaxe", "block/crafting_table_front"),
+              ("Commerce", "gold", "item/emerald", "block/emerald_block"),
+              ("Bestiaire", "red", "item/bone", "block/soul_sand"),
+              ("Compagnons", "#E0A040", "item/lead", "block/hay_block_side"),
+              ("Mon profil", "yellow", "item/name_tag", "block/spruce_planks"),
+              ("Guide", "white", "item/book", "block/bookshelf")]
+def _lb(k):
+    nom, col, ico, fond = MENU_FACES[k]
+    return libelle_json(NS, ("menu_g", k), 150, ico, col, [{"text": nom, "color": col, "bold": True}], blargeur(nom, True), fond)
 MENU_SERVEUR = {
     "type": "minecraft:multi_action",
     "title": {"text": "Les Couillons", "color": "gold", "bold": True},
