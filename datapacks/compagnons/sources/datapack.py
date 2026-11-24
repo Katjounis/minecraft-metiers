@@ -819,7 +819,12 @@ RP = os.path.join(ICI, "..", "build", "compagnons_rp")
 if os.path.exists(RP):
     shutil.rmtree(RP)
 os.makedirs(os.path.join(RP, "assets", NS, "equipment"))
-json.dump({"layers": {}}, open(os.path.join(RP, "assets", NS, "equipment", "vide.json"), "w"))
+# harnais invisible : une couche avec une texture entièrement transparente (une liste de couches vide est refusée
+# par le client : « Map must have contents »)
+json.dump({"layers": {"happy_ghast_body": [{"texture": f"{NS}:vide"}]}}, open(os.path.join(RP, "assets", NS, "equipment", "vide.json"), "w"))
+os.makedirs(os.path.join(RP, "assets", NS, "textures", "entity", "equipment", "happy_ghast_body"))
+from PIL import Image as _Im
+_Im.new("RGBA", (128, 128), (0, 0, 0, 0)).save(os.path.join(RP, "assets", NS, "textures", "entity", "equipment", "happy_ghast_body", "vide.png"))
 
 # ---------------------------------------------------------------------------------------------
 # pastilles des boutons de navigation (labo/outils/badges.py, 24/11/2026)
