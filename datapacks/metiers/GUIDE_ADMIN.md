@@ -74,7 +74,7 @@ Touche **G** (actions rapides, réglable dans les options) ou bouton **Métiers*
 | Explorateur | se déplaçant (20 XP par 200 m, élytres et cheval comptent moins) | bottes |
 | Marchand | échangeant avec les villageois (6) | bourse |
 
-XP par niveau : `10 x niveau + 40`. Anti-triche : poser ou jeter un objet récolté retire l'XP gagnée avec. La netherrack ne rapporte rien.
+XP par niveau (25.3, exponentielle) : `100 x 1,045^(niveau - 1)`, soit 100 au niveau 1, 149 au 10, 864 au 50, 7 471 au 99 (171 000 XP pour le niveau 100), plus 7 471 par étoile de prestige. Table précalculée dans `xp/table`. Anti-triche : poser ou jeter un objet récolté retire l'XP gagnée avec. La netherrack ne rapporte rien.
 
 ### Progression
 - **Compétences** : 1 point par niveau, un arbre de 6 compétences par métier (deux branches et une ultime). Se débloquent dans le menu du métier.

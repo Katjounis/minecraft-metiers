@@ -7,7 +7,7 @@ Datapack vanilla (Minecraft Java 26.x) qui ajoute une économie au serveur, bran
 | Élément | Fonctionnement |
 |---|---|
 | Écus | Argent sur un compte (score `c.ecus`, centimes dans `c.cts`), impossible à perdre ou à voler |
-| Déblocage | Crafter l'**oeuf de comptoir** débloque le Commerce. Recette : blocs d'émeraude aux 4 coins, bloc de diamant en haut, blocs d'or à gauche et à droite, lingot de netherite au centre, tonneau en bas. La grille de craft est dessinée avec les vraies textures du jeu dans la fenêtre de la touche G et sur la page du Commerce ; tant que l'oeuf n'est pas crafté, les autres boutons sont grisés |
+| Déblocage | Crafter l'**oeuf de comptoir** débloque le Commerce. Recette (simplifiée le 24/11/2026) : un tonneau au centre, 4 émeraudes en croix autour, 4 lingots d'or dans les coins. La grille de craft est dessinée avec les vraies textures du jeu dans la fenêtre de la touche G et sur la page du Commerce ; tant que l'oeuf n'est pas crafté, les autres boutons sont grisés |
 | Comptoir | L'oeuf pose un villageois immobile et invincible « Comptoir de <pseudo> ». Un seul par joueur, utilisable par tous (clic droit). Touche G, Mon comptoir : il revient en oeuf pour être reposé ailleurs |
 | Menu | Touche G (ou menu Échap), Commerce, « Ouvrir le Commerce » : compte, marché, bourse, fortunes, cristaux. Tout marche depuis n'importe où |
 | Marché | 459 objets en 16 catégories (pierres, terre, fleurs, bois, 16 couleurs de laine, béton, terre cuite et verre, minerais et blocs, Nether et End, agriculture, élevage, pêche, cuisine, utilitaires et redstone, trésors), achat et vente par 1 à 640, « Tout vendre ». Les Trésors (diamant, netherite, élytres...) sont en vente seulement |

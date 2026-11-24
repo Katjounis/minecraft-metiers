@@ -120,3 +120,22 @@ w(F + "k/pose_shop.mcfunction", "\n".join([
     "scoreboard players remove @s c.kb 1", "scoreboard players add @s m.kbj 1", "scoreboard players add @s m.k_raw 40",
     "execute if score @s m.kbj matches 256 run " + tr("Bonus des blocs du shop : 256 blocs aujourd’hui, c’est le maximum. Il revient avec les défis de demain.", "yellow")]))
 add_lines(F + "defis/nouveaux.mcfunction", ["scoreboard players reset * m.kbj"])
+
+# ---------------------------------------------------------------- 25.3 : courbe d'XP exponentielle (24/11/2026)
+# XP pour passer du niveau L au suivant : f(L) = 100 x 1,045^(L-1) (100 au niveau 1, ~870 au 50, ~7 600 au 99 ;
+# 171 000 XP pour atteindre le niveau 100, contre 53 000 avec l'ancienne formule 40 + 10 x niveau).
+# Prestige : + étoiles x f(99), donc le niveau 1 d'une étoile demande toujours plus que le niveau 99 sans étoile.
+# Table précalculée, cherchée par tranches de 10 niveaux (~20 commandes au lieu de 100).
+XPF = {L: round(100 * 1.045 ** (L - 1)) for L in range(1, 101)}
+add_lines(F + "refonte/load.mcfunction", [f"scoreboard players set #F99 m.const {XPF[99]}"])
+w(F + "xp/table.mcfunction", "\n".join(
+    [f"execute if score #L m.tmp matches {a}..{a + 9} run return run function {NS}:xp/table_{a // 10}" for a in range(1, 101, 10)] +
+    [f"scoreboard players set #N m.tmp {XPF[100]}"]))
+for _t in range(10):
+    w(F + f"xp/table_{_t}.mcfunction", "\n".join(
+        f"execute if score #L m.tmp matches {L} run return run scoreboard players set #N m.tmp {XPF[L]}" for L in range(10 * _t + 1, 10 * _t + 11)))
+# besoin d'XP recalculé une fois pour chaque joueur avec la nouvelle courbe (sinon l'ancien reste affiché jusqu'au prochain gain)
+add_lines(F + "joueur.mcfunction", [f"execute unless entity @s[tag=metiers.v253] run function {NS}:xp/maj253"])
+w(F + "xp/maj253.mcfunction", "\n".join(["tag @s add metiers.v253"] + [f"function {NS}:{j}/check" for j in jobs] +
+    [tr("Mise à jour 25.3 : la progression des métiers devient exponentielle, chaque niveau demande 4,5 % de plus que le précédent.", "yellow")]))
+w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 25.3 : courbe d’XP exponentielle, 10e métier Bâtisseur, quêtes, guildes, synergies, boss plus durs, menu G commun","color":"gold"}')

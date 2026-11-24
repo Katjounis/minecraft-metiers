@@ -273,9 +273,8 @@ EGG_LORE = [{"text": "Pose-le à ta base : c'est ton comptoir de commerce.", "co
             {"text": "Un seul par joueur. Touche G pour le déplacer.", "color": "gray", "italic": False}]
 wj(f"data/{NS}/recipe/oeuf.json", {
     "type": "minecraft:crafting_shaped", "category": "misc",
-    "pattern": ["EDE", "GNG", "ECE"],  # C = tonneau
-    "key": {"E": "minecraft:emerald_block", "D": "minecraft:diamond_block", "G": "minecraft:gold_block",
-            "N": "minecraft:netherite_ingot", "C": "minecraft:barrel"},
+    "pattern": ["GEG", "ECE", "GEG"],  # recette simplifiée (24/11/2026) : 4 émeraudes, 4 lingots d'or, un tonneau
+    "key": {"E": "minecraft:emerald", "G": "minecraft:gold_ingot", "C": "minecraft:barrel"},
     "result": {"id": "minecraft:villager_spawn_egg", "count": 1, "components": {
         "minecraft:custom_name": EGG_NAME, "minecraft:lore": EGG_LORE, "minecraft:entity_data": EGG_ENTITY_JSON,
         "minecraft:custom_data": {"commerce": "oeuf"}, "minecraft:max_stack_size": 1, "minecraft:rarity": "epic",
@@ -707,8 +706,8 @@ spr = lambda iid: f'{{object:"atlas",atlas:"minecraft:{SPRITES[iid][0]}",sprite:
 # déjà posées dans les cases : rien à aligner au pixel en jeu. Taille réelle (176 x 88), sous les 256 px permis.
 RP = os.path.join(HERE, "..", "build", "commerce_rp", "assets", "commerce")
 PANNEAU = ""
-RECETTE = {"E": "emerald_block", "D": "diamond_block", "G": "gold_block", "N": "netherite_ingot", "C": "barrel_side"}
-GRID = ["EDE", "GNG", "ECE"]
+RECETTE = {"E": "emerald", "G": "gold_ingot", "C": "barrel_side"}
+GRID = ["GEG", "ECE", "GEG"]
 BANNIERES = [("COMMERCE", "emerald"), ("MARCHÉ", "emerald"), ("BOURSE", "bell"), ("FORTUNES", "gold_ingot"), ("CRISTAUX", "diamond"), ("SPAWNERS", "spawner"), ("GRAPHIQUES", "clock"),
              # bandeaux des autres packs (même police, resource pack commun) : Métiers 7 à 11, Horreur 12, Compagnons 13
              ("MÉTIERS", "iron_pickaxe"), ("FORGE", "anvil_top"), ("QUETES", "writable_book"), ("GUILDE", "name_tag"), ("BAREME", "book"), ("BESTIAIRE", "bone"), ("COMPAGNONS", "lead")]

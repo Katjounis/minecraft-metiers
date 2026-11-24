@@ -748,7 +748,7 @@ w(F + "joueur.mcfunction", "\n".join(J))
 I = []
 for j in jobs:
     I += [f"scoreboard players set @s m.{j}_lvl 1", f"scoreboard players set @s m.{j}_xp 0",
-          f"scoreboard players set @s m.{j}_need 50", f"scoreboard players set @s m.{j}_bal 0"]
+          f"scoreboard players set @s m.{j}_need 100", f"scoreboard players set @s m.{j}_bal 0"]
 for _, _, _, obj, _ in ALL_STATS:
     I.append(f"scoreboard players set @s s.{obj} 0")
 I += ["tag @s add metiers.ok",
@@ -757,7 +757,7 @@ w(F + "init.mcfunction", "\n".join(I))
 for j in jobs:
     w(F + f"{j}/init.mcfunction", "\n".join(
         [f"scoreboard players set @s m.{j}_{k} {v}" for k, v in
-         (("lvl", 1), ("xp", 0), ("need", 50), ("bal", 0), ("spent", 0), ("pal", 0), ("pr", 0), ("out", 0), ("cd", 0))] +
+         (("lvl", 1), ("xp", 0), ("need", 100), ("bal", 0), ("spent", 0), ("pal", 0), ("pr", 0), ("out", 0), ("cd", 0))] +
         ["scoreboard players set @s m.x_acc 0"]))
 
 M = ["tag @s add metiers.v2",
@@ -877,11 +877,12 @@ title @s actionbar [{{"text":"+","color":"green"}},{{"score":{{"name":"@s","obje
 """)
 
     w(F + f"{j}/check.mcfunction", f"""
-scoreboard players operation @s m.{j}_need = @s m.{j}_pr
-scoreboard players operation @s m.{j}_need *= #100 m.const
-scoreboard players operation @s m.{j}_need += @s m.{j}_lvl
-scoreboard players operation @s m.{j}_need *= #10 m.const
-scoreboard players operation @s m.{j}_need += #40 m.const
+scoreboard players operation #L m.tmp = @s m.{j}_lvl
+function {NS}:xp/table
+scoreboard players operation @s m.{j}_need = #N m.tmp
+scoreboard players operation #N m.tmp = @s m.{j}_pr
+scoreboard players operation #N m.tmp *= #F99 m.const
+scoreboard players operation @s m.{j}_need += #N m.tmp
 execute if score @s m.{j}_lvl matches ..{MAXLVL-1} if score @s m.{j}_xp >= @s m.{j}_need run function {NS}:{j}/levelup
 """)
 
