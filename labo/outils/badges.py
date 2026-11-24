@@ -137,23 +137,32 @@ def face_manuelle(cle, W, sprite, couleur, fond=None):
     return _FACES[cle][0]
 
 
-def libelle(ns, cle, W, sprite, couleur, composants, tw, fond=None):
-    """Libellé complet : face, recul, composants (largeur tw estimée), avance. Le texte part après l'icône."""
-    ch = face_manuelle(cle, W, sprite, couleur, fond)
-    F = W - 6   # face de W - 6 px ; libellé total de W - 6 px : le jeu le centre à x + 3, pile dans le cadre de 3 px
+# Largeur totale du libellé = 0 (24/11/2026 23 h) : un libellé plus large que le bouton moins 4 px défile de gauche
+# à droite, et la mesure du jeu ne colle jamais au pixel près. À largeur nulle, le jeu place le début au centre du
+# bouton et ne fait jamais défiler : on recule d'une demi-face, on pose la face, on revient poser le texte, puis on
+# revient au centre.
+def _sequence(W, tw):
+    F = W - 6
     x0 = 22 + max(0, (F - 26 - tw) // 2)
-    return ('[{text:""},' + f'{{text:"{ch}",font:"{ns}:badges",color:"white",shadow_color:0}},'
-            + f'{{text:"{besp(-F - 1 + x0)}",font:"{ns}:badges"}},' + ",".join(composants)
-            + f',{{text:"{besp(F - x0 - tw)}",font:"{ns}:badges"}}]')
+    return F, [besp(-(W // 2 - 3)), None, besp(-F - 1 + x0), "TEXTE", besp(W // 2 - 3 - x0 - tw)]
+
+
+def libelle(ns, cle, W, sprite, couleur, composants, tw, fond=None):
+    """Libellé complet (SNBT) : face calée dans le cadre du bouton, texte posé dessus, largeur totale nulle."""
+    ch = face_manuelle(cle, W, sprite, couleur, fond)
+    F, q = _sequence(W, tw)
+    return ('[{text:""},' + f'{{text:"{q[0]}",font:"{ns}:badges"}},'
+            + f'{{text:"{ch}",font:"{ns}:badges",color:"white",shadow_color:0}},'
+            + f'{{text:"{q[2]}",font:"{ns}:badges"}},' + ",".join(composants)
+            + f',{{text:"{q[4]}",font:"{ns}:badges"}}]')
 
 
 def libelle_json(ns, cle, W, sprite, couleur, composants, tw, fond=None):
     """Même chose en JSON (dialogues fixes comme le menu G) : composants = liste de dicts."""
     ch = face_manuelle(cle, W, sprite, couleur, fond)
-    F = W - 6
-    x0 = 22 + max(0, (F - 26 - tw) // 2)
-    return ([{"text": ""}, {"text": ch, "font": f"{ns}:badges", "color": "white", "shadow_color": 0},
-             {"text": besp(-F - 1 + x0), "font": f"{ns}:badges"}] + composants + [{"text": besp(F - x0 - tw), "font": f"{ns}:badges"}])
+    F, q = _sequence(W, tw)
+    return ([{"text": ""}, {"text": q[0], "font": f"{ns}:badges"}, {"text": ch, "font": f"{ns}:badges", "color": "white", "shadow_color": 0},
+             {"text": q[2], "font": f"{ns}:badges"}] + composants + [{"text": q[4], "font": f"{ns}:badges"}])
 
 
 POINT = chr(0xE7FF)      # pastille rouge de largeur fixe (6 px), pour les boutons à texte variable
