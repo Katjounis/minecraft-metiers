@@ -77,7 +77,7 @@ def note(t):
 
 BONUS = ('{text:"\\n\\nBonus : ",color:"aqua",bold:true},{text:"x2 pendant l’heure du métier, +10 % par étoile de prestige, '
          '+10 % avec le cristal de Sagesse sur l’outil. Poser ou jeter ce que tu viens de récolter retire l’XP gagnée. '
-         'Niveau suivant : 100 XP au niveau 1, puis +4,5 % à chaque niveau (870 au niveau 50, 7 471 au niveau 99), plus 7 471 par étoile de prestige.",color:"gray"}')
+         'Niveau suivant : 150 XP au niveau 1, puis +6 % à chaque niveau (2 607 au niveau 50, 45 297 au niveau 99), plus 45 297 par étoile de prestige.",color:"gray"}')
 DEFI = note("Défi du jour réussi : la moitié d’un niveau du métier, 2 diamants et 16 fioles d’expérience.")
 
 PAGES = {}
