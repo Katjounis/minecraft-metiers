@@ -1,34 +1,33 @@
-# Fond des menus en jeu (24/11/2026) : remplace le voile sombre posé sur le monde flouté (dialogues, menu Échap,
-# options) par un appareillage de pierre chaude presque opaque, dans la palette de l'interface Forge.
-# Le jeu répète la texture tous les 32 px d'interface. Usage : python3 fond_menus.py ../../../../metiers_resourcepack.zip
+# Décor des menus en jeu (24/11/2026) : à la place du monde flouté derrière les dialogues, le menu Échap et les options. Usage : python3 fond_menus.py ../../../../metiers_resourcepack.zip
 import io, random, sys, zipfile
 from PIL import Image
 
 ZIP = sys.argv[1]
 NOM = "assets/minecraft/textures/gui/inworld_menu_background.png"
-rnd = random.Random(7)
-im = Image.new("RGBA", (32, 32)); px = im.load()
-for y in range(32):
-    rang = y // 8
-    for x in range(32):
-        xx = (x + (8 if rang % 2 else 0)) % 32
-        n = rnd.randint(-3, 3)
-        if y % 8 == 0 or xx % 16 == 0:
-            c = (17 + n // 2, 14 + n // 2, 13 + n // 2)            # joint
-        elif y % 8 == 1 or xx % 16 == 1:
-            c = (40 + n, 34 + n, 30 + n)                            # arête éclairée
-        elif y % 8 == 7 or xx % 16 == 15:
-            c = (24 + n, 20 + n, 18 + n)                            # arête dans l'ombre
-        else:
-            c = (31 + n, 26 + n, 23 + n)                            # face
-        px[x, y] = c + (242,)
-for x, y in ((16, 0), (8, 8), (0, 16), (24, 24)):                  # rivets dorés aux croisements
-    px[x, y] = (150, 112, 50, 255)
+# 24/11/2026 soir : le décor est un paysage de nuit animé calculé par un shader (decor_menu.fsh) qui remplace le flou
+# (post_effect/blur.json) ; la texture de fond n'est plus qu'un voile très léger pour garder le texte lisible.
+im = Image.new("RGBA", (32, 32), (6, 4, 10, 46))
+import os, json
+ICI = os.path.dirname(os.path.abspath(__file__))
+FICHIERS = {
+    "assets/minecraft/shaders/post/decor_menu.fsh": open(os.path.join(ICI, "decor_menu.fsh"), encoding="utf-8").read().encode("utf-8"),
+    "assets/minecraft/post_effect/blur.json": json.dumps({
+        "targets": {"swap": {}},
+        "passes": [
+            {"vertex_shader": "minecraft:core/screenquad", "fragment_shader": "minecraft:post/decor_menu",
+             "inputs": [{"sampler_name": "In", "target": "minecraft:main", "bilinear": True}], "output": "swap"},
+            {"vertex_shader": "minecraft:core/screenquad", "fragment_shader": "minecraft:post/blit",
+             "inputs": [{"sampler_name": "In", "target": "swap"}],
+             "uniforms": {"BlitConfig": [{"name": "ColorModulate", "type": "vec4", "value": [1.0, 1.0, 1.0, 1.0]}]},
+             "output": "minecraft:main"}]}, indent=1).encode("utf-8")}
 buf = io.BytesIO(); im.save(buf, "PNG")
-src = zipfile.ZipFile(ZIP); items = [(i, src.read(i.filename)) for i in src.infolist() if i.filename != NOM]; src.close()
+FICHIERS[NOM] = None
+src = zipfile.ZipFile(ZIP); items = [(i, src.read(i.filename)) for i in src.infolist() if i.filename not in FICHIERS]; src.close()
+FICHIERS[NOM] = buf.getvalue()
 with zipfile.ZipFile(ZIP, "w", zipfile.ZIP_DEFLATED) as z:
     for info, data in items:
         z.writestr(info, data)
-    zi = zipfile.ZipInfo(NOM, date_time=(2026, 1, 1, 0, 0, 0)); zi.compress_type = zipfile.ZIP_DEFLATED
-    z.writestr(zi, buf.getvalue())
-print("fond des menus posé :", NOM)
+    for nom, data in FICHIERS.items():
+        zi = zipfile.ZipInfo(nom, date_time=(2026, 1, 1, 0, 0, 0)); zi.compress_type = zipfile.ZIP_DEFLATED
+        z.writestr(zi, data)
+print("décor des menus posé :", ", ".join(FICHIERS))

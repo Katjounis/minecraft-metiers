@@ -1,28 +1,29 @@
 # -*- coding: utf-8 -*-
-"""Pastilles des boutons de navigation (24/11/2026), communes aux 4 packs.
+"""Boutons dessinés des 4 packs (24/11/2026, refait le soir même : bouton entier et non plus une pastille).
 
-Chaque bouton dont le libellé commence par une icône du jeu (composant « object » atlas) suivie d'un texte coloré
-voit son icône remplacée par une pastille dessinée : carré arrondi 18 x 18 en dégradé de la couleur du texte, liseré
-sombre, reflet, et l'icône du jeu posée dessus avec une ombre. Une pastille par couple (icône, couleur), dans la police
-<ns>:badges du resource pack du pack (fusionné par fusion_rp.py).
+Chaque bouton de navigation dont le libellé est « icône du jeu + texte fixe coloré » reçoit une face dessinée qui couvre
+tout le bouton (W - 6 x 18 px d'interface) : fond dégradé dans la couleur du texte, motif de biais, grande icône en
+filigrane à droite, l'icône nette à gauche sur un halo, liseré clair et coins coupés. Le texte reste écrit par le jeu
+(accents, ombre), posé sur la face grâce à des espaces négatifs : [face][recul][texte][avance] fait exactement la
+largeur de la face, donc le jeu centre le tout pile sur le bouton.
 
-Appel, juste avant le zip du datapack :
-    exec(open(.../labo/outils/badges.py).read()); appliquer(ROOT, NS, RP_ASSETS, exclure=lambda rel: ...)
+Les boutons de métier (texte variable : niveau, barre) prennent une face à part, avec le bloc du métier en fond
+(face_manuelle, appelée par Métiers pendant sa génération).
+
+Tout va dans la police <ns>:badges du resource pack du pack (fusionné par fusion_rp.py). Appel, avant le zip :
+    _BADGES_FICHIER = ".../labo/outils/badges.py"; exec(open(_BADGES_FICHIER).read()); appliquer(ROOT, NS, RP_ASSETS, exclure)
 """
-import json as _bj, os as _bo, re as _bre, urllib.request as _bu
+import json as _bj, os as _bo, re as _bre, random as _brd, urllib.request as _bu
 from PIL import Image as _BI
 
-_BADGES_FICHIER = _bo.path.abspath(_bo.path.join(_bo.path.dirname(_bo.path.abspath(__file__ if "__file__" in dir() else ".")), "badges.py")) \
-    if "_BADGES_FICHIER" not in globals() else _BADGES_FICHIER
+_BDIR = _bo.path.dirname(_bo.path.abspath(_BADGES_FICHIER))
+if "_FACES" not in globals():
+    _FACES = {}          # clé -> (car, largeur, sprite icône, rgb, texture de fond ou None)
 
 COULEURS_MC = {"black": (40, 40, 40), "dark_blue": (30, 40, 170), "dark_green": (20, 130, 40), "dark_aqua": (20, 140, 150),
-               "dark_red": (160, 20, 20), "dark_purple": (130, 40, 170), "gold": (230, 160, 20), "gray": (150, 150, 155),
+               "dark_red": (170, 25, 25), "dark_purple": (130, 40, 170), "gold": (230, 160, 20), "gray": (150, 150, 155),
                "dark_gray": (85, 85, 90), "blue": (70, 90, 230), "green": (60, 190, 60), "aqua": (40, 200, 220),
-               "red": (220, 60, 50), "light_purple": (220, 90, 220), "yellow": (235, 215, 50), "white": (205, 205, 210)}
-
-_K = lambda k: f'"?{k}"?'   # clés SNBT avec ou sans guillemets (Horreur écrit du JSON)
-_RE = _bre.compile(rf'({_K("label")}:\[(?:\{{{_K("text")}:""\}},)?)\{{{_K("object")}:"atlas",{_K("atlas")}:"minecraft:(items|blocks)",'
-                   rf'{_K("sprite")}:"minecraft:([a-z0-9_/]+)"\}},(\{{{_K("text")}:"[^"]*",{_K("color")}:"(#[0-9A-Fa-f]{{6}}|[a-z_]+)")')
+               "red": (220, 60, 50), "light_purple": (220, 90, 220), "yellow": (235, 215, 50), "white": (190, 190, 200)}
 
 
 def _rgb(c):
@@ -31,8 +32,37 @@ def _rgb(c):
     return COULEURS_MC.get(c, (150, 150, 150))
 
 
-def _texture(sprite, dossier):
-    """Texture du jeu (26.1), mise en cache dans labo/outils/textures_cache/ (versionné)."""
+# ---------------------------------------------------------------- largeur du texte (police du jeu, ascii.png)
+_ASC = _BI.open(_bo.path.join(_BDIR, "..", "..", "datapacks", "commerce", "sources", "textures_recette", "ascii.png")).convert("RGBA")
+_BASE = str.maketrans("éèêëàâäîïôöûùüçÉÈÊÀÂÎÔÛÙÇœ", "eeeeaaaiioouuucEEEAAIOUUCo")
+_SPEC = {" ": 4, "’": 2, "'": 2, "·": 2, "▶": 8, "◀": 8, "•": 4, "★": 8, "…": 8}
+
+
+def _avance(ch):
+    if ch in _SPEC:
+        return _SPEC[ch]
+    b = ch.translate(_BASE)
+    o = ord(b)
+    if o > 255:
+        return 7
+    cell = _ASC.crop(((o % 16) * 8, (o // 16) * 8, (o % 16) * 8 + 8, (o // 16) * 8 + 8))
+    xs = [x for x in range(8) for y in range(8) if cell.getpixel((x, y))[3]]
+    return (max(xs) + 2) if xs else 4
+
+
+def blargeur(txt, gras=False):
+    return sum(_avance(c) + (1 if gras and c != " " else 0) for c in txt)
+
+
+def besp(n):
+    """Espace de n px (négatif = recul), police <ns>:badges."""
+    n = max(-400, min(400, int(n)))
+    return chr(0xE800 + 400 + n)
+
+
+# ---------------------------------------------------------------- textures du jeu (cache versionné)
+def _texture(sprite):
+    dossier = _bo.path.join(_BDIR, "textures_cache")
     pth = _bo.path.join(dossier, sprite.replace("/", "__") + ".png")
     if not _bo.path.exists(pth):
         _bo.makedirs(dossier, exist_ok=True)
@@ -40,50 +70,105 @@ def _texture(sprite, dossier):
         with _bu.urlopen(url, timeout=20) as r:
             open(pth, "wb").write(r.read())
     im = _BI.open(pth).convert("RGBA")
-    if im.height > im.width:   # texture animée : première image
+    if im.height > im.width:
         im = im.crop((0, 0, im.width, im.width))
     return im.resize((16, 16), _BI.NEAREST) if im.size != (16, 16) else im
 
 
-def _pastille(sprite, couleur, dossier):
-    W = 18
-    haut = tuple(int(v * 0.8) for v in couleur)
-    bas = tuple(int(v * 0.32) for v in couleur)
-    b = _BI.new("RGBA", (W, W), (0, 0, 0, 0)); px = b.load()
-    for y in range(W):
-        f = y / (W - 1)
-        col = tuple(int(haut[i] + (bas[i] - haut[i]) * f) for i in range(3))
+# ---------------------------------------------------------------- dessin d'une face
+def _face(W, sprite, coul, fond=None, graine=0):
+    H = 18
+    rg = _brd.Random(graine)
+    im = _BI.new("RGBA", (W, H), (0, 0, 0, 0)); px = im.load()
+    clair = tuple(min(255, int(v * 1.1 + 40)) for v in coul)
+    if fond:   # bloc du thème, x2, assombri et teinté
+        t = _texture(fond).resize((32, 32), _BI.NEAREST); tp = t.load()
+    for y in range(H):
         for x in range(W):
-            coin = (x in (0, W - 1)) and (y in (0, W - 1))
+            coin = (x in (0, W - 1) and y in (0, H - 1))
             if coin:
                 continue
-            bord = x in (0, W - 1) or y in (0, W - 1)
-            if bord:
-                px[x, y] = (int(couleur[0] * 0.18), int(couleur[1] * 0.18), int(couleur[2] * 0.18), 255)
-            elif y == 1 and 1 < x < W - 2:
-                px[x, y] = tuple(min(255, v + 45) for v in col) + (255,)
+            if fond:
+                r, g, b, _ = tp[x % 32, (y + 7) % 32]
+                k = 0.42 - 0.12 * y / H
+                c = [r * k * 0.7 + coul[0] * 0.10, g * k * 0.7 + coul[1] * 0.10, b * k * 0.7 + coul[2] * 0.10]
             else:
-                px[x, y] = col + (235,)
-    ic = _texture(sprite, dossier)
+                f = y / (H - 1)
+                c = [v * (0.34 - 0.16 * f) for v in coul]
+                if ((x + y) // 3) % 4 == 0:                       # motif de biais discret
+                    c = [v + 6 for v in c]
+                n = rg.randint(-2, 2); c = [v + n for v in c]
+            # halo derrière l'icône
+            d = ((x - 10) ** 2 + (y - 9) ** 2) ** 0.5
+            if d < 11:
+                a = (1 - d / 11) * 0.35
+                c = [c[i] * (1 - a) + coul[i] * a for i in range(3)]
+            bord = x in (0, W - 1) or y in (0, H - 1)
+            if bord:
+                c = [v * 0.25 for v in coul]
+            elif y == 1 or x == 1:
+                c = [min(255, v + 0.35 * (clair[i] - v) + 18) for i, v in enumerate(c)]
+            elif y == H - 2 or x == W - 2:
+                c = [v * 0.6 for v in c]
+            px[x, y] = tuple(max(0, min(255, int(v))) for v in c) + (255,)
+    ic = _texture(sprite)
+    # filigrane : grande icône à droite, coupée par le bord
+    big = ic.resize((32, 32), _BI.NEAREST); bp = big.load()
+    ox, oy = W - 30, -7
+    for x in range(32):
+        for y in range(32):
+            X, Y = ox + x, oy + y
+            if 2 <= X < W - 2 and 2 <= Y < H - 2 and bp[x, y][3]:
+                r, g, b, a = px[X, Y]
+                s = bp[x, y]; al = 0.16
+                px[X, Y] = (int(r * (1 - al) + s[0] * al), int(g * (1 - al) + s[1] * al), int(b * (1 - al) + s[2] * al), 255)
+    # icône nette avec ombre
     ombre = _BI.new("RGBA", (16, 16), (0, 0, 0, 0)); op = ombre.load(); ip = ic.load()
     for x in range(16):
         for y in range(16):
             if ip[x, y][3]:
-                op[x, y] = (0, 0, 0, 110)
-    b.alpha_composite(ombre, (2, 2)); b.alpha_composite(ic, (1, 1))
-    return b
+                op[x, y] = (0, 0, 0, 140)
+    im.alpha_composite(ombre, (4, 2)); im.alpha_composite(ic, (3, 1))
+    return im
+
+
+def face_manuelle(cle, W, sprite, couleur, fond=None):
+    """Réserve une face (dessinée par appliquer) et renvoie son caractère."""
+    if cle not in _FACES:
+        _FACES[cle] = (chr(0xE000 + len(_FACES)), W - 6, sprite, _rgb(couleur) if isinstance(couleur, str) else couleur, fond)
+    return _FACES[cle][0]
+
+
+def libelle(ns, cle, W, sprite, couleur, composants, tw, fond=None):
+    """Libellé complet : face, recul, composants (largeur tw estimée), avance. Le texte part après l'icône."""
+    ch = face_manuelle(cle, W, sprite, couleur, fond)
+    F = W - 6   # la face + son espacement font W - 5 : sous la limite où le jeu fait défiler le libellé
+    x0 = 22 + max(0, (F - 26 - tw) // 2)
+    return ('[{text:""},' + f'{{text:"{ch}",font:"{ns}:badges",color:"white",shadow_color:0}},'
+            + f'{{text:"{besp(-F - 1 + x0)}",font:"{ns}:badges"}},' + ",".join(composants)
+            + f',{{text:"{besp(F + 1 - x0 - tw)}",font:"{ns}:badges"}}]')
+
+
+# ---------------------------------------------------------------- application automatique
+_K = lambda k: f'"?{k}"?'
+_RE = _bre.compile(rf'({_K("label")}:)\[(?:\{{{_K("text")}:""\}},)?\{{{_K("object")}:"atlas",{_K("atlas")}:"minecraft:(?:items|blocks)",'
+                   rf'{_K("sprite")}:"minecraft:([a-z0-9_/]+)"\}},(\{{{_K("text")}:"([^"$]*)",{_K("color")}:"(#[0-9A-Fa-f]{{6}}|[a-z_]+)"'
+                   rf'(?:,{_K("bold")}:(true|false|1b|0b))?[^{{}}\]]*\}})\],({_K("width")}:(\d+))')
 
 
 def appliquer(root, ns, rp_assets, exclure=lambda rel: False):
-    """Remplace les icônes des boutons par des pastilles dans tous les .mcfunction de root ; dessine la police."""
-    combos, n = {}, 0
+    n = 0
     def sub(m):
         nonlocal n
-        cle = (m.group(3), m.group(5))
-        if cle not in combos:
-            combos[cle] = chr(0xE600 + len(combos))
+        etiq, sprite, comp, texte, coul, gras, wtxt, W = m.groups()
+        W = int(W); txt_ = texte.strip()
+        gr = gras in ("true", "1b")
+        comp = comp.replace(f'"{texte}"', f'"{txt_}"', 1)
+        tw = blargeur(txt_, gr)
+        if tw > W - 30:          # trop long pour la face : on laisse le bouton tel quel
+            return m.group(0)
         n += 1
-        return (m.group(1) + f'{{text:"{combos[cle]}",font:"{ns}:badges",color:"white",shadow_color:0}},' + m.group(4))
+        return etiq + libelle(ns, (sprite, coul, W), W, sprite, coul, [comp], tw) + "," + wtxt
     for dp, _, fs in _bo.walk(root):
         for fn in fs:
             if not fn.endswith(".mcfunction"):
@@ -97,14 +182,12 @@ def appliquer(root, ns, rp_assets, exclure=lambda rel: False):
             t2 = _RE.sub(sub, t)
             if t2 != t:
                 open(p, "w", encoding="utf-8").write(t2)
-    dossier = _bo.path.join(_bo.path.dirname(_bo.path.abspath(_BADGES_FICHIER)), "textures_cache")
-    tex_dir = _bo.path.join(rp_assets, ns, "textures", "font", "badges")
+    tex_dir = _bo.path.join(rp_assets, ns, "textures", "font", "boutons")
     _bo.makedirs(tex_dir, exist_ok=True); _bo.makedirs(_bo.path.join(rp_assets, ns, "font"), exist_ok=True)
-    provs = []
-    for (sprite, coul), ch in sorted(combos.items(), key=lambda kv: kv[1]):
-        k = ord(ch) - 0xE600
-        _pastille(sprite, _rgb(coul), dossier).save(_bo.path.join(tex_dir, f"b{k}.png"))
-        provs.append({"type": "bitmap", "file": f"{ns}:font/badges/b{k}.png", "height": 18, "ascent": 13, "chars": [ch]})
-    _bj.dump({"providers": provs}, open(_bo.path.join(rp_assets, ns, "font", "badges.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-    print(f"pastilles {ns} : {len(combos)} dessinées, {n} boutons")
-    return combos
+    provs = [{"type": "space", "advances": {chr(0xE800 + 400 + k): k for k in range(-400, 401)}}]
+    for cle, (ch, F, sprite, rgb, fond) in sorted(_FACES.items(), key=lambda kv: kv[1][0]):
+        k = ord(ch) - 0xE000
+        _face(F, sprite, rgb, fond, graine=k).save(_bo.path.join(tex_dir, f"f{k}.png"))
+        provs.append({"type": "bitmap", "file": f"{ns}:font/boutons/f{k}.png", "height": 18, "ascent": 12, "chars": [ch]})
+    _bj.dump({"providers": provs}, open(_bo.path.join(rp_assets, ns, "font", "badges.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=0)
+    print(f"boutons {ns} : {len(_FACES)} faces dessinées, {n} boutons automatiques")

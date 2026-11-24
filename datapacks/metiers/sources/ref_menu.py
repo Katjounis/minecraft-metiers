@@ -18,6 +18,9 @@ def IC(p):
 def ib(icone, label, col, action, width=130, tip=None, bold=False):
     """Bouton avec une icône du jeu devant le libellé."""
     return btn(f'[{IC(icone)},{txt("  " + label, col, bold)}]', action, width, tip)
+FOND_J = {"b": "block/oak_log", "f": "block/farmland_moist", "m": "block/deepslate", "c": "block/mossy_cobblestone",
+          "p": "block/prismarine_bricks", "e": "block/hay_block_top", "n": "block/bookshelf", "x": "block/moss_block",
+          "t": "block/emerald_block", "k": "block/bricks"}
 OUTIL_IC = {"b": "item/iron_axe", "f": "item/iron_hoe", "m": "item/iron_pickaxe", "c": "item/iron_sword", "p": "item/fishing_rod",
             "e": "item/carrot_on_a_stick", "n": "item/enchanted_book", "x": "item/iron_shovel", "t": "item/bundle", "k": "item/brush"}
 
@@ -66,7 +69,10 @@ MN.append(f"function {NS}:menu_dialog with storage {NS}:mn")
 w(F + "menu.mcfunction", "\n".join(MN))
 acts = []
 for j, d in jobs.items():
-    lab = f'[{gs("metier_" + j)},{txt(" " + d["name"], d["color"])},{txt(" $(" + j + "_l) ", "yellow")},{{text:"$({j}_b)",font:"metiers:icones",color:"white"}},{txt("$(" + j + "_d)", "red")}]'
+    # 25.8 : bouton dessiné en entier (bloc du métier en fond, outil à gauche), texte du jeu posé dessus
+    _tw = blargeur(d["name"], True) + blargeur(" 100 ") + 7
+    lab = libelle(NS, ("metier", j), 150, OUTIL_IC[j], d["color"],
+                  [txt(d["name"], d["color"], True), txt(" $(" + j + "_l) ", "yellow"), txt("$(" + j + "_d)", "red")], _tw, FOND_J[j])
     acts.append(btn(lab, 20 + d["idx"], 150, f"Ouvre la page {d['name']} : outil, compétences, récompenses, titre."))
 acts += [ib("item/netherite_upgrade_smithing_template", "Forge", "gold", 471, 150, "Boutique de la Forge : marteau, faux, arc triple, lasso, aimant, cape... et sertissage des cristaux.", True),
          ib("item/compass_00", "Activités", "aqua", 497, 150, "Défis, quêtes, guilde, classement, synergies, barème, skins, cadres, armure, aide.", True)]

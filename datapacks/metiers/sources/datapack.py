@@ -1,4 +1,7 @@
 import os, json, shutil, zipfile
+# boutons dessinés (labo/outils/badges.py) : chargé dès le début pour que les menus réservent leurs faces
+_BADGES_FICHIER = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "labo", "outils", "badges.py"))
+exec(open(_BADGES_FICHIER, encoding="utf-8").read())
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "build", "metiers_datapack")
 NS = "metiers"
