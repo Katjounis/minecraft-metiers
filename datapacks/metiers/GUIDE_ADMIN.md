@@ -74,7 +74,9 @@ Touche **G** (actions rapides, réglable dans les options) ou bouton **Métiers*
 | Explorateur | se déplaçant (20 XP par 200 m, élytres et cheval comptent moins) | bottes |
 | Marchand | échangeant avec les villageois (6) | bourse |
 
-XP par niveau (25.4, exponentielle) : `150 x 1,06^(niveau - 1)`, soit 150 au niveau 1, 253 au 10, 2 607 au 50, 45 297 au 99 (798 000 XP pour le niveau 100), et au moins 15 000 x étoiles par niveau en prestige (25.5). Table précalculée dans `xp/table`. Anti-triche : poser ou jeter un objet récolté retire l'XP gagnée avec. La netherrack ne rapporte rien.
+XP par niveau (25.4, exponentielle) : `150 x 1,06^(niveau - 1)`, soit 150 au niveau 1, 253 au 10, 2 607 au 50, 45 297 au 99 (798 000 XP pour le niveau 100), et au moins 15 000 x étoiles par niveau en prestige (25.5). Table précalculée dans `xp/table`.
+
+Recalcul 25.7 (une seule fois par joueur, tag `metiers.v257`) : l'XP totale de chaque métier est reconstituée avec l'ancienne formule linéaire (`40 + 10 x (niveau + 100 x étoiles)`) puis rejouée sur la nouvelle courbe (étoiles entières d'abord, puis niveau, le reste en XP en cours). Ordres de grandeur sans étoile : 10 → 5, 20 → 13, 30 → 20, 50 → 33, 70 → 43, 100 → 54. Compétences au-dessus du niveau retirées (points rendus), outil et palier de récompenses ramenés à niveau/10, Armure des Guildes reprise et redonnée au nouveau score. Cristaux, Écus et objets déjà reçus restent acquis. Pour refaire le recalcul d'un joueur : `tag <joueur> remove metiers.v257` (attention, il repart de son niveau actuel comme s'il était sur l'ancienne courbe, à ne faire que sur un joueur jamais recalculé). Anti-triche : poser ou jeter un objet récolté retire l'XP gagnée avec. La netherrack ne rapporte rien.
 
 ### Progression
 - **Compétences** : 1 point par niveau, un arbre de 6 compétences par métier (deux branches et une ultime). Se débloquent dans le menu du métier.
