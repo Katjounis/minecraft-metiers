@@ -12,8 +12,10 @@ butin : (objet, min, max, poids) tous tires ; rare : une chance sur 4 de tirer u
 
 PALIERS = (1, 10, 50, 100)
 # Prime en Écus (pack Commerce) à chaque victoire ; un contrat de la semaine la multiplie par 5 (premier kill)
-PRIMES = {"slender": 300, "herobrine": 250, "siren": 600, "nonne": 150, "clown": 150, "pinhead": 500,
-          "dame": 250, "loup": 450, "feu": 100, "rodeur": 200, "croque": 5000}
+# primes de base (25.6 : doublées), puis +25 % dès 10 victoires sur la créature, +50 % dès 50, +100 % dès 100,
+# et x2 pendant la Nuit de sang (calcul dans tue/<créature>)
+PRIMES = {"slender": 600, "herobrine": 500, "siren": 1200, "nonne": 300, "clown": 300, "pinhead": 1000,
+          "dame": 500, "loup": 900, "feu": 200, "rodeur": 400, "croque": 10000}
 # Relique du palier 100 : (objet, nom, enchantements)
 RELIQUES = {
     "slender": ("netherite_leggings", "Jambières de l'ombre", {"swift_sneak": 3, "protection": 4, "unbreaking": 3, "mending": 1}),

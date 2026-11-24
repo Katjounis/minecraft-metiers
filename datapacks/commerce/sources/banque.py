@@ -82,7 +82,15 @@ w(B_ + "interets_boucle.mcfunction", [f"execute unless data storage {NS}:t W[0] 
                                       f"data remove storage {NS}:t W[0]", f"function {NS}:banque/interets_boucle"])
 w(B_ + "interets_m.mcfunction", [
     f"{S} set #x c.t 0", "$execute store result score #x c.t run scoreboard players get $(nom) c.ep",
-    "scoreboard players operation #x c.t /= #50 c.g", "execute if score #x c.t matches 5001.. run scoreboard players set #x c.t 5000",
+    "scoreboard players operation #x c.t /= #50 c.g",
+    # guilde niveau 2 ou 3 : 3 % ; niveau 4 ou 5 : 4 % et plafond 10 000
+    f"{S} set #gn c.t 0", "$execute store result score #gn c.t run scoreboard players get $(nom) c.gn",
+    f"{S} operation #y c.t = #x c.t", f"{S} set #2 c.t 2",
+    "execute if score #gn c.t matches 2..3 run scoreboard players operation #y c.t /= #2 c.t",
+    "execute if score #gn c.t matches 2..3 run scoreboard players operation #x c.t += #y c.t",
+    "execute if score #gn c.t matches 4.. run scoreboard players operation #x c.t *= #2 c.t",
+    "execute if score #gn c.t matches ..3 if score #x c.t matches 5001.. run scoreboard players set #x c.t 5000",
+    "execute if score #gn c.t matches 4.. if score #x c.t matches 10001.. run scoreboard players set #x c.t 10000",
     "execute if score #x c.t matches ..0 run return 0",
     "$scoreboard players operation $(nom) c.ep += #x c.t",
     f"execute store result storage {NS}:t m.v int 1 run scoreboard players get #x c.t",

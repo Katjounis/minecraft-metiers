@@ -127,7 +127,7 @@ LD.append(f"function {NS}:prive/load")
 LD.append(f"function {NS}:hud/load")
 LD.append(f"function {NS}:stat/load")
 LD.append(f"function {NS}:spawner/load")
-LD += [f"function {NS}:banque/load", f"function {NS}:hdv/load", f"function {NS}:boutique/load", "scoreboard objectives add c.gd dummy",
+LD += [f"function {NS}:guilde/load", f"function {NS}:banque/load", f"function {NS}:hdv/load", f"function {NS}:boutique/load", "scoreboard objectives add c.gd dummy",
        "scoreboard players set #50 c.g 50", "scoreboard players set #95 c.g 95"]
 w(F + "load.mcfunction", LD)
 # Barre latérale : le seul affichage permanent fiable en vanilla. Elle montre le solde de chaque joueur,
@@ -183,7 +183,7 @@ w(F + "joueur/seconde.mcfunction", [
     f"execute if score @s c.craft matches 1.. unless score @s c.deb matches 1 run function {NS}:debloque",
     f"function {NS}:joueur/paliers",
     f"execute unless score @s c.init2 matches 1 run function {NS}:joueur/evts_init",
-    f"function {NS}:joueur/evts"])
+    f"function {NS}:joueur/evts", f"function {NS}:guilde/sync"])
 w(F + "joueur/arrivee.mcfunction", [f"scoreboard players add @s {o} 0" for o in PLAYER_OBJ] + [
     f"recipe give @s {NS}:oeuf", "scoreboard players set @s c.vu 1",
     f"execute unless score @s c.gd matches 1 run function {NS}:serveur/bienvenue"])
@@ -403,7 +403,9 @@ w(F + "prix/vente.mcfunction", [
     "scoreboard players operation #a c.t /= #1000 c.g", "scoreboard players operation #f c.t = #e c.t",
     "execute if score #f c.t matches ..999 run scoreboard players set #f c.t 1000",
     "scoreboard players operation #a c.t *= #f c.t", "scoreboard players operation #a c.t /= #1000 c.g",
-    "scoreboard players operation #a c.t *= #achat c.g"])
+    "scoreboard players operation #a c.t *= #achat c.g",
+    # 25.6 : les blocs posables s'achètent 2 fois plus cher (rachat 8 x la base au lieu de 4), la revente ne change pas
+    "execute if score #blk c.t matches 1 run scoreboard players operation #a c.t *= #2 c.g"])
 BO = ["scoreboard players set #bon c.t 1000", "scoreboard players set #lv c.t 0"]
 BO += [f"execute if score #mj c.t matches {JIDX[j]} run scoreboard players operation #lv c.t = @s m.{j}_lvl" for j, *_ in JOBS]
 BO += ["execute if score #lv c.t matches 101.. run scoreboard players set #lv c.t 100",
@@ -526,7 +528,8 @@ w(F + "op/acheter.mcfunction", [
     "execute if score @s c.cts matches ..-1 run scoreboard players add @s c.cts 100",
     "scoreboard players operation @s c.ta += #ce c.t",
     f"function {NS}:op/donner with storage {NS}:t it",
-    "execute if score #blk c.t matches 1 run scoreboard players operation @s c.kb += #q c.t",
+    # bonus du Bâtisseur : seulement pour les blocs à 1 Écu pièce ou plus (sinon de la terre devenait une machine à XP)
+    "execute if score #blk c.t matches 1 if score #a c.t matches 100.. run scoreboard players operation @s c.kb += #q c.t",
     "scoreboard players operation #p c.t += #d c.t",
     "execute if score #p c.t matches ..-301 run scoreboard players set #p c.t -300",
     "scoreboard players operation #as c.t += #q c.t",
@@ -862,6 +865,7 @@ TR = ["scoreboard players operation #v c.t = @s commerce", "scoreboard players s
       f"execute if score #v c.t matches 9000000..9499999 run return run function {NS}:hdv/acheter",
       f"execute if score #v c.t matches 9500000..9999999 run return run function {NS}:hdv/retirer",
       f"execute if score #v c.t matches 7500000..7599999 run return run function {NS}:boutique/acheter",
+      f"execute if score #v c.t matches 7700..7799 run return run function {NS}:guilde/entree",
       f"execute if score #v c.t matches 81..84 run return run function {NS}:stat/global",
       f"execute if score #v c.t matches 70 run return run function {NS}:spawner/entree",
       f"execute if score #v c.t matches 700..799 run return run function {NS}:spawner/entree",
@@ -925,6 +929,7 @@ w(F + "page/accueil_d.mcfunction", "$" + dlg(
      btn(L('{object:"atlas",atlas:"minecraft:items",sprite:"minecraft:item/clock_00"}', T("  Graphiques", "aqua", True)), 81, 160, "Courbes et flux du marché, jour par jour."),
      btn(L(spr("gold_ingot"), T("  Banque", "yellow", True)), 90, 160, "Virements, épargne, historique."),
      btn(L(spr("chest"), T("  Hôtel des ventes", "light_purple", True)), 6000, 160, "Achète et vends des objets entre joueurs."),
+     btn(L('{object:"atlas",atlas:"minecraft:items",sprite:"minecraft:item/name_tag"}', T("  Trésor de guilde", "gold", True)), 7700, 160, "Le trésor de ta guilde : niveaux et avantages pour tous les membres."),
      btn(L(spr("barrel"), T("  Mon comptoir", "white")), 50, 160, "Range ton comptoir dans ton inventaire pour le reposer ailleurs."),
      btn(T("Aide", "gray"), 60, 160)]))
 
@@ -1178,7 +1183,7 @@ w(F + "desinstaller.mcfunction", [f"scoreboard objectives remove {o}" for o in P
 # =====================================================================
 exec(open(os.path.join(HERE, "grafiques.py"), encoding="utf-8").read())
 exec(open(os.path.join(HERE, "spawners.py"), encoding="utf-8").read())
-for _m in ("banque.py", "hdv.py", "boutiques.py", "serveur.py"):
+for _m in ("banque.py", "hdv.py", "boutiques.py", "serveur.py", "guilde.py"):
     exec(open(os.path.join(HERE, _m), encoding="utf-8").read())
 
 # =====================================================================

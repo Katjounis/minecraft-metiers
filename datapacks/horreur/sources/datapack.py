@@ -731,8 +731,13 @@ execute if score @s hr.k.{k} matches {PALIERS[1]} run function horreur:palier/{k
 execute if score @s hr.k.{k} matches {PALIERS[2]} run function horreur:palier/{k}_3
 execute if score @s hr.k.{k} matches {PALIERS[3]} run function horreur:palier/{k}_4
 scoreboard players add @s hr.tot 1
-execute if score @s c.ecus matches -2147483648.. run scoreboard players add @s c.ecus {PRIMES[k]}
-execute if score @s c.ecus matches -2147483648.. run tellraw @s [{PREF},{{"text":"Prime : +{PRIMES[k]} Écus","color":"gold"}}]
+scoreboard players set #pr hr.tmp {PRIMES[k]}
+execute if score @s hr.k.{k} matches 10..49 run scoreboard players add #pr hr.tmp {PRIMES[k] // 4}
+execute if score @s hr.k.{k} matches 50..99 run scoreboard players add #pr hr.tmp {PRIMES[k] // 2}
+execute if score @s hr.k.{k} matches 100.. run scoreboard players add #pr hr.tmp {PRIMES[k]}
+execute if score #sang hr.cfg matches 1 run scoreboard players operation #pr hr.tmp += #pr hr.tmp
+execute if score @s c.ecus matches -2147483648.. run scoreboard players operation @s c.ecus += #pr hr.tmp
+execute if score @s c.ecus matches -2147483648.. run tellraw @s [{PREF},{{"text":"Prime : +","color":"gold"}},{{"score":{{"name":"#pr","objective":"hr.tmp"}},"color":"gold"}},{{"text":" Écus","color":"gold"}}]
 """ + (f"execute if score #contrat hr.cfg matches {REG.index(k) + 1} unless score @s hr.cw = #cw hr.cfg run function horreur:contrat/paye_{k}\n" if k in REG else "") + f"""execute if score #sang hr.cfg matches 1 run loot give @s loot horreur:bonus/{k}""")
     nom_c = snbt({"text": nom, "color": c["couleur"], "bold": True})
     w(F + f"palier/{k}_1.mcfunction", f"""

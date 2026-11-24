@@ -37,7 +37,7 @@ Réglages du 23/11/2026 (Samuel) : environ une rencontre par nuit et par joueur 
 ## Nuit de sang, primes, contrats (23/11/2026)
 
 - **Nuit de sang** : une nuit sur huit, annoncée à tout le serveur. Créatures 4 fois plus fréquentes, 3 min d'attente au lieu de 10, butin doublé, pluie de particules rouges, et le Croque-mitaine sort vers minuit près d'un joueur au hasard. Admin : `/function horreur:sang`.
-- **Primes en Écus** (pack Commerce) à chaque victoire, de 100 (Feu follet) à 5 000 (Croque-mitaine) ; le bouton « Vendre mes trophées » du bestiaire les rachète 5 fois la prime.
+- **Primes en Écus** (pack Commerce) à chaque victoire, de 200 (Feu follet) à 10 000 (Croque-mitaine) depuis le 24/11/2026, +25 % dès 10 victoires sur la créature, +50 % dès 50, +100 % dès 100, et doublées pendant la Nuit de sang ; le bouton « Vendre mes trophées » du bestiaire les rachète 5 fois la prime.
 - **Contrat de chasse** : chaque semaine de jeu (2 h 48 avec des joueurs connectés), une créature recherchée ; la première victoire de chaque joueur paie 5 fois la prime.
 - **Classement** des victoires dans le bestiaire (pseudos lus dans le registre du pack Commerce).
 

@@ -157,7 +157,7 @@ FAM_K = [("quartz_block", "b", "quartz_block_side", "Quartz (bloc, briques, pili
 PAGES["k"] = [note("Tout bloc posé rapporte un peu, les blocs de construction beaucoup plus. Casser un bloc de construction retire ce qu’il a rapporté.")] + \
     [titre("Bonus en plus du bloc posé")] + groupes([(BLOCS_K[b] / d_k, spr(kd, tex), nom) for b, kd, tex, nom in FAM_K]) + \
     [titre("Tous les blocs")] + groupes([(1 / d_k, spr("b", "dirt"), "n’importe quel bloc posé (terre, sable, roche...), 2 XP par minute au plus"),
-                                        (2, spr("i", "emerald"), "en plus, un bloc acheté au Commerce (256 par jour au plus)")]) + [DEFI]
+                                        (2, spr("i", "emerald"), "en plus, un bloc acheté au Commerce à 1 Écu pièce ou plus (256 par jour au plus)")]) + [DEFI]
 
 BAREME_INTRO = {"b": "Tout ce qui sort d’un tronc.", "f": "Les cultures, ramassées ou cassées.", "m": "Les minerais et les pierres cassés.",
                 "c": "Chaque créature tuée.", "p": "Chaque prise, avec des multiplicateurs.", "e": "Les naissances et la laine.",

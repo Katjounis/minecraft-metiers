@@ -113,12 +113,12 @@ for j in JL:
         nxt = [f"function {NS}:quete/{j}_debut_{n + 1}"] if n < 10 else [f"{S} set @s m.q_{j} 11"]
         w(F + f"quete/{j}_fin_{n}.mcfunction", "\n".join([
             f"scoreboard players add @s m.cr_{j} {cr}",
-            f"scoreboard players operation @s m.tmp = @s m.{j}_need", f"scoreboard players operation @s m.tmp /= #4 m.const",
+            f"scoreboard players operation @s m.tmp = @s m.{j}_need", f"scoreboard players operation @s m.tmp /= #2 m.const",
             f"scoreboard players operation @s m.{j}_bal += @s m.tmp"] +
             ([f"scoreboard players add @s m.ecl 1"] if n % 3 == 0 else []) +
             [f"execute if score @s c.ecus matches -2147483648.. run scoreboard players add @s c.ecus {200 * n}",
              'tellraw @a ' + PREFIX + f',{{"selector":"@s","color":"white"}},{{"text":" termine la quête {d["name"]} {n}/10 : ","color":"gray"}},{{"text":"{txt_}","color":"{d["color"]}","bold":true}}]',
-             tr(f"Récompense : {cr} cristaux de {d['name']}, un quart de niveau" + (", 1 éclat de boss" if n % 3 == 0 else "") + f", {200 * n} Écus.", "gold"),
+             tr(f"Récompense : {cr} cristaux de {d['name']}, un demi-niveau" + (", 1 éclat de boss" if n % 3 == 0 else "") + f", {200 * n} Écus.", "gold"),
              "playsound minecraft:ui.toast.challenge_complete master @s ~ ~ ~ 0.8 1.3",
              "particle minecraft:totem_of_undying ~ ~1 ~ 0.4 0.8 0.4 0.3 40"] + nxt))
         w(F + f"quete/{j}_debut_{n}.mcfunction", "\n".join([
@@ -350,6 +350,7 @@ w(G_ + "page_d.mcfunction",
   '{text:"\\n\\nClassement des guildes\\n",color:"gold",bold:true},{text:"",extra:$(R)}]}],'
   'actions:[{label:{text:"Inviter",color:"green"},width:150,action:{type:"run_command",command:"trigger metiers set 773"}},'
   '{label:{text:"Quitter la guilde",color:"red"},width:150,action:{type:"run_command",command:"trigger metiers set 772"}},'
+  '{label:{text:"Trésor de guilde",color:"gold",bold:true},width:150,tooltip:{text:"Dans le Commerce : dépôts des membres, niveaux de guilde (ventes, épargne, XP de métier pour tous)."},action:{type:"run_command",command:"trigger commerce set 7700"}},'
   '{label:{text:"Retour"},width:150,action:{type:"run_command",command:"trigger metiers set 1"}}],columns:3}')
 w(G_ + "page_sans.mcfunction", "\n".join([
     f"function {NS}:guilde/classement", f"function {NS}:guilde/page_sans_d with storage {NS}:gu"]))

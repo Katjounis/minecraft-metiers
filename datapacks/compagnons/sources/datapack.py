@@ -443,12 +443,18 @@ w(F + "xp/gagner.mcfunction", [
     f"execute if score @s m.e_pr matches 1.. run {S} set #e cp.t 100",
     f"{S} operation #e cp.t *= #g cp.t", f"{S} operation #e cp.t /= #100 cp.t", f"{S} operation #g cp.t += #e cp.t"] +
     [f"execute if score #y cp.t matches {k} run function {NS}:xp/ajout_{k}" for k in T])
+# 25.6 (v3) : courbe exponentielle, +8 % par niveau ; les montures demandent bien plus (dragon et wither surtout)
+BESOIN0 = {1: 60, 2: 60, 3: 60, 4: 60, 5: 60, 6: 60, 7: 120, 8: 180, 9: 200}
+BESOIN = lambda k, L: round(BESOIN0[k] * 1.08 ** (L - 1))
+for k in T:
+    w(F + f"xp/besoin_{k}.mcfunction", "\n".join(
+        [f"execute if score @s cp.l{k} matches {L} run return run {S} set #n cp.t {BESOIN(k, L)}" for L in range(1, LMAX + 1)]))
 for k, (_, cle, nom, col, ent, ico, req, suit, combat) in T.items():
     w(F + f"xp/ajout_{k}.mcfunction", [
         f"execute if score @s cp.l{k} matches {LMAX}.. run return 0",
         f"{S} operation @s cp.x{k} += #g cp.t", f"function {NS}:xp/monter_{k}"])
     w(F + f"xp/monter_{k}.mcfunction", [
-        f"{S} operation #n cp.t = @s cp.l{k}", f"{S} operation #n cp.t *= #6 cp.t", f"{S} operation #n cp.t += #20 cp.t",
+        f"function {NS}:xp/besoin_{k}",
         f"execute if score @s cp.x{k} < #n cp.t run return 0",
         f"{S} operation @s cp.x{k} -= #n cp.t", f"{S} add @s cp.l{k} 1",
         f"execute if score @s cp.l{k} matches {LMAX}.. run {S} set @s cp.x{k} 0",
@@ -627,7 +633,7 @@ def txt(t, col="white", bold=False):
 
 # =====================================================================
 # AMÉLIORATIONS : 3 voies de 5 rangs par compagnon, payées en points de dressage (1 par niveau) et en Écus
-#   rang r : r points (les 3 voies au max coûtent 45 points, il y en a 30 : il faut choisir) et 1 500 x r Écus
+#   rang r : r points (les 3 voies au max coûtent 45 points, il y en a 30 : il faut choisir) et 4 000 x r Écus (25.6)
 # =====================================================================
 VOIES = [("r", "Robustesse", "red", "apple", "+10 % de vie par rang."),
          ("f", "Puissance", "gold", "blaze_powder", "+15 % de dégâts, +5 % de vitesse et +10 % de vitesse de vol par rang."),
@@ -647,7 +653,7 @@ for k, (_, cle, nom, col, ent, ico, req, suit, combat) in T.items():
                f'data modify storage {NS}:a c{v} set value "{vc}"', f'execute if score @s cp.{v}{k} matches 5.. run data modify storage {NS}:a c{v} set value "dark_gray"',
                f'data modify storage {NS}:a p{v} set value "max"']
         for r in range(0, 5):
-            P_.append(f'execute if score @s cp.{v}{k} matches {r} run data modify storage {NS}:a p{v} set value "{r + 1} pt + {1500 * (r + 1):,} Écus"'.replace(",", " "))
+            P_.append(f'execute if score @s cp.{v}{k} matches {r} run data modify storage {NS}:a p{v} set value "{r + 1} pt + {4000 * (r + 1):,} Écus"'.replace(",", " "))
     P_ += [f"execute store result storage {NS}:a e int 1 run {S} get @s c.ecus", f"function {NS}:menu/amel_{k}_d with storage {NS}:a"]
     w(F + f"menu/amel_{k}.mcfunction", P_)
     acts_ = [btn(f'[{IC(vi)},{{text:"  {vn} $({v})/5",color:"$(c{v})",bold:true}}]', 100 + 10 * k + i, 140, f"{vd}\\nProchain rang : $(p{v}).")
@@ -655,14 +661,14 @@ for k, (_, cle, nom, col, ent, ico, req, suit, combat) in T.items():
     w(F + f"menu/amel_{k}_d.mcfunction",
       f'$dialog show @s {{type:"minecraft:multi_action",title:[{IC(ico)},{{text:"  {nom} : améliorations",color:"{col}",bold:true}}],can_close_with_escape:true,pause:false,'
       f'body:[{BAN},{{type:"minecraft:plain_message",width:440,contents:[{{text:"Points de dressage libres : ",color:"gray"}},{{text:"$(pt)",color:"yellow",bold:true}},'
-      f'{{text:"   ·   ton compte : $(e) Écus\\n",color:"gray"}},{{text:"1 point par niveau du compagnon. Un rang coûte autant de points que son numéro, plus 1 500 Écus par rang. 30 points pour 45 au total : choisis ta voie.",color:"dark_gray"}}]}}],'
+      f'{{text:"   ·   ton compte : $(e) Écus\\n",color:"gray"}},{{text:"1 point par niveau du compagnon. Un rang coûte autant de points que son numéro, plus 4 000 Écus par rang. 30 points pour 45 au total : choisis ta voie.",color:"dark_gray"}}]}}],'
       f'actions:[{",".join(acts_)}],columns:3,'
       f'exit_action:{{label:"Retour",width:200,action:{{type:"run_command",command:"trigger compagnons set {10 + k}"}}}}}}')
     for i, (v, vn, vc, vi, vd) in enumerate(VOIES, 1):
         A_ = [f"execute if score @s cp.{v}{k} matches 5.. run return run " + tr(f"{vn} est déjà au maximum.", "red")] + points(k) + [
               f"{S} operation #c cp.t = @s cp.{v}{k}", f"{S} add #c cp.t 1",
               f"execute if score #pt cp.t < #c cp.t run return run " + tr("Pas assez de points de dressage : fais monter ton compagnon de niveau.", "red"),
-              f"{S} operation #e cp.t = #c cp.t", f"{S} set #1500 cp.t 1500", f"{S} operation #e cp.t *= #1500 cp.t",
+              f"{S} operation #e cp.t = #c cp.t", f"{S} set #1500 cp.t 4000", f"{S} operation #e cp.t *= #1500 cp.t",
               f"{S} set #ok cp.t 0", f"execute if score @s c.ecus >= #e cp.t run {S} set #ok cp.t 1",
               f"execute if score #ok cp.t matches 0 run return run " + tr("Pas assez d’Écus sur ton compte.", "red"),
               f"{S} operation @s c.ecus -= #e cp.t", f"{S} add @s cp.{v}{k} 1",
@@ -724,7 +730,7 @@ for k, (_, cle, nom, col, ent, ico, (j, n, jn), suit, combat) in T.items():
         f"execute if score #deb cp.t matches 0 run return run function {NS}:menu/verrou_{k}",
         f"execute store result storage {NS}:p lv int 1 run {S} get @s cp.l{k}",
         f"execute store result storage {NS}:p xp int 1 run {S} get @s cp.x{k}",
-        f"{S} operation #n cp.t = @s cp.l{k}", f"{S} operation #n cp.t *= #6 cp.t", f"{S} operation #n cp.t += #20 cp.t",
+        f"function {NS}:xp/besoin_{k}",
         f"execute store result storage {NS}:p need int 1 run {S} get #n cp.t",
         f"{S} operation #b cp.t = @s cp.x{k}", f"{S} operation #b cp.t *= #10 cp.t", f"{S} operation #b cp.t /= #n cp.t",
         f"execute if score @s cp.l{k} matches {LMAX}.. run {S} set #b cp.t 10"] + \
@@ -781,10 +787,10 @@ w(F + "menu/aide.mcfunction",
   'dialog show @s {type:"minecraft:notice",title:{text:"Compagnons : comment ça marche",color:"#E0A040",bold:true},'
   f'body:[{BAN},{{type:"minecraft:plain_message",width:400,contents:[{{text:"'
   "Déblocage : chaque compagnon vient d’un métier (loup Chasseur 10, chat Fermier 10, perroquet Explorateur 15, bonhomme de neige Pêcheur 20, allay Enchanteur 25, golem Mineur ou Bâtisseur 30). Le prestige compte comme le niveau 100.\\n\\n"
-  "Niveaux : 5 XP par monstre qu’il achève, 1 par monstre que tu tues pendant qu’il est dehors, 2 par minute passée ensemble. +1 % par niveau d’Éleveur. À chaque niveau il gagne de la vie, des dégâts, de l’armure, et parfois grandit. Niveau maximum 30.\\n\\n"
+  "Niveaux (de plus en plus longs, +8 % par niveau, montures bien plus lentes) : 5 XP par monstre qu’il achève, 1 par monstre que tu tues pendant qu’il est dehors, 2 par minute passée ensemble. +1 % par niveau d’Éleveur. À chaque niveau il gagne de la vie, des dégâts, de l’armure, et parfois grandit. Niveau maximum 30.\\n\\n"
   "Capacités : 4 par compagnon, aux niveaux 5, 10, 20 et 30. Apparences : une nouvelle régulièrement (loup, chat, perroquet). Le loup porte une armure dès le niveau 15.\\n\\n"
   "Montures : ghast joyeux (Explorateur 40), dragon de l’Ender (Chasseur 50 et l’Ender Dragon vaincu), wither (Chasseur 70 et un Wither affronté). Clic droit pour monter, regarde où tu veux aller et avance. En descendant en plein vol, tu tombes doucement.\\n\\n"
-  "Améliorations : 1 point de dressage par niveau, à placer dans Robustesse (vie), Puissance (dégâts et vitesse) ou Maîtrise (capacités plus tôt), 5 rangs chacune, avec des Écus.\\n\\n"
+  "Améliorations : 1 point de dressage par niveau, à placer dans Robustesse (vie), Puissance (dégâts et vitesse) ou Maîtrise (capacités plus tôt), 5 rangs chacune, avec des Écus (4 000 par rang).\\n\\n"
   "K.O. : à court de vie, il rentre se reposer 60 secondes, il ne meurt jamais. Il te suit d’une dimension à l’autre et rentre quand tu te déconnectes."
   '",color:"white"}]}],action:{label:"Retour",width:200,action:{type:"run_command",command:"trigger compagnons set 1"}}}')
 
@@ -796,7 +802,7 @@ if os.path.exists(MENU):
     wj("data/minecraft/tags/dialog/pause_screen_additions.json", {"values": ["serveur:menu"]})
 
 # ---------------------------------------------------------------- admin
-w(F + "version.mcfunction", tr("Version 2 : 9 compagnons dont 3 montures volantes (ghast joyeux, dragon de l’Ender, wither), niveaux 1 à 30, 36 capacités, améliorations, apparences.", "gold"))
+w(F + "version.mcfunction", tr("Version 3 : progression exponentielle, 9 compagnons dont 3 montures volantes (ghast joyeux, dragon de l’Ender, wither), niveaux 1 à 30, 36 capacités, améliorations, apparences.", "gold"))
 w(F + "admin/max.mcfunction", [f"{S} set @s cp.l{k} {LMAX}" for k in T] + [f"{S} set @s cp.x{k} 0" for k in T] +
   [f"execute if score @s cp.out matches 1.. run function {NS}:invoquer/maj", tr("Tous tes compagnons passent niveau 30 (test).", "gold")])
 w(F + "admin/zero.mcfunction", [f"{S} set @s cp.l{k} 1" for k in T] + [f"{S} set @s cp.x{k} 0" for k in T] +

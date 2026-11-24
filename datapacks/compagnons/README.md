@@ -24,11 +24,11 @@ Le ghast joyeux est un vrai ghast joyeux harnaché : vol du jeu (clic droit pour
 
 ## Améliorations
 
-Trois voies par compagnon, 5 rangs chacune : Robustesse (+10 % de vie par rang), Puissance (+15 % de dégâts, +5 % de vitesse, +10 % de vol par rang), Maîtrise (capacités débloquées 2 niveaux plus tôt par rang). Un rang n coûte n points de dressage (1 par niveau du compagnon, 30 au maximum alors que tout acheter en coûte 45) et 1 500 x n Écus du Commerce.
+Trois voies par compagnon, 5 rangs chacune : Robustesse (+10 % de vie par rang), Puissance (+15 % de dégâts, +5 % de vitesse, +10 % de vol par rang), Maîtrise (capacités débloquées 2 niveaux plus tôt par rang). Un rang n coûte n points de dressage (1 par niveau du compagnon, 30 au maximum alors que tout acheter en coûte 45) et 4 000 x n Écus du Commerce.
 
 ## Progression
 
-- Niveaux 1 à 30, XP pour le niveau suivant : 20 + 6 x niveau.
+- Niveaux 1 à 30, XP pour le niveau suivant : base x 1,08^(niveau - 1), base 60 (120 pour le ghast, 180 pour le dragon, 200 pour le wither) : environ 6 200 XP pour le niveau 30, 18 700 pour le dragon.
 - 5 XP par monstre qu'il achève (crédit par le dernier attaquant du monstre, détecté toutes les 5 ticks), 1 XP par monstre tué par le joueur pendant qu'il est dehors, 2 XP par minute passée ensemble. +1 % par niveau d'Éleveur (+100 % au prestige).
 - Chaque niveau : vie, dégâts, armure, vitesse, et taille pour le loup, le bonhomme de neige et le golem (tables `stats()` dans `datapack.py`).
 - Apparences : 9 pour le loup, 11 pour le chat, 5 pour le perroquet, une nouvelle tous les 3, 2 ou 5 niveaux. Armure de loup dès le niveau 15. Renommer : objet renommé à l'enclume en main.

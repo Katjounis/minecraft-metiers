@@ -102,6 +102,9 @@ for i, (j, desc, tgt, crits, div) in enumerate(SEM, 1):
     DW.append(f"execute if score #s_def m.defi matches {i} unless score @s m.wd matches 1 if score @s m.wp matches {tgt}.. run function {NS}:defis/semaine_fini_{i}")
     w(F + f"defis/semaine_fini_{i}.mcfunction", "\n".join([
         "scoreboard players set @s m.wd 1", f"scoreboard players add @s m.cr_{j} 20", "scoreboard players add @s m.ecl 1",
+        # 25.6 : un niveau entier du métier concerné (proportionnel au niveau actuel)
+        f"scoreboard players operation @s m.{j}_bal += @s m.{j}_need",
+        f'tellraw @s {PREFIX},{{"text":"Défi de la semaine : un niveau entier de {jobs[j]["name"]} en plus !","color":"light_purple"}}]',
         f'tellraw @a {PREFIX},{{"selector":"@s","color":"white"}},{{"text":" a réussi le défi de la semaine ! ","color":"light_purple","bold":true}},{{"text":"+20 ","color":"aqua"}},{GJ("cristal_" + j)},{{"text":" et 1 ","color":"aqua"}},{GJ("eclat")}]',
         "playsound minecraft:ui.toast.challenge_complete master @s ~ ~ ~ 1 0.8"]))
 for i, (_, tgt, crits) in enumerate(COLL, 1):

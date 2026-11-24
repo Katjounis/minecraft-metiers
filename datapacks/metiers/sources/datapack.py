@@ -32,10 +32,10 @@ STONES = {"stone": 2, "deepslate": 3, "andesite": 2, "diorite": 2, "granite": 2,
           "netherrack": 1, "basalt": 2, "smooth_basalt": 2, "calcite": 2, "dripstone_block": 2, "end_stone": 3,
           "sandstone": 1, "red_sandstone": 1, "obsidian": 4, "crying_obsidian": 4}
 ORES = {"coal_ore": 8, "deepslate_coal_ore": 10, "copper_ore": 8, "deepslate_copper_ore": 10,
-        "iron_ore": 16, "deepslate_iron_ore": 20, "gold_ore": 24, "deepslate_gold_ore": 28,
+        "iron_ore": 16, "deepslate_iron_ore": 20, "gold_ore": 48, "deepslate_gold_ore": 56,
         "redstone_ore": 12, "deepslate_redstone_ore": 14, "lapis_ore": 20, "deepslate_lapis_ore": 24,
-        "diamond_ore": 80, "deepslate_diamond_ore": 90, "emerald_ore": 100, "deepslate_emerald_ore": 110,
-        "nether_gold_ore": 6, "nether_quartz_ore": 6, "ancient_debris": 160}
+        "diamond_ore": 240, "deepslate_diamond_ore": 270, "emerald_ore": 300, "deepslate_emerald_ore": 330,
+        "nether_gold_ore": 6, "nether_quartz_ore": 6, "ancient_debris": 480}   # 25.6 : or x2, diamant, émeraude et débris x3
 DIV = {"m": 4, "f": 2, "e": 2, "k": 20}
 ORE_DROP = {"coal": "coal 1", "copper": "raw_copper 2", "iron": "raw_iron 1", "gold": "raw_gold 1",
             "redstone": "redstone 4", "lapis": "lapis_lazuli 4", "diamond": "diamond 1",
@@ -47,7 +47,7 @@ PLANTABLE = ["carrot", "potato", "nether_wart", "sweet_berries", "glow_berries"]
 CROP_BLOCKS = {"melon": (4, "melon", "melon_slice"), "pumpkin": (4, "pumpkin", "pumpkin"),
                "sugar_cane": (2, "sugar_cane", "sugar_cane"), "cocoa": (2, "cocoa_beans", "cocoa_beans"),
                "cactus": (1, "cactus", "cactus")}
-BOSSES = {"wither": 200, "ender_dragon": 300, "warden": 100, "elder_guardian": 45}
+BOSSES = {"wither": 800, "ender_dragon": 1200, "warden": 400, "elder_guardian": 180}   # 25.6 : x4
 
 jobs = {
     "b": {"name": "Bûcheron", "color": "gold", "idx": 1, "icon": "♣", "src": []},
@@ -105,6 +105,7 @@ for c, (x, placed, drop) in CROP_BLOCKS.items():
     jobs["f"]["src"].append((f"minecraft.used:minecraft.{placed}", x, -1, f"f.up.{c}", []))
 # XP selon la créature tuée (mob_kills ne sert plus qu'à la compétence Soif de sang)
 MOBS = {'chicken': 1, 'cow': 1, 'pig': 1, 'sheep': 1, 'rabbit': 1, 'goat': 1, 'mooshroom': 1, 'silverfish': 1, 'slime': 1, 'magma_cube': 1, 'zombie': 3, 'husk': 3, 'zombie_villager': 3, 'spider': 3, 'piglin': 3, 'zombified_piglin': 1, 'drowned': 3, 'skeleton': 4, 'cave_spider': 4, 'vex': 4, 'stray': 5, 'bogged': 5, 'creeper': 5, 'phantom': 6, 'pillager': 6, 'witch': 5, 'enderman': 3, 'blaze': 5, 'guardian': 3, 'hoglin': 7, 'creaking': 8, 'vindicator': 9, 'shulker': 9, 'zoglin': 9, 'ghast': 11, 'wither_skeleton': 11, 'breeze': 11, 'piglin_brute': 13, 'evoker': 15, 'ravager': 21}
+MOBS = {m: (2 * x if x >= 9 else x) for m, x in MOBS.items()}   # 25.6 : mobs rares (9 XP et plus) x2
 for mob, x in MOBS.items():
     HEAD = {"zombie": "zombie_head", "skeleton": "skeleton_skull", "creeper": "creeper_head", "piglin": "piglin_head"}
     hk = [("c3", "chance_25", f"loot give @s loot minecraft:entities/{mob}"), ("c6", None, "effect give @s minecraft:instant_health 1 0 true"),
@@ -449,7 +450,9 @@ def tool_iid(j, k):
     tool = TOOL[j][0]
     return f"{MAT[k]}_{tool}" if j in ("b", "m", "f", "c", "x") else tool
 
-CRIST = [0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30]   # cristaux du métier gagnés à chaque palier
+CRIST = [0, 3, 6, 9, 12, 15, 25, 40, 60, 85, 120]   # cristaux du métier par palier (25.6 : paliers 6 à 10 bien plus généreux)
+ECL_PAL = {6: 1, 7: 2, 8: 3, 9: 4, 10: 6}            # éclats de boss en plus (25.6)
+ECUS_PAL = {6: 5000, 7: 10000, 8: 20000, 9: 35000, 10: 60000}   # Écus du Commerce en plus (25.6)
 
 def rewards(j, k):
     tool, nom, dieu = TOOL[j]
@@ -869,6 +872,11 @@ scoreboard players operation @s m.tmp = @s m.gain
 scoreboard players operation @s m.tmp *= @s m.{j}_pr
 scoreboard players operation @s m.tmp /= #10 m.const
 scoreboard players operation @s m.gain += @s m.tmp
+execute if score @s c.gn matches 3..4 run scoreboard players operation @s m.tmp = @s m.gain
+execute if score @s c.gn matches 3..4 run scoreboard players operation @s m.tmp /= #20 m.const
+execute if score @s c.gn matches 5.. run scoreboard players operation @s m.tmp = @s m.gain
+execute if score @s c.gn matches 5.. run scoreboard players operation @s m.tmp /= #10 m.const
+execute if score @s c.gn matches 3.. run scoreboard players operation @s m.gain += @s m.tmp
 execute if score #job m.heure matches {d['idx']} run scoreboard players operation @s m.gain *= #2 m.const
 execute if score @s m.{j}_lvl matches {MAXLVL}.. run return 0
 scoreboard players operation @s m.{j}_xp += @s m.gain
@@ -931,6 +939,9 @@ execute if score @s m.{j}_lvl matches ..{MAXLVL-1} if score @s m.{j}_xp >= @s m.
             else:
                 lignes.append(f'{{text:"\\n• {it["label"]}",color:"white",bold:false}}')
         lignes.append(f'{{text:"\\n• {CRIST[k]} cristaux de {d["name"]} ",color:"aqua",bold:true}},{{text:"(à dépenser à la Forge)",color:"gray",bold:false}}')
+        if k in ECL_PAL:
+            _e = f"{ECUS_PAL[k]:,}".replace(",", " ")
+            lignes.append(f'{{text:"\\n• {ECL_PAL[k]} éclat{"s" if ECL_PAL[k] > 1 else ""} de boss et {_e} Écus",color:"gold",bold:true}}')
         body.append('{type:"minecraft:plain_message",width:320,contents:[{text:""},' + ",".join(lignes) + ']}')
         dlg = (f'dialog show @s {{type:"minecraft:confirmation",title:{{text:"Palier {lv} : {TIERS[k][0]} {d["name"]}",color:"gold",bold:true}},'
                f'can_close_with_escape:true,pause:false,body:[{",".join(body)}],'
@@ -946,6 +957,9 @@ execute if score @s m.{j}_lvl matches ..{MAXLVL-1} if score @s m.{j}_xp >= @s m.
              f"execute if score @s m.tmp matches ..{n-1} run return 0",
              f"scoreboard players set @s m.{j}_pal {k}",
              f"scoreboard players add @s m.cr_{j} {CRIST[k]}"]
+        if k in ECL_PAL:
+            G += [f"scoreboard players add @s m.ecl {ECL_PAL[k]}",
+                  f"execute if score @s c.ecus matches -2147483648.. run scoreboard players add @s c.ecus {ECUS_PAL[k]}"]
         G += [f"give @s {it['give']}" for it in items[1:]]
         G += [f'tellraw @a ' + PREFIX + f',{{"selector":"@s","color":"white"}},{{"text":" récupère sa récompense","color":"gray"}},{{"text":" (palier {lv} {d["name"]})","color":"gray"}}]',
               "playsound minecraft:entity.player.levelup master @s ~ ~ ~ 1 0.6",
@@ -1787,7 +1801,7 @@ w(F + "classement/dialog.mcfunction",
 w(F + "boss/tick.mcfunction", f"""
 scoreboard players add #cycle m.boss 1
 execute if score #actif m.boss matches 0 if score #compte m.boss matches 1.. run function {NS}:boss/compte
-execute if score #actif m.boss matches 0 if score #compte m.boss matches ..0 if score #cycle m.boss matches 3600.. run function {NS}:boss/alerte
+execute if score #actif m.boss matches 0 if score #compte m.boss matches ..0 if score #cycle m.boss matches 9000.. run function {NS}:boss/alerte
 execute if score #actif m.boss matches 1 run function {NS}:boss/encours
 """)
 w(F + "boss/alerte.mcfunction", f"""
@@ -2072,7 +2086,7 @@ for i, (nom, base, col) in enumerate(LEGENDES, 1):
             f'minecraft:custom_data={{metiers_legende:{i}}},minecraft:rarity="epic",minecraft:enchantment_glint_override=true,minecraft:max_stack_size=1]')
     w(F + f"p/leg_{i}.mcfunction", "\n".join([
         f"give @s {item} 1",
-        "scoreboard players add @s m.p_bal 50",
+        "scoreboard players add @s m.p_bal 300",
         f'tellraw @a ' + PREFIX + f',{{"selector":"@s","color":"white"}},{{"text":" a pêché une prise légendaire : ","color":"gray"}},{{"text":"{nom}","color":"{col}","bold":true}}]',
         f'execute unless score @s m.p_l{i} matches 1 run tellraw @s ' + PREFIX + f',{{"text":"Nouvelle espèce dans ton Carnet du pêcheur !","color":"aqua","bold":true}}]',
         f"scoreboard players set @s m.p_l{i} 1",
@@ -2086,14 +2100,15 @@ CK += ["execute if score @s m.p_legok matches 1 run return 0",
        "execute unless score @s m.tmp matches 10 run return 0",
        "scoreboard players set @s m.p_legok 1",
        "give @s minecraft:enchanted_golden_apple 5", "give @s minecraft:netherite_ingot 3", "give @s minecraft:heart_of_the_sea 1",
-       "scoreboard players add @s m.p_bal 500",
+       "scoreboard players add @s m.p_bal 5000",
        'tellraw @a ' + PREFIX + ',{"selector":"@s","color":"white"},{"text":" a complété le Carnet du pêcheur : les 10 légendes ! ","color":"aqua","bold":true}]',
        "execute as @a at @s run playsound minecraft:ui.toast.challenge_complete master @s ~ ~ ~ 1 0.6"]
 w(F + "p/carnet_check.mcfunction", "\n".join(CK))
 TRES = ["shipwreck_treasure", "buried_treasure", "ancient_city", "ruined_portal", "underwater_ruin_big", "desert_pyramid"]
 TR = ["execute store result score #f m.tmp run random value 1..6"]
 TR += [f"execute if score #f m.tmp matches {i} run loot give @s loot minecraft:chests/{t}" for i, t in enumerate(TRES, 1)]
-TR += ['tellraw @a ' + PREFIX + ',{"selector":"@s","color":"white"},{"text":" remonte un coffre des profondeurs !","color":"dark_aqua","bold":true}]',
+TR += ["scoreboard players add @s m.p_bal 150",
+       'tellraw @a ' + PREFIX + ',{"selector":"@s","color":"white"},{"text":" remonte un coffre des profondeurs ! (+150 XP Pêcheur)","color":"dark_aqua","bold":true}]',
        "playsound minecraft:block.chest.open master @s ~ ~ ~ 1 0.8",
        "particle minecraft:bubble ~ ~0.5 ~ 0.6 0.4 0.6 0.1 40"]
 w(F + "p/tresor.mcfunction", "\n".join(TR))
@@ -2111,7 +2126,7 @@ w(F + "p/carnet_dialog.mcfunction",
   '$dialog show @s {type:"minecraft:notice",title:{text:"Carnet du pêcheur",color:"aqua",bold:true},can_close_with_escape:true,pause:false,'
   'body:[{type:"minecraft:plain_message",width:300,contents:[{text:"Légendes trouvées : $(nb)/10\\n\\n",color:"yellow"},' + lignes + ']},'
   '{type:"minecraft:plain_message",width:300,contents:{text:"Chaque prise a une chance d\'être légendaire (2 % au niveau 1, 12 % au niveau 100). '
-  'Collection complète : 5 pommes de Notch, 3 lingots de netherite, un cœur de la mer et 500 XP Pêcheur.",color:"gray"}}],'
+  'Collection complète : 5 pommes de Notch, 3 lingots de netherite, un cœur de la mer et 5 000 XP Pêcheur. Chaque légende : 300 XP.",color:"gray"}}],'
   'action:{label:"Retour",width:150,action:{type:"run_command",command:"trigger metiers set 25"}}}')
 
 # =====================================================================
