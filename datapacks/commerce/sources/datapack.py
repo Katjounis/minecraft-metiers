@@ -720,6 +720,18 @@ MENU_BTN = [("MÉTIERS", "iron_pickaxe", (140, 255, 255), (20, 150, 190)), ("COM
             ("BESTIAIRE", "bone", (255, 110, 90), (150, 15, 15)), ("COMPAGNONS", "lead", (250, 200, 120), (180, 100, 30)),
             ("MON PROFIL", "name_tag", (255, 245, 140), (200, 160, 20)), ("GUIDE", "book", (255, 255, 255), (170, 170, 180))]
 MENU_GLY = [chr(0xE040 + k) for k in range(len(MENU_BTN))]
+# décors des pages de métier (lus par Métiers) : nom, bloc de fond, outil, dégradé haut/bas, blocs semés dans le fond
+SCENES = {"b": ("BÛCHERON", "oak_log", "iron_axe", (255, 215, 110), (200, 120, 20), []),
+          "f": ("FERMIER", "farmland_moist", "wheat", (150, 255, 120), (40, 150, 30), ["hay_block_top"]),
+          "m": ("MINEUR", "deepslate", "iron_pickaxe", (235, 235, 240), (130, 130, 145), ["deepslate_diamond_ore", "deepslate_gold_ore"]),
+          "c": ("CHASSEUR", "mossy_cobblestone", "iron_sword", (255, 120, 100), (170, 20, 20), []),
+          "p": ("PÊCHEUR", "prismarine_bricks", "fishing_rod", (150, 255, 255), (20, 150, 190), []),
+          "e": ("ÉLEVEUR", "hay_block_top", "lead", (255, 160, 255), (180, 60, 190), []),
+          "n": ("ENCHANTEUR", "bookshelf", "enchanted_book", (220, 150, 255), (110, 30, 170), []),
+          "x": ("EXPLORATEUR", "cartography_table_top", "compass_00", (140, 170, 255), (40, 60, 200), ["map"]),
+          "t": ("MARCHAND", "emerald_block", "emerald", (140, 255, 150), (20, 130, 40), []),
+          "k": ("BÂTISSEUR", "bricks", "brush", (240, 200, 150), (170, 110, 60), [])}
+SCENE_IDX = {"b": 1, "f": 2, "m": 3, "c": 4, "p": 5, "e": 6, "n": 7, "x": 8, "t": 9, "k": 10}
 # bandeau k : glyphe chr(0xE020 + k), 27 px de haut, soit 3 lignes de texte
 BAN = lambda k: f'{{type:"minecraft:plain_message",width:310,contents:[{{text:""}},{{text:"{chr(0xE020 + k)}",font:"commerce:recette",color:"white",shadow_color:0}},{{text:"\\n\\n"}}]}}'
 
@@ -822,6 +834,55 @@ def dessiner_rp():
                 x += w_ * 2 + 1
         b.save(os.path.join(RP, "textures", "font", f"menu_{k}.png"))
         provs.append({"type": "bitmap", "file": f"commerce:font/menu_{k}.png", "height": Hb, "ascent": 13, "chars": [MENU_GLY[k]]})
+    # décors des pages de métier (Métiers, 24/11/2026) : 300 x 36, fond de blocs du métier x2 assombri, cadre doré,
+    # nom en grosses lettres dégradées, outil de chaque côté. Glyphe chr(0xE100 + idx du métier).
+    ACC = {"É": ("E", [(6, -3), (7, -3), (4, -2), (5, -2)]), "Ê": ("E", [(4, -3), (5, -3), (2, -2), (3, -2), (6, -2), (7, -2)]),
+           "Û": ("U", [(4, -3), (5, -3), (2, -2), (3, -2), (6, -2), (7, -2)]), "Â": ("A", [(4, -3), (5, -3), (2, -2), (3, -2), (6, -2), (7, -2)])}
+    def gros(img, txt, x, y, haut, bas, ombre):
+        for dx, dy, grad in ((2, 2, False), (0, 0, True)):
+            xx0 = x
+            for ch in txt:
+                base, acc = ACC.get(ch, (ch, []))
+                cell, w_ = lettre(base)
+                big = cell.resize((16, 16), Image.NEAREST)
+                pts = [(u, v) for v in range(16) for u in range(16) if big.getpixel((u, v))[3]] + acc
+                for u, v in pts:
+                    f = min(1, max(0, v / 13))
+                    col = tuple(int(haut[i] + (bas[i] - haut[i]) * f) for i in range(3)) if grad else ombre
+                    X, Y = xx0 + u + dx, y + v + dy
+                    if 0 <= X < img.width and 0 <= Y < img.height:
+                        img.putpixel((X, Y), col + (255,))
+                xx0 += w_ * 2 + 2
+    for j, (nom, fond, ico, haut, bas, sem) in SCENES.items():
+        Wb, Hb = 300, 36
+        b = Image.new("RGBA", (Wb, Hb), (0, 0, 0, 255))
+        tf = tex(fond).resize((32, 32), Image.NEAREST)
+        semis = [tex(x_).resize((32, 32), Image.NEAREST) for x_ in sem]
+        import random as _rd
+        rg = _rd.Random(j)
+        for tx in range(0, Wb, 32):
+            for ty in range(-14, Hb, 32):
+                t_ = rg.choice(semis) if semis and rg.random() < 0.25 else tf
+                b.paste(t_, (tx, ty))
+        px = b.load()
+        for X in range(Wb):
+            for Y in range(Hb):
+                r, g, b_, a_ = px[X, Y]
+                k_ = 0.42 * (1 - 0.5 * (abs(X - Wb / 2) / (Wb / 2)) ** 2)
+                k_ *= 0.55 if fond == "emerald_block" else 1
+                px[X, Y] = (int(r * k_), int(g * k_), int(b_ * k_), 255)
+        d3 = ImageDraw.Draw(b)
+        d3.rectangle([0, 0, Wb - 1, Hb - 1], outline=(40, 26, 8, 255))
+        d3.rectangle([1, 1, Wb - 2, Hb - 2], outline=(222, 170, 60, 255))
+        d3.rectangle([2, 2, Wb - 3, Hb - 3], outline=(120, 80, 20, 255))
+        for cx, cy in ((3, 3), (Wb - 4, 3), (3, Hb - 4), (Wb - 4, Hb - 4)):
+            d3.point((cx, cy), fill=(255, 225, 120, 255))
+        it = tex(ico).resize((24, 24), Image.NEAREST)
+        b.paste(it, (10, 6), it); b.paste(it.transpose(Image.FLIP_LEFT_RIGHT), (Wb - 34, 6), it.transpose(Image.FLIP_LEFT_RIGHT))
+        larg = sum(lettre(ACC.get(ch, (ch,))[0])[1] * 2 + 2 for ch in nom) - 2
+        gros(b, nom, (Wb - larg) // 2, 12, haut, bas, tuple(int(c * 0.18) for c in bas))
+        b.save(os.path.join(RP, "textures", "font", f"scene_{j}.png"))
+        provs.append({"type": "bitmap", "file": f"commerce:font/scene_{j}.png", "height": Hb, "ascent": 7, "chars": [chr(0xE100 + SCENE_IDX[j])]})
     # barres de courbe : 8 hauteurs, blanches (la couleur du texte les teinte), 2 px de large, posées sur la ligne
     bar = Image.new("RGBA", (24, 9), (0, 0, 0, 0))
     for k in range(8):
