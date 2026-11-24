@@ -785,7 +785,7 @@ def dessiner_rp():
         return b
     provs = []
     for k, (txt, ico) in enumerate(BANNIERES):
-        Wb, Hb = (280 if k == 14 else 200), 27
+        Wb, Hb = (256 if k == 14 else 200), 27   # un glyphe de police ne doit pas dépasser 256 px (sinon le client plante)
         b = plaque(Wb, Hb)
         d2 = ImageDraw.Draw(b)
         # texte centré, deux fois la taille de la police, ombre portée
@@ -854,7 +854,7 @@ def dessiner_rp():
                         img.putpixel((X, Y), col + (255,))
                 xx0 += w_ * 2 + 2
     for j, (nom, fond, ico, haut, bas, sem) in SCENES.items():
-        Wb, Hb = 300, 36
+        Wb, Hb = 256, 36   # 256 px au plus par glyphe : au-delà, le client plante en l'affichant
         b = Image.new("RGBA", (Wb, Hb), (0, 0, 0, 255))
         tf = tex(fond).resize((32, 32), Image.NEAREST)
         semis = [tex(x_).resize((32, 32), Image.NEAREST) for x_ in sem]
@@ -883,6 +883,10 @@ def dessiner_rp():
         gros(b, nom, (Wb - larg) // 2, 12, haut, bas, tuple(int(c * 0.18) for c in bas))
         b.save(os.path.join(RP, "textures", "font", f"scene_{j}.png"))
         provs.append({"type": "bitmap", "file": f"commerce:font/scene_{j}.png", "height": Hb, "ascent": 7, "chars": [chr(0xE100 + SCENE_IDX[j])]})
+    for _p in provs:   # garde-fou : glyphe seul de plus de 256 px = plantage du client (24/11/2026)
+        if _p["type"] == "bitmap" and len(_p["chars"]) == 1 and len(_p["chars"][0]) == 1:
+            _im = Image.open(os.path.join(RP, "textures", "font", _p["file"].split("font/")[1]))
+            assert max(_im.size) <= 256, f"glyphe trop grand : {_p['file']} {_im.size}"
     # barres de courbe : 8 hauteurs, blanches (la couleur du texte les teinte), 2 px de large, posées sur la ligne
     bar = Image.new("RGBA", (24, 9), (0, 0, 0, 0))
     for k in range(8):
