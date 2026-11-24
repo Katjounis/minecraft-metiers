@@ -460,7 +460,10 @@ w(F + "fmt/tendance.mcfunction", [
 # =====================================================================
 # OPÉRATIONS : vendre, acheter, créditer
 # =====================================================================
-FILTRE = "[!minecraft:custom_data,!minecraft:custom_name,!minecraft:lore]"   # ni objets de pack (outils, trophées du Bestiaire...), ni objets renommés
+# ni objets de pack (outils, trophées du Bestiaire...), ni objets renommés. 24/11/2026 : en 26.3 la description (lore)
+# est un composant par défaut (liste vide) sur tous les objets, donc « !minecraft:lore » refusait tout : on exige une
+# description vide à la place.
+FILTRE = "[!minecraft:custom_data,!minecraft:custom_name,minecraft:lore=[]]"
 w(F + "op/compter.mcfunction", f"$return run clear @s minecraft:$(id){FILTRE} 0")
 w(F + "op/retirer.mcfunction", f"$clear @s minecraft:$(id){FILTRE} $(q)")
 w(F + "op/donner.mcfunction", "$give @s minecraft:$(id) $(q)")
