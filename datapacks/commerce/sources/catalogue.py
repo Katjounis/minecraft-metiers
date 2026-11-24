@@ -33,8 +33,9 @@ CATEGORIES = [
     (13, "Cuisine", "bread", "yellow", "Plats cuits et préparés"),
     (14, "Utilitaires", "lantern", "#F1CF4E", "Éclairage, rangement, rails, redstone, outils"),
     (15, "Trésors", "diamond", "light_purple", "Vente seulement : le serveur ne les revend pas"),
+    (17, "Butin de boss", "nether_star", "gold", "Vente seulement : butin des boss de Métiers, et vente des reliques"),
 ]
-RARES = {15}
+RARES = {15, 17}
 
 COULEURS = [  # id, masculin, féminin, prix de la teinture
     ("white", "blanc", "blanche", 0.12), ("orange", "orange", "orange", 0.15), ("magenta", "magenta", "magenta", 0.15),
@@ -292,6 +293,20 @@ for t in [
     ("enchanted_golden_apple", "Pomme de Notch", 1000.0, 4, ""),
 ]:
     I(15, *t)
+
+# 17 Butin de boss (vente seulement, 25/11/2026) : ce que lâchent les boss de Métiers et qui n'était pas au catalogue.
+# Prix de vente sous le coût des ingrédients pour les objets fabricables (pas d'achat-fabrication-revente).
+for t in [
+    ("enchanted_book", "Livre enchanté", 25.0, 32, "n"), ("experience_bottle", "Fiole d'expérience", 3.0, 256, "n"),
+    ("ominous_bottle", "Fiole sinistre", 60.0, 16, "c"), ("netherite_upgrade_smithing_template", "Gabarit d'amélioration netherite", 400.0, 4, "m"),
+    ("diamond_sword", "Épée en diamant", 180.0, 8, "c"), ("diamond_axe", "Hache en diamant", 250.0, 8, "b"),
+    ("diamond_pickaxe", "Pioche en diamant", 250.0, 8, "m"), ("crossbow", "Arbalète", 8.0, 32, "c"),
+    ("tnt", "TNT", 8.0, 64, "m"), ("fire_charge", "Boule de feu", 1.5, 128, "c"), ("firework_rocket", "Fusée", 0.6, 256, "x"),
+    ("cobweb", "Toile d'araignée", 0.8, 128, "c"),
+] + [(f"music_disc_{d}", f"Disque {d}", 150.0, 4, "") for d in ("cat", "blocks", "chirp", "far", "mall", "mellohi", "stal", "strad", "ward", "wait")] + [
+    ("music_disc_pigstep", "Disque Pigstep", 400.0, 2, ""), ("music_disc_otherside", "Disque Otherside", 400.0, 2, ""),
+]:
+    I(17, *t)
 
 # Cuisson au four (absente des recettes d'établi) : (résultat, ingrédient). Le combustible vaut 1/8 de charbon.
 CUISSON = [("stone", "cobblestone"), ("smooth_stone", "stone"), ("cracked_stone_bricks", "stone_bricks"), ("glass", "sand"),

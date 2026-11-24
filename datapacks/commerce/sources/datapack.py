@@ -11,7 +11,7 @@ from catalogue import ACHAT, CATEGORIES, ITEMS, RARES
 ROOT = os.path.join(HERE, "..", "build", "commerce_datapack")
 NS = "commerce"
 F = f"data/{NS}/function/"
-VERSION = 13
+VERSION = 15
 if os.path.exists(ROOT):
     shutil.rmtree(ROOT)
 
@@ -832,6 +832,22 @@ NPAGES = {c: (len(v) + PAGE - 1) // PAGE for c, v in CATIT.items()}
 for c, v in CATIT.items():
     for k, it in enumerate(v):
         it["page"] = k // PAGE
+RELIQUE_PRIX = 15000   # vente d'une relique de boss de Métiers (25/11/2026)
+# anciennes reliques, sans marque custom_data : reconnues par leur nom exact (tel que posé par les tables de butin de Métiers)
+RELIQUES_NOM = [("netherite_axe", "Hache du Colosse", "dark_red"), ("bow", "Arc de la Reine", "dark_green"),
+                ("trident", "Trident du givre", "aqua"), ("netherite_chestplate", "Plastron du Brasier", "gold"),
+                ("crossbow", "Arbalète du Creeper", "green")]
+w(F + "relique/vendre.mcfunction", [
+    f"execute if items entity @s weapon.mainhand *[minecraft:custom_data~{{metiers_relique:1b}}] run return run function {NS}:relique/ok"] + [
+    f'execute if items entity @s weapon.mainhand minecraft:{i}[minecraft:custom_name={{text:"{n}",color:"{c}",bold:1b,italic:0b}}] run return run function {NS}:relique/ok'
+    for i, n, c in RELIQUES_NOM] + [
+    say("Prends une relique de boss en main (objet nommé avec « Relique de boss » en description), puis clique sur Vendre.", "red"),
+    "playsound minecraft:entity.villager.no master @s ~ ~ ~ 1 1"])
+w(F + "relique/ok.mcfunction", [
+    "item replace entity @s weapon.mainhand with minecraft:air",
+    f"scoreboard players add @s c.ecus {RELIQUE_PRIX}", f"scoreboard players add @s c.tv {RELIQUE_PRIX}",
+    say(f"Relique vendue : +{RELIQUE_PRIX:,} Écus.".replace(",", " "), "gold"),
+    "playsound minecraft:entity.experience_orb.pickup master @s ~ ~ ~ 1 0.8"])
 PG = lambda c, p: 1000 + 10 * c + p         # valeur du trigger d'une page de catégorie
 for it in ITL:
     # retour vers la bonne page de la catégorie : on corrige la valeur stockée par i/<n>/charger
@@ -866,6 +882,7 @@ TR = ["scoreboard players operation #v c.t = @s commerce", "scoreboard players s
       f"execute if score #v c.t matches 9500000..9999999 run return run function {NS}:hdv/retirer",
       f"execute if score #v c.t matches 7500000..7599999 run return run function {NS}:boutique/acheter",
       f"execute if score #v c.t matches 7700..7799 run return run function {NS}:guilde/entree",
+      f"execute if score #v c.t matches 7800 run return run function {NS}:relique/vendre",
       f"execute if score #v c.t matches 81..84 run return run function {NS}:stat/global",
       f"execute if score #v c.t matches 70 run return run function {NS}:spawner/entree",
       f"execute if score #v c.t matches 700..799 run return run function {NS}:spawner/entree",
@@ -984,6 +1001,9 @@ for c in ITEMS:
             acts.append(btn(L(spr(it["id"]), T("  " + court(it["n"]), "white")), 10000 + k, 160, it["n"] + "\\n" + tip))
         if len(its) % 2:
             acts.append(VIDE)
+        if c == 17:   # reliques de boss (objets nommés, refusés par la vente normale)
+            acts += [btn(L(spr("nether_star"), T("  Vendre la relique en main", "gold", True)), 7800, 160,
+                         f"Une relique de boss (objet unique nommé) se vend {RELIQUE_PRIX:,} Écus. Prends-la en main puis clique.".replace(",", " ")), VIDE]
         acts.append(btn(T("◀  Page précédente", "white"), PG(c, p - 1), 160) if p > 0 else VIDE)
         acts.append(btn(T("Page suivante  ▶", "white"), PG(c, p + 1), 160) if p < NPAGES[c] - 1 else VIDE)
         acts += [btn(T("Marché", "yellow"), 9, 160), btn(T("Accueil", "white"), 1, 160)]

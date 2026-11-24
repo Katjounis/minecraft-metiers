@@ -1834,5 +1834,101 @@
 "enchanted_golden_apple": [
 "items",
 "item/golden_apple"
+],
+"enchanted_book": [
+"items",
+"item/enchanted_book"
+],
+"experience_bottle": [
+"items",
+"item/experience_bottle"
+],
+"ominous_bottle": [
+"items",
+"item/ominous_bottle"
+],
+"netherite_upgrade_smithing_template": [
+"items",
+"item/netherite_upgrade_smithing_template"
+],
+"diamond_sword": [
+"items",
+"item/diamond_sword"
+],
+"diamond_axe": [
+"items",
+"item/diamond_axe"
+],
+"diamond_pickaxe": [
+"items",
+"item/diamond_pickaxe"
+],
+"crossbow": [
+"items",
+"item/crossbow_standby"
+],
+"fire_charge": [
+"items",
+"item/fire_charge"
+],
+"firework_rocket": [
+"items",
+"item/firework_rocket"
+],
+"music_disc_cat": [
+"items",
+"item/music_disc_cat"
+],
+"music_disc_blocks": [
+"items",
+"item/music_disc_blocks"
+],
+"music_disc_chirp": [
+"items",
+"item/music_disc_chirp"
+],
+"music_disc_far": [
+"items",
+"item/music_disc_far"
+],
+"music_disc_mall": [
+"items",
+"item/music_disc_mall"
+],
+"music_disc_mellohi": [
+"items",
+"item/music_disc_mellohi"
+],
+"music_disc_stal": [
+"items",
+"item/music_disc_stal"
+],
+"music_disc_strad": [
+"items",
+"item/music_disc_strad"
+],
+"music_disc_ward": [
+"items",
+"item/music_disc_ward"
+],
+"music_disc_wait": [
+"items",
+"item/music_disc_wait"
+],
+"music_disc_pigstep": [
+"items",
+"item/music_disc_pigstep"
+],
+"music_disc_otherside": [
+"items",
+"item/music_disc_otherside"
+],
+"tnt": [
+"blocks",
+"block/tnt_side"
+],
+"cobweb": [
+"blocks",
+"block/cobweb"
 ]
 }

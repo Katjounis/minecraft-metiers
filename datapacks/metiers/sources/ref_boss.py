@@ -245,18 +245,19 @@ def EN(n, w, a=1, b=1, ench=None, niv=None, nom=None, col="gold", lore=None):
         mods.append({"type": "minecraft:set_lore", "mode": "replace_all", "lore": [{"text": lore, "color": "gray", "italic": False},
                                                                                 {"text": "Relique de boss", "color": "light_purple", "italic": False}]})
         mods.append({"type": "minecraft:set_components", "components": {"minecraft:rarity": "epic"}})
+        mods.append({"type": "minecraft:set_custom_data", "tag": {"metiers_relique": True}})   # vendable au Commerce (Butin de boss)
     e = {"type": "minecraft:item", "name": f"minecraft:{n}", "weight": w}
     if mods: e["modifier"] = mods
     return e
 # butin courant, tiré 1 fois en facile, 2 en normal, 3 en difficile, +1 pour le plus gros dégât
 BUTIN = {
     1: [EN("diamond", 12, 3, 6), EN("iron_block", 12, 2, 5), EN("gold_block", 10, 1, 3), EN("emerald_block", 8, 1, 3),
-        EN("netherite_scrap", 6, 1, 2), EN("ancient_debris", 5, 1, 2), EN("diamond_chestplate", 4, niv=30), EN("diamond_axe", 4, niv=30),
+        EN("netherite_scrap", 6, 1, 2), EN("ancient_debris", 5, 1, 2), EN("diamond_pickaxe", 4, niv=30), EN("diamond_axe", 4, niv=30),
         EN("netherite_upgrade_smithing_template", 3), EN("anvil", 3)],
     2: [EN("ender_pearl", 12, 4, 8), EN("diamond", 10, 2, 4), EN("enchanted_book", 10, niv=30), EN("golden_apple", 8, 2, 4),
         EN("name_tag", 6, 1, 2), EN("string", 8, 16, 32), EN("cobweb", 5, 4, 8), EN("saddle", 4), EN("ominous_bottle", 4), EN("bow", 4, niv=30)],
     3: [EN("experience_bottle", 14, 16, 32), EN("enchanted_book", 12, niv=30), EN("diamond", 10, 2, 4), EN("lapis_block", 10, 3, 6),
-        EN("amethyst_shard", 6, 8, 16), EN("blue_ice", 6, 8, 16), EN("echo_shard", 3, 1, 2), EN("trident", 3, niv=30), EN("diamond_helmet", 4, niv=30)],
+        EN("amethyst_shard", 6, 8, 16), EN("blue_ice", 6, 8, 16), EN("echo_shard", 3, 1, 2), EN("trident", 3, niv=30), EN("fishing_rod", 4, niv=30)],
     4: [EN("blaze_rod", 14, 8, 16), EN("gold_block", 10, 2, 5), EN("netherite_scrap", 8, 1, 3), EN("ancient_debris", 6, 1, 3),
         EN("golden_apple", 8, 2, 4), EN("magma_cream", 6, 6, 12), EN("fire_charge", 5, 8, 16), EN("netherite_ingot", 2), EN("diamond_sword", 4, niv=30)],
     5: [EN("diamond", 10, 2, 4), EN("emerald_block", 8, 2, 4), EN("tnt", 10, 4, 8), EN("gunpowder", 12, 16, 32), EN("firework_rocket", 8, 32, 64),
@@ -272,8 +273,8 @@ RELIQUE = {
           lore="Tendu avec la soie de la Reine arachnide."),
     3: EN("trident", 4, ench={"impaling": 5, "loyalty": 3, "unbreaking": 3, "mending": 1}, nom="Trident du givre", col="aqua",
           lore="Taillé dans la glace de la Liche."),
-    4: EN("netherite_chestplate", 4, ench={"protection": 4, "thorns": 3, "unbreaking": 3, "mending": 1}, nom="Plastron du Brasier", col="gold",
-          lore="Encore tiède du Brasier ancestral."),
+    4: EN("mace", 4, ench={"density": 5, "fire_aspect": 2, "unbreaking": 3, "mending": 1}, nom="Masse du Brasier", col="gold",
+          lore="Encore tiède du Brasier ancestral."),   # 25.8 : remplace le plastron (inutile à côté de l'Armure des Guildes)
     5: EN("crossbow", 4, ench={"multishot": 1, "quick_charge": 3, "unbreaking": 3, "mending": 1}, nom="Arbalète du Creeper", col="green",
           lore="Gonflée à bloc, comme le Creeper géant."),
 }
