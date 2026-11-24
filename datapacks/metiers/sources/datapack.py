@@ -882,7 +882,7 @@ function {NS}:xp/table
 scoreboard players operation @s m.{j}_need = #N m.tmp
 scoreboard players operation #N m.tmp = @s m.{j}_pr
 scoreboard players operation #N m.tmp *= #F99 m.const
-scoreboard players operation @s m.{j}_need += #N m.tmp
+scoreboard players operation @s m.{j}_need > #N m.tmp
 execute if score @s m.{j}_lvl matches ..{MAXLVL-1} if score @s m.{j}_xp >= @s m.{j}_need run function {NS}:{j}/levelup
 """)
 

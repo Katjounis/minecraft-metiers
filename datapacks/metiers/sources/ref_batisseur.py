@@ -128,7 +128,8 @@ add_lines(F + "defis/nouveaux.mcfunction", ["scoreboard players reset * m.kbj"])
 # Table précalculée, cherchée par tranches de 10 niveaux (~20 commandes au lieu de 100).
 # 25.4 (24/11/2026, « encore beaucoup trop simple ») : 150 x 1,06^(L-1), 798 000 XP pour le niveau 100
 XPF = {L: round(150 * 1.06 ** (L - 1)) for L in range(1, 101)}
-add_lines(F + "refonte/load.mcfunction", [f"scoreboard players set #F99 m.const {XPF[99]}"])
+# prestige (25.5) : chaque étoile démarre à 15 000 XP par niveau, la courbe normale reprend quand elle dépasse (max des deux)
+add_lines(F + "refonte/load.mcfunction", ["scoreboard players set #F99 m.const 15000"])
 w(F + "xp/table.mcfunction", "\n".join(
     [f"execute if score #L m.tmp matches {a}..{a + 9} run return run function {NS}:xp/table_{a // 10}" for a in range(1, 101, 10)] +
     [f"scoreboard players set #N m.tmp {XPF[100]}"]))
@@ -136,7 +137,7 @@ for _t in range(10):
     w(F + f"xp/table_{_t}.mcfunction", "\n".join(
         f"execute if score #L m.tmp matches {L} run return run scoreboard players set #N m.tmp {XPF[L]}" for L in range(10 * _t + 1, 10 * _t + 11)))
 # besoin d'XP recalculé une fois pour chaque joueur avec la nouvelle courbe (sinon l'ancien reste affiché jusqu'au prochain gain)
-add_lines(F + "joueur.mcfunction", [f"execute unless entity @s[tag=metiers.v254] run function {NS}:xp/maj253"])
-w(F + "xp/maj253.mcfunction", "\n".join(["tag @s add metiers.v254"] + [f"function {NS}:{j}/check" for j in jobs] +
-    [tr("Mise à jour 25.4 : progression des métiers beaucoup plus dure, chaque niveau demande 6 % de plus que le précédent (45 000 XP au niveau 99).", "yellow")]))
-w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 25.4 : courbe d’XP exponentielle (+6 % par niveau), 10e métier Bâtisseur, quêtes, guildes, synergies, boss plus durs, menu G commun","color":"gold"}')
+add_lines(F + "joueur.mcfunction", [f"execute unless entity @s[tag=metiers.v255] run function {NS}:xp/maj253"])
+w(F + "xp/maj253.mcfunction", "\n".join(["tag @s add metiers.v255"] + [f"function {NS}:{j}/check" for j in jobs] +
+    [tr("Mise à jour 25.5 : chaque niveau demande 6 % de plus que le précédent (45 000 XP au niveau 99) ; avec une étoile, chaque niveau demande au moins 15 000 XP (30 000 avec deux...).", "yellow")]))
+w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 25.5 : courbe d’XP exponentielle (+6 % par niveau), prestige à 15 000 XP par niveau et par étoile, 10e métier Bâtisseur, quêtes, guildes, synergies, boss plus durs, menu G commun","color":"gold"}')
