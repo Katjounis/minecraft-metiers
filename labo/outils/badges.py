@@ -2,7 +2,7 @@
 """Boutons dessinés des 4 packs (24/11/2026, refait le soir même : bouton entier et non plus une pastille).
 
 Chaque bouton de navigation dont le libellé est « icône du jeu + texte fixe coloré » reçoit une face dessinée qui couvre
-tout le bouton (W - 6 x 18 px d'interface) : fond dégradé dans la couleur du texte, motif de biais, grande icône en
+tout l'intérieur du bouton (W - 4 x 16 px d'interface) : fond dégradé dans la couleur du texte, motif de biais, grande icône en
 filigrane à droite, l'icône nette à gauche sur un halo, liseré clair et coins coupés. Le texte reste écrit par le jeu
 (accents, ombre), posé sur la face grâce à des espaces négatifs : [face][recul][texte][avance] fait exactement la
 largeur de la face, donc le jeu centre le tout pile sur le bouton.
@@ -77,7 +77,7 @@ def _texture(sprite):
 
 # ---------------------------------------------------------------- dessin d'une face
 def _face(W, sprite, coul, fond=None, graine=0):
-    H = 18
+    H = 16   # intérieur du bouton : 2 px de cadre en haut et en bas
     rg = _brd.Random(graine)
     im = _BI.new("RGBA", (W, H), (0, 0, 0, 0)); px = im.load()
     clair = tuple(min(255, int(v * 1.1 + 40)) for v in coul)
@@ -99,7 +99,7 @@ def _face(W, sprite, coul, fond=None, graine=0):
                     c = [v + 6 for v in c]
                 n = rg.randint(-2, 2); c = [v + n for v in c]
             # halo derrière l'icône
-            d = ((x - 10) ** 2 + (y - 9) ** 2) ** 0.5
+            d = ((x - 10) ** 2 + (y - 8) ** 2) ** 0.5
             if d < 11:
                 a = (1 - d / 11) * 0.35
                 c = [c[i] * (1 - a) + coul[i] * a for i in range(3)]
@@ -128,34 +128,34 @@ def _face(W, sprite, coul, fond=None, graine=0):
         for y in range(16):
             if ip[x, y][3]:
                 op[x, y] = (0, 0, 0, 140)
-    im.alpha_composite(ombre, (4, 2)); im.alpha_composite(ic, (3, 1))
+    im.alpha_composite(ombre, (3, 1)); im.alpha_composite(ic, (2, 0))
     return im
 
 
 def face_manuelle(cle, W, sprite, couleur, fond=None):
     """Réserve une face (dessinée par appliquer) et renvoie son caractère."""
     if cle not in _FACES:
-        _FACES[cle] = (chr(0xE000 + len(_FACES)), W - 6, sprite, _rgb(couleur) if isinstance(couleur, str) else couleur, fond)
+        _FACES[cle] = (chr(0xE000 + len(_FACES)), W - 4, sprite, _rgb(couleur) if isinstance(couleur, str) else couleur, fond)
     return _FACES[cle][0]
 
 
 def libelle(ns, cle, W, sprite, couleur, composants, tw, fond=None):
     """Libellé complet : face, recul, composants (largeur tw estimée), avance. Le texte part après l'icône."""
     ch = face_manuelle(cle, W, sprite, couleur, fond)
-    F = W - 6   # la face + son espacement font W - 5 : sous la limite où le jeu fait défiler le libellé
+    F = W - 4   # face de W - 4 px, libellé total de W - 4 px pile (au-delà, le jeu fait défiler le texte) : la face couvre tout l'intérieur du cadre
     x0 = 22 + max(0, (F - 26 - tw) // 2)
     return ('[{text:""},' + f'{{text:"{ch}",font:"{ns}:badges",color:"white",shadow_color:0}},'
             + f'{{text:"{besp(-F - 1 + x0)}",font:"{ns}:badges"}},' + ",".join(composants)
-            + f',{{text:"{besp(F + 1 - x0 - tw)}",font:"{ns}:badges"}}]')
+            + f',{{text:"{besp(F - x0 - tw)}",font:"{ns}:badges"}}]')
 
 
 def libelle_json(ns, cle, W, sprite, couleur, composants, tw, fond=None):
     """Même chose en JSON (dialogues fixes comme le menu G) : composants = liste de dicts."""
     ch = face_manuelle(cle, W, sprite, couleur, fond)
-    F = W - 6
+    F = W - 4
     x0 = 22 + max(0, (F - 26 - tw) // 2)
     return ([{"text": ""}, {"text": ch, "font": f"{ns}:badges", "color": "white", "shadow_color": 0},
-             {"text": besp(-F - 1 + x0), "font": f"{ns}:badges"}] + composants + [{"text": besp(F + 1 - x0 - tw), "font": f"{ns}:badges"}])
+             {"text": besp(-F - 1 + x0), "font": f"{ns}:badges"}] + composants + [{"text": besp(F - x0 - tw), "font": f"{ns}:badges"}])
 
 
 POINT = chr(0xE7FF)      # pastille rouge de largeur fixe (6 px), pour les boutons à texte variable
@@ -208,6 +208,6 @@ def appliquer(root, ns, rp_assets, exclure=lambda rel: False):
     for cle, (ch, F, sprite, rgb, fond) in sorted(_FACES.items(), key=lambda kv: kv[1][0]):
         k = ord(ch) - 0xE000
         _face(F, sprite, rgb, fond, graine=k).save(_bo.path.join(tex_dir, f"f{k}.png"))
-        provs.append({"type": "bitmap", "file": f"{ns}:font/boutons/f{k}.png", "height": 18, "ascent": 12, "chars": [ch]})
+        provs.append({"type": "bitmap", "file": f"{ns}:font/boutons/f{k}.png", "height": 16, "ascent": 11, "chars": [ch]})
     _bj.dump({"providers": provs}, open(_bo.path.join(rp_assets, ns, "font", "badges.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=0)
     print(f"boutons {ns} : {len(_FACES)} faces dessinées, {n} boutons automatiques")
