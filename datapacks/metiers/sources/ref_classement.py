@@ -35,3 +35,34 @@ for j, d in jobs.items():
 w(F + "classement/niv.mcfunction", f'$data modify storage {NS}:cm l$(r) set value "niveau $(v)"')
 add_lines(F + "trigger.mcfunction",
           [f'execute if score @s m.trig matches {520 + d["idx"]} run function {NS}:appel {{f:"classement/metier_{j}"}}' for j, d in jobs.items()])
+
+# ---------------------------------------------------------------- sommaire A à Z (25/11/2026)
+# Pas de recherche par texte possible en vanilla : tout Métiers par ordre alphabétique, la lettre en tête de bouton.
+import unicodedata as _ud
+SOM = [("Activités", "item/compass_00", 497, "Défis, quêtes, guilde, classement, synergies..."),
+       ("Aide", "item/paper", 460, "Cristaux, éclats, Forge, défis, boss : comment ça marche."),
+       ("Armure des Guildes", "item/golden_chestplate", 6, "L’armure qui monte avec ton score total."),
+       ("Aura de prestige", "item/glowstone_dust", 499, "Particules de prestige autour de toi."),
+       ("Barème d’XP", "item/book", 480, "Ce que rapporte chaque action, métier par métier."),
+       ("Cadres de titre", "item/item_frame", 472, "Le cadre autour de ton titre."),
+       ("Classement général", "item/gold_ingot", 5, "Podium du serveur et meilleur de chaque métier."),
+       ("Défis du jour", "item/clock_00", 4, "Un défi par métier, chaque jour."),
+       ("Forge (boutique)", "item/netherite_upgrade_smithing_template", 471, "Marteau, faux, arc triple, lasso, aimant, cape..."),
+       ("Forger l’outil", "item/anvil", 470, "Sertir des cristaux dans l’outil de métier tenu."),
+       ("Guilde", "item/name_tag", 770, "Fonder ou rejoindre une guilde."),
+       ("Quêtes", "item/writable_book", 495, "Une quête de 10 étapes par métier."),
+       ("Skins", "item/painting", 420, "Apparence de tes outils et de ton armure."),
+       ("Synergies", "item/emerald", 496, "Bonus quand deux métiers atteignent le niveau 50.")]
+for j, d in jobs.items():
+    SOM.append((d["name"], OUTIL_IC[j], 20 + d["idx"], f"Page {d['name']} : compétences en arbre, outil, titre, prestige."))
+    SOM.append((f"Classement {d['name']}", "item/goat_horn", 520 + d["idx"], f"Top 10 du serveur en {d['name']}."))
+def _cle(t):
+    return _ud.normalize("NFD", t).encode("ascii", "ignore").decode().lower()
+SOM.sort(key=lambda e: _cle(e[0]))
+sacts = [ib(ic, f"{_cle(nom)[0].upper()}  ·  {nom}", "white", val, 150, tip) for nom, ic, val, tip in SOM]
+w(F + "sommaire.mcfunction",
+  'dialog show @s {type:"minecraft:multi_action",title:{text:"Sommaire A à Z",color:"yellow",bold:true},can_close_with_escape:true,pause:false,'
+  'body:[{type:"minecraft:plain_message",width:400,contents:{text:"Tout Métiers par ordre alphabétique. Survole pour le détail, clique pour y aller.",color:"gray"}}],'
+  f'actions:[{",".join(sacts)}],columns:3,'
+  'exit_action:{label:"Retour",width:200,action:{type:"run_command",command:"trigger metiers set 1"}}}')
+add_lines(F + "trigger.mcfunction", [f'execute if score @s m.trig matches 540 run function {NS}:sommaire'])

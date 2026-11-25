@@ -1109,7 +1109,8 @@ w(F + "page/marche_d.mcfunction", "$" + dlg(
     T("Marché", "yellow", True),
     [BAN(1), f'{{type:"minecraft:plain_message",width:310,contents:{L(SOLDE_TXT)}}}'],
     [btn(L(spr(CATSHOW[c][0]), T("  " + CATNAME[c], CATSHOW[c][1])), PG(c, 0), 160, CATSHOW[c][2]) for c in ITEMS]
-    + [btn(T("Bourse", "light_purple"), 20, 160), btn(T("Accueil", "white"), 1, 160)]))
+    + [btn(T("Index A à Z", "yellow", True), 3000, 160, "Trouver un objet par la première lettre de son nom."),
+       btn(T("Bourse", "light_purple"), 20, 160), btn(T("Accueil", "white"), 1, 160)]))
 
 # ---------------------------------------------------------------- une page de catégorie : 10 boutons, prix en infobulle
 w(F + "page/ligne.mcfunction", [
@@ -1165,6 +1166,57 @@ for c in ITEMS:
         w(F + f"page/cat_{c}_{p}_d.mcfunction", "$" + dlg(
             T(CATNAME[c], CATSHOW[c][1], True),
             [f'{{type:"minecraft:plain_message",width:310,contents:{L(SOLDE_TXT, T(sub + "   ·   prix au survol", "gray"))}}}'], acts))
+
+# ---------------------------------------------------------------- index A à Z (25/11/2026)
+# Une vraie recherche par texte est impossible en vanilla (un joueur non-op ne renvoie que des nombres). Index par
+# première lettre du nom français : page 3000 = les lettres, 3010 + 10 x lettre + page = les objets de cette lettre.
+import unicodedata as _ud
+def _lettre(n):
+    n = n.replace("Œ", "O").replace("œ", "o")
+    return _ud.normalize("NFD", n)[0].upper()
+PARLET = {}
+for it in sorted(ITL, key=lambda x: _ud.normalize("NFD", x["n"].replace("Œ", "Oe")).lower()):
+    PARLET.setdefault(_lettre(it["n"]), []).append(it)
+ALPHA = [chr(65 + i) for i in range(26)]
+PL = lambda li, p: 3010 + 10 * li + p
+AZ_ACTS = []
+for li, l in enumerate(ALPHA):
+    n = len(PARLET.get(l, []))
+    AZ_ACTS.append(btn(T(f"{l}   ", "yellow", True) if n else T(l, "dark_gray"), PL(li, 0) if n else 3000, 60,
+                       f"{n} objet{'s' if n > 1 else ''} commençant par {l}" if n else f"Aucun objet en {l}"))
+AZ_ACTS += [btn(T("Marché", "yellow"), 9, 60), btn(T("Accueil", "white"), 1, 60)]
+w(F + "page/index.mcfunction", dlg(T("Index A à Z", "yellow", True),
+    [f'{{type:"minecraft:plain_message",width:310,contents:{T("Choisis la première lettre de l’objet cherché (sans accent : Écorce est au E).", "gray")}}}'],
+    AZ_ACTS, cols=7))
+for li, l in enumerate(ALPHA):
+    its_l = PARLET.get(l, [])
+    np_ = max(1, -(-len(its_l) // PAGE))
+    for p in range(np_):
+        its = its_l[p * PAGE:(p + 1) * PAGE]
+        CL = SOLDE(f"{NS}:cp")
+        for it in its:
+            CL += [f"scoreboard players set #i c.t {it['i']}", f"function {NS}:page/ligne"]
+            CL += [f"data modify storage {NS}:cp {k}{it['i']} set from storage {NS}:l {k}" for k in ("ve", "vz", "vc", "ae", "az", "ac", "t")]
+        CL.append(f"function {NS}:page/lettre_{l.lower()}_{p}_d with storage {NS}:cp")
+        w(F + f"page/lettre_{l.lower()}_{p}.mcfunction", CL)
+        acts = []
+        for it in its:
+            k = it["i"]
+            rare = it["cat"] in RARES
+            tip = f"Vente : $(ve{k}),$(vz{k})$(vc{k}) Écus l’unité" + ("" if rare else f"\\nAchat : $(ae{k}),$(az{k})$(ac{k}) Écus l’unité") + f"\\nTendance sur 1 h : $(t{k})"
+            acts.append(btn(L(spr(it["id"]), T("  " + court(it["n"]), "white")), 10000 + k, 160, it["n"] + "\\n" + tip))
+        if len(its) % 2:
+            acts.append(VIDE)
+        acts.append(btn(T("◀  Page précédente", "white"), PL(li, p - 1), 160) if p > 0 else VIDE)
+        acts.append(btn(T("Page suivante  ▶", "white"), PL(li, p + 1), 160) if p < np_ - 1 else VIDE)
+        acts += [btn(T("Index A à Z", "yellow"), 3000, 160), btn(T("Marché", "white"), 9, 160)]
+        sub = f"   ·   page {p + 1}/{np_}" if np_ > 1 else ""
+        w(F + f"page/lettre_{l.lower()}_{p}_d.mcfunction", "$" + dlg(
+            T(f"Objets en {l}", "yellow", True),
+            [f'{{type:"minecraft:plain_message",width:310,contents:{L(SOLDE_TXT, T(sub + "   ·   prix au survol", "gray"))}}}'], acts))
+        TR.insert(-2, f"execute if score #v c.t matches {PL(li, p)} run return run function {NS}:page/lettre_{l.lower()}_{p}")
+TR.insert(-2, f"execute if score #v c.t matches 3000 run return run function {NS}:page/index")
+w(F + "trigger/entree.mcfunction", TR)
 
 # ---------------------------------------------------------------- courbes (barres de la police commerce:recette)
 w(F + "hist/courbe.mcfunction", [

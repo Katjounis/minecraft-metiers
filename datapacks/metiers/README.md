@@ -38,6 +38,10 @@ Touche G (ou menu Échap) pour ouvrir le menu des métiers, ou `/trigger metiers
 
 Commandes admin : `/function metiers:boss/alerte` (boss suivant de la rotation dans 2 min), `/function metiers:heure/lancer`, `/function metiers:defis/nouveaux`, `/function metiers:defis/semaine`.
 
+## Version 25.14 (25/11/2026)
+
+Page de métier : les 6 compétences posées en arbre cliquable (racine, deux branches, sommet) dans une grille de 3 colonnes avec des cases vides d'un pixel. Bouton « Sommaire A à Z » dans le menu Métiers (déclencheur 540) : tout Métiers par ordre alphabétique, métiers et classements de chaque métier compris. Une vraie recherche par texte est impossible en vanilla, un joueur non-op ne renvoyant que des nombres.
+
 ## Version 25.13 (25/11/2026)
 
 Bouton « Classement » dans l'onglet de chaque métier (déclencheurs 521 à 530, `ref_classement.py`) : top 10 du serveur dans ce métier, trié par étoiles de prestige puis par niveau, médailles pour le podium. Les joueurs en ligne sont mis à jour à l'ouverture, les autres gardent leur dernier score connu. « Retour » ramène à l'onglet du métier.

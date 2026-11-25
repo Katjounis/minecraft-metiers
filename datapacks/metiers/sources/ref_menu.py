@@ -72,7 +72,8 @@ for j, d in jobs.items():
     lab = f'[{gs("metier_" + j)},{txt(" " + d["name"], d["color"])},{txt(" $(" + j + "_l) ", "yellow")},{{text:"$({j}_b)",font:"metiers:icones",color:"white"}},{txt("$(" + j + "_d)", "red")}]'
     acts.append(btn(lab, 20 + d["idx"], 150, f"Ouvre la page {d['name']} : outil, compétences, récompenses, titre."))
 acts += [ib("item/netherite_upgrade_smithing_template", "Forge", "gold", 471, 150, "Boutique de la Forge : marteau, faux, arc triple, lasso, aimant, cape... et sertissage des cristaux.", True),
-         ib("item/compass_00", "Activités", "aqua", 497, 150, "Défis, quêtes, guilde, classement, synergies, barème, skins, cadres, armure, aide.", True)]
+         ib("item/compass_00", "Activités", "aqua", 497, 150, "Défis, quêtes, guilde, classement, synergies, barème, skins, cadres, armure, aide.", True),
+         ib("item/spyglass", "Sommaire A à Z", "yellow", 540, 150, "Tout Métiers rangé par ordre alphabétique : un clic et tu y es.", True)]
 w(F + "menu_dialog.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Mes métiers",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
   'body:[{type:"minecraft:plain_message",width:310,contents:[{text:""},{text:"\ue027",font:"commerce:recette",color:"white",shadow_color:0},{text:"\\n\\n"}]},{type:"minecraft:plain_message",width:460,contents:[{text:"Score total ",color:"gray"},{text:"$(score)",color:"yellow"},'
@@ -196,6 +197,13 @@ for j, d in jobs.items():
         tip = (f"{desc}\\nCoût : {cost} points · niveau {SKILL_LVL[k - 1]} · requiert : {rq}\\nUne fois acquise : clic pour l’activer ou la désactiver."
                "\\n\\nVert ✔ acquise · jaune disponible · rouge points manquants · gris ✖ niveau trop bas · ○ désactivée")
         sbtn.append(f'{{label:{{text:"$(l{k})",color:"$(c{k})"}},width:130,tooltip:{{text:"{tip}"}},action:{{type:"run_command",command:"trigger metiers set {TSK(d, k)}"}}}}')
+    # 25/11/2026 : les compétences posées en arbre cliquable (grille de 3 colonnes, cases vides d'un pixel) :
+    #        1            racine
+    #     2     3         deux branches
+    #     4     5
+    #        6            sommet, qui demande 4 et 5
+    VIDE = '{label:"",width:1}'
+    sbtn = [VIDE, sbtn[0], VIDE, sbtn[1], VIDE, sbtn[2], sbtn[3], VIDE, sbtn[4], VIDE, sbtn[5], VIDE]
     sp = SPECIAL[j]
     ICL = lambda ic, lab, col: f'[{IC(ic)},{{text:"  {lab}",color:"{col}",italic:false}}]'
     ICV = lambda ic, var, col: f'[{IC(ic)},{{text:"  $({var})",color:"$({col})",italic:false}}]'
