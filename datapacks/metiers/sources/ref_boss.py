@@ -110,10 +110,16 @@ w(F + "boss/encours.mcfunction", "\n".join([
     f"execute if entity {B} run scoreboard players operation #last m.boss = #hp m.boss",
     f"execute as @a[scores={{m.dmg=1..}}] at @s if entity @e[tag=metiers.boss,distance=..32] run function {NS}:boss/frappe",
     "scoreboard players set @a m.dmg 0",
-    f"execute unless entity {B} unless score #tue m.boss matches 1 run scoreboard players add #abs m.boss 1",
-    f"execute unless entity {B} unless score #tue m.boss matches 1 if score #abs m.boss matches ..599 run return run bossbar set metiers:boss players @a",
+    # boss introuvable : tué, ou simplement dans un chunk déchargé ? On regarde si sa dernière position est chargée.
+    f"execute unless entity {B} unless score #tue m.boss matches 1 run return run function {NS}:boss/absent with storage {NS}:boss",
     f"execute unless entity {B} run return run function {NS}:boss/disparu",
     "scoreboard players set #abs m.boss 0",
+    f"execute store result storage {NS}:boss bx int 1 run data get entity {B} Pos[0]",
+    f"execute store result storage {NS}:boss by int 1 run data get entity {B} Pos[1]",
+    f"execute store result storage {NS}:boss bz int 1 run data get entity {B} Pos[2]",
+    f'execute at {B} if dimension minecraft:overworld run data modify storage {NS}:boss bdim set value "minecraft:overworld"',
+    f'execute at {B} if dimension minecraft:the_nether run data modify storage {NS}:boss bdim set value "minecraft:the_nether"',
+    f'execute at {B} if dimension minecraft:the_end run data modify storage {NS}:boss bdim set value "minecraft:the_end"',
     "scoreboard players add #temps m.boss 1",
     "bossbar set metiers:boss players @a",
     "scoreboard players set #seuil m.boss 0", "scoreboard players operation #seuil m.boss = #max m.boss",
@@ -134,6 +140,7 @@ AD = ["tag @s add metiers.badopte",
 for k, b in BOSS.items():
     AD += [f"execute if entity @s[type=minecraft:{b['etype']}] run scoreboard players set #type m.boss {k}"]
 AD += ["tag @s remove metiers.badopte",
+       f'data modify storage {NS}:boss bdim set value "minecraft:overworld"',
        "execute store result score #max m.boss run attribute @s minecraft:max_health base get",
        "execute store result score #hp m.boss run data get entity @s Health",
        "scoreboard players set #actif m.boss 1", "scoreboard players set #compte m.boss 0",
@@ -153,12 +160,31 @@ w(F + "boss/adopter.mcfunction", "\n".join(AD))
 w(F + "boss/frappe.mcfunction", "tag @s add metiers.bossp\nscoreboard players operation @s m.bdmg += @s m.dmg")
 w(F + "boss/particules.mcfunction", "\n".join(
     [f"execute if score #type m.boss matches {k} run particle {b['part']} ~ ~2.5 ~ 0.9 1.6 0.9 0.02 10" for k, b in BOSS.items()]))
+# position chargée et boss absent : il est mort (feu, chute, explosion...) -> fin du combat tout de suite.
+# Position déchargée (joueur parti, déconnexion) : jusqu'à 5 min de grâce, la barre reste.
+w(F + "boss/absent.mcfunction", "\n".join([
+    f"$execute in $(bdim) if loaded $(bx) $(by) $(bz) run return run function {NS}:boss/disparu",
+    "scoreboard players add #abs m.boss 1",
+    f"execute if score #abs m.boss matches 600.. run return run function {NS}:boss/disparu",
+    "bossbar set metiers:boss players @a"]))
 w(F + "boss/disparu.mcfunction", "\n".join([
     f"execute if score #tue m.boss matches 1 run return run function {NS}:boss/victoire",
+    # mort pendant que des joueurs le combattaient : victoire, même si le coup final n'est pas d'un joueur
+    f"execute if entity @a[tag=metiers.bossp] if score #abs m.boss matches ..599 run return run function {NS}:boss/victoire",
     "scoreboard players operation #seuil m.boss = #max m.boss", "scoreboard players operation #seuil m.boss /= #4 m.const",
     f"execute if score #last m.boss <= #seuil m.boss run return run function {NS}:boss/victoire",
     f"function {NS}:boss/fuite"]))
 w(F + "boss/tue.mcfunction", f"advancement revoke @s only {NS}:boss_tue\nscoreboard players set #tue m.boss 1\ntag @s add metiers.bossp")
+# 25/11/2026 : les tirs (arc, arbalète, trident) ne comptent pas dans la statistique damage_dealt : un boss abattu à
+# distance (Brasier qui vole, Creeper géant qu'on évite au corps à corps) ne récompensait personne. Tout coup porté au
+# boss, projectile compris, inscrit maintenant le joueur (environ 4 PV comptés par touche pour le meilleur dégât).
+wj(f"data/{NS}/advancement/boss_touche.json", {
+    "criteria": {"touche": {"trigger": "minecraft:player_hurt_entity", "conditions": {"entity": {
+        "type": "minecraft:entity_properties", "entity": "this",
+        "predicate": {"minecraft:nbt": '{Tags:["metiers.boss"]}'}}}}},
+    "rewards": {"function": f"{NS}:boss/touche"}})
+w(F + "boss/touche.mcfunction", "\n".join([f"advancement revoke @s only {NS}:boss_touche",
+    "tag @s add metiers.bossp", "execute unless score @s m.dmg matches 1.. run scoreboard players add @s m.bdmg 40"]))
 # 25/11/2026 : le succès qui déclenche boss/tue n'était plus généré ; la victoire ne tenait qu'au filet « dernier PV
 # connus sous 25 % » et le tueur n'était récompensé que s'il avait été vu frapper à moins de 32 blocs.
 wj(f"data/{NS}/advancement/boss_tue.json", {
@@ -347,3 +373,7 @@ add_lines(F + "boss/fin.mcfunction", ["execute if score #mgset m.boss matches 1 
 add_lines(F + "boss/encours.mcfunction", [f"execute if score #type m.boss matches 4 at {B} run fill ~-15 ~-8 ~-15 ~15 ~7 ~15 minecraft:air replace minecraft:fire"])
 add_lines(F + "refonte/load.mcfunction", ["execute if score #mgset m.boss matches 1 unless score #actif m.boss matches 1 run gamerule mob_griefing true",
                                           "execute if score #mgset m.boss matches 1 unless score #actif m.boss matches 1 run scoreboard players set #mgset m.boss 0"])
+# position mémorisée du boss : valeur de départ hors du monde (jamais chargée) pour qu'un combat repris sans position
+# connue passe par la grâce de 5 min au lieu d'être déclaré terminé
+add_lines(F + "refonte/load.mcfunction", [
+    f'execute unless data storage {NS}:boss bx run data merge storage {NS}:boss {{bx:29999000,by:64,bz:29999000,bdim:"minecraft:overworld"}}'])

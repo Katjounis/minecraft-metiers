@@ -38,6 +38,10 @@ Touche G (ou menu Échap) pour ouvrir le menu des métiers, ou `/trigger metiers
 
 Commandes admin : `/function metiers:boss/alerte` (boss suivant de la rotation dans 2 min), `/function metiers:heure/lancer`, `/function metiers:defis/nouveaux`, `/function metiers:defis/semaine`.
 
+## Version 25.12 (25/11/2026)
+
+Boss sans récompense corrigés. Les tirs (arc, arbalète, trident) ne comptent pas dans `damage_dealt`, donc un boss abattu à distance (Brasier, Creeper géant) ne récompensait personne. Le succès `boss_touche` (déclencheur `player_hurt_entity`, projectiles compris) inscrit maintenant tout joueur qui touche le boss, avec environ 4 PV comptés par touche pour le meilleur dégât. Quand le boss disparaît, sa dernière position est testée (`execute if loaded`) : chunk chargé, il est mort, et le combat se termine en victoire si des joueurs le combattaient ; chunk déchargé, on attend jusqu'à 5 minutes (`boss/absent`).
+
 ## Version 25.11 (25/11/2026)
 
 Le succès `boss_tue` (boss tué par un joueur, qui déclenche `boss/tue`) n'était plus généré : il est de retour, donc le tueur est toujours récompensé, même s'il n'a pas été vu frapper.
