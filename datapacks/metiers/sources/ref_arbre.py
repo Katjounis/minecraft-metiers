@@ -16,9 +16,14 @@ def _tex(p):
     return im.crop((0, 0, im.width, im.width)) if im.height > im.width else im   # 1re image d'une texture animée
 
 
-ARB_W, ARB_H = 228, 138
-ARB_P = {1: (114, 22), 2: (52, 54), 3: (176, 54), 4: (52, 86), 5: (176, 86), 6: (114, 116)}
-ARB_LIENS = [(1, 2), (1, 3), (2, 4), (3, 5), (4, 6), (5, 6)]
+# 26.0 (26/11/2026) : 18 nœuds sur 3 colonnes (branche gauche, tronc, branche droite) et 6 rangées de niveau
+ARB_W, ARB_H = 236, 200
+ARB_COL = {"G": 38, "T": 118, "D": 198}
+ARB_ROW = [20, 52, 84, 116, 148, 180]
+ARB_P = {k: (ARB_COL["T"], ARB_ROW[k - 1]) for k in range(1, 7)}
+ARB_P.update({k: (ARB_COL["G"], ARB_ROW[k - 7]) for k in range(7, 13)})
+ARB_P.update({k: (ARB_COL["D"], ARB_ROW[k - 13]) for k in range(13, 19)})
+ARB_LIENS = [(k, k + 1) for k in range(1, 6)] + [(1, 7)] + [(k, k + 1) for k in range(7, 12)] + [(1, 13)] + [(k, k + 1) for k in range(13, 18)]
 ARB_FOND = {"b": "oak_planks", "f": "farmland_moist", "m": "deepslate", "c": "mossy_cobblestone", "p": "prismarine_bricks",
             "e": "hay_block_side", "n": "purpur_block", "x": "moss_block", "t": "emerald_block", "k": "bricks"}
 ARB_IC = {
@@ -60,50 +65,88 @@ def _glyphe(nom, im, top, car=None):
 
 # ---------------------------------------------------------------- liens (gris / blanc), communs à tous les métiers
 ARB_SEG = {}
-for n, (a, b) in enumerate(ARB_LIENS, 1):
-    (x1, y1), (x2, y2) = ARB_P[a], ARB_P[b]
-    my = (y1 + y2) // 2
-    x0, xmax, ytop, ybot = min(x1, x2) - 1, max(x1, x2) + 1, y1 + 13, y2 - 13
+for n, (a_, b_) in enumerate(ARB_LIENS, 1):
+    (x1, y1), (x2, y2) = ARB_P[a_], ARB_P[b_]
     var = {}
     for etat, coul in (("gris", (110, 110, 110, 255)), ("blanc", (255, 255, 255, 255))):
-        im = _Img.new("RGBA", (xmax - x0 + 1, ybot - ytop + 1))
-        d = _Draw.Draw(im)
-        pts = [(x1 - x0, 0), (x1 - x0, my - ytop), (x2 - x0, my - ytop), (x2 - x0, ybot - ytop)]
-        for i in range(3):
-            d.line([pts[i], pts[i + 1]], fill=(0, 0, 0, 255), width=3)
-        for i in range(3):
-            d.line([pts[i], pts[i + 1]], fill=coul, width=1)
+        if y1 == y2:      # lien horizontal (racine vers une branche), entre les bords des cadres
+            xa, xb = sorted((x1, x2))
+            x0, ytop = xa + 13, y1 - 1
+            im = _Img.new("RGBA", (xb - 13 - x0, 3))
+            d = _Draw.Draw(im)
+            d.rectangle([(0, 0), (im.width - 1, 2)], fill=(0, 0, 0, 255))
+            d.line([(0, 1), (im.width - 1, 1)], fill=coul, width=1)
+        else:             # lien vertical dans une colonne
+            x0, ytop = x1 - 1, y1 + 13
+            im = _Img.new("RGBA", (3, y2 - 13 - ytop))
+            d = _Draw.Draw(im)
+            d.rectangle([(0, 0), (2, im.height - 1)], fill=(0, 0, 0, 255))
+            d.line([(1, 0), (1, im.height - 1)], fill=coul, width=1)
         var[etat] = _glyphe(f"lien_{n}_{etat}", im, ytop)
     assert var["gris"][1] == var["blanc"][1]
-    ARB_SEG[n] = {"x": x0, "gris": var["gris"][0], "blanc": var["blanc"][0], "adv": var["gris"][1]}
+    ARB_SEG[n] = {"x": x0, "gris": var["gris"][0], "blanc": var["blanc"][0], "adv": var["gris"][1], "ab": (a_, b_)}
 
 # ---------------------------------------------------------------- fond et nœuds de chaque métier
-_CAD = {(t, o): _tex(f"cadre/{t}_frame_{'obtained' if o else 'unobtained'}").resize((26, 26), _Img.NEAREST)
-        for t in ("task", "goal") for o in (True, False)}
+_CAD = {(t_, o): _tex(f"cadre/{t_}_frame_{'obtained' if o else 'unobtained'}").resize((26, 26), _Img.NEAREST)
+        for t_ in ("task", "goal", "challenge") for o in (True, False)}
 _PAST = {"dispo": (255, 255, 85, 255), "points": (255, 85, 85, 255)}
 ARB = {}
-for j in jobs:
-    bloc = _tex("block/" + ARB_FOND[j])
-    fond = _Img.new("RGBA", (ARB_W, ARB_H))
+
+
+def _gris(ic, alpha):
+    g = ic.convert("LA").convert("RGBA")
+    g.putalpha(ic.split()[3].point(lambda a: a * alpha // 10))
+    return g
+
+
+# 26.0 : fond en blocs mêlés par métier (bordure d'un bloc, intérieur tiré au hasard avec des poids, toujours le même tirage)
+ARB_MIX = {
+    "b": ("oak_log", [("oak_planks", 5), ("spruce_planks", 2), ("birch_planks", 1), ("stripped_oak_log", 1)]),
+    "f": ("hay_block_side", [("farmland_moist", 4), ("dirt", 2), ("coarse_dirt", 1), ("rooted_dirt", 1)]),
+    "m": ("deepslate_bricks", [("deepslate", 4), ("cobbled_deepslate", 2), ("tuff", 2), ("deepslate_tiles", 1)]),
+    "c": ("stone_bricks", [("mossy_cobblestone", 3), ("cobblestone", 2), ("mossy_stone_bricks", 2), ("cracked_stone_bricks", 1)]),
+    "p": ("dark_prismarine", [("prismarine_bricks", 3), ("prismarine", 3), ("dark_prismarine", 1)]),
+    "e": ("stripped_spruce_log", [("hay_block_top", 3), ("packed_mud", 2), ("mud_bricks", 1), ("coarse_dirt", 1)]),
+    "n": ("dark_oak_planks", [("bookshelf", 3), ("purpur_block", 2), ("end_stone_bricks", 1)]),
+    "x": ("oak_log", [("moss_block", 3), ("podzol_top", 1), ("rooted_dirt", 1), ("mossy_cobblestone", 1)]),
+    "t": ("terracotta", [("cut_sandstone", 3), ("chiseled_sandstone", 1), ("emerald_block", 1), ("gold_block", 1)]),
+    "k": ("oak_planks", [("bricks", 3), ("stone_bricks", 2), ("terracotta", 1)])}
+
+
+def _fond_mixte(j):
+    import random as _r
+    bord, mix = ARB_MIX[j]
+    rnd = _r.Random("arbre-" + j)
+    tir = [b for b, n in mix for _ in range(n)]
+    tx = {b: _tex("block/" + b) for b in set(tir) | {bord}}
+    im = _Img.new("RGBA", (ARB_W, ARB_H))
     for x in range(0, ARB_W, 16):
         for y in range(0, ARB_H, 16):
-            fond.paste(bloc, (x, y))
-    fond.alpha_composite(_Img.new("RGBA", (ARB_W, ARB_H), (0, 0, 0, 105)))
+            im.paste(tx[rnd.choice(tir)], (x, y))
+    for x in list(range(0, ARB_W - 16, 16)) + [ARB_W - 16]:
+        im.paste(tx[bord], (x, 0)); im.paste(tx[bord], (x, ARB_H - 16))
+    for y in list(range(0, ARB_H - 16, 16)) + [ARB_H - 16]:
+        im.paste(tx[bord], (0, y)); im.paste(tx[bord], (ARB_W - 16, y))
+    return im
+
+
+for j in jobs:
+    fond = _fond_mixte(j)
+    fond.alpha_composite(_Img.new("RGBA", (ARB_W, ARB_H), (0, 0, 0, 115)))
     d = _Draw.Draw(fond)
     d.rectangle([(0, 0), (ARB_W - 1, ARB_H - 1)], outline=(0, 0, 0, 255), width=2)
     d.rectangle([(2, 2), (ARB_W - 3, ARB_H - 3)], outline=(170, 128, 40, 255), width=1)
     cf, af = _glyphe(f"fond_{j}", fond, 0)
     nd = {}
-    for k in range(1, 7):
-        ic = _tex(ARB_IC[j][k - 1]).resize((16, 16), _Img.NEAREST)
+    icones = ARB_IC[j] + ([ic for _n, _d, ic in NOUVELLES[j]] if j in NOUVELLES else [])
+    for k in range(1, NB_SK[j] + 1):
+        ic = _tex(icones[k - 1]).resize((16, 16), _Img.NEAREST)
+        cadre = "challenge" if k in (12, 18) else ("goal" if k == 6 else "task")
         nd[k] = {}
         for e in ARB_ETATS:
-            im = _CAD[("goal" if k == 6 else "task", e == "acquise")].copy()
-            icn = ic
-            if e == "bloquee":
-                g = ic.convert("LA").convert("RGBA")
-                g.putalpha(ic.split()[3].point(lambda a: a * 6 // 10))
-                icn = g
+            im = _CAD[(cadre, e == "acquise")].copy()
+            # 26.0 : seule une compétence acquise garde ses couleurs ; les autres sont grisées
+            icn = ic if e == "acquise" else _gris(ic, 8 if e == "dispo" else (7 if e == "points" else 4))
             im.alpha_composite(icn, (5, 5))
             if e in _PAST:
                 dd = _Draw.Draw(im)
@@ -261,17 +304,28 @@ def _q(t):
     return t.replace("\\", "\\\\").replace('"', '\\"')
 
 
+_LARGF = {**{c: 2 for c in "i!,.:;|"}, **{c: 3 for c in "l'`"}, **{c: 4 for c in "It[] "}, **{c: 5 for c in "fk<>(){}*\""}}
+
+
+def _larg(s, gras=True):
+    return sum(_LARGF.get(c, 6) + (1 if gras else 0) for c in s)
+
+
+def _liens(j):
+    return [(n, s) for n, s in ARB_SEG.items() if max(s["ab"]) <= NB_SK[j]]
+
+
 def arbre_texte(j):
     """Composants (SNBT) qui posent le fond puis chaque calque ; $(sN) et $(aK) sont remplis par la page.
-    25/11/2026 : chaque nœud porte son infobulle (nom, effet, coût, niveau) et se clique pour acheter ou basculer."""
+    Chaque nœud porte son infobulle (nom, effet, coût, niveau, prérequis) et se clique pour acheter ou basculer."""
     A = ARB[j]
     F_ = 'font:"metiers:arbre",color:"white",shadow_color:0'
     t = A["fond"] + _esp(-A["adv"])
-    for n, s in ARB_SEG.items():
+    for n, s in _liens(j):
         t += _esp(s["x"]) + f"$(s{n})" + _esp(-(s["x"] + s["adv"]))
     comps = ['{text:"' + _q(t) + '",' + F_ + '}']
     d = jobs[j]
-    for k in range(1, 7):
+    for k in range(1, NB_SK[j] + 1):
         x = ARB_P[k][0] - 13
         adv = A["noeuds"][k]["acquise"][1]
         nom, cout, req, desc = SKILLS[j][k - 1]
@@ -286,7 +340,24 @@ def arbre_texte(j):
     return comps
 
 
+def arbre_legende(j):
+    """Noms des branches centrés sous leur colonne (espaces de la police de l'arbre, texte en police normale)."""
+    if j not in BRANCHES:
+        return []
+    F_ = 'font:"metiers:arbre",color:"white",shadow_color:0'
+    out, cur = [], 0
+    for col, nom, coul in (("G", BRANCHES[j][0], "green"), ("T", "Tronc", "gold"), ("D", BRANCHES[j][1], "red")):
+        w_ = _larg(nom)
+        x = ARB_COL[col] - w_ // 2
+        out.append('{text:"' + _q(_esp(x - cur)) + '",' + F_ + '}')
+        out.append(f'{{text:"{nom}",color:"{coul}",bold:true}}')
+        cur = x + w_
+    out.append('{text:"' + _q(_esp(ARB_W - cur)) + '",' + F_ + '}')   # même largeur que le dessin : même centrage
+    return out
+
+
 _ARB_TXT = {j: arbre_texte(j) for j in jobs}
+_ARB_LEG = {j: arbre_legende(j) for j in jobs}
 _prov.append({"type": "space", "advances": {c: n for n, c in _ESP.items()}})
 ARB_FONT = {"providers": _prov}
 
@@ -295,20 +366,20 @@ def arbre_etats(j, sk_tag):
     """Lignes qui remplissent pg aK (état de chaque nœud) et pg sN (lien allumé ou non) d'après les couleurs déjà
     calculées (cK) et les compétences acquises."""
     L = []
-    for k in range(1, 7):
+    for k in range(1, NB_SK[j] + 1):
         n = ARB[j]["noeuds"][k]
         L += [f'data modify storage {NS}:pg a{k} set value "{n["bloquee"][0]}"',
               f'execute if data storage {NS}:pg {{c{k}:"yellow"}} run data modify storage {NS}:pg a{k} set value "{n["dispo"][0]}"',
               f'execute if data storage {NS}:pg {{c{k}:"red"}} run data modify storage {NS}:pg a{k} set value "{n["points"][0]}"',
               f'execute if entity @s[tag={sk_tag}{k}] run data modify storage {NS}:pg a{k} set value "{n["acquise"][0]}"']
-    for n, (a, b) in enumerate(ARB_LIENS, 1):
-        s = ARB_SEG[n]
+    for n, s in _liens(j):
+        a_, b_ = s["ab"]
         L += [f'data modify storage {NS}:pg s{n} set value "{s["gris"]}"',
-              f'execute if entity @s[tag={sk_tag}{a},tag={sk_tag}{b}] run data modify storage {NS}:pg s{n} set value "{s["blanc"]}"']
+              f'execute if entity @s[tag={sk_tag}{a_},tag={sk_tag}{b_}] run data modify storage {NS}:pg s{n} set value "{s["blanc"]}"']
     return L
 
 
 def arbre_corps(j):
-    """Élément de corps de dialogue (SNBT) : le dessin, puis des lignes vides pour lui laisser sa hauteur."""
-    return ('{type:"minecraft:plain_message",width:240,contents:[' + ",".join(_ARB_TXT[j]) + ','
-            '{text:"' + "\\n" * 15 + '"}]}')
+    """Élément de corps de dialogue (SNBT) : le dessin, des lignes vides pour lui laisser sa hauteur, puis les noms des branches."""
+    return ('{type:"minecraft:plain_message",width:250,contents:[' + ",".join(_ARB_TXT[j]) + ','
+            '{text:"' + "\\n" * 22 + '"}' + "".join("," + c for c in _ARB_LEG[j]) + ']}')

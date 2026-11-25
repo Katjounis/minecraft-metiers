@@ -73,7 +73,7 @@ for j, d in jobs.items():
     lab = f'[{gs("metier_" + j)},{txt(" " + d["name"], d["color"])},{txt(" $(" + j + "_l) ", "yellow")},{{text:"$({j}_b)",font:"metiers:icones",color:"white"}},{txt("$(" + j + "_d)", "red")}]'
     acts.append(btn(lab, 20 + d["idx"], 150, f"Ouvre la page {d['name']} : arbre de compétences, outil, progression."))
 acts += ['{label:"",width:1}', '{label:"",width:1}']   # le Bâtisseur seul sur sa rangée, la suite repart à gauche
-acts += [ib("item/netherite_upgrade_smithing_template", "Forge", "gold", 471, 150, "Boutique de la Forge : marteau, faux, arc triple, lasso, aimant, cape... et sertissage des cristaux.", True),
+acts += [ib("item/netherite_upgrade_smithing_template", "Forge", "gold", 471, 150, "Forge : sertissage des cristaux dans ton outil, skins et cadres de titre.", True),
          ib("item/clock_00", "Défis du jour", "gold", 4, 150, "Un défi par métier, chaque jour.", True),
          ib("item/writable_book", "Quêtes", "gold", 495, 150, "Une quête de 10 étapes par métier.", True),
          ib("item/golden_chestplate", "Armure", "gold", 6, 150, "L’Armure des Guildes, qui monte avec ton score total.", True),
@@ -247,10 +247,19 @@ for j, d in jobs.items():
     titre_j = f'[{gs("metier_" + j)},{{text:" {d["name"]}",color:"{d["color"]}",bold:true}}]'
     w(F + f"{j}/page_dialog.mcfunction",
       f'$dialog show @s {{type:"minecraft:multi_action",title:{titre_j},'
-      f'can_close_with_escape:true,pause:false,body:[{ent},{arbre_corps(j)}],actions:[{",".join(sbtn + onglets)}],columns:3}}')
+      f'can_close_with_escape:true,pause:false,body:[{ent},{arbre_corps(j)}],actions:[{",".join(onglets)}],columns:3}}')
     # onglet Outil : l'outil en image, sa description, et tout ce qui le concerne
     outil_btn = [abtn[0], abtn[1], cb(ICL("item/netherite_upgrade_smithing_template", "Forger l’outil", "gold"), 470, "Sertis des cristaux dans l’outil de métier que tu tiens."),
                  cb(ICL("item/painting", "Skin de l’outil", "light_purple"), 420, "Apparence de tes outils et de ton armure.")] + abtn[8:]
+    # 26.0 : objets achetables du métier, Forge arcanique (Enchanteur), arc et élytres de palier à récupérer
+    if j in OBJ_BTN:
+        outil_btn.append(cb(ICL("item/bundle", "Objets du métier", "gold"), OBJ_BTN[j][0], "Les objets débloqués par tes compétences, achetés en Écus."))
+    if j == "n":
+        outil_btn.append(cb(ICL("item/enchanted_book", "Forge arcanique", "light_purple"), 3490, "Compétence Forge arcanique : 15 niveaux d’XP et 10 lapis, tous les enchantements de l’objet en main montent d’un niveau, jusqu’à 1, 2 ou 3 au-dessus du maximum du jeu."))
+    if j == "c":
+        outil_btn.append(cb(ICL("item/bow", "Arc du Chasseur", "red"), 3491, "Récompense du palier 5 : le récupérer s’il est perdu."))
+    if j == "x":
+        outil_btn.append(cb(ICL("item/elytra", "Élytres", "blue"), 3492, "Récompense du palier 6 : les récupérer si elles sont perdues."))
     corps_outil = ('[{type:"minecraft:item",item:{id:"minecraft:paper",components:{"minecraft:item_model":"metiers:$(model)","minecraft:custom_model_data":{strings:["$(skin)"]}}},'
                    'show_decorations:false,show_tooltip:false,description:{width:260,contents:['
                    f'{{text:"Outil au palier $(out) sur 10\\n",color:"gray"}},{{text:"$(next)",color:"gold"}}]}}}},'
@@ -415,7 +424,6 @@ w(F + "forge/outil_dialog.mcfunction",
   '{type:"minecraft:plain_message",width:380,contents:[{text:"$(outil)",color:"gray"},{text:"$(us) / $(sl)",color:"yellow"}]}],'
   f'actions:[{",".join(fo)}],columns:1,' + RET400)
 HUB = [btn(f'[{gs("forge_marteau")},{txt("  Forger l’outil en main", "gold", True)}]', 470, 320, "Sertis des cristaux dans l’outil de métier que tu tiens : Sagesse, Fortune, Écho, Efficacité."),
-       btn(f'[{gs("forge_cape")},{txt("  Boutique de la Forge", "yellow", True)}]', 471, 320, "Marteau 3x3, faux, arc triple, lasso, parchemin, aimant, cape-planeur."),
        btn(f'[{gs("forge_cristal_sagesse")},{txt("  Skins d’outil et d’armure", "light_purple", True)}]', 420, 320, "Change l’apparence de tes outils et de ton armure."),
        btn(f'[{gs("cadre_dore_g")},{txt("Cadres de titre", "gold", True)},{gs("cadre_dore_d")}]', 472, 320, "Le cadre qui entoure ton titre devant ton pseudo.")]
 w(F + "forge/menu_dialog.mcfunction",
@@ -648,12 +656,8 @@ w(F + "skins/cadre_0.mcfunction", f"function {NS}:skins/cadre {{i:0}}")
 # ================================================================ déclencheurs
 TRG = [f'execute if score @s m.trig matches 400 run function {NS}:appel {{f:"forge/menu"}}',
        f'execute if score @s m.trig matches 470 run function {NS}:appel {{f:"forge/outil"}}',
-       f'execute if score @s m.trig matches 471 run function {NS}:appel {{f:"forge/boutique"}}',
+       f'execute if score @s m.trig matches 471 run function {NS}:appel {{f:"forge/menu"}}',   # 26.0 : plus de boutique d'objets
        f'execute if score @s m.trig matches 472 run function {NS}:appel {{f:"skins/cadres"}}']
-for i, key in enumerate(CRP, 1):
-    TRG.append(f'execute if score @s m.trig matches {400 + i} run function {NS}:appel {{f:"forge/acheter_{key}"}}')
-for i, key in enumerate(COMMUN, 6):
-    TRG.append(f'execute if score @s m.trig matches {400 + i} run function {NS}:appel {{f:"forge/acheter_{key}"}}')
 TRG += [f'execute if score @s m.trig matches 411 run function {NS}:appel {{f:"forge/sertir_sagesse"}}',
         f'execute if score @s m.trig matches 412 run function {NS}:appel {{f:"forge/sertir_fortune"}}',
         f'execute if score @s m.trig matches 413 run function {NS}:appel {{f:"forge/sertir_echo"}}',

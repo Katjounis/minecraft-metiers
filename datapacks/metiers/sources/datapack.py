@@ -267,7 +267,8 @@ SKILLS = {
 SKILL_LVL = [5, 20, 20, 45, 45, 70]
 
 # niveau 100 : 99 points, coûts doublés pour finir l'arbre au niveau max
-SKILLS = {j: [(n, c * 2, r, d) for (n, c, r, d) in v] for j, v in SKILLS.items()}
+# 26.0 : plus de doublement, arbres à 18 (comp18.py : branches, coûts, niveaux, déclencheurs)
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "comp18.py"), encoding="utf-8").read())
 
 # =====================================================================
 # TITRES (11 paliers)
@@ -812,7 +813,7 @@ for j, d in jobs.items():
 for j, d in jobs.items():
     T.append(f"execute if score @s m.trig matches {20 + d['idx']} run function {NS}:{j}/arbre")
     T.append(f"execute if score @s m.trig matches {200 + d['idx']} run function {NS}:{j}/reclamer")
-    for k in range(1, 7):
+    for k in range(1, NB_SK[j] + 1):
         T.append(f"execute if score @s m.trig matches {TSK(d, k)} run function {NS}:{j}/acheter_{k}")
 w(F + "trigger.mcfunction", "\n".join(T))
 
@@ -830,7 +831,7 @@ for j, d in jobs.items():
         for sk, pred, cmd in hooks:
             cond = f"execute if entity @s[tag=metiers.sk.{sk}] if score @s s.{obj} matches 1.."
             if pred:
-                S.append(f"{cond} store result score #r m.tmp run random value 1..100")
+                S.append(f"{cond} store result score #r m.tmp run random value 1..{1000 if pred.startswith('pm_') else 100}")
                 cond += f" if score #r m.tmp matches ..{int(pred.split('_')[1])}"
             S.append(f"{cond} run {cmd}")
         op = "+=" if sign > 0 else "-="
@@ -991,7 +992,9 @@ execute if score @s m.{j}_lvl matches ..{MAXLVL-1} if score @s m.{j}_xp >= @s m.
         w(F + f"{j}/donner_{k}.mcfunction", "\n".join(G))
 
     # points disponibles = niveau - 1 - dépensés
-    w(F + f"{j}/points.mcfunction", f"""
+    # 26.0 : les points dépensés sont recalculés à chaque fois d'après les compétences acquises (coûts revus = remboursement)
+    w(F + f"{j}/points.mcfunction", f"scoreboard players set @s m.{j}_spent 0\n" + "\n".join(
+        f"execute if entity @s[tag=metiers.sk.{j}{k}] run scoreboard players add @s m.{j}_spent {c}" for k, (_n, c, _r, _d) in enumerate(SKILLS[j], 1)) + f"""
 scoreboard players operation @s m.tmp = @s m.{j}_lvl
 scoreboard players remove @s m.tmp 1
 scoreboard players operation @s m.tmp -= @s m.{j}_spent
@@ -1008,12 +1011,12 @@ scoreboard players operation @s m.tmp += #ppr m.tmp
          f"execute store result storage {NS}:arbre pts int 1 run scoreboard players get @s m.tmp"]
     for k, (name, cost, req, desc) in enumerate(sk, 1):
         cond = f"execute if entity @s[{reqsel(req)}]" if req else "execute if entity @s"
-        A += [f'data modify storage {NS}:arbre l{k} set value "✖  {POS[k]} · {name}   ({cost} pts)"',
+        A += [f'data modify storage {NS}:arbre l{k} set value "✖  {POS.get(k, 'Branche')} · {name}   ({cost} pts)"',
               f'data modify storage {NS}:arbre c{k} set value "dark_gray"',
-              f'{cond} run data modify storage {NS}:arbre l{k} set value "{POS[k]} · {name}   ({cost} pts)"',
+              f'{cond} run data modify storage {NS}:arbre l{k} set value "{POS.get(k, 'Branche')} · {name}   ({cost} pts)"',
               f'{cond} run data modify storage {NS}:arbre c{k} set value "yellow"',
               f'{cond} if score @s m.tmp matches ..{cost-1} run data modify storage {NS}:arbre c{k} set value "red"',
-              f'execute if entity @s[tag=metiers.sk.{j}{k}] run data modify storage {NS}:arbre l{k} set value "✔  {POS[k]} · {name}"',
+              f'execute if entity @s[tag=metiers.sk.{j}{k}] run data modify storage {NS}:arbre l{k} set value "✔  {POS.get(k, 'Branche')} · {name}"',
               f'execute if entity @s[tag=metiers.sk.{j}{k}] run data modify storage {NS}:arbre c{k} set value "green"']
     A.append(f"function {NS}:{j}/arbre_dialog with storage {NS}:arbre")
     w(F + f"{j}/arbre.mcfunction", "\n".join(A))
@@ -1261,14 +1264,14 @@ for j, d in jobs.items():
         "description": {"text": "Compétences et paliers du métier. Touche G pour ouvrir le menu.", "color": "gray"},
         "frame": "task", "background": BG[j], "show_toast": False, "announce_to_chat": False},
         "criteria": {"tick": {"trigger": "minecraft:tick"}}})
-    parents = {1: "racine", 2: "competence_1", 3: "competence_1", 4: "competence_2", 5: "competence_3", 6: "competence_4"}
+    parents = {k: ("racine" if k == 1 else ("competence_1" if k in (7, 13) else f"competence_{k - 1}")) for k in range(1, NB_SK[j] + 1)}
     for k, (name, cost, req, desc) in enumerate(SKILLS[j], 1):
         rq = " + ".join(SKILLS[j][r-1][0] for r in req) if req else "rien"
         wj(A_ + f"competence_{k}.json", {"parent": f"{NS}:{j}/{parents[k]}",
-            "display": {"icon": {"id": f"minecraft:{ICONS_SK[j][k-1]}"},
+            "display": {"icon": {"id": "minecraft:" + (ICONS_SK[j][k-1] if k <= 6 else NOUVELLES[j][k - 7][2].split("/")[1])},
                         "title": {"text": name, "color": d["color"]},
                         "description": {"text": f"{desc}\nCoût : {cost} points\nRequiert : {rq}", "color": "gray"},
-                        "frame": "challenge" if k == 6 else ("goal" if k >= 4 else "task"),
+                        "frame": "challenge" if k in (6, 12, 18) else ("goal" if k in (4, 5, 10, 11, 16, 17) else "task"),
                         "show_toast": True, "announce_to_chat": False},
             "criteria": IMP})
         SY.append(f"execute if entity @s[tag=metiers.sk.{j}{k}] run advancement grant @s only {NS}:{j}/competence_{k}")
@@ -1382,6 +1385,10 @@ SKIN_NOM = ["Givre", "Corail", "Or royal", "Ossements", "Magma", "Ombre"]
 MAXDUR = {"iron": 250, "diamond": 1561, "netherite": 2031, "golden": 32, "stone": 131, "wooden": 59}
 BASE_TOOL = {j: tool_iid(j, 0) for j in jobs}
 
+CAPA_OUTIL = [("m", 5, "Accroupi : creuse en 3x3 (ancien Marteau)"), ("f", 3, "Clic droit sur des cultures : récolte et replante en 3x3"),
+              ("f", 6, "La récolte au clic droit passe en 5x5"), ("e", 4, "Accroupi + clic droit : capture l'animal visé dans un œuf"),
+              ("n", 3, "Accroupi + clic droit : les enchantements de ta main secondaire passent sur un livre"),
+              ("t", 4, "En main secondaire : attire les objets et l'XP à 8 blocs")]
 def outil_give(j, k):
     d = jobs[j]
     if k == 0:
@@ -1398,7 +1405,9 @@ def outil_give(j, k):
             f'{{text:"Palier {k}/10, il évolue tous les 10 niveaux",color:"gray",italic:false}}' +
             {"e": ',{text:"Clic droit : les animaux proches te suivent",color:"light_purple",italic:false}',
              "n": ',{text:"Clic droit : points de téléportation",color:"light_purple",italic:false}',
-             "k": f',{{text:"Tenue dans une main : portée +{1 + k // 5} pour poser et casser",color:"#C08850",italic:false}}'}.get(j, "") + ']')
+             "k": f',{{text:"Tenue dans une main : portée +{1 + k // 5} pour poser et casser",color:"#C08850",italic:false}}'}.get(j, "") +
+            # 26.0 : capacités des anciens objets de la Forge, débloquées par palier sur l'outil du métier
+            "".join(f',{{text:"{txt_}",color:"aqua",italic:false}}' for jj, kk, txt_ in CAPA_OUTIL if jj == j and k >= kk) + ']')
     comps = [f"minecraft:enchantments={{{e}}}",
              f'minecraft:custom_name=[{{text:"$(et)",color:"gold",bold:true,italic:false}},{{text:"{name}",color:"{color}",bold:true,italic:false}}]',
              f"minecraft:lore={lore}",
@@ -1411,6 +1420,8 @@ def outil_give(j, k):
              'minecraft:rarity="epic"']
     if unb:
         comps.append("minecraft:unbreakable={}")
+    if j == "f" and k >= 3:   # 26.0 : la houe récolte au clic droit (détecté par « using_item »), comme l'ancienne Faux
+        comps.append('minecraft:consumable={consume_seconds:100000,animation:"none",has_consume_particles:false,sound:"minecraft:intentionally_empty"}')
     if j == "k":   # truelle : portée de pose et de casse, quelle que soit la main
         comps.append(f'minecraft:attribute_modifiers=[{{type:"minecraft:block_interaction_range",id:"metiers:truelle",amount:{1 + k // 5},operation:"add_value",slot:"hand"}}]')
     return f"minecraft:{iid}[{','.join(comps)}] 1"
@@ -2171,7 +2182,7 @@ for j, d in jobs.items():
 CL.append("tag @s remove metiers.req")
 w(F + "classement.mcfunction", "\n".join(CL))
 
-ALLTAGS = [f"metiers.sk.{j}{k}" for j in jobs for k in range(1, 7)]
+ALLTAGS = [f"metiers.sk.{j}{k}" for j in jobs for k in range(1, NB_SK[j] + 1)]
 w(F + "reset_joueur.mcfunction", "\n".join(
     ["tag @s remove metiers.ok", "tag @s remove metiers.v2", "tag @s remove metiers.v3", "team leave @s",
      f"advancement revoke @s from {NS}:b/racine", f"advancement revoke @s from {NS}:f/racine",
@@ -2248,14 +2259,14 @@ playsound minecraft:ui.toast.in master @s ~ ~ ~ 0.6 1.4
 """)
 
 # REFONTE (v24) : objets, armure 11 paliers, compétences, menus, Forge, skins, boss, défis
-for _mod in ("ref_base.py", "ref_skills.py", "ref_menu.py", "ref_boss.py", "ref_defis.py", "ref_bareme.py", "ref_prestige.py", "ref_v26.py", "ref_batisseur.py", "ref_recalcul.py", "ref_paliers.py", "ref_scenes.py", "ref_classement.py", "ref_arbre_ecrire.py"):
+for _mod in ("ref_base.py", "ref_skills.py", "ref_comp18.py", "ref_objets.py", "ref_menu.py", "ref_boss.py", "ref_defis.py", "ref_bareme.py", "ref_prestige.py", "ref_v26.py", "ref_batisseur.py", "ref_recalcul.py", "ref_paliers.py", "ref_scenes.py", "ref_classement.py", "ref_arbre_ecrire.py"):
     exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), _mod), encoding="utf-8").read())
 
 # Compétences désactivables : une compétence achetée garde son tag metiers.sk.XN (achat, prérequis, menus),
 # et le tag metiers.skoff.XN coupe son effet. Tous les sélecteurs d'effet reçoivent donc « et pas désactivée ».
 import re as _re2
-_SK = _re2.compile(r"tag=metiers\.sk\.([a-z])(\d)(?=[,\]])")
-_GARDE = _re2.compile(r"(/acheter_\d|/basculer_\d|/arbre|/page_dialog|/points|function[/\\]menu|refonte[/\\]migration|desinstaller)")
+_SK = _re2.compile(r"tag=metiers\.sk\.([a-z])(\d+)(?=[,\]])")
+_GARDE = _re2.compile(r"(/acheter_\d+|/basculer_\d+|/arbre|/page_dialog|/points|function[/\\]menu|refonte[/\\]migration|desinstaller)")
 for _dp, _, _fs in os.walk(ROOT):
     for _fn in _fs:
         if not _fn.endswith(".mcfunction"): continue

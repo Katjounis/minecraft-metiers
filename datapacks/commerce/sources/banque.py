@@ -83,6 +83,9 @@ w(B_ + "interets_boucle.mcfunction", [f"execute unless data storage {NS}:t W[0] 
 w(B_ + "interets_m.mcfunction", [
     f"{S} set #x c.t 0", "$execute store result score #x c.t run scoreboard players get $(nom) c.ep",
     "scoreboard players operation #x c.t /= #50 c.g",
+    # Métiers 26 : compétence Banquier du Marchand, +1 % par semaine
+    f"{S} set #z c.t 0", "$execute if score $(nom) m.tbq matches 1 store result score #z c.t run scoreboard players get $(nom) c.ep",
+    "scoreboard players operation #z c.t /= #100 c.g", "scoreboard players operation #x c.t += #z c.t",
     # guilde niveau 2 ou 3 : 3 % ; niveau 4 ou 5 : 4 % et plafond 10 000
     f"{S} set #gn c.t 0", "$execute store result score #gn c.t run scoreboard players get $(nom) c.gn",
     f"{S} operation #y c.t = #x c.t", f"{S} set #2 c.t 2",

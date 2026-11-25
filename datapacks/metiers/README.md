@@ -26,7 +26,7 @@ Dans `server.properties` :
 
 ```
 resource-pack=https://github.com/Katjounis/minecraft-metiers/raw/main/metiers_resourcepack.zip
-resource-pack-sha1=ac45436543baaf8df97edb9951981cf068ffe056
+resource-pack-sha1=48f6dc742ea8f491e209a1cbd9e29673de52e90e
 require-resource-pack=true
 ```
 
@@ -37,6 +37,18 @@ Le SHA-1 doit être recalculé à chaque nouvelle version du resource pack.
 Touche G (ou menu Échap) pour ouvrir le menu des métiers, ou `/trigger metiers`.
 
 Commandes admin : `/function metiers:boss/alerte` (boss suivant de la rotation dans 2 min), `/function metiers:heure/lancer`, `/function metiers:defis/nouveaux`, `/function metiers:defis/semaine`.
+
+## Version 27.0 (26/11/2026)
+
+Arbres à 18 compétences (`sources/comp18.py`, effets dans `sources/ref_comp18.py`). Chaque métier garde ses 6 compétences en tronc, maintenant en chaîne, et gagne deux branches de 6 (gauche n° 7 à 12, droite n° 13 à 18) aux niveaux 10, 20, 30, 45, 60 et 80. Le Bâtisseur reste à 6. Coûts réels sans doublement : tronc 3, 4, 6, 8, 12, 16 ; branches 4, 6, 8, 10, 12, 14, soit 157 points pour tout l'arbre. Le niveau 100 en donne 99 et chaque étoile de prestige 99 de plus. Les points dépensés sont recalculés à chaque ouverture à partir des compétences acquises (anciens coûts doublés remboursés d'office). Déclencheurs d'achat des branches : 3000 + 20 x numéro du métier + n° de compétence.
+
+Page de métier : l'arbre dessiné (236 x 200 px, fond en blocs mêlés propres à chaque métier, `ARB_MIX` dans `ref_arbre.py`) est seul à porter les compétences, on clique sur l'icône pour acheter ou basculer, l'infobulle donne nom, effet, coût, niveau et prérequis. Seules les compétences acquises gardent leurs couleurs. Les noms des branches sont écrits sous l'arbre. Restent dessous : Outil, Progression, Retour.
+
+Effets : attributs (vie max, armure, portée, vitesse de casse, air, nage, minage sous l'eau, saut, recul), effets selon l'outil tenu ou le lieu, crochets sur les gains d'XP (chances de butin, `pm_N` pour une chance sur 1000), progrès `player_hurt_entity` et `entity_hurt_player` pour les coups critiques, le saignement (types de dégâts `metiers:critique` et `metiers:saignement`), l'esquive et le Tourbillon. Les compétences du Marchand côté marché sont lues par Commerce : `m.tmb` (bonus de vente en millièmes), `m.tam` (achats -5 %), `m.ttx` (taxe de l'hôtel des ventes à 2 %, retenue à la mise en vente), `m.tbq` (épargne +1 %), `m.tcb` (5 % d'achats remboursés).
+
+Objets de métier (`sources/ref_objets.py`), achetés en Écus dans l'onglet Outil quand la compétence est acquise : Graine de forêt, Bombe d'engrais, Arrosoir, Épouvantail, Dynamite, Lanterne, Piège à mâchoires, Fumigène, Filet de pêche, Sifflet, Mangeoire, Tente. Les objets lancés sont des boules de neige suivies par un marqueur, les objets posés des porte-armures invisibles avec un marqueur jumeau qui rend l'objet quand on le casse.
+
+Fin des objets de la Forge : la boutique disparaît (le bouton Forge ouvre le sertissage, les skins et les cadres). Le 3x3 passe sur la pioche du Mineur (palier 5, accroupi), la récolte au clic droit sur la houe du Fermier (3x3 au palier 3, 5x5 au palier 6), le lasso sur la houlette de l'Éleveur (palier 4, accroupi), le parchemin sur le grimoire de l'Enchanteur (palier 3, accroupi), l'aimant sur la bourse du Marchand en main secondaire (palier 4). L'arc triple devient la récompense du palier 5 de Chasseur, des élytres incassables celle du palier 6 d'Explorateur (récupérables dans l'onglet Outil). Les anciens objets sont retirés des inventaires et des coffres de l'Ender, une seule fois, avec le remboursement des cristaux et éclats payés.
 
 ## Version 26.5 (25/11/2026)
 

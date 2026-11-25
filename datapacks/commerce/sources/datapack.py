@@ -413,7 +413,9 @@ BO += ["execute if score #lv c.t matches 101.. run scoreboard players set #lv c.
        "scoreboard players operation #lv c.t *= #5 c.g", "scoreboard players operation #bon c.t += #lv c.t",
        "execute if score #mj c.t matches 1.. if score #mj c.t = #job m.heure run scoreboard players add #bon c.t 250",
        # synergie Négoce de Métiers (Mineur + Marchand niveau 50) : +5 %
-       "execute if score @s m.syn matches 1 run scoreboard players add #bon c.t 50"]
+       "execute if score @s m.syn matches 1 run scoreboard players add #bon c.t 50",
+       # Métiers 26 : Vendeur, Vendeur aguerri, Grossiste (+3, +6, +10 %)
+       "scoreboard players operation #bon c.t += @s m.tmb"]
 w(F + "prix/bonus.mcfunction", BO)
 w(F + "prix/sans_bonus.mcfunction", "scoreboard players set #bon c.t 1000")
 
@@ -519,6 +521,9 @@ w(F + "op/acheter.mcfunction", [
     "scoreboard players operation #d c.t /= #V c.t", "scoreboard players operation #d c.t *= #-1 c.g",
     f"function {NS}:prix/mid", f"function {NS}:prix/sans_bonus", f"function {NS}:prix/vente",
     "scoreboard players operation #tot c.t = #a c.t", "scoreboard players operation #tot c.t *= #q c.t",
+    # Métiers 26 : Acheteur malin (-5 %)
+    "execute if score @s m.tam matches 1 run scoreboard players operation #tot c.t *= #95 c.g",
+    "execute if score @s m.tam matches 1 run scoreboard players operation #tot c.t /= #100 c.g",
     # paiement au centime près : #ce Écus et #cc centimes
     "scoreboard players operation #ce c.t = #tot c.t", "scoreboard players operation #ce c.t /= #100 c.g",
     "scoreboard players operation #cc c.t = #tot c.t", "scoreboard players operation #cc c.t %= #100 c.g",
@@ -533,6 +538,9 @@ w(F + "op/acheter.mcfunction", [
     "execute if score @s c.cts matches ..-1 run scoreboard players remove @s c.ecus 1",
     "execute if score @s c.cts matches ..-1 run scoreboard players add @s c.cts 100",
     "scoreboard players operation @s c.ta += #ce c.t",
+    # Métiers 26 : Contrebandier, 5 % de chance d'être remboursé
+    "execute if score @s m.tcb matches 1 store result score #r c.t run random value 1..100",
+    f"execute if score @s m.tcb matches 1 if score #r c.t matches ..5 run function {NS}:op/contrebande",
     f"function {NS}:op/donner with storage {NS}:t it",
     # bonus du Bâtisseur : seulement pour les blocs à 1 Écu pièce ou plus (sinon de la terre devenait une machine à XP)
     "execute if score #blk c.t matches 1 if score #a c.t matches 100.. run scoreboard players operation @s c.kb += #q c.t",
@@ -548,6 +556,9 @@ w(F + "op/acheter.mcfunction", [
     "playsound minecraft:entity.item.pickup master @s ~ ~ ~ 0.6 0.8"])
 w(F + "op/msg_achat.mcfunction", [f'$data modify storage {NS}:t msg set value "Acheté : $(q) pour $(e),$(z)$(c) Écus."',
     '$execute unless score #lot c.t matches 1 run tellraw @s [{"text":"[Commerce] ","color":"green"},{"text":"Acheté : ","color":"gray"},{"text":"$(q) $(n)","color":"white"},{"text":" pour ","color":"gray"},{"text":"-$(e),$(z)$(c) Écus","color":"red"}]'])
+w(F + "op/contrebande.mcfunction", ["scoreboard players operation @s c.ecus += #ce c.t", "scoreboard players operation @s c.cts += #cc c.t",
+    "execute if score @s c.cts matches 100.. run scoreboard players add @s c.ecus 1", "execute if score @s c.cts matches 100.. run scoreboard players remove @s c.cts 100",
+    'tellraw @s [{"text":"[Commerce] ","color":"green"},{"text":"Contrebandier : cet achat t\'est remboursé.","color":"dark_green"}]'])
 w(F + "op/msg_pauvre.mcfunction", [
     f'$data modify storage {NS}:t msg set value "Pas assez d\'Écus : il te faut $(e),$(z)$(c) Écus pour $(q)."',
     "playsound minecraft:entity.villager.no master @s ~ ~ ~ 0.8 1"])

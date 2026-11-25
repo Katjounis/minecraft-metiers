@@ -46,6 +46,8 @@ w(H_ + "prix.mcfunction", [
     f"execute store result storage {NS}:t e.n int 1 run scoreboard players get #hdvn c.g",
     f"execute store result storage {NS}:t e.v int 1 run scoreboard players get @s m.id",
     f"execute store result storage {NS}:t e.p int 1 run scoreboard players get #q c.t",
+    # Métiers 26 : compétence Taxe réduite du Marchand, retenue au moment de la mise en vente (2 % au lieu de 5)
+    f"execute if score @s m.ttx matches 1 run data modify storage {NS}:t e.tx set value 98",
     f"function {NS}:joueur/nom_moi", f"data modify storage {NS}:t e.vn set from storage {NS}:t moi",
     f"data modify storage {NS}:t e.it set from entity @s SelectedItem",
     "item replace entity @s weapon.mainhand with minecraft:air",
@@ -118,7 +120,8 @@ w(H_ + "acheter.mcfunction", [
     f'execute if score @s c.ecus < #q c.t run return run function {NS}:hdv/erreur {{m:"Pas assez d’Écus."}}',
     "scoreboard players operation @s c.ecus -= #q c.t", "scoreboard players operation @s c.ta += #q c.t",
     # vendeur : prix moins 5 %
-    "scoreboard players operation #net c.t = #q c.t", "scoreboard players operation #net c.t *= #95 c.g", "scoreboard players operation #net c.t /= #100 c.g",
+    "scoreboard players set #tx c.t 95", f"execute if data storage {NS}:t e{{tx:98}} run scoreboard players set #tx c.t 98",
+    "scoreboard players operation #net c.t = #q c.t", "scoreboard players operation #net c.t *= #tx c.t", "scoreboard players operation #net c.t /= #100 c.g",
     f"execute store result storage {NS}:t e.net int 1 run scoreboard players get #net c.t",
     f"function {NS}:hdv/payer with storage {NS}:t e",
     f"function {NS}:hdv/donner",
