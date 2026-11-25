@@ -38,6 +38,10 @@ Touche G (ou menu Échap) pour ouvrir le menu des métiers, ou `/trigger metiers
 
 Commandes admin : `/function metiers:boss/alerte` (boss suivant de la rotation dans 2 min), `/function metiers:heure/lancer`, `/function metiers:defis/nouveaux`, `/function metiers:defis/semaine`.
 
+## Version 25.13 (25/11/2026)
+
+Bouton « Classement » dans l'onglet de chaque métier (déclencheurs 521 à 530, `ref_classement.py`) : top 10 du serveur dans ce métier, trié par étoiles de prestige puis par niveau, médailles pour le podium. Les joueurs en ligne sont mis à jour à l'ouverture, les autres gardent leur dernier score connu. « Retour » ramène à l'onglet du métier.
+
 ## Version 25.12 (25/11/2026)
 
 Boss sans récompense corrigés. Les tirs (arc, arbalète, trident) ne comptent pas dans `damage_dealt`, donc un boss abattu à distance (Brasier, Creeper géant) ne récompensait personne. Le succès `boss_touche` (déclencheur `player_hurt_entity`, projectiles compris) inscrit maintenant tout joueur qui touche le boss, avec environ 4 PV comptés par touche pour le meilleur dégât. Quand le boss disparaît, sa dernière position est testée (`execute if loaded`) : chunk chargé, il est mort, et le combat se termine en victoire si des joueurs le combattaient ; chunk déchargé, on attend jusqu'à 5 minutes (`boss/absent`).

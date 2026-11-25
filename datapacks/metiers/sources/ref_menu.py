@@ -207,7 +207,8 @@ for j, d in jobs.items():
             cb(ICV("item/name_tag", "tl", "tc"), TTI(d), f"Affiche ton titre de {d['name']} devant ton pseudo. Le cadre se choisit dans Activités."),
             cb(ICL("item/amethyst_shard", SPECIAL_COURT[j], sp[2]), sp[0], sp[3]),
             cb(ICV("item/totem_of_undying", "pl", "pc"), 310 + d["idx"], "Au niveau 100 : repars au niveau 1 avec une étoile, tu gardes tes compétences (5 étoiles max)."),
-            cb(ICL("item/book", "Barème d’XP", "gold"), 480 + d["idx"], f"Ce que rapporte chaque action en {d['name']}, avec les images du jeu.")] + \
+            cb(ICL("item/book", "Barème d’XP", "gold"), 480 + d["idx"], f"Ce que rapporte chaque action en {d['name']}, avec les images du jeu."),
+            cb(ICL("item/goat_horn", "Classement", "yellow"), 520 + d["idx"], f"Les 10 meilleurs joueurs en {d['name']} (niveau et étoiles de prestige).")] + \
            ([cb(ICV("item/enchanted_book", "sk_mode", "mc"), 761, "Change l’enchantement de ta pioche : Fortune (plus de minerais) ou Toucher de soie (le bloc tel quel). Ta pioche est remplacée tout de suite.")] if j == "m" else [])
     body = ('[{type:"minecraft:item",item:{id:"minecraft:paper",components:{"minecraft:item_model":"metiers:$(model)","minecraft:custom_model_data":{strings:["$(skin)"]}}},'
             'show_decorations:false,show_tooltip:false,description:{width:260,contents:['
