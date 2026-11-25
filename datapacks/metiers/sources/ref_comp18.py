@@ -68,17 +68,13 @@ ATT = [  # (modificateur, attribut, valeur, opération, condition supplémentair
     ("b18", "max_health", 8, "add_value", ""),
     ("f13a", "attack_damage", 3, "add_value", f"if items entity @s {HOUE}"),
     ("f13b", "sweeping_damage_ratio", 0.5, "add_value", f"if items entity @s {HOUE}"),
-    ("f15", "max_health", 4, "add_value", ""),
     ("m14", "explosion_knockback_resistance", 1, "add_value", ""),
-    ("m16a", "step_height", 0.5, "add_value", "if entity @s[y=-64,dy=113]"),
-    ("m16b", "fall_damage_multiplier", -0.5, "add_multiplied_base", "if entity @s[y=-64,dy=113]"),
     ("m18a", "armor", 4, "add_value", ""), ("m18b", "armor_toughness", 2, "add_value", ""),
     ("m18c", "knockback_resistance", 0.5, "add_value", ""),
     ("p13", "oxygen_bonus", 3, "add_value", ""),
     ("p14", "water_movement_efficiency", 0.5, "add_value", ""),
     ("p15", "submerged_mining_speed", 0.8, "add_value", ""),
     ("p16", "attack_damage", 3, "add_value", "if block ~ ~0.5 ~ minecraft:water"),
-    ("e15a", "armor", 2, "add_value", ""), ("e15b", "knockback_resistance", 0.3, "add_value", ""),
     ("x8a", "jump_strength", 0.1, "add_value", ""), ("x8b", "safe_fall_distance", 2, "add_value", "")]
 ATT += [(f"c11r{n}", "attack_damage", 1, "add_value", f"if score @s m.rage matches {n}..") for n in range(1, 6)]
 J_ = []
@@ -106,7 +102,6 @@ J_ += [
     f"execute if entity @s[{SK('f', 12)}] if predicate {NS}:pluie run function {NS}:comp/f_pluie",
     f"execute if entity @s[{SK('f', 16)}] if block ~ ~-0.2 ~ minecraft:farmland run effect give @s minecraft:regeneration 2 0 true",
     f"execute if entity @s[{SK('f', 16)}] if block ~ ~ ~ #minecraft:crops run effect give @s minecraft:regeneration 2 0 true",
-    f"execute if entity @s[{SK('f', 18)}] run function {NS}:comp/f_repas",
     # Mineur
     "execute if score @s m.arcd matches 1.. run scoreboard players remove @s m.arcd 1",
     f"execute if entity @s[{SK('m', 13)}] unless score @s m.arcd matches 1.. if predicate {NS}:sombre if block ~ ~ ~ minecraft:air unless block ~ ~-1 ~ #{NS}:vide if items entity @s container.* minecraft:torch run function {NS}:comp/m_torche",
@@ -160,7 +155,6 @@ J_ += [
     f"execute if entity @s[{SK('t', 7)}] if score #quatre m.timer matches 0 as @e[type=minecraft:villager,distance=..16] run function {NS}:comp/t_oubli",
     f"execute if entity @s[{SK('t', 8)}] if score #quatre m.timer matches 0 as @e[type=minecraft:villager,distance=..8] run data modify entity @s Offers.Recipes[].uses set value 0",
     f"execute if entity @s[{SK('t', 9)}] if score #quatre m.timer matches 0 as @e[type=minecraft:villager,distance=..8] run data modify entity @s Offers.Recipes[].demand set value 0",
-    f"execute if entity @s[{SK('t', 10)}] as @e[type=minecraft:zombie_villager,distance=..8] run function {NS}:comp/t_guerir",
     f"execute if entity @s[{SK('t', 11)}] if score #huit m.timer matches 0 as @e[type=minecraft:villager,distance=..8] run function {NS}:comp/t_livres",
     "scoreboard players set @s m.tmb 0",
     f"execute if entity @s[{SK('t', 13)}] run scoreboard players set @s m.tmb 30",
@@ -265,8 +259,7 @@ w(C + "n_enclume.mcfunction", "\n".join([
 w(C + "n_xp.mcfunction", "$xp add @s $(n) levels\n$title @s actionbar {\"text\":\"Enclume douce : $(n) niveaux rendus\",\"color\":\"dark_purple\"}")
 add_lines(F + "n/enchant.mcfunction", [
     f"execute if entity @s[{SK('n', 7)}] if score #lv m.tmp matches 1.. store result score #r m.tmp run random value 1..2",
-    f"execute if entity @s[{SK('n', 7)}] if score #lv m.tmp matches 1.. if score #r m.tmp matches 1 run function {NS}:comp/n_lapis",
-    f"execute if entity @s[{SK('n', 8)}] if score #lv m.tmp matches 1.. run xp add @s 1 levels"])
+    f"execute if entity @s[{SK('n', 7)}] if score #lv m.tmp matches 1.. if score #r m.tmp matches 1 run function {NS}:comp/n_lapis"])
 w(C + "n_lapis.mcfunction", f"execute store result storage {NS}:t n int 1 run scoreboard players get #lv m.tmp\nfunction {NS}:comp/n_lapis_m with storage {NS}:t")
 w(C + "n_lapis_m.mcfunction", "$give @s minecraft:lapis_lazuli $(n)")
 # Garde-niveaux et Sac étanche : à la mort

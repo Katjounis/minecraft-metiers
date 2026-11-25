@@ -26,7 +26,7 @@ Dans `server.properties` :
 
 ```
 resource-pack=https://github.com/Katjounis/minecraft-metiers/raw/main/metiers_resourcepack.zip
-resource-pack-sha1=3775a0789f6185c379a0d27ada1d4ffe37b644ce
+resource-pack-sha1=3e2cec9fa9b112a15a329100853ddd52dcb7b37a
 require-resource-pack=true
 ```
 
@@ -37,6 +37,10 @@ Le SHA-1 doit être recalculé à chaque nouvelle version du resource pack.
 Touche G (ou menu Échap) pour ouvrir le menu des métiers, ou `/trigger metiers`.
 
 Commandes admin : `/function metiers:boss/alerte` (boss suivant de la rotation dans 2 min), `/function metiers:heure/lancer`, `/function metiers:defis/nouveaux`, `/function metiers:defis/semaine`.
+
+## Version 27.2 (26/11/2026)
+
+Les anciennes capacités de la Forge sont des compétences de l'arbre, plus des paliers d'outil : Faux (clic droit avec la houe du Fermier, récolte et replante en 3x3, f15) et Grande faux (5x5, f18), Pioche large (3x3 accroupi avec n'importe quelle pioche, m16), Tir triple (n'importe quel arc, c17), Lasso (houlette, accroupi + clic droit, e15), Parchemin (grimoire, accroupi + clic droit, n8), Bourse aimantée (bourse en main secondaire, t10). Elles remplacent Vigueur du terroir, Repas de fête, Pied de montagne, Fumigène, Peau épaisse, Remise et Guérisseur. La houe du Fermier accepte le clic droit à tous les paliers (remise à jour une fois à la connexion). L'Arc du Chasseur n'est plus donné au palier 5 (ceux déjà donnés tirent toujours en triple).
 
 ## Version 27.1 (26/11/2026)
 

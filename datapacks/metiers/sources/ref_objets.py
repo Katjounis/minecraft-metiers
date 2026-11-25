@@ -19,7 +19,6 @@ OBJETS = {
     "lanterne": ("m", 15, "Lanterne", "paper", "minecraft:lantern", 8000, "En main secondaire : la lumière te suit. Se garde."),
     "piege": ("c", 16, "Piège à mâchoires", "armor_stand", "minecraft:tripwire_hook", 800,
               "Pose-le : il bloque et blesse le premier monstre qui passe (recharge 10 s). Casse-le pour le reprendre."),
-    "fumigene": ("c", 17, "Fumigène", "snowball", "minecraft:gunpowder", 300, "Lance-le : les monstres à 8 blocs sont ralentis et affaiblis 6 s."),
     "filet": ("p", 9, "Filet de pêche", "armor_stand", "minecraft:cobweb", 15000,
               "Pose-le dans l'eau : il pêche seul toutes les 2 min, dans un coffre ou un tonneau collé à lui (sinon au sol)."),
     "sifflet": ("e", 16, "Sifflet", "carrot_on_a_stick", "minecraft:goat_horn", 4000,
@@ -84,7 +83,6 @@ for j, lst in OBJ_J.items():
     OBJ_BTN[j] = (3480 + d["idx"], f"Objets de {d['name']}")
     TRG_O.append(f'execute if score @s m.trig matches {3480 + d["idx"]} run function {NS}:appel {{f:"objets/boutique_{j}"}}')
 TRG_O += [f'execute if score @s m.trig matches 3490 run function {NS}:appel {{f:"comp/n_forge"}}',
-          f'execute if score @s m.trig matches 3491 run function {NS}:appel {{f:"objets/recup_arc"}}',
           f'execute if score @s m.trig matches 3492 run function {NS}:appel {{f:"objets/recup_elytres"}}']
 add_lines(F + "trigger.mcfunction", TRG_O)
 
@@ -95,8 +93,8 @@ _t[1:1] = [f"execute if items entity @s weapon.mainhand {OSEL('graine')} run ret
            f"execute if items entity @s weapon.mainhand {OSEL('arrosoir')} run return run function {NS}:objets/arrosoir",
            f"execute if items entity @s weapon.mainhand {OSEL('sifflet')} run return run function {NS}:objets/sifflet",
            # anciens objets de la Forge sur l'outil : Éleveur (lasso) et Enchanteur (parchemin), accroupi
-           f'execute if items entity @s weapon.mainhand {SEL("e")} if predicate {NS}:accroupi if score @s m.e_out matches 4.. run return run function {NS}:forge/lasso',
-           f'execute if items entity @s weapon.mainhand {SEL("n")} if predicate {NS}:accroupi if score @s m.n_out matches 3.. run return run function {NS}:objets/parchemin']
+           f'execute if items entity @s weapon.mainhand {SEL("e")} if predicate {NS}:accroupi if entity @s[tag={NS}.sk.e15] run return run function {NS}:forge/lasso',
+           f'execute if items entity @s weapon.mainhand {SEL("n")} if predicate {NS}:accroupi if entity @s[tag={NS}.sk.n8] run return run function {NS}:objets/parchemin']
 open(_p, "w", encoding="utf-8").write("\n".join(_t))
 SAPF = {"oak_sapling": "oak", "spruce_sapling": "spruce", "birch_sapling": "birch", "jungle_sapling": "jungle_tree",
         "acacia_sapling": "acacia", "dark_oak_sapling": "dark_oak", "cherry_sapling": "cherry", "mangrove_propagule": "mangrove",
@@ -158,9 +156,9 @@ TO = [f"execute as @e[type=minecraft:snowball,tag=!{NS}.pv] run function {NS}:ob
       # objets posés : nouveaux
       f"execute as @e[type=minecraft:armor_stand,tag={NS}.onew] at @s run function {NS}:objets/pose",
       # Marchand : bourse en main secondaire au palier 4 (ancien Aimant)
-      f'execute as @a if items entity @s weapon.offhand {SEL("t")} if score @s m.t_out matches 4.. at @s run function {NS}:objets/aimant',
+      f'execute as @a if items entity @s weapon.offhand {SEL("t")} if entity @s[tag={NS}.sk.t10] at @s run function {NS}:objets/aimant',
       # Mineur : 3x3 accroupi, pioche du métier au palier 5 (ancien Marteau)
-      f'execute as @a[predicate={NS}:accroupi] if items entity @s weapon.mainhand {SEL("m")} if score @s m.m_out matches 5.. at @s run function {NS}:objets/marteau',
+      f'execute as @a[predicate={NS}:accroupi] if items entity @s weapon.mainhand #minecraft:pickaxes if entity @s[tag={NS}.sk.m16] at @s run function {NS}:objets/marteau',
       "scoreboard players set @a s.pk 0"]
 w(O_ + "tick.mcfunction", "\n".join(TO))
 add_lines(F + "refonte/tick.mcfunction", [f"function {NS}:objets/tick"])
@@ -278,10 +276,10 @@ w(O_ + "donner_arc.mcfunction", f"give @s {ARC}")
 w(O_ + "donner_elytres.mcfunction", f"give @s {ELY}")
 ARCSEL = "*[minecraft:custom_data~{metiers_arc:1b}]"
 ELYSEL = "*[minecraft:custom_data~{metiers_elytres:1b}]"
-add_lines(F + "c/donner_5.mcfunction", [f"function {NS}:objets/donner_arc", tr("Palier 5 : l'Arc du Chasseur (tir triple) est dans ton inventaire.", "red")])
 add_lines(F + "x/donner_6.mcfunction", [f"function {NS}:objets/donner_elytres", tr("Palier 6 : des élytres incassables sont dans ton inventaire.", "blue")])
 add_lines(F + "refonte/tick.mcfunction", [
-    f"execute as @a[scores={{s.bow2=1..}}] at @s if items entity @s weapon.mainhand {ARCSEL} run function {NS}:forge/arc3",
+    f"execute as @a[scores={{s.bow2=1..}},tag={NS}.sk.c17] at @s run function {NS}:forge/arc3",
+    f"execute as @a[scores={{s.bow2=1..}},tag=!{NS}.sk.c17] at @s if items entity @s weapon.mainhand {ARCSEL} run function {NS}:forge/arc3",
     "scoreboard players set @a s.bow2 0"])
 add_lines(F + "refonte/load.mcfunction", ["scoreboard objectives add s.bow2 minecraft.used:minecraft.bow"])
 for nom_, sel_, fn_, j_, pal_ in (("arc", ARCSEL, "donner_arc", "c", 5), ("elytres", ELYSEL, "donner_elytres", "x", 6)):
@@ -306,8 +304,7 @@ for key, e_ in COMMUN.items():
 RB += [f"scoreboard players set @s m.fo_{key} 0" for key in list(CRP) + list(COMMUN)]
 for j in ("m", "f", "e", "n", "t"):
     RB.append(f"execute if items entity @s container.* {SEL(j)} run function {NS}:{j}/outil_donner")
-RB += [f"execute if score @s m.c_pal matches 5.. run function {NS}:objets/donner_arc",
-       f"execute if score @s m.x_pal matches 6.. run function {NS}:objets/donner_elytres",
+RB += [f"execute if score @s m.x_pal matches 6.. run function {NS}:objets/donner_elytres",
        tr("Mise à jour 26 : les objets de la Forge disparaissent. Ce que tu avais payé (cristaux et éclats) t'est rendu, "
           "et leurs capacités passent sur tes outils de métier (voir l'onglet Outil).", "gold")]
 w(O_ + "migration.mcfunction", "\n".join(RB))
@@ -323,10 +320,14 @@ wj(f"data/{NS}/advancement/objets/houe.json", {"criteria": {"u": {"trigger": "mi
     "item": {"items": "#minecraft:hoes", "predicates": {"minecraft:custom_data": "{metiers_outil:\"f\"}"}}}}},
     "rewards": {"function": f"{NS}:objets/houe"}})
 HO = [f"advancement revoke @s only {NS}:objets/houe", "execute if score @s m.forgecd matches 1.. run return 0",
-      "execute unless score @s m.f_out matches 3.. run return 0", "scoreboard players set @s m.forgecd 2"]
+      f"execute unless entity @s[tag={NS}.sk.f15] run return 0", "scoreboard players set @s m.forgecd 2"]
 for dx in range(-2, 3):
     for dz in range(-2, 3):
-        cond = "" if max(abs(dx), abs(dz)) <= 1 else "if score @s m.f_out matches 6.. "
+        cond = "" if max(abs(dx), abs(dz)) <= 1 else f"if entity @s[tag={NS}.sk.f18] "
         HO.append(f"execute {cond}positioned ~{dx} ~ ~{dz} run function {NS}:forge/faux_bloc")
 HO += ["playsound minecraft:item.hoe.till master @s ~ ~ ~ 1 0.8", "particle minecraft:sweep_attack ~ ~0.5 ~ 1 0.2 1 0 4"]
 w(O_ + "houe.mcfunction", "\n".join(HO))
+
+# 26/11/2026 : la houe du Fermier reçoit le clic droit à tous les paliers (compétences Faux et Grande faux) : on la remet à jour une fois
+add_lines(O_ + "joueur.mcfunction", [f'execute unless entity @s[tag={NS}.v27h] if items entity @s container.* {SEL("f")} run function {NS}:f/outil_donner',
+                                     f"tag @s add {NS}.v27h"])

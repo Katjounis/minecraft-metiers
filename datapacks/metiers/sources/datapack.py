@@ -1385,10 +1385,7 @@ SKIN_NOM = ["Givre", "Corail", "Or royal", "Ossements", "Magma", "Ombre"]
 MAXDUR = {"iron": 250, "diamond": 1561, "netherite": 2031, "golden": 32, "stone": 131, "wooden": 59}
 BASE_TOOL = {j: tool_iid(j, 0) for j in jobs}
 
-CAPA_OUTIL = [("m", 5, "Accroupi : creuse en 3x3 (ancien Marteau)"), ("f", 3, "Clic droit sur des cultures : récolte et replante en 3x3"),
-              ("f", 6, "La récolte au clic droit passe en 5x5"), ("e", 4, "Accroupi + clic droit : capture l'animal visé dans un œuf"),
-              ("n", 3, "Accroupi + clic droit : les enchantements de ta main secondaire passent sur un livre"),
-              ("t", 4, "En main secondaire : attire les objets et l'XP à 8 blocs")]
+CAPA_OUTIL = []   # 26/11/2026 : les anciennes capacités de la Forge sont des compétences de l'arbre (comp18.py)
 def outil_give(j, k):
     d = jobs[j]
     if k == 0:
@@ -1420,7 +1417,7 @@ def outil_give(j, k):
              'minecraft:rarity="epic"']
     if unb:
         comps.append("minecraft:unbreakable={}")
-    if j == "f" and k >= 3:   # 26.0 : la houe récolte au clic droit (détecté par « using_item »), comme l'ancienne Faux
+    if j == "f":   # 26.0 : la houe récolte au clic droit (détecté par « using_item »), comme l'ancienne Faux
         comps.append('minecraft:consumable={consume_seconds:100000,animation:"none",has_consume_particles:false,sound:"minecraft:intentionally_empty"}')
     if j == "k":   # truelle : portée de pose et de casse, quelle que soit la main
         comps.append(f'minecraft:attribute_modifiers=[{{type:"minecraft:block_interaction_range",id:"metiers:truelle",amount:{1 + k // 5},operation:"add_value",slot:"hand"}}]')

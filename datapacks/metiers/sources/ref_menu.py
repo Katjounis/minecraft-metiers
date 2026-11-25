@@ -266,8 +266,6 @@ for j, d in jobs.items():
         outil_btn.append(cb(ICL("item/bundle", "Objets du métier", "gold"), OBJ_BTN[j][0], "Les objets débloqués par tes compétences, achetés en Écus."))
     if j == "n":
         outil_btn.append(cb(ICL("item/enchanted_book", "Forge arcanique", "light_purple"), 3490, "Compétence Forge arcanique : 15 niveaux d’XP et 10 lapis, tous les enchantements de l’objet en main montent d’un niveau, jusqu’à 1, 2 ou 3 au-dessus du maximum du jeu."))
-    if j == "c":
-        outil_btn.append(cb(ICL("item/bow", "Arc du Chasseur", "red"), 3491, "Récompense du palier 5 : le récupérer s’il est perdu."))
     if j == "x":
         outil_btn.append(cb(ICL("item/elytra", "Élytres", "blue"), 3492, "Récompense du palier 6 : les récupérer si elles sont perdues."))
     corps_outil = ('[{type:"minecraft:item",item:{id:"minecraft:paper",components:{"minecraft:item_model":"metiers:$(model)","minecraft:custom_model_data":{strings:["$(skin)"]}}},'
