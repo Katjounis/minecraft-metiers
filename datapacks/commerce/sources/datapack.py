@@ -739,6 +739,9 @@ SCENE_IDX = {"b": 1, "f": 2, "m": 3, "c": 4, "p": 5, "e": 6, "n": 7, "x": 8, "t"
 BAN = lambda k: f'{{type:"minecraft:plain_message",width:310,contents:[{{text:""}},{{text:"{chr(0xE020 + k)}",font:"commerce:recette",color:"white",shadow_color:0}},{{text:"\\n\\n"}}]}}'
 
 
+GLYPHE_MAX = 240   # taille maxi d'un glyphe de police (px)
+
+
 def dessiner_rp():
     import io as _io
     from PIL import Image, ImageDraw
@@ -788,7 +791,7 @@ def dessiner_rp():
         return b
     provs = []
     for k, (txt, ico) in enumerate(BANNIERES):
-        Wb, Hb = (256 if k == 14 else 200), 27   # un glyphe de police ne doit pas dépasser 256 px (sinon le client plante)
+        Wb, Hb = (240 if k == 14 else 200), 27   # glyphe < 256 px : au-delà le client plante, à 256 pile le texte du jeu se corrompt (25/11/2026)
         b = plaque(Wb, Hb)
         d2 = ImageDraw.Draw(b)
         # texte centré, deux fois la taille de la police, ombre portée
@@ -857,7 +860,7 @@ def dessiner_rp():
                         img.putpixel((X, Y), col + (255,))
                 xx0 += w_ * 2 + 2
     for j, (nom, fond, ico, haut, bas, sem) in SCENES.items():
-        Wb, Hb = 256, 36   # 256 px au plus par glyphe : au-delà, le client plante en l'affichant
+        Wb, Hb = 240, 36   # glyphe < 256 px : à 256 pile, le texte des panneaux et des noms devenait illisible en 26.3 (25/11/2026)
         b = Image.new("RGBA", (Wb, Hb), (0, 0, 0, 255))
         tf = tex(fond).resize((32, 32), Image.NEAREST)
         semis = [tex(x_).resize((32, 32), Image.NEAREST) for x_ in sem]
@@ -886,10 +889,10 @@ def dessiner_rp():
         gros(b, nom, (Wb - larg) // 2, 12, haut, bas, tuple(int(c * 0.18) for c in bas))
         b.save(os.path.join(RP, "textures", "font", f"scene_{j}.png"))
         provs.append({"type": "bitmap", "file": f"commerce:font/scene_{j}.png", "height": Hb, "ascent": 7, "chars": [chr(0xE100 + SCENE_IDX[j])]})
-    for _p in provs:   # garde-fou : glyphe seul de plus de 256 px = plantage du client (24/11/2026)
+    for _p in provs:   # garde-fou : glyphe seul de 256 px ou plus = plantage ou texte corrompu chez le client (24-25/11/2026)
         if _p["type"] == "bitmap" and len(_p["chars"]) == 1 and len(_p["chars"][0]) == 1:
             _im = Image.open(os.path.join(RP, "textures", "font", _p["file"].split("font/")[1]))
-            assert max(_im.size) <= 256, f"glyphe trop grand : {_p['file']} {_im.size}"
+            assert max(_im.size) <= GLYPHE_MAX, f"glyphe trop grand : {_p['file']} {_im.size}"
     # barres de courbe : 8 hauteurs, blanches (la couleur du texte les teinte), 2 px de large, posées sur la ligne
     bar = Image.new("RGBA", (24, 9), (0, 0, 0, 0))
     for k in range(8):
