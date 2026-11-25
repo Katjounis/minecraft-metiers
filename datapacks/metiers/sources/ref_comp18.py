@@ -32,7 +32,7 @@ wj(P_ + "au_sol.json", {"type": "minecraft:entity_properties", "entity": "this",
 wj(P_ + "court.json", {"type": "minecraft:entity_properties", "entity": "this", "predicate": {"flags": {"is_sprinting": True}}})
 wj(P_ + "plane.json", {"type": "minecraft:entity_properties", "entity": "this", "predicate": {"flags": {"is_flying": True}}})
 wj(P_ + "avance.json", {"type": "minecraft:entity_properties", "entity": "this",
-                        "predicate": {"type_specific": {"type": "minecraft:player", "input": {"forward": True}}}})
+                        "predicate": {"type_specific/player": {"input": {"forward": True}}}})
 wj(P_ + "monte.json", {"type": "minecraft:entity_properties", "entity": "this", "predicate": {"vehicle": {}}})
 wj(P_ + "pluie.json", {"type": "minecraft:weather_check", "raining": True})
 wj(P_ + "sombre.json", {"type": "minecraft:location_check", "predicate": {"light": {"light": {"max": 3}}}})
