@@ -1479,7 +1479,7 @@ for j, d in jobs.items():
     for k in range(1, 11):
         RM += [f'data modify storage {NS}:rec s{k} set value "Niveau {10 * k} requis"',
                f'data modify storage {NS}:rec c{k} set value "dark_gray"',
-               f'execute if score @s m.{j}_lvl matches {10 * k}.. run data modify storage {NS}:rec s{k} set value "À récupérer (G > Récompenses de palier)"',
+               f'execute if score @s m.{j}_lvl matches {10 * k}.. run data modify storage {NS}:rec s{k} set value "À récupérer : clique"',
                f'execute if score @s m.{j}_lvl matches {10 * k}.. run data modify storage {NS}:rec c{k} set value "yellow"',
                f'execute if score @s m.{j}_pal matches {k}.. run data modify storage {NS}:rec s{k} set value "✔ Récupéré"',
                f'execute if score @s m.{j}_pal matches {k}.. run data modify storage {NS}:rec c{k} set value "green"']
@@ -1491,14 +1491,21 @@ for j, d in jobs.items():
         tool = its[0]
         extras = ", ".join([f"{CRIST[k]} cristaux"] + ([f"{ECL_PAL[k]} éclat{'s' if ECL_PAL[k] > 1 else ''}"] if k in ECL_PAL else [])
                            + [f"{ECUS_PAL[k]:,} Écus".replace(",", " ")] + [it["label"] if it.get("label") else it["name"] for it in its[1:]])
-        rb.append(f'{{type:"minecraft:plain_message",width:330,contents:[{{text:"Palier {k} · niveau {10 * k}   ",color:"gold",bold:true}},'
-                  f'{{text:"$(s{k})",color:"$(c{k})",bold:false}},'
-                  f'{{text:"\\nOutil : ",color:"gray",bold:false}},{{text:"{tool["name"]}",color:"{tool["color"]}",bold:true}},'
-                  f'{{text:"\\n{ench_txt(tool)}",color:"dark_aqua",bold:false}},'
-                  f'{{text:"\\nBonus : {extras}",color:"white",bold:false}}]}}')
+        # 25/11/2026 : une case par palier, le détail passe dans l'infobulle (plus de pavé de texte)
+        rb.append(f'{{label:{{text:"Palier {k}",color:"$(c{k})"}},width:90,'
+                  f'tooltip:[{{text:"Palier {k} · niveau {10 * k}\\n",color:"gold",bold:true}},'
+                  f'{{text:"$(s{k})\\n",color:"$(c{k})",bold:false}},'
+                  f'{{text:"{tool["name"]}\\n",color:"{tool["color"]}",bold:false}},'
+                  f'{{text:"{ench_txt(tool)}\\n",color:"dark_aqua",bold:false}},'
+                  f'{{text:"{extras}",color:"white",bold:false}}],'
+                  f'action:{{type:"run_command",command:"trigger metiers set 3"}}}}')
+    rb.append('{label:{text:"Tout récupérer",color:"green"},width:190,action:{type:"run_command",command:"trigger metiers set 3"}}')
+    rb.append(f'{{label:"Retour",width:190,action:{{type:"run_command",command:"trigger metiers set {560 + d["idx"]}"}}}}')
     w(F + f"{j}/recompenses_dialog.mcfunction",
-      f'$dialog show @s {{type:"minecraft:notice",title:{{text:"Récompenses {d["name"]}",color:"{d["color"]}",bold:true}},can_close_with_escape:true,pause:false,'
-      f'body:[{",".join(rb)}],action:{{label:"Retour",width:150,action:{{type:"run_command",command:"trigger metiers set {20 + d["idx"]}"}}}}}}')
+      f'$dialog show @s {{type:"minecraft:multi_action",title:{{text:"Récompenses {d["name"]}",color:"{d["color"]}",bold:true}},can_close_with_escape:true,pause:false,'
+      f'body:[{{type:"minecraft:plain_message",width:300,contents:[{{text:"Vert : récupéré   ",color:"green"}},{{text:"Jaune : à prendre   ",color:"yellow"}},{{text:"Gris : à venir",color:"dark_gray"}},'
+      f'{{text:"\\nSurvole un palier pour voir l\'outil et les bonus.",color:"gray"}}]}}],'
+      f'actions:[{",".join(rb)}],columns:5}}')
     w(F + f"{j}/outil_reparer.mcfunction", "\n".join([
         f"execute unless items entity @s container.* {sel} unless items entity @s weapon.offhand {sel} run return run {tr('Tu dois avoir ton outil de ' + d['name'] + ' sur toi pour le réparer.', 'red')}",
         f"execute if score @s m.{j}_out matches 5.. run return run {tr('Ton outil est déjà incassable.', 'green')}",

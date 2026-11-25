@@ -11,7 +11,7 @@ from catalogue import ACHAT, CATEGORIES, ITEMS, RARES
 ROOT = os.path.join(HERE, "..", "build", "commerce_datapack")
 NS = "commerce"
 F = f"data/{NS}/function/"
-VERSION = 15
+VERSION = 16
 if os.path.exists(ROOT):
     shutil.rmtree(ROOT)
 
@@ -1043,6 +1043,7 @@ TR = ["scoreboard players operation #v c.t = @s commerce", "scoreboard players s
       f"execute if score #v c.t matches 20 run return run function {NS}:page/bourse",
       f"execute if score #v c.t matches 21 run return run function {NS}:page/fortunes",
       f"execute if score #v c.t matches 22 run return run function {NS}:page/cristaux",
+      f"execute if score #v c.t matches 23 run return run function {NS}:page/plus",
       f"execute if score #v c.t matches 50 run return run function {NS}:comptoir/deplacer",
       f"execute if score #v c.t matches ..-1 run return run function {NS}:saisie/entree",
       f"execute if score #v c.t matches 90 run return run function {NS}:banque/page",
@@ -1100,10 +1101,11 @@ AIDE = [
     ("Magasin", "Un panneau [Vente] sur un coffre : tu choisis le prix, les clients achètent d’un clic droit sur le panneau."),
     ("Coffre privé", "Pose un panneau sur ton coffre ou ton tonneau et écris [Privé] : toi seul l’ouvres, et il se reconstruit s’il est cassé. Casse le panneau pour le libérer."),
 ]
+# 25/11/2026 : aide en grille de sujets, l'explication s'affiche au survol (plus de pavé à faire défiler)
 w(F + "page/aide.mcfunction", dlg(
     T("Commerce : comment ça marche", "gold", True),
-    [f'{{type:"minecraft:plain_message",width:320,contents:{L(*[x for t, d in AIDE for x in (T(t + " : ", "gold", True), T(d + "\\n", "gray"))])}}}'],
-    [btn(T("Accueil", "white"), 1, 150)], 1))
+    [f'{{type:"minecraft:plain_message",width:300,contents:{L(T("Survole un sujet pour lire son explication.", "gray"))}}}'],
+    [btn(T(tt, "gold"), 60, 100, dd) for tt, dd in AIDE] + [btn(T("Accueil", "white"), 1, 100)], 3))
 
 # ---------------------------------------------------------------- accueil
 AC = SOLDE(f"{NS}:a") + [
@@ -1115,30 +1117,41 @@ w(F + "page/accueil.mcfunction", AC)
 # 25/11/2026 : décor encadré du marché (glyphe U+E7F2 de metiers:arbre, dessiné par Métiers), boutons verts sur 3 colonnes
 DECOR = lambda n: ('{type:"minecraft:plain_message",width:240,contents:[{text:"' + {"serveur": "\ue7f0", "metiers": "\ue7f1", "commerce": "\ue7f2",
                    "compagnons": "\ue7f3", "bestiaire": "\ue7f4"}[n] + '",font:"metiers:arbre",color:"white",shadow_color:0},{text:"' + "\\n" * 9 + '"}]}')
+# 25/11/2026 : accueil allégé, 6 grandes entrées sur 3 colonnes ; le reste passe dans « Plus » (23)
+SPR_B = lambda b: '{object:"atlas",atlas:"minecraft:blocks",sprite:"minecraft:block/' + b + '"}'
+SPR_I = lambda i: '{object:"atlas",atlas:"minecraft:items",sprite:"minecraft:item/' + i + '"}'
 w(F + "page/accueil_d.mcfunction", "$" + dlg(
-    T("Commerce", "gold", True),
+    T("Commerce", "green", True),
     [DECOR("commerce"), f'{{type:"minecraft:plain_message",width:310,contents:{L(SOLDE_TXT, T("\\nVendu : $(tv) " + ECU + "   ·   acheté : $(ta) " + ECU, "gray"), T("\\n$(ev)", "light_purple"), MSG_TXT)}}}'],
-    [btn(L(spr("emerald"), T("  Marché", "green", True)), 9, 130, "Acheter et vendre, objet par objet."),
-     btn(L(spr("diamond"), T("  Bourse", "green", True)), 20, 130, "Évènements, tendances, tops."),
-     btn(L(spr("gold_ingot"), T("  Fortunes", "green", True)), 21, 130, "Le solde de tout le monde."),
-     btn(L(G("cristal_m"), T("  Cristaux de métier", "green", True)), 22, 130, "Hors de prix, mais c'est le but."),
-     btn(L('{object:"atlas",atlas:"minecraft:blocks",sprite:"minecraft:block/spawner"}', T("  Spawners", "green", True)), 70, 130, "Des spawners à acheter et à améliorer. Très chers."),
-     btn(L('{object:"atlas",atlas:"minecraft:items",sprite:"minecraft:item/clock_00"}', T("  Graphiques", "green", True)), 81, 130, "Courbes et flux du marché, jour par jour."),
+    [btn(L(spr("emerald"), T("  Marché", "green", True)), 9, 130, "Acheter et vendre, par catégorie ou de A à Z."),
      btn(L(spr("gold_ingot"), T("  Banque", "green", True)), 90, 130, "Virements, épargne, historique."),
      btn(L(spr("chest"), T("  Hôtel des ventes", "green", True)), 6000, 130, "Achète et vends des objets entre joueurs."),
-     btn(L('{object:"atlas",atlas:"minecraft:items",sprite:"minecraft:item/name_tag"}', T("  Trésor de guilde", "green", True)), 7700, 130, "Le trésor de ta guilde : niveaux et avantages pour tous les membres."),
+     btn(L(spr("diamond"), T("  Bourse", "green", True)), 20, 130, "Évènements, tendances, tops."),
+     btn(L(SPR_B("spawner"), T("  Spawners", "green", True)), 70, 130, "Des spawners à acheter et à améliorer."),
+     btn(L(SPR_I("compass_00"), T("  Plus", "green", True)), 23, 130, "Fortunes, graphiques, cristaux de métier, trésor de guilde, comptoir, aide.")],
+    cols=3))
+w(F + "page/plus.mcfunction", dlg(
+    T("Commerce  ·  Plus", "green", True),
+    [DECOR("commerce")],
+    [btn(L(spr("gold_ingot"), T("  Fortunes", "green", True)), 21, 130, "Le solde de tout le monde."),
+     btn(L(SPR_I("clock_00"), T("  Graphiques", "green", True)), 81, 130, "Courbes et flux du marché, jour par jour."),
+     btn(L(G("cristal_m"), T("  Cristaux", "green", True)), 22, 130, "Cristaux de métier : hors de prix, mais c’est le but."),
+     btn(L(SPR_I("name_tag"), T("  Trésor de guilde", "green", True)), 7700, 130, "Niveaux et avantages pour tous les membres de ta guilde."),
      btn(L(spr("barrel"), T("  Mon comptoir", "green", True)), 50, 130, "Range ton comptoir dans ton inventaire pour le reposer ailleurs."),
-     btn(T("Aide", "gray"), 60, 130)], cols=3))
+     btn(L(SPR_I("paper"), T("  Aide", "white", True)), 60, 130, "Comment marchent les prix, la vente, la banque.")]
+    + [btn(T("Retour", "white"), 1, 130)], cols=3))
 
 # ---------------------------------------------------------------- index du marché : une ligne de texte, puis les boutons
 CATSHOW = {c: (vit, col, desc) for c, _, vit, col, desc in CATEGORIES}
 w(F + "page/marche.mcfunction", SOLDE(f"{NS}:mk") + [f"function {NS}:page/marche_d with storage {NS}:mk"])
 w(F + "page/marche_d.mcfunction", "$" + dlg(
-    T("Marché", "yellow", True),
-    [BAN(1), f'{{type:"minecraft:plain_message",width:310,contents:{L(SOLDE_TXT)}}}'],
-    [btn(L(spr(CATSHOW[c][0]), T("  " + CATNAME[c], CATSHOW[c][1])), PG(c, 0), 160, CATSHOW[c][2]) for c in ITEMS]
-    + [btn(T("Index A à Z", "yellow", True), 3000, 160, "Trouver un objet par la première lettre de son nom."),
-       btn(T("Bourse", "light_purple"), 20, 160), btn(T("Accueil", "white"), 1, 160)]))
+    T("Marché", "green", True),
+    [f'{{type:"minecraft:plain_message",width:310,contents:{L(SOLDE_TXT)}}}'],
+    [btn(L(SPR_I("spyglass"), T("  Index A à Z", "gold", True)), 3000, 130, "Trouver un objet par la première lettre de son nom."),
+     btn(L(spr("diamond"), T("  Bourse", "green", True)), 20, 130, "Évènements, tendances, tops."),
+     btn(T("Accueil", "white"), 1, 130)]
+    + [btn(L(spr(CATSHOW[c][0]), T("  " + (CATNAME[c] if len(CATNAME[c]) <= 16 else CATNAME[c][:15].rstrip() + "…"), "white")), PG(c, 0), 130, CATNAME[c] + " : " + CATSHOW[c][2]) for c in ITEMS],
+    cols=3))
 
 # ---------------------------------------------------------------- une page de catégorie : 10 boutons, prix en infobulle
 w(F + "page/ligne.mcfunction", [

@@ -38,6 +38,10 @@ Touche G (ou menu Échap) pour ouvrir le menu des métiers, ou `/trigger metiers
 
 Commandes admin : `/function metiers:boss/alerte` (boss suivant de la rotation dans 2 min), `/function metiers:heure/lancer`, `/function metiers:defis/nouveaux`, `/function metiers:defis/semaine`.
 
+## Version 26.5 (25/11/2026)
+
+Récompenses de palier en grille de 10 cases (vert récupéré, jaune à prendre, gris à venir), l'outil, ses enchantements et les bonus passent dans l'infobulle ; un clic sur une case ou sur « Tout récupérer » récupère ce qui est disponible, Retour ramène à l'onglet Progression du métier. Page Synergies sur une ligne par synergie, l'effet au survol du nom.
+
 ## Version 26.4 (25/11/2026)
 
 Décors encadrés en tête des menus principaux, dessinés dans la police `metiers:arbre` à des caractères fixes (U+E7F0 serveur, U+E7F1 Métiers, U+E7F2 Commerce, U+E7F3 Compagnons, U+E7F4 Bestiaire) pour que les autres packs les utilisent : menu Les Couillons (îles volantes, une couleur par pack), Mes métiers (forêt et falaise à minerais), accueil Commerce (étals du marché), Compagnons (prairie au couchant), Bestiaire (forêt de nuit).

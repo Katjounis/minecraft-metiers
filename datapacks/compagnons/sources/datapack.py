@@ -854,16 +854,20 @@ for k, (_, cle, nom, col, ent, ico, (j, n, jn), suit, combat) in T.items():
         tr(f"{LE(nom)} se débloque au {COND(k)}. Le prestige du métier compte aussi.", "red"),
         f"function {NS}:menu/accueil"])
 
+# 25/11/2026 : aide en grille de sujets, le texte s'affiche au survol
+AIDE_CP = [
+    ("Déblocage", "Chaque compagnon vient d’un métier : loup Chasseur 10, chat Fermier 10, perroquet Explorateur 15, bonhomme de neige Pêcheur 20, allay Enchanteur 25, golem Mineur ou Bâtisseur 30. Le prestige compte comme le niveau 100."),
+    ("Niveaux", "5 XP par monstre qu’il achève, 1 par monstre que tu tues pendant qu’il est dehors, 2 par minute ensemble. +1 % par niveau d’Éleveur. Chaque niveau donne vie, dégâts, armure. Maximum 30."),
+    ("Capacités", "4 par compagnon, aux niveaux 5, 10, 20 et 30. Une nouvelle apparence régulièrement (loup, chat, perroquet). Le loup porte une armure dès le niveau 15."),
+    ("Montures", "Ghast joyeux (Explorateur 40), dragon (Chasseur 50 et Ender Dragon vaincu), wither (Chasseur 70 et un Wither affronté). Clic droit pour monter, regarde où aller et avance."),
+    ("Dressage", "1 point par niveau, à placer dans Robustesse (vie), Puissance (dégâts et vitesse) ou Maîtrise (capacités plus tôt), 5 rangs chacune, 4 000 Écus par rang."),
+    ("K.O.", "À court de vie, il se repose 60 secondes, il ne meurt jamais. Il te suit d’une dimension à l’autre et rentre quand tu te déconnectes."),
+]
 w(F + "menu/aide.mcfunction",
-  'dialog show @s {type:"minecraft:notice",title:{text:"Compagnons : comment ça marche",color:"#E0A040",bold:true},'
-  f'body:[{BAN},{{type:"minecraft:plain_message",width:400,contents:[{{text:"'
-  "Déblocage : chaque compagnon vient d’un métier (loup Chasseur 10, chat Fermier 10, perroquet Explorateur 15, bonhomme de neige Pêcheur 20, allay Enchanteur 25, golem Mineur ou Bâtisseur 30). Le prestige compte comme le niveau 100.\\n\\n"
-  "Niveaux (de plus en plus longs, +8 % par niveau, montures bien plus lentes) : 5 XP par monstre qu’il achève, 1 par monstre que tu tues pendant qu’il est dehors, 2 par minute passée ensemble. +1 % par niveau d’Éleveur. À chaque niveau il gagne de la vie, des dégâts, de l’armure, et parfois grandit. Niveau maximum 30.\\n\\n"
-  "Capacités : 4 par compagnon, aux niveaux 5, 10, 20 et 30. Apparences : une nouvelle régulièrement (loup, chat, perroquet). Le loup porte une armure dès le niveau 15.\\n\\n"
-  "Montures : ghast joyeux (Explorateur 40), dragon de l’Ender (Chasseur 50 et l’Ender Dragon vaincu), wither (Chasseur 70 et un Wither affronté). Clic droit pour monter, regarde où tu veux aller et avance. En descendant en plein vol, tu tombes doucement.\\n\\n"
-  "Améliorations : 1 point de dressage par niveau, à placer dans Robustesse (vie), Puissance (dégâts et vitesse) ou Maîtrise (capacités plus tôt), 5 rangs chacune, avec des Écus (4 000 par rang).\\n\\n"
-  "K.O. : à court de vie, il rentre se reposer 60 secondes, il ne meurt jamais. Il te suit d’une dimension à l’autre et rentre quand tu te déconnectes."
-  '",color:"white"}]}],action:{label:"Retour",width:200,action:{type:"run_command",command:"trigger compagnons set 1"}}}')
+  'dialog show @s {type:"minecraft:multi_action",title:{text:"Compagnons : comment ça marche",color:"#E0A040",bold:true},can_close_with_escape:true,pause:false,'
+  f'body:[{BAN},{{type:"minecraft:plain_message",width:300,contents:[{{text:"Survole un sujet pour lire son explication.",color:"gray"}}]}}],'
+  'actions:[' + ",".join(f'{{label:{{text:"{tt}",color:"#E0A040"}},width:100,tooltip:{{text:"{dd}"}},action:{{type:"run_command",command:"trigger compagnons set 4"}}}}' for tt, dd in AIDE_CP) +
+  '],columns:3,exit_action:{label:"Retour",width:200,action:{type:"run_command",command:"trigger compagnons set 1"}}}')
 
 # ---------------------------------------------------------------- menu G commun (copie de celui de Commerce)
 MENU = os.path.join(ICI, "..", "..", "commerce", "sources", "menu_serveur.json")
@@ -873,7 +877,7 @@ if os.path.exists(MENU):
     wj("data/minecraft/tags/dialog/pause_screen_additions.json", {"values": ["serveur:menu"]})
 
 # ---------------------------------------------------------------- admin
-w(F + "version.mcfunction", tr("Version 4.4 : clic droit sur le dragon ou le wither pour monter, suivi au pas, rattrapage, attaque ce que tu frappes.", "gold"))
+w(F + "version.mcfunction", tr("Version 4.5 : aide en grille de sujets, clic droit pour monter, suivi au pas.", "gold"))
 w(F + "admin/max.mcfunction", [f"{S} set @s cp.l{k} {LMAX}" for k in T] + [f"{S} set @s cp.x{k} 0" for k in T] +
   [f"execute if score @s cp.out matches 1.. run function {NS}:invoquer/maj", tr("Tous tes compagnons passent niveau 30 (test).", "gold")])
 w(F + "admin/zero.mcfunction", [f"{S} set @s cp.l{k} 1" for k in T] + [f"{S} set @s cp.x{k} 0" for k in T] +

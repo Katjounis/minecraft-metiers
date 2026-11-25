@@ -50,11 +50,13 @@ SYP.append(f"function {NS}:synergie/page_d with storage {NS}:sy")
 w(F + "synergie/page.mcfunction", "\n".join(SYP))
 sy_l = []
 for sid, a, b, nom, eff in SYN:
-    sy_l.append(f'{{text:"$({sid}t) ",color:"$({sid})",bold:true}},{gs("metier_" + a)},{gs("metier_" + b)},{{text:" {nom}",color:"$({sid})",bold:true}},'
-                f'{{text:" ({jobs[a]["name"]} + {jobs[b]["name"]}, niv. 50)\\n",color:"gray"}},{{text:"   {eff}\\n",color:"white"}}')
+    # 25/11/2026 : une ligne par synergie, l'effet s'affiche au survol du nom
+    sy_l.append(f'{{text:"$({sid}t) ",color:"$({sid})",bold:true}},{gs("metier_" + a)},{gs("metier_" + b)},{{text:" {nom}",color:"$({sid})",bold:true,'
+                f'hover_event:{{action:"show_text",value:{{text:"{eff}",color:"white"}}}}}},'
+                f'{{text:"  {jobs[a]["name"]} + {jobs[b]["name"]}\\n",color:"gray",bold:false}}')
 w(F + "synergie/page_d.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Synergies",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
-  f'body:[{BANDEAU(BAN_METIERS)},{{type:"minecraft:plain_message",width:400,contents:[{{text:"Deux métiers au niveau 50 (ou passés par le prestige) débloquent un bonus permanent.\\n\\n",color:"gray"}},{",".join(sy_l)}]}}],'
+  f'body:[{BANDEAU(BAN_METIERS)},{{type:"minecraft:plain_message",width:400,contents:[{{text:"Deux métiers au niveau 50 (ou passés par le prestige) débloquent un bonus permanent. Survole un nom pour son effet.\\n\\n",color:"gray"}},{",".join(sy_l)}]}}],'
   'actions:[{label:{text:"Retour",color:"white"},width:200,action:{type:"run_command",command:"trigger metiers set 1"}}],columns:1}')
 
 # =====================================================================

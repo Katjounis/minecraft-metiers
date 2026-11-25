@@ -53,6 +53,10 @@ Trois voies par compagnon, 5 rangs chacune : Robustesse (+10 % de vie par rang),
 
 `compagnons.zip` dans `world/datapacks/`, avec Métiers, Commerce et Horreur à jour (le menu G commun est le même fichier dans les quatre packs). Le resource pack commun contient le bandeau.
 
+## Version 4.5 (25/11/2026)
+
+Page « Comment ça marche » en grille de 6 sujets (Déblocage, Niveaux, Capacités, Montures, Dressage, K.O.), le texte s'affiche au survol au lieu d'un long pavé.
+
 ## Version 4.4 (25/11/2026)
 
 Dragon et wither : une zone d'interaction (`cp.monter`, 4,2 x 4,2 blocs) suit le ghast porteur et fait monter d'un clic droit. Avant, le clic tombait sur le boss décoratif et il fallait viser le ghast invisible. Les montures déjà sorties la reçoivent en les rangeant puis en les ressortant.
