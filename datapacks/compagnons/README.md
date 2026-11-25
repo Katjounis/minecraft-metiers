@@ -53,6 +53,10 @@ Trois voies par compagnon, 5 rangs chacune : Robustesse (+10 % de vie par rang),
 
 `compagnons.zip` dans `world/datapacks/`, avec Métiers, Commerce et Horreur à jour (le menu G commun est le même fichier dans les quatre packs). Le resource pack commun contient le bandeau.
 
+## Version 4.1 (25/11/2026)
+
+Suivi au pas : le compagnon repart quand il est à plus de 5 blocs et s'arrête à 3 (tag `cp.marche`), à vitesse de marche (0,12 bloc/tick, 0,15 pour les volants), en visant directement le joueur. Fini le point derrière le joueur et le décalage quand il passe devant : le golem tournait autour en courant.
+
 ## Version 4 (25/11/2026)
 
 Suivi réel pour les 9 compagnons (`c/suivre`, à chaque tick) : il vise un point 3,5 blocs derrière son joueur (plus haut pour les volants), reste entre 2,5 et 6 blocs, et se décale s'il passe devant à moins de 5 blocs, pour ne pas gêner le minage. Déplacement par Motion, donc avec collisions, gravité et petit saut devant une marche. Pas de suivi s'il est monté, en mode « reste », ou en combat près du joueur. Équipe `cp.compagnons` sans collision : il ne pousse plus le joueur. Téléportation de rattrapage à 3 blocs derrière au lieu de 1,5.

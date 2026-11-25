@@ -174,7 +174,7 @@ w(F + "tick.mcfunction", [
     f"execute if score #t5 cp.t matches 0 as @e[tag=cp.c] at @s as @e[type=#{NS}:hostiles,distance=..24,tag=!cp.mort] if data entity @s {{Health:0.0f}} run function {NS}:xp/mort",
     f"execute as @e[tag=cp.porteur] at @s run function {NS}:c/visuel",
     f"execute as @e[tag=cp.c] at @s run function {NS}:c/suivre"])
-# 25/11/2026 : suivi réel pour tous les compagnons (avant, golems et montures ne revenaient que par téléportation au-delà
+# 25/11/2026 : suivi réel pour tous les compagnons (v4.1 : au pas, voir c/suivre_pas) (avant, golems et montures ne revenaient que par téléportation au-delà
 # de 8 à 24 blocs). Le compagnon vise un point 3,5 blocs DERRIÈRE son joueur : il reste entre 2,5 et 6 blocs, hors du
 # champ de vision, donc pas dans la pioche. Poussée par Motion (collisions et gravité respectées, pas de traversée de mur),
 # petit saut devant une marche. Pas de suivi s'il est monté, en mode « reste », ou en plein combat près du joueur.
@@ -185,23 +185,22 @@ w(F + "c/suivre.mcfunction", [
     "tag @a remove cp.guide"])
 w(F + "c/suivre_pas.mcfunction", [
     "execute on passengers if entity @s[type=minecraft:player] run return 0",
-    # devant le joueur (dans l'axe de la pioche, à moins de 5 blocs) : il se décale derrière même s'il est à bonne distance
-    "tag @s add cp.ici",
-    "execute as @a[tag=cp.guide,limit=1] at @s rotated ~ 0 positioned ^ ^ ^2.5 if entity @e[tag=cp.ici,distance=..2.6] run tag @e[tag=cp.ici] add cp.devant",
-    "tag @s remove cp.ici",
-    "execute if entity @s[tag=!cp.devant] if entity @a[tag=cp.guide,distance=..6] unless entity @a[tag=cp.guide,distance=..2.5] run return 0",
-    "tag @s remove cp.devant",
     f"execute if entity @e[type=#{NS}:hostiles,distance=..8] if entity @a[tag=cp.guide,distance=..14] run return 0",
-    "execute if entity @s[tag=!cp.vol,type=!minecraft:allay] as @a[tag=cp.guide,limit=1] at @s rotated ~ 0 run summon minecraft:marker ^ ^ ^-3.5 {Tags:[\"cp.cible\"]}",
-    "execute if entity @s[tag=cp.vol] as @a[tag=cp.guide,limit=1] at @s rotated ~ 0 run summon minecraft:marker ^ ^2 ^-5 {Tags:[\"cp.cible\"]}",
-    "execute if entity @s[type=minecraft:allay] as @a[tag=cp.guide,limit=1] at @s rotated ~ 0 run summon minecraft:marker ^ ^1.5 ^-3 {Tags:[\"cp.cible\"]}",
-    "execute facing entity @e[type=minecraft:marker,tag=cp.cible,limit=1] feet positioned 0.0 0.0 0.0 run summon minecraft:marker ^ ^ ^0.3 {Tags:[\"cp.vec\"]}",
+    # 25/11/2026 v4.1 : marche au pas, sans tourner autour du joueur. Il repart au-delà de 5 blocs et s'arrête à
+    # 3 blocs (tag cp.marche), à vitesse de marche (0,12 bloc/tick, 0,15 pour les volants), en visant le joueur.
+    "execute unless entity @a[tag=cp.guide,distance=..5] run tag @s add cp.marche",
+    "execute if entity @a[tag=cp.guide,distance=..3] run tag @s remove cp.marche",
+    "execute if entity @s[tag=!cp.marche] run return 0",
+    "execute if entity @s[tag=!cp.vol,type=!minecraft:allay] facing entity @a[tag=cp.guide,limit=1] feet rotated ~ 0 positioned 0.0 0.0 0.0 run summon minecraft:marker ^ ^ ^0.12 {Tags:[\"cp.vec\"]}",
+    "execute if entity @s[tag=cp.vol] positioned as @a[tag=cp.guide,limit=1] positioned ~ ~2 ~ run summon minecraft:marker ~ ~ ~ {Tags:[\"cp.cible\"]}",
+    "execute if entity @s[type=minecraft:allay] positioned as @a[tag=cp.guide,limit=1] positioned ~ ~1.5 ~ run summon minecraft:marker ~ ~ ~ {Tags:[\"cp.cible\"]}",
+    "execute if entity @e[type=minecraft:marker,tag=cp.cible,distance=..30] facing entity @e[type=minecraft:marker,tag=cp.cible,limit=1] feet positioned 0.0 0.0 0.0 run summon minecraft:marker ^ ^ ^0.15 {Tags:[\"cp.vec\"]}",
     "data modify entity @s Motion[0] set from entity @e[type=minecraft:marker,tag=cp.vec,limit=1] Pos[0]",
     "data modify entity @s Motion[2] set from entity @e[type=minecraft:marker,tag=cp.vec,limit=1] Pos[2]",
     "execute if entity @s[tag=cp.vol] run data modify entity @s Motion[1] set from entity @e[type=minecraft:marker,tag=cp.vec,limit=1] Pos[1]",
     "execute if entity @s[type=minecraft:allay] run data modify entity @s Motion[1] set from entity @e[type=minecraft:marker,tag=cp.vec,limit=1] Pos[1]",
-    "execute if entity @s[tag=!cp.vol,type=!minecraft:allay] unless block ~ ~-0.2 ~ #minecraft:replaceable facing entity @e[type=minecraft:marker,tag=cp.cible,limit=1] feet rotated ~ 0 unless block ^ ^0.3 ^0.9 #minecraft:replaceable if block ^ ^1.3 ^0.9 #minecraft:replaceable if block ^ ^2.3 ^0.9 #minecraft:replaceable run data modify entity @s Motion[1] set value 0.42d",
-    "rotate @s facing entity @e[type=minecraft:marker,tag=cp.cible,limit=1] feet",
+    "execute if entity @s[tag=!cp.vol,type=!minecraft:allay] unless block ~ ~-0.2 ~ #minecraft:replaceable facing entity @a[tag=cp.guide,limit=1] feet rotated ~ 0 unless block ^ ^0.3 ^0.9 #minecraft:replaceable if block ^ ^1.3 ^0.9 #minecraft:replaceable if block ^ ^2.3 ^0.9 #minecraft:replaceable run data modify entity @s Motion[1] set value 0.42d",
+    "rotate @s facing entity @a[tag=cp.guide,limit=1] feet",
     "kill @e[type=minecraft:marker,tag=cp.cible]", "kill @e[type=minecraft:marker,tag=cp.vec]"])
 # le boss figé suit son porteur (ghast invisible) à chaque tick, tourné comme lui (le dragon du jeu regarde à l'envers)
 w(F + "c/visuel.mcfunction", [f"{S} operation #o cp.t = @s cp.own", f"{S} operation #s cp.t = @s cp.ser"] +
@@ -835,7 +834,7 @@ if os.path.exists(MENU):
     wj("data/minecraft/tags/dialog/pause_screen_additions.json", {"values": ["serveur:menu"]})
 
 # ---------------------------------------------------------------- admin
-w(F + "version.mcfunction", tr("Version 4 : tous les compagnons te suivent pour de vrai, derrière toi et sans collision.", "gold"))
+w(F + "version.mcfunction", tr("Version 4.1 : tous les compagnons te suivent au pas, entre 3 et 5 blocs, sans collision.", "gold"))
 w(F + "admin/max.mcfunction", [f"{S} set @s cp.l{k} {LMAX}" for k in T] + [f"{S} set @s cp.x{k} 0" for k in T] +
   [f"execute if score @s cp.out matches 1.. run function {NS}:invoquer/maj", tr("Tous tes compagnons passent niveau 30 (test).", "gold")])
 w(F + "admin/zero.mcfunction", [f"{S} set @s cp.l{k} 1" for k in T] + [f"{S} set @s cp.x{k} 0" for k in T] +
