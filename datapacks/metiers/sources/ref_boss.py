@@ -92,7 +92,7 @@ for k, b in BOSS.items():
     attrs = (f'attributes:[{{id:"minecraft:max_health",base:$(hp)d}},{{id:"minecraft:attack_damage",base:{b["atk"]}d}},{{id:"minecraft:armor",base:{b["arm"]}d}},'
              f'{{id:"minecraft:knockback_resistance",base:1d}},{{id:"minecraft:movement_speed",base:{b["spd"]}d}},{{id:"minecraft:follow_range",base:64d}},'
              f'{{id:"minecraft:scale",base:{b["scale"]}d}}' + (',{id:"minecraft:spawn_reinforcements",base:0d}' if b["etype"] == "zombie" else "") + "]")
-    nbt = (f'Tags:["metiers.boss"],CustomName:{{text:"{b["nom"]}",color:"{b["col"]}",bold:true}},CustomNameVisible:1b,PersistenceRequired:1b,'
+    nbt = (f'Tags:["metiers.boss"],CustomName:{{text:"{b["nom"]}",color:"{b["col"]}",bold:true}},CustomNameVisible:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",'
            f'Health:$(hp)f,{attrs}' + (f",{b['extra']}" if b["extra"] else ""))
     w(F + f"boss/apparaitre_{k}.mcfunction", "\n".join([
         f"$summon minecraft:{b['etype']} ~ ~ ~ {{{nbt}}}",
@@ -347,18 +347,22 @@ RARE = [EN("enchanted_golden_apple", 3), EN("totem_of_undying", 3), EN("netherit
 for k, ent in BUTIN.items():
     wj(f"data/{NS}/loot_table/boss/{k}.json", {"type": "minecraft:generic", "pools": [{"rolls": 4, "entries": ent}]})
     wj(f"data/{NS}/loot_table/boss/rare_{k}.json", {"type": "minecraft:generic", "pools": [{"rolls": 1, "entries": RARE + [RELIQUE[k]]}]})
+# 25/11/2026 : plus aucun objet en butin de boss (ni minerais, ni reliques), seulement éclats, Écus et XP. Les tables
+# de butin ci-dessus restent écrites mais ne sont plus tirées. Chaque tirage (1 par niveau de difficulté, +1 pour le
+# meilleur dégât) rapporte 2 500 Écus ; le « butin rare » devient 2 éclats et 5 000 Écus de plus.
 BT = ["execute store result score #diff m.boss run difficulty", "scoreboard players operation #tirs m.boss = #diff m.boss",
-      "execute if entity @s[tag=metiers.btop] run scoreboard players add #tirs m.boss 1"]
-for k in BUTIN:
-    for n in range(1, 5):
-        BT.append(f"execute if score #type m.boss matches {k} if score #tirs m.boss matches {n}.. run loot give @s loot {NS}:boss/{k}")
-BT += ["scoreboard players operation #chance m.boss = #diff m.boss", "scoreboard players operation #chance m.boss *= #15 m.const",
-       "scoreboard players add #chance m.boss 20",
-       "execute if entity @s[tag=metiers.btop] run scoreboard players add #chance m.boss 15",
-       "execute store result score #r m.boss run random value 1..100",
-       *[f"execute if score #type m.boss matches {k} if score #r m.boss <= #chance m.boss run loot give @s loot {NS}:boss/rare_{k}" for k in BUTIN],
-       f'execute if score #r m.boss <= #chance m.boss run tellraw @a {PREFIX},{{"selector":"@s","color":"white"}},{{"text":" obtient un butin rare du boss !","color":"light_purple","bold":true}}]',
-       f'tellraw @s {PREFIX},{{"text":"Butin du boss dans ton inventaire (difficulté : plus de butin en difficile).","color":"gold"}}]']
+      "execute if entity @s[tag=metiers.btop] run scoreboard players add #tirs m.boss 1",
+      "scoreboard players operation #gain m.boss = #tirs m.boss", "scoreboard players operation #gain m.boss *= #2500 m.const",
+      "execute if score @s c.ecus matches -2147483648.. run scoreboard players operation @s c.ecus += #gain m.boss",
+      "scoreboard players operation #chance m.boss = #diff m.boss", "scoreboard players operation #chance m.boss *= #15 m.const",
+      "scoreboard players add #chance m.boss 20",
+      "execute if entity @s[tag=metiers.btop] run scoreboard players add #chance m.boss 15",
+      "execute store result score #r m.boss run random value 1..100",
+      "execute if score #r m.boss <= #chance m.boss run scoreboard players add @s m.ecl 2",
+      "execute if score #r m.boss <= #chance m.boss if score @s c.ecus matches -2147483648.. run scoreboard players add @s c.ecus 5000",
+      f'execute if score #r m.boss <= #chance m.boss run tellraw @a {PREFIX},{{"selector":"@s","color":"white"}},{{"text":" décroche le bonus rare du boss : 2 éclats et 5 000 Écus !","color":"light_purple","bold":true}}]',
+      f'tellraw @s {PREFIX},{{"text":"Prime de combat : ","color":"gold"}},{{"score":{{"name":"#gain","objective":"m.boss"}},"color":"yellow"}},{{"text":" Écus (plus en difficile).","color":"gold"}}]']
+add_lines(F + "refonte/load.mcfunction", ["scoreboard players set #2500 m.const 2500"])
 w(F + "boss/butin.mcfunction", "\n".join(BT))
 add_lines(F + "boss/recompense.mcfunction", [f"function {NS}:boss/butin"])
 
