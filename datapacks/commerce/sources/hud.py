@@ -106,6 +106,13 @@ B_F = "    if (color.a < 0.1) {"
 assert A_F in fsh and B_F in fsh
 fsh = fsh.replace(A_F, A_F + "layout(location = 4) in float hudMark;\n")
 fsh = fsh.replace(B_F, "    if (hudMark > 0.5) {\n        color.a = min(color.a * %.1f, 1.0);\n    }\n\n" % ALPHA + B_F)
+# 25/11/2026 : pseudos, panneaux et noms de villageois en lettres hachées pour les joueurs en vanilla 26.3 (pas sous
+# Fabric). Seul le texte du monde, vu de loin donc rétréci, était touché : la texture des lettres est lue au niveau de
+# détail 0, sans les réductions (mipmaps) que le jeu calcule pour le texte du monde et qui sortaient corrompues.
+for _a, _b in (("texture(Sampler0, texCoord0).rrrr", "textureLod(Sampler0, texCoord0, 0.0).rrrr"),
+               ("texture(Sampler0, texCoord0);", "textureLod(Sampler0, texCoord0, 0.0);")):
+    assert _a in fsh, _a
+    fsh = fsh.replace(_a, _b)
 # 25/11/2026 : shader débranché un temps (panneaux illisibles en 26.3), puis rebranché à la demande de Samuel : il n'y
 # était pour rien. HUD_SHADER = False passe le solde dans la barre latérale (tableau/on) sans toucher au texte du jeu.
 HUD_SHADER = True

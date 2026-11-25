@@ -173,7 +173,8 @@ w(F + "tick.mcfunction", [
     f"{S} add #t5 cp.t 1", f"execute if score #t5 cp.t matches 5.. run {S} set #t5 cp.t 0",
     f"execute if score #t5 cp.t matches 0 as @e[tag=cp.c] at @s as @e[type=#{NS}:hostiles,distance=..24,tag=!cp.mort] if data entity @s {{Health:0.0f}} run function {NS}:xp/mort",
     f"execute as @e[tag=cp.porteur] at @s run function {NS}:c/visuel",
-    f"execute as @e[tag=cp.c] at @s run function {NS}:c/suivre"])
+    f"execute as @e[tag=cp.c] at @s run function {NS}:c/suivre",
+    f"execute as @e[type=minecraft:interaction,tag=cp.monter] if data entity @s interaction run function {NS}:c/monter_clic"])
 # 25/11/2026 : suivi réel pour tous les compagnons (v4.1 : au pas, voir c/suivre_pas) (avant, golems et montures ne revenaient que par téléportation au-delà
 # de 8 à 24 blocs). Le compagnon vise un point 3,5 blocs DERRIÈRE son joueur : il reste entre 2,5 et 6 blocs, hors du
 # champ de vision, donc pas dans la pioche. Poussée par Motion (collisions et gravité respectées, pas de traversée de mur),
@@ -231,7 +232,15 @@ w(F + "c/suivre_pas.mcfunction", [
     "kill @e[type=minecraft:marker,tag=cp.cible]", "kill @e[type=minecraft:marker,tag=cp.vec]"])
 # le boss figé suit son porteur (ghast invisible) à chaque tick, tourné comme lui (le dragon du jeu regarde à l'envers)
 w(F + "c/visuel.mcfunction", [f"{S} operation #o cp.t = @s cp.own", f"{S} operation #s cp.t = @s cp.ser"] +
-  [f"execute as @e[tag={v[4]}] if score @s cp.own = #o cp.t if score @s cp.ser = #s cp.t run tp @s ~ ~{v[3]} ~ ~{v[2]} 0" for v in VISUEL.values()])
+  [f"execute as @e[tag={v[4]}] if score @s cp.own = #o cp.t if score @s cp.ser = #s cp.t run tp @s ~ ~{v[3]} ~ ~{v[2]} 0" for v in VISUEL.values()] +
+  ["execute as @e[type=minecraft:interaction,tag=cp.monter] if score @s cp.own = #o cp.t if score @s cp.ser = #s cp.t run tp @s ~ ~ ~"])
+w(F + "c/monter_clic.mcfunction", [
+    f"{S} operation #o cp.t = @s cp.own", f"{S} operation #s cp.t = @s cp.ser",
+    "execute on target run tag @s add cp.monteur",
+    "execute as @e[tag=cp.porteur] if score @s cp.own = #o cp.t if score @s cp.ser = #s cp.t run tag @s add cp.monture",
+    "ride @a[tag=cp.monteur,limit=1] mount @e[tag=cp.monture,limit=1]",
+    "tag @a remove cp.monteur", "tag @e remove cp.monture",
+    "data remove entity @s interaction", "data remove entity @s attack"])
 w(F + "c/vis_valide.mcfunction", [
     f"{S} operation #o cp.t = @s cp.own", f"{S} operation #s cp.t = @s cp.ser", f"{S} set #ok cp.t 0",
     f"execute as @e[tag=cp.porteur] if score @s cp.own = #o cp.t if score @s cp.ser = #s cp.t run {S} set #ok cp.t 1",
@@ -554,9 +563,10 @@ w(F + "invoquer/actuel.mcfunction", [f"{S} add @s cp.ser 1", f"{S} set @s cp.hp 
     f"{S} operation @e[tag=cp.nouveau] cp.own = @s cp.id", f"{S} operation @e[tag=cp.nouveau] cp.ser = @s cp.ser",
     f"{S} operation @e[tag=cp.nouveau] cp.typ = @s cp.out",
     f"{S} operation @e[tag=cp.nvis] cp.own = @s cp.id", f"{S} operation @e[tag=cp.nvis] cp.ser = @s cp.ser",
+    f"{S} operation @e[tag=cp.nmont] cp.own = @s cp.id", f"{S} operation @e[tag=cp.nmont] cp.ser = @s cp.ser",
     f"execute as @e[tag=cp.nouveau] run function {NS}:invoquer/stats",
     "team join cp.compagnons @e[tag=cp.nouveau]",
-    f"function {NS}:invoquer/nom", "tag @e[tag=cp.nouveau] remove cp.nouveau", "tag @e[tag=cp.nvis] remove cp.nvis",
+    f"function {NS}:invoquer/nom", "tag @e[tag=cp.nouveau] remove cp.nouveau", "tag @e[tag=cp.nvis] remove cp.nvis", "tag @e[tag=cp.nmont] remove cp.nmont",
     "particle minecraft:happy_villager ~ ~1 ~ 0.5 0.5 0.5 0 12", "playsound minecraft:entity.allay.item_given neutral @s ~ ~ ~ 0.6 1.2"])
 for k, (_, cle, nom, col, ent, ico, req, suit, combat) in T.items():
     tags = ["cp.c", "cp.nouveau", f"cp.{cle}"] + ([] if suit else ["cp.lent"]) + (["cp.vol"] if k in MONTURES else []) + \
@@ -589,6 +599,9 @@ for k, (_, cle, nom, col, ent, ico, req, suit, combat) in T.items():
         post.append(f'summon minecraft:{e} ^ ^ ^-3 {{Tags:["cp.vis","{tg}","cp.nvis"],NoAI:1b,Invulnerable:1b,Silent:1b,PersistenceRequired:1b,'
                     f'DeathLootTable:"minecraft:empty",' + ("Invul:0," if e == "wither" else "") +
                     f'attributes:[{{id:"minecraft:scale",base:{taille}d}}]}}')
+        # 25/11/2026 : on cliquait sur le dragon ou le wither décoratif, pas sur le ghast invisible qui porte : impossible
+        # de monter. Une zone d'interaction suit la monture et fait monter d'un clic droit.
+        post.append('summon minecraft:interaction ^ ^ ^-3 {Tags:["cp.vis","cp.monter","cp.nmont"],width:4.2f,height:4.2f,response:1b}')
     if k == 1:   # armure de loup dès le niveau 15
         post.append('execute if score @s cp.l1 matches 15.. run data modify entity @e[tag=cp.nouveau,limit=1] equipment.body set value {id:"minecraft:wolf_armor",count:1}')
     w(F + f"invoquer/s_{k}.mcfunction", [f"summon minecraft:{ent} ^ ^ ^-1.5 {{{','.join(nbt)}}}"] + post)
@@ -861,7 +874,7 @@ if os.path.exists(MENU):
     wj("data/minecraft/tags/dialog/pause_screen_additions.json", {"values": ["serveur:menu"]})
 
 # ---------------------------------------------------------------- admin
-w(F + "version.mcfunction", tr("Version 4.3 : suivi au pas entre 3 et 5 blocs, rattrapage s’il est coincé, et le compagnon attaque ce que tu frappes.", "gold"))
+w(F + "version.mcfunction", tr("Version 4.4 : clic droit sur le dragon ou le wither pour monter, suivi au pas, rattrapage, attaque ce que tu frappes.", "gold"))
 w(F + "admin/max.mcfunction", [f"{S} set @s cp.l{k} {LMAX}" for k in T] + [f"{S} set @s cp.x{k} 0" for k in T] +
   [f"execute if score @s cp.out matches 1.. run function {NS}:invoquer/maj", tr("Tous tes compagnons passent niveau 30 (test).", "gold")])
 w(F + "admin/zero.mcfunction", [f"{S} set @s cp.l{k} 1" for k in T] + [f"{S} set @s cp.x{k} 0" for k in T] +
