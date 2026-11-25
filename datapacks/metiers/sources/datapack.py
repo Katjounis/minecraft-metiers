@@ -37,6 +37,7 @@ ORES = {"coal_ore": 8, "deepslate_coal_ore": 10, "copper_ore": 8, "deepslate_cop
         "diamond_ore": 240, "deepslate_diamond_ore": 270, "emerald_ore": 300, "deepslate_emerald_ore": 330,
         "nether_gold_ore": 6, "nether_quartz_ore": 6, "ancient_debris": 480}   # 25.6 : or x2, diamant, émeraude et débris x3
 DIV = {"m": 4, "f": 2, "e": 2, "k": 20}
+DETTE_MAX = 64  # dette anti-triche maximale (blocs posés non compensés), voir stats
 ORE_DROP = {"coal": "coal 1", "copper": "raw_copper 2", "iron": "raw_iron 1", "gold": "raw_gold 1",
             "redstone": "redstone 4", "lapis": "lapis_lazuli 4", "diamond": "diamond 1",
             "emerald": "emerald 1", "nether_gold": "gold_nugget 3", "nether_quartz": "quartz 1"}
@@ -869,6 +870,12 @@ for j, d in jobs.items():
     if j in ("p", "c"):
         S += [f"execute if score @s m.afk matches 240.. if score @s m.tmp matches 1.. run scoreboard players operation @s m.{j}_bal = @s m.b0",
               "execute if score @s m.afk matches 240.. run scoreboard players set @s m.tmp 0"]
+    # Plancher de la dette anti-triche : poser des blocs pour construire (Litematica, grosses bases)
+    # creusait le solde sans limite et bloquait toute l'XP du métier. La dette est plafonnée à
+    # DETTE_MAX points, ce qui suffit à annuler un aller-retour poser/casser.
+    S.append(f"execute if score @s m.{j}_bal matches ..{-DETTE_MAX - 1} run scoreboard players set @s m.{j}_bal {-DETTE_MAX}")
+    if j in DIV:
+        S.append(f"execute if score @s m.{j}_raw matches ..{-DETTE_MAX * DIV[j] - 1} run scoreboard players set @s m.{j}_raw {-DETTE_MAX * DIV[j]}")
     S.append(f"execute if score @s m.{j}_bal matches 1.. run function {NS}:{j}/gain")
     if j == "p":
         S.append(f'execute if score @s m.p_aff matches 1 run function {NS}:appel {{f:"p/affiche"}}')
