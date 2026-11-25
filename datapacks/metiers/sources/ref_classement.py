@@ -39,11 +39,11 @@ add_lines(F + "trigger.mcfunction",
 # ---------------------------------------------------------------- sommaire A à Z (25/11/2026)
 # Pas de recherche par texte possible en vanilla : tout Métiers par ordre alphabétique, la lettre en tête de bouton.
 import unicodedata as _ud
-SOM = [("Activités", "item/compass_00", 497, "Défis, quêtes, guilde, classement, synergies..."),
+SOM = [("Plus", "item/compass_00", 497, "Guilde, classement, synergies, cadres, aura, aide."),
        ("Aide", "item/paper", 460, "Cristaux, éclats, Forge, défis, boss : comment ça marche."),
        ("Armure des Guildes", "item/golden_chestplate", 6, "L’armure qui monte avec ton score total."),
        ("Aura de prestige", "item/glowstone_dust", 499, "Particules de prestige autour de toi."),
-       ("Barème d’XP", "item/book", 480, "Ce que rapporte chaque action, métier par métier."),
+       ("Barème d’XP", "item/book", 480, "Ce que rapporte chaque action, métier par métier (aussi dans Progression)."),
        ("Cadres de titre", "item/item_frame", 472, "Le cadre autour de ton titre."),
        ("Classement général", "item/gold_ingot", 5, "Podium du serveur et meilleur de chaque métier."),
        ("Défis du jour", "item/clock_00", 4, "Un défi par métier, chaque jour."),

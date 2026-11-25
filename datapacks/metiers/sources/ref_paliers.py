@@ -17,4 +17,4 @@ RP += ['tellraw @s [{"text":"[Métiers] ","color":"gold"},{"text":"Mise à jour 
        "playsound minecraft:entity.player.levelup master @s ~ ~ ~ 1 1.2"]
 w(F + "paliers/rattrapage.mcfunction", "\n".join(RP))
 add_lines(F + "joueur.mcfunction", [f"execute if entity @s[tag=metiers.v257] unless entity @s[tag=metiers.v258] run function {NS}:paliers/rattrapage"])
-w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 25.14 : compétences en arbre cliquable, sommaire A à Z, classement par métier","color":"gold"}')
+w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 26.0 : arbre de compétences dessiné, onglets Outil et Progression, menus réorganisés","color":"gold"}')

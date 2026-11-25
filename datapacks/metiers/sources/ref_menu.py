@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Refonte v24, partie 3 : menus (accueil, page métier), titres et cadres, Forge, skins.
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "ref_arbre.py"), encoding="utf-8").read())
 
 def btn(label, action=None, width=150, tooltip=None):
     s = f"{{label:{label},width:{width}"
@@ -70,31 +71,28 @@ w(F + "menu.mcfunction", "\n".join(MN))
 acts = []
 for j, d in jobs.items():
     lab = f'[{gs("metier_" + j)},{txt(" " + d["name"], d["color"])},{txt(" $(" + j + "_l) ", "yellow")},{{text:"$({j}_b)",font:"metiers:icones",color:"white"}},{txt("$(" + j + "_d)", "red")}]'
-    acts.append(btn(lab, 20 + d["idx"], 150, f"Ouvre la page {d['name']} : outil, compétences, récompenses, titre."))
-acts += [ib("item/netherite_upgrade_smithing_template", "Forge", "gold", 471, 150, "Boutique de la Forge : marteau, faux, arc triple, lasso, aimant, cape... et sertissage des cristaux.", True),
-         ib("item/compass_00", "Activités", "aqua", 497, 150, "Défis, quêtes, guilde, classement, synergies, barème, skins, cadres, armure, aide.", True),
-         ib("item/spyglass", "Sommaire A à Z", "yellow", 540, 150, "Tout Métiers rangé par ordre alphabétique : un clic et tu y es.", True)]
+    acts.append(btn(lab, 20 + d["idx"], 210, f"Ouvre la page {d['name']} : arbre de compétences, outil, progression."))
+acts += [ib("item/netherite_upgrade_smithing_template", "Forge", "gold", 471, 210, "Boutique de la Forge : marteau, faux, arc triple, lasso, aimant, cape... et sertissage des cristaux.", True),
+         ib("item/clock_00", "Défis du jour", "gold", 4, 210, "Un défi par métier, chaque jour.", True),
+         ib("item/writable_book", "Quêtes", "gold", 495, 210, "Une quête de 10 étapes par métier.", True),
+         ib("item/golden_chestplate", "Armure", "gold", 6, 210, "L’Armure des Guildes, qui monte avec ton score total.", True),
+         ib("item/spyglass", "Sommaire A à Z", "gold", 540, 210, "Tout Métiers rangé par ordre alphabétique : un clic et tu y es.", True),
+         ib("item/compass_00", "Plus", "gold", 497, 210, "Guilde, classement, synergies, cadres de titre, aura, aide.", True)]
 w(F + "menu_dialog.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Mes métiers",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
   'body:[{type:"minecraft:plain_message",width:310,contents:[{text:""},{text:"\ue027",font:"commerce:recette",color:"white",shadow_color:0},{text:"\\n\\n"}]},{type:"minecraft:plain_message",width:460,contents:[{text:"Score total ",color:"gray"},{text:"$(score)",color:"yellow"},'
   '{text:"   ·   Armure des Guildes : ",color:"gray"},{text:"$(arm)",color:"gold"},{text:"   ·   ",color:"gray"},' + gs("eclat") + ',{text:" $(ecl) éclats",color:"gray"},{text:"\\n● : des points de compétence ou une récompense t\'attendent",color:"dark_gray"}]}],'
-  f'actions:[{",".join(acts)}],columns:3,'
+  f'actions:[{",".join(acts)}],columns:2,'
   f'exit_action:{{label:"Fermer",width:200}}}}')
 # hub « Activités » (497) : tout ce qui n'est pas un métier, en icônes sur 3 colonnes
-hub = [ib("item/clock_00", "Défis du jour", "aqua", 4, 150, "Un défi par métier, chaque jour."),
-       ib("item/writable_book", "Quêtes", "yellow", 495, 150, "Une quête de 10 étapes par métier."),
-       ib("item/name_tag", "Guilde", "gold", 770, 150, "Fonder ou rejoindre une guilde, défi de la semaine, classement."),
-       ib("item/gold_ingot", "Classement", "gold", 5, 150, "Les meilleurs joueurs, métier par métier."),
-       ib("item/emerald", "Synergies", "green", 496, 150, "Bonus quand deux métiers atteignent le niveau 50."),
-       ib("item/book", "Barème d’XP", "aqua", 480, 150, "Ce que rapporte chaque action, métier par métier, avec les images."),
-       ib("item/netherite_upgrade_smithing_template", "Forger l’outil", "gold", 470, 150, "Sertis des cristaux dans l’outil de métier que tu tiens."),
-       ib("item/golden_chestplate", "Armure", "#F1CF4E", 6, 150, "L’Armure des Guildes, qui monte avec ton score total."),
-       ib("item/painting", "Skins", "light_purple", 420, 150, "Apparence de tes outils et de ton armure."),
+hub = [ib("item/name_tag", "Guilde", "gold", 770, 150, "Fonder ou rejoindre une guilde, défi de la semaine, classement."),
+       ib("item/gold_ingot", "Classement", "gold", 5, 150, "Podium du serveur et meilleur de chaque métier."),
+       ib("item/emerald", "Synergies", "gold", 496, 150, "Bonus quand deux métiers atteignent le niveau 50."),
        ib("item/item_frame", "Cadres de titre", "gold", 472, 150, "Le cadre autour de ton titre."),
        ib("item/glowstone_dust", "Aura", "gold", 499, 150, "Active ou coupe les particules de prestige autour de toi."),
        ib("item/paper", "Aide", "white", 460, 150, "Cristaux, éclats, Forge, défis, boss : comment ça marche.")]
 w(F + "activites.mcfunction",
-  'dialog show @s {type:"minecraft:multi_action",title:{text:"Activités",color:"aqua",bold:true},can_close_with_escape:true,pause:false,'
+  'dialog show @s {type:"minecraft:multi_action",title:{text:"Plus",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
   'body:[{type:"minecraft:plain_message",width:310,contents:[{text:""},{text:"\ue027",font:"commerce:recette",color:"white",shadow_color:0},{text:"\\n\\n"}]}],'
   f'actions:[{",".join(hub)}],columns:3,'
   'exit_action:{label:"Retour",width:200,action:{type:"run_command",command:"trigger metiers set 1"}}}')
@@ -188,8 +186,13 @@ for j, d in jobs.items():
           f'execute if score @s m.{j}_lvl matches {MAXLVL}.. run data modify storage {NS}:pg pc set value "gold"',
           f'data modify storage {NS}:pg sk_mode set value "Fortune ⇄ Soie"',
           f'execute if score @s m.silk matches 1 run data modify storage {NS}:pg sk_mode set value "Soie ⇄ Fortune"',
-          f'data modify storage {NS}:pg mc set value "aqua"',
-          f"function {NS}:{j}/page_dialog with storage {NS}:pg"]
+          f'data modify storage {NS}:pg mc set value "aqua"']
+    P += arbre_etats(j, f"metiers.sk.{j}")
+    # 25/11/2026 : page = l'arbre ; les onglets Outil (#vue 1) et Progression (#vue 2) relisent les mêmes valeurs
+    P += [f"execute if score #vue m.tmp matches 1 run function {NS}:{j}/outil_dialog with storage {NS}:pg",
+          f"execute if score #vue m.tmp matches 2 run function {NS}:{j}/prog_dialog with storage {NS}:pg",
+          f"execute unless score #vue m.tmp matches 1..2 run function {NS}:{j}/page_dialog with storage {NS}:pg",
+          "scoreboard players set #vue m.tmp 0"]
     w(F + f"{j}/arbre.mcfunction", "\n".join(P))
     sbtn = []
     for k, (name, cost, req, desc) in enumerate(sk, 1):
@@ -229,10 +232,37 @@ for j, d in jobs.items():
             f'{{type:"minecraft:plain_message",width:380,contents:[{{text:"Ton outil  ",color:"{d["color"]}",bold:true}},{{text:"{TDESC[j]}\\n",color:"white",bold:false}}' +
             (f',{{text:"Objet de Forge  ",color:"gold",bold:true}},{{text:"{NOMF_J[j]}\\n",color:"white",bold:false}}' if j in FITEM else "") +
             ']}]')
+    ent = ('{type:"minecraft:plain_message",width:380,contents:['
+           f'{{text:"$(titre) {d["name"]}   ",color:"{d["color"]}",bold:true}},{{text:"Niveau $(lvl)   ",color:"yellow",bold:false}},'
+           '{text:"$(bar)",font:"metiers:icones",color:"white"},{text:"  $(xp) / $(need) XP\\n",color:"gray"},'
+           '{text:"$(pts) points de compétence",color:"yellow"},{text:"   ·   ",color:"gray"},'
+           f'{gs("cristal_" + j)},{{text:" $(cr) cristaux",color:"aqua"}}]}}')
+    leg = ('{type:"minecraft:plain_message",width:380,contents:{text:"Vert acquise · jaune disponible · rouge points manquants · '
+           'gris niveau trop bas. Survole un nœud pour son effet et son coût.",color:"dark_gray"}}')
+    RET = f'{{label:"Retour",width:130,action:{{type:"run_command",command:"trigger metiers set 1"}}}}'
+    ARBRE = f'{{label:"Retour à l’arbre",width:200,action:{{type:"run_command",command:"trigger metiers set {20 + d["idx"]}"}}}}'
+    onglets = [cb(ICL(OUTIL_IC[j], "Outil", "aqua"), 550 + d["idx"], "Ton outil : le récupérer, le réparer, le forger, son skin."),
+               cb(ICL("item/gold_ingot", "Progression", "gold"), 560 + d["idx"], "Récompenses de palier, titre, prestige, barème, classement."), RET]
+    titre_j = f'[{gs("metier_" + j)},{{text:" {d["name"]}",color:"{d["color"]}",bold:true}}]'
     w(F + f"{j}/page_dialog.mcfunction",
-      f'$dialog show @s {{type:"minecraft:multi_action",title:[{gs("metier_" + j)},{{text:" {d["name"]}",color:"{d["color"]}",bold:true}}],'
-      f'can_close_with_escape:true,pause:false,body:{body},actions:[{",".join(sbtn + abtn)}],columns:3,'
-      f'exit_action:{{label:"Retour",width:200,action:{{type:"run_command",command:"trigger metiers set 1"}}}}}}')
+      f'$dialog show @s {{type:"minecraft:multi_action",title:{titre_j},'
+      f'can_close_with_escape:true,pause:false,body:[{ent},{arbre_corps(j)},{leg}],actions:[{",".join(sbtn + onglets)}],columns:3}}')
+    # onglet Outil : l'outil en image, sa description, et tout ce qui le concerne
+    outil_btn = [abtn[0], abtn[1], cb(ICL("item/netherite_upgrade_smithing_template", "Forger l’outil", "gold"), 470, "Sertis des cristaux dans l’outil de métier que tu tiens."),
+                 cb(ICL("item/painting", "Skin de l’outil", "light_purple"), 420, "Apparence de tes outils et de ton armure.")] + abtn[8:]
+    corps_outil = ('[{type:"minecraft:item",item:{id:"minecraft:paper",components:{"minecraft:item_model":"metiers:$(model)","minecraft:custom_model_data":{strings:["$(skin)"]}}},'
+                   'show_decorations:false,show_tooltip:false,description:{width:260,contents:['
+                   f'{{text:"Outil au palier $(out) sur 10\\n",color:"gray"}},{{text:"$(next)",color:"gold"}}]}}}},'
+                   f'{{type:"minecraft:plain_message",width:380,contents:[{{text:"Ton outil  ",color:"{d["color"]}",bold:true}},{{text:"{TDESC[j]}",color:"white",bold:false}}' +
+                   (f',{{text:"\\nObjet de Forge  ",color:"gold",bold:true}},{{text:"{NOMF_J[j]}",color:"white",bold:false}}' if j in FITEM else "") + ']}]')
+    w(F + f"{j}/outil_dialog.mcfunction",
+      f'$dialog show @s {{type:"minecraft:multi_action",title:[{gs("metier_" + j)},{{text:" {d["name"]}  ·  Outil",color:"{d["color"]}",bold:true}}],'
+      f'can_close_with_escape:true,pause:false,body:{corps_outil},actions:[{",".join(outil_btn)}],columns:3,exit_action:{ARBRE}}}')
+    prog_btn = [abtn[2], abtn[5], abtn[3], abtn[6],
+                cb(ICL("item/goat_horn", "Classement", "yellow"), 520 + d["idx"], f"Les 10 meilleurs joueurs en {d['name']}."), abtn[4]]
+    w(F + f"{j}/prog_dialog.mcfunction",
+      f'$dialog show @s {{type:"minecraft:multi_action",title:[{gs("metier_" + j)},{{text:" {d["name"]}  ·  Progression",color:"{d["color"]}",bold:true}}],'
+      f'can_close_with_escape:true,pause:false,body:[{ent}],actions:[{",".join(prog_btn)}],columns:3,exit_action:{ARBRE}}}')
     for k, (name, cost, req, desc) in enumerate(sk, 1):
         w(F + f"{j}/basculer_{k}.mcfunction", "\n".join([
             f"execute if entity @s[tag=metiers.skoff.{j}{k}] run return run function {NS}:{j}/activer_{k}",
@@ -245,7 +275,7 @@ for j, d in jobs.items():
     w(F + f"{j}/titre.mcfunction", "\n".join([
         f"execute if score @s m.pref matches {d['idx']} run scoreboard players set @s m.trig 10",
         f"execute unless score @s m.pref matches {d['idx']} run scoreboard players set @s m.trig {10 + d['idx']}",
-        f"function {NS}:prefixe/choisir", f"function {NS}:{j}/arbre"]))
+        f"function {NS}:prefixe/choisir", "scoreboard players set #vue m.tmp 2", f"function {NS}:{j}/arbre"]))
 
 # ================================================================ titres + cadres (équipes)
 CADRES = ["bois", "fer", "dore", "runique", "flammes", "celeste"]
@@ -691,3 +721,12 @@ w(F + "m/soie.mcfunction", "\n".join([
     "playsound minecraft:block.enchantment_table.use master @s ~ ~ ~ 0.6 1.4", f"function {NS}:m/arbre"]))
 add_lines(F + "trigger.mcfunction", [f'execute if score @s m.trig matches 761 run function {NS}:appel {{f:"m/soie"}}'])
 add_lines(F + "refonte/load.mcfunction", ["scoreboard objectives add m.silk dummy"])
+
+
+# onglets Outil (550 + idx) et Progression (560 + idx) de la page de métier (25/11/2026)
+for j, d in jobs.items():
+    w(F + f"{j}/onglet_outil.mcfunction", f"scoreboard players set #vue m.tmp 1\nfunction {NS}:{j}/arbre")
+    w(F + f"{j}/onglet_prog.mcfunction", f"scoreboard players set #vue m.tmp 2\nfunction {NS}:{j}/arbre")
+add_lines(F + "trigger.mcfunction",
+          [f'execute if score @s m.trig matches {550 + d["idx"]} run function {NS}:appel {{f:"{j}/onglet_outil"}}' for j, d in jobs.items()] +
+          [f'execute if score @s m.trig matches {560 + d["idx"]} run function {NS}:appel {{f:"{j}/onglet_prog"}}' for j, d in jobs.items()])

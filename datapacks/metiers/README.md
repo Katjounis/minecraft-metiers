@@ -26,7 +26,7 @@ Dans `server.properties` :
 
 ```
 resource-pack=https://github.com/Katjounis/minecraft-metiers/raw/main/metiers_resourcepack.zip
-resource-pack-sha1=cdfc11c4500ecf32e7c355e0ea96e8f0df5471b9
+resource-pack-sha1=d6a653342cf3dd2ccb0368576a77edad5c97c927
 require-resource-pack=true
 ```
 
@@ -37,6 +37,16 @@ Le SHA-1 doit être recalculé à chaque nouvelle version du resource pack.
 Touche G (ou menu Échap) pour ouvrir le menu des métiers, ou `/trigger metiers`.
 
 Commandes admin : `/function metiers:boss/alerte` (boss suivant de la rotation dans 2 min), `/function metiers:heure/lancer`, `/function metiers:defis/nouveaux`, `/function metiers:defis/semaine`.
+
+## Version 26.0 (25/11/2026)
+
+Refonte des menus.
+
+Page de métier : l'arbre de compétences est dessiné en haut (police `metiers:arbre`, `ref_arbre.py`) sur le bloc du métier, avec les cadres de l'écran des Progrès, les icônes des compétences et des liens qui s'allument quand les deux compétences sont acquises. Les nœuds ont 4 états (acquise, disponible, points manquants, niveau trop bas). Les boutons cliquables sont posés dessous dans la même forme. Le reste part dans deux onglets : Outil (récupérer, réparer, forger, skin, mode de la pioche) et Progression (récompense de palier, titre, prestige, barème, classement, capacité spéciale), déclencheurs 550 et 560 + numéro du métier.
+
+Mes métiers : les 10 métiers sur 2 colonnes, puis Forge, Défis du jour, Quêtes, Armure, Sommaire A à Z et Plus. Plus (l'ancien Activités) regroupe Guilde, Classement, Synergies, Cadres de titre, Aura et Aide ; le barème, la Forge de l'outil et les skins sont dans les onglets de chaque métier.
+
+Les textures du jeu utilisées pour dessiner l'arbre sont copiées dans `sources/textures_arbre/`. La police est écrite à la toute fin du build (`ref_arbre_ecrire.py`), après le nettoyage de `build/metiers_rp` par `ref_batisseur.py`.
 
 ## Version 25.14 (25/11/2026)
 
