@@ -1818,7 +1818,7 @@ w(F + "classement/dialog.mcfunction",
 w(F + "boss/tick.mcfunction", f"""
 scoreboard players add #cycle m.boss 1
 execute if score #actif m.boss matches 0 if score #compte m.boss matches 1.. run function {NS}:boss/compte
-execute if score #actif m.boss matches 0 if score #compte m.boss matches ..0 if score #cycle m.boss matches 9000.. run function {NS}:boss/alerte
+execute if score #actif m.boss matches 0 if score #compte m.boss matches ..0 if score #cycle m.boss matches 3600.. run function {NS}:boss/alerte
 execute if score #actif m.boss matches 1 run function {NS}:boss/encours
 """)
 w(F + "boss/alerte.mcfunction", f"""

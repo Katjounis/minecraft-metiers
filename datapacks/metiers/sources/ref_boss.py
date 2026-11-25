@@ -27,7 +27,7 @@ ANN = lambda txt, col="white": f'tellraw @a {PREFIX},{{"text":"{txt}","color":"{
 
 w(F + "boss/alerte.mcfunction", "\n".join([
     "execute store result score #n m.boss if entity @a[gamemode=!spectator]",
-    "execute if score #n m.boss matches ..0 run return run scoreboard players set #cycle m.boss 8400",
+    "execute if score #n m.boss matches ..0 run return run scoreboard players set #cycle m.boss 3000",
     "scoreboard players set #cycle m.boss 0", "scoreboard players set #compte m.boss 240",
     "scoreboard players add #type m.boss 1", "execute unless score #type m.boss matches 1..5 run scoreboard players set #type m.boss 1"] +
     [f'execute if score #type m.boss matches {k} run tellraw @a {PREFIX},{{"text":"{b["nom"]} se réveille ! ","color":"{b["col"]}","bold":true}},{{"text":"Il apparaît dans 2 minutes près d\'un joueur au hasard. Préparez-vous.","color":"white"}}]' for k, b in BOSS.items()] +
@@ -212,10 +212,13 @@ w(F + "boss/victoire.mcfunction", "\n".join([
     "execute as @a at @s run playsound minecraft:ui.toast.challenge_complete master @s ~ ~ ~ 1 0.7",
     f"function {NS}:boss/fin"]))
 RC = ["scoreboard players add @s m.ecl 3", "execute if entity @s[tag=metiers.btop] run scoreboard players add @s m.ecl 2",  # 25.6 : boss 2,5 fois plus rares, butin plus gros
-      "scoreboard players operation @s m.c_bal += @s m.c_need", f"function {NS}:c/gain",
+      # 25/11/2026 : 30 % du niveau de Chasseur en cours au lieu d'un niveau entier
+      "scoreboard players operation @s m.tmp = @s m.c_need", "scoreboard players operation @s m.tmp *= #3 m.const",
+      "scoreboard players operation @s m.tmp /= #10 m.const",
+      "scoreboard players operation @s m.c_bal += @s m.tmp", f"function {NS}:c/gain",
       "execute if score @s c.ecus matches -2147483648.. run scoreboard players add @s c.ecus 5000"]
 RC += [f"execute if score #type m.boss matches {k} run scoreboard players add @s m.bk{k} 1" for k in BOSS]
-RC += [f'tellraw @s {PREFIX},{{"text":"Récompense : ","color":"gold"}},{json.dumps(gj("eclat"), ensure_ascii=False)},{{"text":" 3 éclats de boss, un niveau entier de Chasseur et 5 000 Écus.","color":"gold"}}]',
+RC += [f'tellraw @s {PREFIX},{{"text":"Récompense : ","color":"gold"}},{json.dumps(gj("eclat"), ensure_ascii=False)},{{"text":" 3 éclats de boss, 30 % d’un niveau de Chasseur et 5 000 Écus.","color":"gold"}}]',
        f'execute if entity @s[tag=metiers.btop] run tellraw @s {PREFIX},{{"text":"Plus gros dégâts : +2 éclats de boss.","color":"light_purple"}}]',
        "particle minecraft:totem_of_undying ~ ~1 ~ 0.5 1 0.5 0.4 80"]
 w(F + "boss/recompense.mcfunction", "\n".join(RC))

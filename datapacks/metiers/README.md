@@ -38,6 +38,10 @@ Touche G (ou menu Échap) pour ouvrir le menu des métiers, ou `/trigger metiers
 
 Commandes admin : `/function metiers:boss/alerte` (boss suivant de la rotation dans 2 min), `/function metiers:heure/lancer`, `/function metiers:defis/nouveaux`, `/function metiers:defis/semaine`.
 
+## Version 25.10 (25/11/2026)
+
+Un boss toutes les 30 minutes au lieu de 75 (seuil `#cycle m.boss` à 3600, nouvel essai 5 minutes plus tard si personne n'est connecté). La récompense Chasseur passe d'un niveau entier à 30 % du niveau en cours (`m.c_need` x 3 / 10). Éclats, 5 000 Écus et butin inchangés.
+
 ## Version 25.9 (25/11/2026)
 
 Correctif XP : l'anti-triche retire l'XP des blocs posés (bûches, cultures replantées, grès, netherrack...), mais la dette n'avait pas de limite. Après une grosse construction (Litematica), le solde d'un métier pouvait descendre à plusieurs milliers sous zéro, et plus rien ne rapportait d'XP tant qu'il n'était pas remboursé. La dette est maintenant plafonnée à 64 points par métier (`DETTE_MAX` dans `datapack.py`), ce qui suffit à annuler un aller-retour poser/casser. Les soldes déjà bloqués sont ramenés à -64 au premier passage, sans migration.
