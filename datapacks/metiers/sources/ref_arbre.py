@@ -17,9 +17,9 @@ def _tex(p):
 
 
 # 26.0 (26/11/2026) : 18 nœuds sur 3 colonnes (branche gauche, tronc, branche droite) et 6 rangées de niveau
-ARB_W, ARB_H = 236, 170
-ARB_COL = {"G": 38, "T": 118, "D": 198}
-ARB_ROW = [17, 44, 71, 98, 125, 152]   # 26/11/2026 : resserré, la page tient sans défiler
+ARB_W, ARB_H = 260, 190   # 26/11/2026 : cadre de pierre noire de 12 px autour
+ARB_COL = {"G": 50, "T": 130, "D": 210}
+ARB_ROW = [27, 54, 81, 108, 135, 162]   # 26/11/2026 : resserré, la page tient sans défiler
 ARB_P = {k: (ARB_COL["T"], ARB_ROW[k - 1]) for k in range(1, 7)}
 ARB_P.update({k: (ARB_COL["G"], ARB_ROW[k - 7]) for k in range(7, 13)})
 ARB_P.update({k: (ARB_COL["D"], ARB_ROW[k - 13]) for k in range(13, 19)})
@@ -46,6 +46,19 @@ ARB_FICHIERS = []   # écrits à la fin par ref_arbre_ecrire.py : ref_batisseur.
 def _car():
     c = chr(_code[0]); _code[0] += 1
     return c
+
+
+# ---------------------------------------------------------------- espaces (avances positives et négatives)
+_ESP = {}
+
+
+def _esp(n):
+    if n == 0:
+        return ""
+    if n not in _ESP:
+        _ESP[n] = _car()
+    return _ESP[n]
+
 
 
 def _avance(im):
@@ -113,30 +126,83 @@ ARB_MIX = {
     "k": ("oak_planks", [("bricks", 3), ("stone_bricks", 2), ("terracotta", 1)])}
 
 
-def _fond_mixte(j):
+CADRE_E = 12   # épaisseur du cadre
+
+
+def _fond_mixte(j, W=None, H=None, graine=None):
+    """Blocs mêlés du métier (ARB_MIX), assombris, avec une ombre intérieure (le fond est en retrait du cadre)."""
     import random as _r
-    bord, mix = ARB_MIX[j]
-    rnd = _r.Random("arbre-" + j)
+    W, H = W or ARB_W, H or ARB_H
+    bord, mix = ARB_MIX[j] if isinstance(j, str) else j
+    rnd = _r.Random(graine or ("arbre-" + str(j)))
     tir = [b for b, n in mix for _ in range(n)]
-    tx = {b: _tex("block/" + b) for b in set(tir) | {bord}}
-    im = _Img.new("RGBA", (ARB_W, ARB_H))
-    for x in range(0, ARB_W, 16):
-        for y in range(0, ARB_H, 16):
+    tx = {b: _tex("block/" + b) for b in set(tir)}
+    im = _Img.new("RGBA", (W, H))
+    for x in range(0, W, 16):
+        for y in range(0, H, 16):
             im.paste(tx[rnd.choice(tir)], (x, y))
-    for x in list(range(0, ARB_W - 16, 16)) + [ARB_W - 16]:
-        im.paste(tx[bord], (x, 0)); im.paste(tx[bord], (x, ARB_H - 16))
-    for y in list(range(0, ARB_H - 16, 16)) + [ARB_H - 16]:
-        im.paste(tx[bord], (0, y)); im.paste(tx[bord], (ARB_W - 16, y))
-    return im
+    im.alpha_composite(_Img.new("RGBA", (W, H), (0, 0, 0, 110)))
+    return cadre_noir(im)
+
+
+def _biseau(im, x0, y0, x1, y1, teintes):
+    d = _Draw.Draw(im)
+    for o, c in enumerate(teintes):
+        hi = tuple(min(255, int(v * 1.25)) for v in c) + (255,); lo = tuple(int(v * 0.7) for v in c) + (255,)
+        d.line([(x0 + o, y0 + o), (x1 - o, y0 + o)], fill=hi); d.line([(x0 + o, y0 + o), (x0 + o, y1 - o)], fill=hi)
+        d.line([(x0 + o, y1 - o), (x1 - o, y1 - o)], fill=lo); d.line([(x1 - o, y0 + o), (x1 - o, y1 - o)], fill=lo)
+
+
+def cadre_noir(im):
+    """26/11/2026 : cadre en relief, briques de pierre noire polie, coins en pierre noire dorée avec un clou d'or,
+    filet d'or autour du fond et ombre portée vers l'intérieur."""
+    W, H = im.size
+    E = CADRE_E
+    fond = im.crop((E, E, W - E, H - E))
+    ombre = _Img.new("RGBA", fond.size)
+    d = _Draw.Draw(ombre)
+    for i in range(6):
+        d.rectangle([(i, i), (fond.width - 1 - i, fond.height - 1 - i)], outline=(0, 0, 0, int(150 * (1 - i / 6))))
+    fond.alpha_composite(ombre)
+    out = _Img.new("RGBA", (W, H))
+    br = _tex("block/polished_blackstone_bricks")
+    for x in range(0, W, 16):
+        out.paste(br, (x, 0)); out.paste(br, (x, H - 16))
+    for y in range(0, H, 16):
+        out.paste(br, (0, y)); out.paste(br, (W - 16, y))
+    out.paste(fond, (E, E))
+    _biseau(out, 0, 0, W - 1, H - 1, [(40, 36, 44), (70, 64, 78), (55, 50, 62)])
+    d = _Draw.Draw(out)
+    d.rectangle([(E - 3, E - 3), (W - E + 2, H - E + 2)], outline=(205, 155, 45, 255))
+    d.rectangle([(E - 2, E - 2), (W - E + 1, H - E + 1)], outline=(110, 75, 20, 255))
+    d.rectangle([(E - 1, E - 1), (W - E, H - E)], outline=(10, 8, 12, 255))
+    gb = _tex("block/gilded_blackstone")
+    for p in ((0, 0), (W - 16, 0), (0, H - 16), (W - 16, H - 16)):
+        out.paste(gb, p)
+        _biseau(out, p[0], p[1], p[0] + 15, p[1] + 15, [(60, 50, 40)])
+    for cx, cy in ((7, 7), (W - 8, 7), (7, H - 8), (W - 8, H - 8)):
+        d.ellipse([(cx - 3, cy - 3), (cx + 3, cy + 3)], fill=(255, 200, 60, 255), outline=(60, 40, 10, 255))
+        d.point([(cx - 1, cy - 1)], fill=(255, 245, 200, 255))
+    d.rectangle([(0, 0), (W - 1, H - 1)], outline=(0, 0, 0, 255))
+    return out
+
+
+def fond_glyphes(nom, im):
+    """Glyphes de 240 px au plus posés bout à bout : (caractères, avance totale)."""
+    W = im.width
+    cf, af, x0 = "", 0, 0
+    while x0 < W:
+        x1 = min(W, x0 + 240)
+        c_, a_ = _glyphe(f"{nom}_{x0}", im.crop((x0, 0, x1, im.height)), 0)
+        cf += (_esp(-1) if cf else "") + c_
+        af += a_ - (1 if x0 else 0)
+        x0 = x1
+    return cf, af
 
 
 for j in jobs:
     fond = _fond_mixte(j)
-    fond.alpha_composite(_Img.new("RGBA", (ARB_W, ARB_H), (0, 0, 0, 115)))
-    d = _Draw.Draw(fond)
-    d.rectangle([(0, 0), (ARB_W - 1, ARB_H - 1)], outline=(0, 0, 0, 255), width=2)
-    d.rectangle([(2, 2), (ARB_W - 3, ARB_H - 3)], outline=(170, 128, 40, 255), width=1)
-    cf, af = _glyphe(f"fond_{j}", fond, 0)
+    cf, af = fond_glyphes(f"fond_{j}", fond)
     nd = {}
     icones = ARB_IC[j] + ([ic for _n, _d, ic in NOUVELLES[j]] if j in NOUVELLES else [])
     for k in range(1, NB_SK[j] + 1):
@@ -288,18 +354,6 @@ def decor_corps(nom):
             '{text:"' + "\\n" * 9 + '"}]}')
 
 
-# ---------------------------------------------------------------- espaces (avances positives et négatives)
-_ESP = {}
-
-
-def _esp(n):
-    if n == 0:
-        return ""
-    if n not in _ESP:
-        _ESP[n] = _car()
-    return _ESP[n]
-
-
 def _q(t):
     return t.replace("\\", "\\\\").replace('"', '\\"')
 
@@ -383,4 +437,4 @@ def arbre_etats(j, sk_tag):
 def arbre_corps(j):
     """Élément de corps de dialogue (SNBT) : le dessin, des lignes vides pour lui laisser sa hauteur, puis les noms des branches."""
     return ('{type:"minecraft:plain_message",width:250,contents:[' + ",".join(_ARB_TXT[j]) + ','
-            '{text:"' + "\\n" * 19 + '"}' + "".join("," + c for c in _ARB_LEG[j]) + ']}')
+            '{text:"' + "\\n" * 21 + '"}' + "".join("," + c for c in _ARB_LEG[j]) + ']}')

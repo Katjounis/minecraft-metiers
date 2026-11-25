@@ -26,7 +26,7 @@ Dans `server.properties` :
 
 ```
 resource-pack=https://github.com/Katjounis/minecraft-metiers/raw/main/metiers_resourcepack.zip
-resource-pack-sha1=3e2cec9fa9b112a15a329100853ddd52dcb7b37a
+resource-pack-sha1=61ae039e7684b90429a0f2e0ccfb12bc266a1368
 require-resource-pack=true
 ```
 
@@ -37,6 +37,10 @@ Le SHA-1 doit être recalculé à chaque nouvelle version du resource pack.
 Touche G (ou menu Échap) pour ouvrir le menu des métiers, ou `/trigger metiers`.
 
 Commandes admin : `/function metiers:boss/alerte` (boss suivant de la rotation dans 2 min), `/function metiers:heure/lancer`, `/function metiers:defis/nouveaux`, `/function metiers:defis/semaine`.
+
+## Version 27.3 (26/11/2026)
+
+Cadre en relief commun aux panneaux « succès » et aux arbres de compétences (`cadre_noir` dans `ref_arbre.py`) : briques de pierre noire polie biseautées, coins en pierre noire dorée avec un clou d'or, filet d'or autour du fond, ombre portée vers l'intérieur ; le fond reste en blocs mêlés. Panneaux agrandis (400 px de large, 6 px au moins entre les textes et le cadre), arbre de 260 x 190 px. Les fonds de plus de 240 px sont découpés en glyphes posés bout à bout (`fond_glyphes`).
 
 ## Version 27.2 (26/11/2026)
 

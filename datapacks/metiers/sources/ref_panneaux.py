@@ -48,31 +48,8 @@ def _noeud_img(ic, cadre, etat):
 def panneau(nom, W, H, mix, cases):
     """cases : liste de dicts {x, ligne (ligne du nom sous l'icône), icone, cadre, nom, couleur, info (texte fixe ou None),
     var (True si l'info est variable : $(iK) puis $(pK)), est (largeur estimée de l'info variable)}."""
-    import random as _r
-    bord, m = mix
-    rnd = _r.Random("panneau-" + nom)
-    tir = [b for b, n in m for _ in range(n)]
-    tx = {b: _tex("block/" + b) for b in set(tir) | {bord}}
-    im = _Img.new("RGBA", (W, H))
-    for x in range(0, W, 16):
-        for y in range(0, H, 16):
-            im.paste(tx[rnd.choice(tir)], (x, y))
-    for x in list(range(0, W - 16, 16)) + [W - 16]:
-        im.paste(tx[bord], (x, 0)); im.paste(tx[bord], (x, H - 16))
-    for y in list(range(0, H - 16, 16)) + [H - 16]:
-        im.paste(tx[bord], (0, y)); im.paste(tx[bord], (W - 16, y))
-    im.alpha_composite(_Img.new("RGBA", (W, H), (0, 0, 0, 120)))
-    d = _Draw.Draw(im)
-    d.rectangle([(0, 0), (W - 1, H - 1)], outline=(0, 0, 0, 255), width=2)
-    d.rectangle([(2, 2), (W - 3, H - 3)], outline=(170, 128, 40, 255), width=1)
-    # glyphes de 240 px au plus : le fond est découpé en morceaux posés bout à bout
-    cf, af, x0 = "", 0, 0
-    while x0 < W:
-        x1 = min(W, x0 + 240)
-        c_, a_ = _glyphe(f"pan_{nom}_{x0}", im.crop((x0, 0, x1, H)), 0)
-        cf += (_esp(-1) if cf else "") + c_
-        af += a_ - (1 if x0 else 0)
-        x0 = x1
+    im = _fond_mixte(mix, W, H, "panneau-" + nom)   # blocs mêlés + cadre de pierre noire (ref_arbre.py)
+    cf, af = fond_glyphes(f"pan_{nom}", im)
     noeuds = []
     for k, c in enumerate(cases, 1):
         ic = _tex(c["icone"]).resize((16, 16), _Img.NEAREST)
@@ -152,31 +129,31 @@ _IC_J = {"b": "item/iron_axe", "f": "item/iron_hoe", "m": "item/iron_pickaxe", "
          "e": "item/lead", "n": "item/enchanted_book", "x": "item/chainmail_boots", "t": "item/emerald", "k": "item/brick"}
 _cases = []
 for i, j in enumerate(_JOBS_ORDRE):
-    _cases.append({"x": 33 + (i % 5) * 66, "ligne": 4 if i < 5 else 10, "icone": _IC_J[j], "nom": jobs[j]["name"],
+    _cases.append({"x": 47 + (i % 5) * 70, "ligne": 5 if i < 5 else 11, "icone": _IC_J[j], "nom": jobs[j]["name"],
                    "couleur": jobs[j]["color"], "var": True, "est": larg_txt("niv 55")})
 for i, (ic, nm) in enumerate((("item/netherite_upgrade_smithing_template", "Forge"), ("item/clock_00", "Défis"), ("item/writable_book", "Quêtes"),
                               ("item/golden_chestplate", "Armure"), ("item/spyglass", "Sommaire"), ("item/compass_00", "Plus"))):
-    _cases.append({"x": 28 + i * 55, "ligne": 16, "icone": ic, "nom": nm, "couleur": "gold", "cadre": "goal"})
-panneau("metiers", 330, 156, _MIXM, _cases)
+    _cases.append({"x": 42 + i * 58, "ligne": 17, "icone": ic, "nom": nm, "couleur": "gold", "cadre": "goal"})
+panneau("metiers", 374, 186, _MIXM, _cases)
 
 _MIXC = ("terracotta", [("cut_sandstone", 3), ("chiseled_sandstone", 1), ("emerald_block", 1), ("gold_block", 1)])
 _CC = [("item/emerald", "Marché", "430 objets"), ("item/gold_ingot", "Banque", "virements, épargne"), ("item/name_tag", "Hôtel des ventes", "entre joueurs"),
        ("item/clock_00", "Bourse", "cours du jour"), ("item/blaze_powder", "Spawners", "à poser chez toi"), ("item/compass_00", "Plus", "classements, aide")]
-panneau("commerce", 300, 111, _MIXC, [{"x": 50 + (i % 3) * 100, "ligne": 4 if i < 3 else 10, "icone": ic, "nom": nm, "info": inf,
+panneau("commerce", 400, 136, _MIXC, [{"x": 80 + (i % 3) * 120, "ligne": 5 if i < 3 else 11, "icone": ic, "nom": nm, "info": inf,
                                         "couleur": "green", "cadre": "goal" if i == 0 else "task"} for i, (ic, nm, inf) in enumerate(_CC)])
 
 _MIXS = ("dark_oak_planks", [("oak_planks", 3), ("stone_bricks", 2), ("mossy_stone_bricks", 1), ("bookshelf", 1)])
 _SC = [("item/iron_pickaxe", "Métiers", "gold", "niveaux, arbres"), ("item/emerald", "Commerce", "green", "marché, banque"),
        ("item/lead", "Compagnons", "#C878FF", "ils t'accompagnent"), ("item/bone", "Bestiaire", "#D03030", "créatures de la nuit"),
        ("item/name_tag", "Mon profil", "yellow", "ton parcours"), ("item/book", "Guide", "white", "bien démarrer")]
-panneau("serveur", 300, 111, _MIXS, [{"x": 50 + (i % 3) * 100, "ligne": 4 if i < 3 else 10, "icone": ic, "nom": nm, "couleur": col,
+panneau("serveur", 400, 136, _MIXS, [{"x": 80 + (i % 3) * 120, "ligne": 5 if i < 3 else 11, "icone": ic, "nom": nm, "couleur": col,
                                        "info": inf, "cadre": "goal" if i < 4 else "task"} for i, (ic, nm, col, inf) in enumerate(_SC)])
 
 _MIXK = ("oak_log", [("moss_block", 3), ("podzol_top", 1), ("rooted_dirt", 1), ("mossy_cobblestone", 1)])
 _KC = [("item/bone", "Loup"), ("item/cod", "Chat"), ("item/feather", "Perroquet"), ("item/snowball", "Bonhomme de neige"),
        ("item/amethyst_shard", "Allay"), ("item/iron_ingot", "Golem"), ("item/ghast_tear", "Ghast joyeux"), ("item/dragon_breath", "Dragon"),
        ("item/nether_star", "Wither")]
-panneau("compagnons", 300, 165, _MIXK, [{"x": 50 + (i % 3) * 100, "ligne": 4 + 6 * (i // 3), "icone": ic, "nom": nm, "couleur": "#E0A040",
+panneau("compagnons", 400, 190, _MIXK, [{"x": 80 + (i % 3) * 120, "ligne": 5 + 6 * (i // 3), "icone": ic, "nom": nm, "couleur": "#E0A040",
                                           "var": True, "est": larg_txt("niv 15"), "cadre": "challenge" if i >= 6 else "task"}
                                          for i, (ic, nm) in enumerate(_KC)])
 
@@ -184,7 +161,7 @@ _MIXB = ("dark_oak_log", [("deepslate", 3), ("cobbled_deepslate", 2), ("mossy_co
 _BC = [("item/ender_eye", "SlenderMan"), ("item/diamond_pickaxe", "Herobrine"), ("item/goat_horn", "Siren Head"), ("item/candle", "La Nonne"),
        ("item/red_dye", "Le Clown"), ("item/iron_chain", "Pinhead"), ("item/white_dye", "Dame blanche"), ("item/bone", "Loup-garou"),
        ("item/blaze_powder", "Feu follet"), ("item/lantern", "Rôdeur"), ("item/ink_sac", "Croque-mitaine")]
-panneau("bestiaire", 320, 165, _MIXB, [{"x": 40 + (i % 4) * 80, "ligne": 4 + 6 * (i // 4), "icone": ic, "nom": nm, "couleur": "#D03030",
+panneau("bestiaire", 400, 190, _MIXB, [{"x": 65 + (i % 4) * 90, "ligne": 5 + 6 * (i // 4), "icone": ic, "nom": nm, "couleur": "#D03030",
                                         "var": True, "est": larg_txt("12 victoires"), "nomvar": True, "cadre": "challenge" if i == 10 else "task"}
                                        for i, (ic, nm) in enumerate(_BC)])
 
