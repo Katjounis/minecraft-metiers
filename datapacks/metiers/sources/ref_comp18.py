@@ -13,7 +13,7 @@ MAXE = {"protection": 4, "fire_protection": 4, "blast_protection": 4, "projectil
         "sharpness": 5, "smite": 5, "bane_of_arthropods": 5, "knockback": 2, "fire_aspect": 2, "looting": 3, "sweeping_edge": 3,
         "efficiency": 5, "silk_touch": 1, "unbreaking": 3, "fortune": 3, "power": 5, "punch": 2, "flame": 1, "infinity": 1,
         "luck_of_the_sea": 3, "lure": 3, "loyalty": 3, "impaling": 5, "riptide": 3, "channeling": 1, "multishot": 1,
-        "quick_charge": 3, "piercing": 4, "density": 5, "breach": 4, "wind_burst": 3, "mending": 1, "lunge": 3}
+        "quick_charge": 3, "piercing": 4, "density": 5, "breach": 4, "wind_burst": 3, "mending": 1}
 
 # ---------------------------------------------------------------- objectifs, prédicats, types de dégâts
 add_lines(F + "refonte/load.mcfunction", [f"scoreboard objectives add {o} dummy" for o in (
@@ -28,15 +28,15 @@ add_lines(F + "refonte/load.mcfunction", [f"scoreboard objectives add {o} dummy"
         "s.st3": "minecraft.used:minecraft.beetroot_soup", "s.st4": "minecraft.used:minecraft.suspicious_stew",
         "s.st5": "minecraft.used:minecraft.pumpkin_pie"}.items()])
 P_ = f"data/{NS}/predicate/"
-wj(P_ + "au_sol.json", {"condition": "minecraft:entity_properties", "entity": "this", "predicate": {"flags": {"is_on_ground": True}}})
-wj(P_ + "court.json", {"condition": "minecraft:entity_properties", "entity": "this", "predicate": {"flags": {"is_sprinting": True}}})
-wj(P_ + "plane.json", {"condition": "minecraft:entity_properties", "entity": "this", "predicate": {"flags": {"is_flying": True}}})
-wj(P_ + "avance.json", {"condition": "minecraft:entity_properties", "entity": "this",
+wj(P_ + "au_sol.json", {"type": "minecraft:entity_properties", "entity": "this", "predicate": {"flags": {"is_on_ground": True}}})
+wj(P_ + "court.json", {"type": "minecraft:entity_properties", "entity": "this", "predicate": {"flags": {"is_sprinting": True}}})
+wj(P_ + "plane.json", {"type": "minecraft:entity_properties", "entity": "this", "predicate": {"flags": {"is_flying": True}}})
+wj(P_ + "avance.json", {"type": "minecraft:entity_properties", "entity": "this",
                         "predicate": {"type_specific": {"type": "minecraft:player", "input": {"forward": True}}}})
-wj(P_ + "monte.json", {"condition": "minecraft:entity_properties", "entity": "this", "predicate": {"vehicle": {}}})
-wj(P_ + "pluie.json", {"condition": "minecraft:weather_check", "raining": True})
-wj(P_ + "sombre.json", {"condition": "minecraft:location_check", "predicate": {"light": {"light": {"max": 3}}}})
-wj(P_ + "absorption.json", {"condition": "minecraft:entity_properties", "entity": "this", "predicate": {"effects": {"minecraft:absorption": {}}}})
+wj(P_ + "monte.json", {"type": "minecraft:entity_properties", "entity": "this", "predicate": {"vehicle": {}}})
+wj(P_ + "pluie.json", {"type": "minecraft:weather_check", "raining": True})
+wj(P_ + "sombre.json", {"type": "minecraft:location_check", "predicate": {"light": {"light": {"max": 3}}}})
+wj(P_ + "absorption.json", {"type": "minecraft:entity_properties", "entity": "this", "predicate": {"effects": {"minecraft:absorption": {}}}})
 for dt, msg in (("critique", "player"), ("saignement", "generic")):
     wj(f"data/{NS}/damage_type/{dt}.json", {"message_id": msg, "exhaustion": 0.0, "scaling": "never"})
 wj("data/minecraft/tags/damage_type/bypasses_invulnerability.json", {"replace": False, "values": [f"{NS}:critique", f"{NS}:saignement"]})
@@ -239,7 +239,7 @@ w(C + "e_dresser.mcfunction", "\n".join([
     "particle minecraft:heart ~ ~1.8 ~ 0.3 0.1 0.3 0 1",
     f"execute if score @s m.drs matches 6.. as @e[type=#{NS}:apprivoisables,distance=..3,predicate=!{NS}:a_maitre,sort=nearest,limit=1] run function {NS}:comp/e_apprivoiser",
     "execute if score @s m.drs matches 6.. run scoreboard players set @s m.drs 0"]))
-wj(P_ + "a_maitre.json", {"condition": "minecraft:entity_properties", "entity": "this", "predicate": {"nbt": "{Owner:[I;]}"}})
+wj(P_ + "a_maitre.json", {"type": "minecraft:entity_properties", "entity": "this", "predicate": {"nbt": "{Owner:[I;]}"}})
 w(C + "e_apprivoiser.mcfunction", "\n".join([
     "data modify entity @s Owner set from entity @p UUID", "data modify entity @s Tame set value 1b",
     "particle minecraft:heart ~ ~1 ~ 0.4 0.4 0.4 0 10", "playsound minecraft:entity.player.levelup neutral @a ~ ~ ~ 0.6 1.6",
