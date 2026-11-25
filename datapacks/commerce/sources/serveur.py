@@ -9,28 +9,35 @@ S = "scoreboard players"
 G_ = F + "serveur/"
 
 _ic = lambda i: {"object": "atlas", "atlas": "minecraft:items", "sprite": "minecraft:item/" + i}
+# 25/11/2026 : décor encadré (îles volantes, glyphe U+E7F0 de la police metiers:arbre, dessiné par Métiers), bandeau
+# « Les Couillons » dessous, une couleur par pack (or Métiers, vert Commerce, violet Compagnons, rouge Bestiaire).
+COUL_PACK = {"metiers": "gold", "commerce": "green", "compagnons": "#C878FF", "bestiaire": "#D03030"}
+
+
+def _bout(icone, nom, coul, tip, cmd):
+    return {"label": [_ic(icone), {"text": "  " + nom, "color": coul, "bold": True}], "width": 200, "tooltip": {"text": tip},
+            "action": {"type": "minecraft:run_command", "command": cmd}}
+
+
 MENU_SERVEUR = {
     "type": "minecraft:multi_action",
     "title": {"text": "Les Couillons", "color": "gold", "bold": True},
     "external_title": {"text": "Menu du serveur"},
     "can_close_with_escape": True, "pause": False,
-    "body": [{"type": "minecraft:plain_message", "width": 310, "contents": [
-        {"text": ""}, {"text": chr(0xE020 + 14), "font": "commerce:recette", "color": "white", "shadow_color": 0}, {"text": "\n\n"},
-        {"text": "\nMétiers, Commerce, Bestiaire, Compagnons : tout est ici.", "color": "gray"}]}],
+    "body": [{"type": "minecraft:plain_message", "width": 240, "contents": [
+                 {"text": "\ue7f0", "font": "metiers:arbre", "color": "white", "shadow_color": 0}, {"text": "\n" * 9}]},
+             {"type": "minecraft:plain_message", "width": 310, "contents": [
+                 {"text": ""}, {"text": chr(0xE020 + 14), "font": "commerce:recette", "color": "white", "shadow_color": 0}, {"text": "\n\n"},
+                 {"text": "\nMétiers, Commerce, Compagnons, Bestiaire : tout est ici.", "color": "gray"}]}],
     "actions": [
-        {"label": [_ic("iron_pickaxe"), {"text": "  Métiers", "color": "aqua", "bold": True}], "width": 150, "tooltip": {"text": "Niveaux, compétences, Forge, défis, classement."},
-         "action": {"type": "minecraft:run_command", "command": "trigger metiers set 1"}},
-        {"label": [_ic("emerald"), {"text": "  Commerce", "color": "gold", "bold": True}], "width": 150, "tooltip": {"text": "Marché, bourse, banque, hôtel des ventes, spawners."},
-         "action": {"type": "minecraft:run_command", "command": "trigger commerce set 1"}},
-        {"label": [_ic("bone"), {"text": "  Bestiaire", "color": "dark_red", "bold": True}], "width": 150, "tooltip": {"text": "Les créatures de la nuit, contrats, classement."},
-         "action": {"type": "minecraft:run_command", "command": "trigger bestiaire set 1"}},
-        {"label": [_ic("lead"), {"text": "  Compagnons", "color": "#E0A040", "bold": True}], "width": 150, "tooltip": {"text": "Loup, chat, golem... qui combattent et progressent avec toi."},
-         "action": {"type": "minecraft:run_command", "command": "trigger compagnons set 1"}},
-        {"label": [_ic("name_tag"), {"text": "  Mon profil", "color": "yellow", "bold": True}], "width": 150, "tooltip": {"text": "Tout ton parcours sur une page."},
-         "action": {"type": "minecraft:run_command", "command": "trigger commerce set 30"}},
-        {"label": [_ic("book"), {"text": "  Guide", "color": "white"}], "width": 150, "tooltip": {"text": "Pour bien démarrer, en 5 pages."},
-         "action": {"type": "minecraft:run_command", "command": "trigger commerce set 31"}}],
-    "columns": 2}
+        _bout("iron_pickaxe", "Métiers", COUL_PACK["metiers"], "Niveaux, arbres de compétences, Forge, défis, quêtes, classement.", "trigger metiers set 1"),
+        _bout("emerald", "Commerce", COUL_PACK["commerce"], "Marché, bourse, banque, hôtel des ventes, spawners.", "trigger commerce set 1"),
+        _bout("lead", "Compagnons", COUL_PACK["compagnons"], "Loup, chat, golem, montures... qui combattent et progressent avec toi.", "trigger compagnons set 1"),
+        _bout("bone", "Bestiaire", COUL_PACK["bestiaire"], "Les créatures de la nuit, contrats, classement.", "trigger bestiaire set 1"),
+        _bout("name_tag", "Mon profil", "yellow", "Tout ton parcours sur une page.", "trigger commerce set 30"),
+        _bout("book", "Guide", "white", "Pour bien démarrer, en 5 pages.", "trigger commerce set 31")],
+    "columns": 2,
+    "exit_action": {"label": "Fermer", "width": 200}}
 wj("data/serveur/dialog/menu.json", MENU_SERVEUR)
 wj("data/minecraft/tags/dialog/quick_actions.json", {"values": ["serveur:menu"]})
 wj("data/minecraft/tags/dialog/pause_screen_additions.json", {"values": ["serveur:menu"]})

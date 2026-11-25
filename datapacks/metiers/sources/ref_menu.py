@@ -81,7 +81,7 @@ acts += [ib("item/netherite_upgrade_smithing_template", "Forge", "gold", 471, 15
          ib("item/compass_00", "Plus", "gold", 497, 150, "Guilde, classement, synergies, cadres de titre, aura, aide.", True)]
 w(F + "menu_dialog.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Mes métiers",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
-  'body:[{type:"minecraft:plain_message",width:310,contents:[{text:""},{text:"\ue027",font:"commerce:recette",color:"white",shadow_color:0},{text:"\\n\\n"}]},{type:"minecraft:plain_message",width:460,contents:[{text:"Score total ",color:"gray"},{text:"$(score)",color:"yellow"},'
+  'body:[' + decor_corps("metiers") + ',{type:"minecraft:plain_message",width:460,contents:[{text:"Score total ",color:"gray"},{text:"$(score)",color:"yellow"},'
   '{text:"   ·   Armure des Guildes : ",color:"gray"},{text:"$(arm)",color:"gold"},{text:"   ·   ",color:"gray"},' + gs("eclat") + ',{text:" $(ecl) éclats",color:"gray"},{text:"\\n● : des points de compétence ou une récompense t\'attendent",color:"dark_gray"}]}],'
   f'actions:[{",".join(acts)}],columns:3,'
   f'exit_action:{{label:"Fermer",width:200}}}}')

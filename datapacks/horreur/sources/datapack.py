@@ -915,7 +915,8 @@ liste += ["execute store result storage horreur:ui m.d int 1 run scoreboard play
           "function horreur:ui/liste_m with storage horreur:ui m"]
 w(F + "ui/liste.mcfunction", "\n".join(liste))
 d_liste = {"type": "minecraft:multi_action", "title": TITRE, "can_close_with_escape": True, "pause": False,
-           "body": [msg([{"text": ""}, {"text": "\ue02c", "font": "commerce:recette", "color": "white", "shadow_color": 0}, {"text": "\n\n"}], 310),
+           # 25/11/2026 : décor de nuit encadré (glyphe U+E7F4 de metiers:arbre, dessiné par Métiers)
+           "body": [msg([{"text": "\ue7f4", "font": "metiers:arbre", "color": "white", "shadow_color": 0}, {"text": "\n" * 9}], 240),
                     msg([{"text": f"§D / {len(CREATURES)} créatures découvertes   ·   §T victoires\n", "color": "gray"},
                          {"text": "Contrat de la semaine : ", "color": "dark_red"}, {"text": "§CT", "color": "gold"}, {"text": "§OK", "color": "green"},
                          {"text": "§SG", "color": "red"}])],

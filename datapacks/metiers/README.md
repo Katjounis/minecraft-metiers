@@ -26,7 +26,7 @@ Dans `server.properties` :
 
 ```
 resource-pack=https://github.com/Katjounis/minecraft-metiers/raw/main/metiers_resourcepack.zip
-resource-pack-sha1=d6a653342cf3dd2ccb0368576a77edad5c97c927
+resource-pack-sha1=ac45436543baaf8df97edb9951981cf068ffe056
 require-resource-pack=true
 ```
 
@@ -37,6 +37,10 @@ Le SHA-1 doit être recalculé à chaque nouvelle version du resource pack.
 Touche G (ou menu Échap) pour ouvrir le menu des métiers, ou `/trigger metiers`.
 
 Commandes admin : `/function metiers:boss/alerte` (boss suivant de la rotation dans 2 min), `/function metiers:heure/lancer`, `/function metiers:defis/nouveaux`, `/function metiers:defis/semaine`.
+
+## Version 26.4 (25/11/2026)
+
+Décors encadrés en tête des menus principaux, dessinés dans la police `metiers:arbre` à des caractères fixes (U+E7F0 serveur, U+E7F1 Métiers, U+E7F2 Commerce, U+E7F3 Compagnons, U+E7F4 Bestiaire) pour que les autres packs les utilisent : menu Les Couillons (îles volantes, une couleur par pack), Mes métiers (forêt et falaise à minerais), accueil Commerce (étals du marché), Compagnons (prairie au couchant), Bestiaire (forêt de nuit).
 
 ## Version 26.3 (25/11/2026)
 

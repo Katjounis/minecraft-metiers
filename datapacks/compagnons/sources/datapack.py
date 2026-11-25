@@ -788,11 +788,10 @@ for k, (_, cle, nom, col, ent, ico, (j, n, jn), suit, combat) in T.items():
     acts.append(btn(f'[{IC(ico)},$(b{k}),{{text:"$(s{k})",color:"yellow"}}]', 10 + k, 150, tip))
 acts += [btn(f'[{IC("lead")},{txt("  Ranger", "gray")}]', 2, 150, "Fait rentrer ton compagnon."),
          btn(f'[{IC("compass_00")},{txt("  Suivre / Rester", "aqua")}]', 3, 150, "Il te suit, ou il reste là où il est pour garder la zone."),
-         btn(f'[{IC("book")},{txt("  Comment ça marche", "white")}]', 4, 150, "Niveaux, capacités, apparences, K.O.")]
+         btn(f'[{IC("book")},{txt("  Comment ça marche", "white")}]', 4, 150, "Un compagnon à la fois. Il se débloque avec tes métiers (et les boss pour le dragon et le wither), gagne ses niveaux, ses capacités et des améliorations. Ghast, dragon et wither se montent d’un clic droit. K.O. : retour 60 s plus tard.")]
 w(F + "menu/accueil_b.mcfunction",
-  '$dialog show @s {type:"minecraft:multi_action",title:{text:"Compagnons",color:"#E0A040",bold:true},can_close_with_escape:true,pause:false,'
-  f'body:[{BAN},{{type:"minecraft:plain_message",width:460,contents:[{{text:"Compagnon dehors : ",color:"gray"}},{{text:"$(dehors)",color:"gold"}},'
-  '{text:"   ·   $(md)\\n",color:"gray"},{text:"Un compagnon à la fois. Il se débloque avec tes métiers (et les boss pour le dragon et le wither), gagne ses niveaux, ses capacités et des améliorations. Ghast, dragon et wither se montent : on vole !",color:"dark_gray"}]}],'
+  '$dialog show @s {type:"minecraft:multi_action",title:{text:"Compagnons",color:"#C878FF",bold:true},can_close_with_escape:true,pause:false,'
+  f'body:[{{type:"minecraft:plain_message",width:240,contents:[{{text:"\ue7f3",font:"metiers:arbre",color:"white",shadow_color:0}},{{text:"\\n\\n\\n\\n\\n\\n\\n\\n\\n"}}]}},{{type:"minecraft:plain_message",width:400,contents:[{{text:"Compagnon dehors : ",color:"gray"}},{{text:"$(dehors)",color:"#C878FF"}},{{text:"   ·   $(md)",color:"gray"}}]}}],'
   f'actions:[{",".join(acts)}],columns:3,'
   'exit_action:{label:"Fermer",width:200}}')
 

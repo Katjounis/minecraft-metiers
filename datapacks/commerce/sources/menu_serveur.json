@@ -13,6 +13,21 @@
  "body": [
   {
    "type": "minecraft:plain_message",
+   "width": 240,
+   "contents": [
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "\n\n\n\n\n\n\n\n\n"
+    }
+   ]
+  },
+  {
+   "type": "minecraft:plain_message",
    "width": 310,
    "contents": [
     {
@@ -28,7 +43,7 @@
      "text": "\n\n"
     },
     {
-     "text": "\nMétiers, Commerce, Bestiaire, Compagnons : tout est ici.",
+     "text": "\nMétiers, Commerce, Compagnons, Bestiaire : tout est ici.",
      "color": "gray"
     }
    ]
@@ -44,13 +59,13 @@
     },
     {
      "text": "  Métiers",
-     "color": "aqua",
+     "color": "gold",
      "bold": true
     }
    ],
-   "width": 150,
+   "width": 200,
    "tooltip": {
-    "text": "Niveaux, compétences, Forge, défis, classement."
+    "text": "Niveaux, arbres de compétences, Forge, défis, quêtes, classement."
    },
    "action": {
     "type": "minecraft:run_command",
@@ -66,11 +81,11 @@
     },
     {
      "text": "  Commerce",
-     "color": "gold",
+     "color": "green",
      "bold": true
     }
    ],
-   "width": 150,
+   "width": 200,
    "tooltip": {
     "text": "Marché, bourse, banque, hôtel des ventes, spawners."
    },
@@ -84,21 +99,21 @@
     {
      "object": "atlas",
      "atlas": "minecraft:items",
-     "sprite": "minecraft:item/bone"
+     "sprite": "minecraft:item/lead"
     },
     {
-     "text": "  Bestiaire",
-     "color": "dark_red",
+     "text": "  Compagnons",
+     "color": "#C878FF",
      "bold": true
     }
    ],
-   "width": 150,
+   "width": 200,
    "tooltip": {
-    "text": "Les créatures de la nuit, contrats, classement."
+    "text": "Loup, chat, golem, montures... qui combattent et progressent avec toi."
    },
    "action": {
     "type": "minecraft:run_command",
-    "command": "trigger bestiaire set 1"
+    "command": "trigger compagnons set 1"
    }
   },
   {
@@ -106,21 +121,21 @@
     {
      "object": "atlas",
      "atlas": "minecraft:items",
-     "sprite": "minecraft:item/lead"
+     "sprite": "minecraft:item/bone"
     },
     {
-     "text": "  Compagnons",
-     "color": "#E0A040",
+     "text": "  Bestiaire",
+     "color": "#D03030",
      "bold": true
     }
    ],
-   "width": 150,
+   "width": 200,
    "tooltip": {
-    "text": "Loup, chat, golem... qui combattent et progressent avec toi."
+    "text": "Les créatures de la nuit, contrats, classement."
    },
    "action": {
     "type": "minecraft:run_command",
-    "command": "trigger compagnons set 1"
+    "command": "trigger bestiaire set 1"
    }
   },
   {
@@ -136,7 +151,7 @@
      "bold": true
     }
    ],
-   "width": 150,
+   "width": 200,
    "tooltip": {
     "text": "Tout ton parcours sur une page."
    },
@@ -154,10 +169,11 @@
     },
     {
      "text": "  Guide",
-     "color": "white"
+     "color": "white",
+     "bold": true
     }
    ],
-   "width": 150,
+   "width": 200,
    "tooltip": {
     "text": "Pour bien démarrer, en 5 pages."
    },
@@ -167,5 +183,9 @@
    }
   }
  ],
- "columns": 2
+ "columns": 2,
+ "exit_action": {
+  "label": "Fermer",
+  "width": 200
+ }
 }

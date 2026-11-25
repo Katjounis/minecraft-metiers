@@ -49,11 +49,11 @@ def _avance(im):
     return (bb[2] if bb else 0) + 1
 
 
-def _glyphe(nom, im, top):
+def _glyphe(nom, im, top, car=None):
     """Enregistre un glyphe dont le coin haut gauche est à « top » px sous le haut du fond. Rend (caractère, avance)."""
     assert max(im.size) <= 240, nom
     ARB_FICHIERS.append((nom, im))
-    c = _car()
+    c = car or _car()
     _prov.append({"type": "bitmap", "file": f"metiers:font/arbre/{nom}.png", "height": im.height, "ascent": _ASC0 - top, "chars": [c]})
     return c, _avance(im)
 
@@ -114,6 +114,136 @@ for j in jobs:
             nd[k][e] = _glyphe(f"{j}_{k}_{e}", im, cy - 13)
         assert len({v[1] for v in nd[k].values()}) == 1
     ARB[j] = {"fond": cf, "adv": af, "noeuds": nd}
+
+# ---------------------------------------------------------------- décors des menus (25/11/2026)
+# Une scène encadrée d'or en tête des menus principaux : serveur (îles volantes), Métiers, Commerce, Compagnons,
+# Bestiaire. 228 x 84 px, blocs du jeu dessinés à 8 px. Glyphes de la même police metiers:arbre.
+DEC_W, DEC_H = 228, 84
+
+
+def _teinte(im, c):
+    o = im.copy(); px = o.load()
+    for x in range(o.width):
+        for y in range(o.height):
+            r, g, b, a = px[x, y]; l = (r + g + b) // 3
+            px[x, y] = (l * c[0] // 255, l * c[1] // 255, l * c[2] // 255, a)
+    return o
+
+
+def _b8(nom, tint=None):
+    im = _tex("block/" + nom).resize((8, 8), _Img.NEAREST)
+    return _teinte(im, tint) if tint else im
+
+
+def _ciel(a, haut, bas):
+    d = _Draw.Draw(a)
+    for y in range(DEC_H):
+        t = y / DEC_H
+        d.line([(0, y), (DEC_W, y)], fill=tuple(int(haut[i] + (bas[i] - haut[i]) * t) for i in range(3)) + (255,))
+
+
+def _nuages(a, liste, coul=(245, 245, 250, 255)):
+    d = _Draw.Draw(a)
+    for cx, cy, cw in liste:
+        d.rectangle([(cx, cy), (cx + cw, cy + 5)], fill=coul)
+        d.rectangle([(cx + 6, cy - 3), (cx + cw - 8, cy)], fill=coul)
+
+
+def _sol(a, y0, bloc_haut, bloc_bas, x0=0, x1=DEC_W):
+    for x in range(x0, x1, 8):
+        a.alpha_composite(bloc_haut, (x, y0))
+        for y in range(y0 + 8, DEC_H, 8):
+            a.alpha_composite(bloc_bas, (x, y))
+
+
+def _arbre_bloc(a, x, y, tronc, feuilles, haut=2):
+    for i in range(haut):
+        a.alpha_composite(tronc, (x, y - 8 * (i + 1)))
+    top = y - 8 * haut
+    for dx in (-8, 0, 8):
+        a.alpha_composite(feuilles, (x + dx, top - 8))
+    a.alpha_composite(feuilles, (x, top - 16))
+
+
+def _cadre(a):
+    d = _Draw.Draw(a)
+    d.rectangle([(0, 0), (DEC_W - 1, DEC_H - 1)], outline=(0, 0, 0, 255), width=2)
+    d.rectangle([(2, 2), (DEC_W - 3, DEC_H - 3)], outline=(170, 128, 40, 255), width=1)
+    return a
+
+
+def _icone(a, nom, x, y, taille=16):
+    a.alpha_composite(_tex("item/" + nom).resize((taille, taille), _Img.NEAREST), (x, y))
+
+
+HERBE = (120, 190, 80)
+FEUIL = (90, 160, 60)
+DECORS = {}
+# serveur : ciel de fin de journée, deux îles volantes
+a = _Img.new("RGBA", (DEC_W, DEC_H)); _ciel(a, (70, 110, 190), (220, 180, 150)); _nuages(a, [(30, 18, 34), (150, 12, 46), (200, 30, 28)])
+for x0, y0, lg in ((18, 52, 7), (130, 44, 10)):
+    for i in range(lg):
+        a.alpha_composite(_b8("grass_block_side"), (x0 + i * 8, y0))
+    for r, b in ((1, "dirt"), (2, "stone")):
+        for i in range(r, lg - r):
+            a.alpha_composite(_b8(b), (x0 + i * 8, y0 + r * 8))
+_arbre_bloc(a, 162, 44, _b8("oak_log"), _b8("oak_leaves", FEUIL))
+DECORS["serveur"] = _cadre(a)
+# Métiers : forêt à gauche, falaise de pierre et minerais à droite
+a = _Img.new("RGBA", (DEC_W, DEC_H)); _ciel(a, (90, 140, 210), (190, 215, 235)); _nuages(a, [(60, 10, 40), (170, 18, 30)])
+_sol(a, 68, _b8("grass_block_side"), _b8("dirt"), 0, 120)
+for x in (14, 46, 86):
+    _arbre_bloc(a, x, 68, _b8("oak_log"), _b8("oak_leaves", FEUIL), 2 + (x % 2))
+for x in range(120, DEC_W, 8):
+    for y in range(36 + (x - 120) // 12 * 0, DEC_H, 8):
+        b = "coal_ore" if (x * 7 + y * 3) % 23 == 0 else "iron_ore" if (x * 5 + y) % 31 == 0 else "diamond_ore" if (x + y * 7) % 59 == 0 else "stone"
+        a.alpha_composite(_b8(b), (x, y))
+for x in range(120, DEC_W, 8):
+    a.alpha_composite(_b8("grass_block_side"), (x, 28))
+DECORS["metiers"] = _cadre(a)
+# Commerce : place de marché, étals à auvent rayé
+a = _Img.new("RGBA", (DEC_W, DEC_H)); _ciel(a, (110, 160, 220), (230, 210, 170)); _nuages(a, [(20, 12, 36), (120, 8, 44)])
+_sol(a, 76, _b8("grass_block_side"), _b8("dirt"))
+for x0 in (14, 84, 154):
+    for i in range(6):
+        a.alpha_composite(_b8("red_wool" if i % 2 == 0 else "white_wool"), (x0 + i * 8, 36))
+    for y in (44, 52, 60):
+        a.alpha_composite(_b8("spruce_log"), (x0, y)); a.alpha_composite(_b8("spruce_log"), (x0 + 40, y))
+    for i in range(6):
+        a.alpha_composite(_b8("barrel_side"), (x0 + i * 8, 68))
+    _icone(a, "emerald", x0 + 12, 52, 12); _icone(a, "iron_ingot", x0 + 26, 52, 12)
+DECORS["commerce"] = _cadre(a)
+# Compagnons : prairie au coucher du soleil, les objets des compagnons posés dans l'herbe
+a = _Img.new("RGBA", (DEC_W, DEC_H)); _ciel(a, (240, 150, 90), (250, 210, 140))
+d = _Draw.Draw(a); d.ellipse([(160, 30), (196, 66)], fill=(255, 230, 120, 255))
+_sol(a, 66, _b8("grass_block_side"), _b8("dirt"))
+_arbre_bloc(a, 30, 66, _b8("spruce_log"), _b8("spruce_leaves", (70, 120, 70)), 3)
+for i, n in enumerate(("bone", "cod", "feather", "snowball", "lead")):
+    _icone(a, n, 64 + i * 26, 48)
+DECORS["compagnons"] = _cadre(a)
+# Bestiaire : nuit, lune, forêt sombre, yeux rouges
+a = _Img.new("RGBA", (DEC_W, DEC_H)); _ciel(a, (8, 10, 30), (30, 20, 50))
+d = _Draw.Draw(a)
+for i in range(40):
+    d.point(((i * 53) % DEC_W, (i * 29) % 50), fill=(230, 230, 255, 255))
+d.ellipse([(170, 10), (194, 34)], fill=(235, 235, 210, 255)); d.ellipse([(176, 12), (198, 32)], fill=(20, 16, 40, 255))
+_sol(a, 70, _b8("grass_block_side", (60, 70, 60)), _b8("dirt", (70, 60, 60)))
+for x in (10, 44, 80, 120, 150, 196):
+    _arbre_bloc(a, x, 70, _b8("dark_oak_log", (90, 80, 90)), _b8("spruce_leaves", (40, 50, 50)), 3)
+for x, y in ((66, 58), (106, 60), (138, 56)):
+    d.rectangle([(x, y), (x + 1, y)], fill=(255, 40, 40, 255)); d.rectangle([(x + 4, y), (x + 5, y)], fill=(255, 40, 40, 255))
+DECORS["bestiaire"] = _cadre(a)
+# caractères fixes : les autres packs (Commerce, Compagnons, Horreur) les écrivent en dur
+DECOR_CODE = {"serveur": 0xE7F0, "metiers": 0xE7F1, "commerce": 0xE7F2, "compagnons": 0xE7F3, "bestiaire": 0xE7F4}
+DECOR_CAR = {n: _glyphe(f"decor_{n}", im, 0, chr(DECOR_CODE[n])) for n, im in DECORS.items()}
+
+
+def decor_corps(nom):
+    """Élément de corps de dialogue (SNBT) : la scène encadrée, puis les lignes vides qui lui laissent sa hauteur."""
+    c, _ = DECOR_CAR[nom]
+    return ('{type:"minecraft:plain_message",width:240,contents:[{text:"' + c + '",font:"metiers:arbre",color:"white",shadow_color:0},'
+            '{text:"' + "\\n" * 9 + '"}]}')
+
 
 # ---------------------------------------------------------------- espaces (avances positives et négatives)
 _ESP = {}

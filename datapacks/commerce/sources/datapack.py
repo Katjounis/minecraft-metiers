@@ -503,12 +503,15 @@ w(F + "op/vendre.mcfunction", [
     f"function {NS}:item/sauver", f"function {NS}:op/crediter", f"function {NS}:stat/vente with storage {NS}:t it",
     "scoreboard players operation #x c.t = #tot c.t"] + fmt(f"{NS}:t", "m.") + [
     f"data modify storage {NS}:t m.q set from storage {NS}:t it.q",
+    f"data modify storage {NS}:t m.n set from storage {NS}:t it.n",
     f"function {NS}:op/msg_vente with storage {NS}:t m",
     f"data modify storage {NS}:t m.n set from storage {NS}:t it.n", f"execute store result storage {NS}:t hl.id int 1 run scoreboard players get @s m.id",
     f'data modify storage {NS}:t hl.col set value "green"', f"function {NS}:banque/hist_txt_vente",
     "playsound minecraft:entity.villager.yes master @s ~ ~ ~ 0.8 1.2",
     "playsound minecraft:block.chain.place master @s ~ ~ ~ 0.6 1.6"])
-w(F + "op/msg_vente.mcfunction", f'$data modify storage {NS}:t msg set value "Vendu : $(q) pour $(e),$(z)$(c) Écus."')
+w(F + "op/msg_vente.mcfunction", [f'$data modify storage {NS}:t msg set value "Vendu : $(q) pour $(e),$(z)$(c) Écus."',
+    # 25/11/2026 : le montant aussi dans le chat, pour toi seul (pas pendant un « Tout vendre », qui fait un total)
+    '$execute unless score #lot c.t matches 1 run tellraw @s [{"text":"[Commerce] ","color":"green"},{"text":"Vendu : ","color":"gray"},{"text":"$(q) $(n)","color":"white"},{"text":" pour ","color":"gray"},{"text":"+$(e),$(z)$(c) Écus","color":"gold"}]'])
 w(F + "op/acheter.mcfunction", [
     f"function {NS}:item/charger",
     f'execute if score #rare c.t matches 1 run return run data modify storage {NS}:t msg set value "Le serveur ne revend pas cet objet, il le rachète seulement."',
@@ -537,12 +540,14 @@ w(F + "op/acheter.mcfunction", [
     "execute if score #p c.t matches ..-301 run scoreboard players set #p c.t -300",
     "scoreboard players operation #as c.t += #q c.t",
     f"function {NS}:item/sauver", f"function {NS}:stat/achat with storage {NS}:t it",
+    f"data modify storage {NS}:t m.n set from storage {NS}:t it.n",
     f"function {NS}:op/msg_achat with storage {NS}:t m",
     f"data modify storage {NS}:t m.n set from storage {NS}:t it.n", f"execute store result storage {NS}:t hl.id int 1 run scoreboard players get @s m.id",
     f'data modify storage {NS}:t hl.col set value "red"', f"function {NS}:banque/hist_txt_achat",
     "playsound minecraft:entity.villager.trade master @s ~ ~ ~ 0.8 1",
     "playsound minecraft:entity.item.pickup master @s ~ ~ ~ 0.6 0.8"])
-w(F + "op/msg_achat.mcfunction", f'$data modify storage {NS}:t msg set value "Acheté : $(q) pour $(e),$(z)$(c) Écus."')
+w(F + "op/msg_achat.mcfunction", [f'$data modify storage {NS}:t msg set value "Acheté : $(q) pour $(e),$(z)$(c) Écus."',
+    '$execute unless score #lot c.t matches 1 run tellraw @s [{"text":"[Commerce] ","color":"green"},{"text":"Acheté : ","color":"gray"},{"text":"$(q) $(n)","color":"white"},{"text":" pour ","color":"gray"},{"text":"-$(e),$(z)$(c) Écus","color":"red"}]'])
 w(F + "op/msg_pauvre.mcfunction", [
     f'$data modify storage {NS}:t msg set value "Pas assez d\'Écus : il te faut $(e),$(z)$(c) Écus pour $(q)."',
     "playsound minecraft:entity.villager.no master @s ~ ~ ~ 0.8 1"])
@@ -977,7 +982,7 @@ assert BOSS_IDS, "aucune table de butin de boss trouvée"
 VENTE_BOSS = [it for it in ITL if it["cat"] == 17 or it["id"] in BOSS_IDS]
 print("Tout vendre (butin de boss) :", len(VENTE_BOSS), "objets ; hors catalogue :",
       sorted(BOSS_IDS - {it["id"] for it in ITL}))
-BT_ = ["scoreboard players set #btot c.t 0"]
+BT_ = ["scoreboard players set #btot c.t 0", "scoreboard players set #lot c.t 1"]
 for it in VENTE_BOSS:
     if True:
         BT_ += [f"execute unless items entity @s container.* minecraft:{it['id']}{FILTRE} unless items entity @s weapon.offhand minecraft:{it['id']}{FILTRE} run scoreboard players set #i c.t 0",
@@ -997,8 +1002,27 @@ BT_ += ["scoreboard players set #k c.t " + str(RELIQUE_PRIX), "scoreboard player
         f'execute if score #btot c.t matches ..0 run tellraw @s {L(PREFIX, T("Aucun butin de boss à vendre dans ton inventaire (les objets renommés à la main ne comptent pas).", "red"))}',
         f'execute if score #btot c.t matches 1.. run tellraw @s {L(PREFIX, T("Butin de boss vendu : ", "gold"), "{score:{name:\"#btot\",objective:\"c.t\"},color:\"yellow\",bold:true}", T(" Écus, dont ", "gold"), "{score:{name:\"#nr\",objective:\"c.t\"},color:\"yellow\"}", T(" relique(s).", "gold"))}',
         "execute if score #btot c.t matches 1.. run playsound minecraft:entity.player.levelup master @s ~ ~ ~ 0.7 1.4",
+        "scoreboard players set #lot c.t 0",
         f"function {NS}:page/cat_17_0"]
 w(F + "relique/tout.mcfunction", BT_)
+# 25/11/2026 : bouton « Tout vendre » en tête de chaque catégorie : vend tout ce que tu as de cette catégorie
+for c in ITEMS:
+    if c == 17:
+        continue
+    TV = ["scoreboard players set #btot c.t 0", "scoreboard players set #lot c.t 1"]
+    for it in CATIT[c]:
+        TV += [f"execute unless items entity @s container.* minecraft:{it['id']}{FILTRE} unless items entity @s weapon.offhand minecraft:{it['id']}{FILTRE} run scoreboard players set #i c.t 0",
+               f"execute if items entity @s container.* minecraft:{it['id']}{FILTRE} run scoreboard players set #i c.t {it['i']}",
+               f"execute if items entity @s weapon.offhand minecraft:{it['id']}{FILTRE} run scoreboard players set #i c.t {it['i']}",
+               "scoreboard players set #tot c.t 0", "scoreboard players set #act c.t 3", "scoreboard players set #q c.t 0",
+               f"execute if score #i c.t matches 1.. run function {NS}:op/vendre",
+               "scoreboard players operation #btot c.t += #tot c.t"]
+    TV += ["scoreboard players set #lot c.t 0", "scoreboard players operation #btot c.t /= #100 c.g",
+           f'execute if score #btot c.t matches ..0 run tellraw @s {L(PREFIX, T("Rien à vendre dans cette catégorie (les objets renommés ou spéciaux sont gardés).", "red"))}',
+           f'execute if score #btot c.t matches 1.. run tellraw @s {L(PREFIX, T(CATNAME[c] + " vendu en entier : ", "gray"), "{score:{name:\"#btot\",objective:\"c.t\"},color:\"gold\",bold:true}", T(" Écus", "gold"))}',
+           "execute if score #btot c.t matches 1.. run playsound minecraft:entity.player.levelup master @s ~ ~ ~ 0.7 1.4",
+           f"function {NS}:page/cat_{c}_0"]
+    w(F + f"page/tout_{c}.mcfunction", TV)
 PG = lambda c, p: 1000 + 10 * c + p         # valeur du trigger d'une page de catégorie
 for it in ITL:
     # retour vers la bonne page de la catégorie : on corrige la valeur stockée par i/<n>/charger
@@ -1042,6 +1066,7 @@ TR = ["scoreboard players operation #v c.t = @s commerce", "scoreboard players s
       f"execute if score #v c.t matches 4000000..4999999 run return run function {NS}:stat/item_entree",
       f"execute if score #v c.t matches 5000000..5999999 run return run function {NS}:stat/jour_entree"]
 TR += [f"execute if score #v c.t matches {PG(c, p)} run return run function {NS}:page/cat_{c}_{p}" for c in ITEMS for p in range(NPAGES[c])]
+TR += [f"execute if score #v c.t matches {7900 + c} run return run function {NS}:page/tout_{c}" for c in ITEMS if c != 17]
 TR += [f"execute if score #v c.t matches {400 + JIDX[j]} run return run function {NS}:page/cristal_{j}" for j, *_ in JOBS]
 TR += [f"execute if score #v c.t matches 10001..{10000 + NIT} run return run function {NS}:page/item_depuis",
        f"execute if score #v c.t matches 1000000..3999999 run return run function {NS}:op/entree"]
@@ -1087,20 +1112,23 @@ AC = SOLDE(f"{NS}:a") + [
     f"data modify storage {NS}:a ev set from storage {NS}:g evtxt"] + msg_line(f"{NS}:a") + [
     f"function {NS}:page/accueil_d with storage {NS}:a"]
 w(F + "page/accueil.mcfunction", AC)
+# 25/11/2026 : décor encadré du marché (glyphe U+E7F2 de metiers:arbre, dessiné par Métiers), boutons verts sur 3 colonnes
+DECOR = lambda n: ('{type:"minecraft:plain_message",width:240,contents:[{text:"' + {"serveur": "\ue7f0", "metiers": "\ue7f1", "commerce": "\ue7f2",
+                   "compagnons": "\ue7f3", "bestiaire": "\ue7f4"}[n] + '",font:"metiers:arbre",color:"white",shadow_color:0},{text:"' + "\\n" * 9 + '"}]}')
 w(F + "page/accueil_d.mcfunction", "$" + dlg(
     T("Commerce", "gold", True),
-    [BAN(0), f'{{type:"minecraft:plain_message",width:310,contents:{L(SOLDE_TXT, T("\\nVendu : $(tv) " + ECU + "   ·   acheté : $(ta) " + ECU, "gray"), T("\\n$(ev)", "light_purple"), MSG_TXT)}}}'],
-    [btn(L(spr("emerald"), T("  Marché", "yellow", True)), 9, 160, "Acheter et vendre, objet par objet."),
-     btn(L(spr("diamond"), T("  Bourse", "light_purple", True)), 20, 160, "Évènements, tendances, tops."),
-     btn(L(spr("gold_ingot"), T("  Fortunes", "gold")), 21, 160, "Le solde de tout le monde."),
-     btn(L(G("cristal_m"), T("  Cristaux de métier", "aqua")), 22, 160, "Hors de prix, mais c'est le but."),
-     btn(L('{object:"atlas",atlas:"minecraft:blocks",sprite:"minecraft:block/spawner"}', T("  Spawners", "light_purple", True)), 70, 160, "Des spawners à acheter et à améliorer. Très chers."),
-     btn(L('{object:"atlas",atlas:"minecraft:items",sprite:"minecraft:item/clock_00"}', T("  Graphiques", "aqua", True)), 81, 160, "Courbes et flux du marché, jour par jour."),
-     btn(L(spr("gold_ingot"), T("  Banque", "yellow", True)), 90, 160, "Virements, épargne, historique."),
-     btn(L(spr("chest"), T("  Hôtel des ventes", "light_purple", True)), 6000, 160, "Achète et vends des objets entre joueurs."),
-     btn(L('{object:"atlas",atlas:"minecraft:items",sprite:"minecraft:item/name_tag"}', T("  Trésor de guilde", "gold", True)), 7700, 160, "Le trésor de ta guilde : niveaux et avantages pour tous les membres."),
-     btn(L(spr("barrel"), T("  Mon comptoir", "white")), 50, 160, "Range ton comptoir dans ton inventaire pour le reposer ailleurs."),
-     btn(T("Aide", "gray"), 60, 160)]))
+    [DECOR("commerce"), f'{{type:"minecraft:plain_message",width:310,contents:{L(SOLDE_TXT, T("\\nVendu : $(tv) " + ECU + "   ·   acheté : $(ta) " + ECU, "gray"), T("\\n$(ev)", "light_purple"), MSG_TXT)}}}'],
+    [btn(L(spr("emerald"), T("  Marché", "green", True)), 9, 130, "Acheter et vendre, objet par objet."),
+     btn(L(spr("diamond"), T("  Bourse", "green", True)), 20, 130, "Évènements, tendances, tops."),
+     btn(L(spr("gold_ingot"), T("  Fortunes", "green", True)), 21, 130, "Le solde de tout le monde."),
+     btn(L(G("cristal_m"), T("  Cristaux de métier", "green", True)), 22, 130, "Hors de prix, mais c'est le but."),
+     btn(L('{object:"atlas",atlas:"minecraft:blocks",sprite:"minecraft:block/spawner"}', T("  Spawners", "green", True)), 70, 130, "Des spawners à acheter et à améliorer. Très chers."),
+     btn(L('{object:"atlas",atlas:"minecraft:items",sprite:"minecraft:item/clock_00"}', T("  Graphiques", "green", True)), 81, 130, "Courbes et flux du marché, jour par jour."),
+     btn(L(spr("gold_ingot"), T("  Banque", "green", True)), 90, 130, "Virements, épargne, historique."),
+     btn(L(spr("chest"), T("  Hôtel des ventes", "green", True)), 6000, 130, "Achète et vends des objets entre joueurs."),
+     btn(L('{object:"atlas",atlas:"minecraft:items",sprite:"minecraft:item/name_tag"}', T("  Trésor de guilde", "green", True)), 7700, 130, "Le trésor de ta guilde : niveaux et avantages pour tous les membres."),
+     btn(L(spr("barrel"), T("  Mon comptoir", "green", True)), 50, 130, "Range ton comptoir dans ton inventaire pour le reposer ailleurs."),
+     btn(T("Aide", "gray"), 60, 130)], cols=3))
 
 # ---------------------------------------------------------------- index du marché : une ligne de texte, puis les boutons
 CATSHOW = {c: (vit, col, desc) for c, _, vit, col, desc in CATEGORIES}
@@ -1148,6 +1176,10 @@ for c in ITEMS:
         CL.append(f"function {NS}:page/cat_{c}_{p}_d with storage {NS}:cp")
         w(F + f"page/cat_{c}_{p}.mcfunction", CL)
         acts = []
+        if c != 17:   # 25/11/2026 : « Tout vendre » de la catégorie, tout en haut
+            acts += [btn(L(spr("emerald"), T("  Tout vendre : " + court(CATNAME[c], 12), "gold", True)), 7900 + c, 160,
+                         "Vend d’un coup tout ce que tu as de cette catégorie dans ton inventaire, au prix du marché. Les objets renommés ou spéciaux sont gardés."),
+                     btn(T("Marché", "yellow"), 9, 160)]
         for it in its:
             k = it["i"]
             tip = f"Vente : $(ve{k}),$(vz{k})$(vc{k}) Écus l’unité" + ("" if rare else f"\\nAchat : $(ae{k}),$(az{k})$(ac{k}) Écus l’unité") + f"\\nTendance sur 1 h : $(t{k})"
