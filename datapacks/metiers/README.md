@@ -40,6 +40,8 @@ Commandes admin : `/function metiers:boss/alerte` (boss suivant de la rotation d
 
 ## Version 27.3 (26/11/2026)
 
+Correctif : le message de l'arbre est plus large que le dessin (sinon la ligne passait à la ligne et le dessin se coupait en deux), et chaque panneau a assez de lignes pour toute sa hauteur (le bas du cadre était coupé).
+
 Cadre en relief commun aux panneaux « succès » et aux arbres de compétences (`cadre_noir` dans `ref_arbre.py`) : briques de pierre noire polie biseautées, coins en pierre noire dorée avec un clou d'or, filet d'or autour du fond, ombre portée vers l'intérieur ; le fond reste en blocs mêlés. Panneaux agrandis (400 px de large, 6 px au moins entre les textes et le cadre), arbre de 260 x 190 px. Les fonds de plus de 240 px sont découpés en glyphes posés bout à bout (`fond_glyphes`).
 
 ## Version 27.2 (26/11/2026)

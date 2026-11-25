@@ -82,6 +82,7 @@ def panneau_contenu(nom, clics, survols, etats=None):
     comps.append(dict(text=_esp(W), **_FA))
     # libellés, ligne par ligne
     nl = max(c["ligne"] + (1 if c.get("info") is not None or c.get("var") else 0) for c in P["cases"]) + 1
+    nl = max(nl, (P["H"] + 8) // 9 + 1)   # assez de lignes pour toute la hauteur du dessin (sinon le bas est coupé)
     lignes = {i: [] for i in range(1, nl)}
     for k, c in enumerate(P["cases"], 1):
         if c.get("nomvar"):   # nom caché tant que pas découvert : $(nK) puis rattrapage $(qK)

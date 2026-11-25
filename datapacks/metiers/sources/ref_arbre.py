@@ -436,5 +436,5 @@ def arbre_etats(j, sk_tag):
 
 def arbre_corps(j):
     """Élément de corps de dialogue (SNBT) : le dessin, des lignes vides pour lui laisser sa hauteur, puis les noms des branches."""
-    return ('{type:"minecraft:plain_message",width:250,contents:[' + ",".join(_ARB_TXT[j]) + ','
+    return ('{type:"minecraft:plain_message",width:' + str(ARB_W + 20) + ',contents:[' + ",".join(_ARB_TXT[j]) + ','
             '{text:"' + "\\n" * 21 + '"}' + "".join("," + c for c in _ARB_LEG[j]) + ']}')

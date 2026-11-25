@@ -428,6 +428,46 @@
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
+    },
+    {
+     "text": "\n",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "\n",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "\n",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "\n",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
     }
    ]
   }
