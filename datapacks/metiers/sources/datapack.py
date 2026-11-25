@@ -649,6 +649,8 @@ L += [f"scoreboard objectives add m.p_l{i} dummy" for i in range(1, 11)]
 L += ["scoreboard objectives add m.b0 dummy", "scoreboard objectives add m.afk dummy", "scoreboard objectives add m.yaw dummy",
       "scoreboard objectives add m.yawp dummy", "scoreboard players set #2000 m.const 2000"]
 L += ["scoreboard objectives add m.arm dummy", "scoreboard objectives add m.acd dummy", "scoreboard objectives add m.aser dummy"]
+# 25/11/2026 : après une mort, ramasser ses propres affaires (graines, laine...) ne rapporte pas d'XP pendant 5 min
+L += ["scoreboard objectives add m.mortr deathCount", "scoreboard objectives add m.ramas dummy"]
 L += [f"scoreboard objectives add m.{j}_ser dummy" for j in jobs]
 for st in XDIST:
     L.append(f"scoreboard objectives add s.x.{st} minecraft.custom:minecraft.{st}")
@@ -746,6 +748,9 @@ J += [f'execute if score #quatre m.timer matches 0 run function {NS}:appel {{f:"
       f'function {NS}:appel {{f:"armure/bonus"}}',
       f'execute if score #quatre m.timer matches 0 run function {NS}:appel {{f:"securite/check"}}',
       "execute if score @s m.acd matches 1.. run scoreboard players remove @s m.acd 1",
+      "execute if score @s m.mortr matches 1.. run scoreboard players set @s m.ramas 600",
+      "scoreboard players set @s m.mortr 0",
+      "execute if score @s m.ramas matches 1.. run scoreboard players remove @s m.ramas 1",
       f'execute if score #soixante m.timer matches 0 run function {NS}:appel {{f:"classement/maj"}}']
 for j in jobs:
     J.append(f"execute unless score @s m.{j}_lvl matches 1.. run function {NS}:{j}/init")
@@ -819,7 +824,9 @@ POS = {1: "Base", 2: "Branche A", 3: "Branche B", 4: "Branche A", 5: "Branche B"
 for j, d in jobs.items():
     S = ["# Anti-triche : poser ou jeter l'objet retire l'XP gagnée",
          f"scoreboard players operation @s m.b0 = @s m.{j}_bal"]
-    for _, wgt, sign, obj, hooks in d["src"]:
+    for crit, wgt, sign, obj, hooks in d["src"]:
+        if "picked_up:" in crit:   # objets ramassés juste après une mort : ce sont les siens, pas une récolte
+            S.append(f"execute if score @s m.ramas matches 1.. run scoreboard players set @s s.{obj} 0")
         for sk, pred, cmd in hooks:
             cond = f"execute if entity @s[tag=metiers.sk.{sk}] if score @s s.{obj} matches 1.."
             if pred:
@@ -1820,6 +1827,7 @@ scoreboard players add #cycle m.boss 1
 execute if score #actif m.boss matches 0 if score #compte m.boss matches 1.. run function {NS}:boss/compte
 execute if score #actif m.boss matches 0 if score #compte m.boss matches ..0 if score #cycle m.boss matches 3600.. run function {NS}:boss/alerte
 execute if score #actif m.boss matches 1 run function {NS}:boss/encours
+execute unless score #actif m.boss matches 1 as @e[tag=metiers.boss,limit=1] run function {NS}:boss/adopter
 """)
 w(F + "boss/alerte.mcfunction", f"""
 execute store result score #n m.boss if entity @a

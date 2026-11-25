@@ -172,7 +172,37 @@ w(F + "tick.mcfunction", [
     f"execute as @a[scores={{compagnons=1..}}] at @s run function {NS}:menu/entree",
     f"{S} add #t5 cp.t 1", f"execute if score #t5 cp.t matches 5.. run {S} set #t5 cp.t 0",
     f"execute if score #t5 cp.t matches 0 as @e[tag=cp.c] at @s as @e[type=#{NS}:hostiles,distance=..24,tag=!cp.mort] if data entity @s {{Health:0.0f}} run function {NS}:xp/mort",
-    f"execute as @e[tag=cp.porteur] at @s run function {NS}:c/visuel"])
+    f"execute as @e[tag=cp.porteur] at @s run function {NS}:c/visuel",
+    f"execute as @e[tag=cp.c] at @s run function {NS}:c/suivre"])
+# 25/11/2026 : suivi réel pour tous les compagnons (avant, golems et montures ne revenaient que par téléportation au-delà
+# de 8 à 24 blocs). Le compagnon vise un point 3,5 blocs DERRIÈRE son joueur : il reste entre 2,5 et 6 blocs, hors du
+# champ de vision, donc pas dans la pioche. Poussée par Motion (collisions et gravité respectées, pas de traversée de mur),
+# petit saut devant une marche. Pas de suivi s'il est monté, en mode « reste », ou en plein combat près du joueur.
+w(F + "c/suivre.mcfunction", [
+    f"{S} operation #o cp.t = @s cp.own",
+    "execute as @a if score @s cp.id = #o cp.t run tag @s add cp.guide",
+    f"execute if entity @a[tag=cp.guide,scores={{cp.mode=0}},distance=..24] run function {NS}:c/suivre_pas",
+    "tag @a remove cp.guide"])
+w(F + "c/suivre_pas.mcfunction", [
+    "execute on passengers if entity @s[type=minecraft:player] run return 0",
+    # devant le joueur (dans l'axe de la pioche, à moins de 5 blocs) : il se décale derrière même s'il est à bonne distance
+    "tag @s add cp.ici",
+    "execute as @a[tag=cp.guide,limit=1] at @s rotated ~ 0 positioned ^ ^ ^2.5 if entity @e[tag=cp.ici,distance=..2.6] run tag @e[tag=cp.ici] add cp.devant",
+    "tag @s remove cp.ici",
+    "execute if entity @s[tag=!cp.devant] if entity @a[tag=cp.guide,distance=..6] unless entity @a[tag=cp.guide,distance=..2.5] run return 0",
+    "tag @s remove cp.devant",
+    f"execute if entity @e[type=#{NS}:hostiles,distance=..8] if entity @a[tag=cp.guide,distance=..14] run return 0",
+    "execute if entity @s[tag=!cp.vol,type=!minecraft:allay] as @a[tag=cp.guide,limit=1] at @s rotated ~ 0 run summon minecraft:marker ^ ^ ^-3.5 {Tags:[\"cp.cible\"]}",
+    "execute if entity @s[tag=cp.vol] as @a[tag=cp.guide,limit=1] at @s rotated ~ 0 run summon minecraft:marker ^ ^2 ^-5 {Tags:[\"cp.cible\"]}",
+    "execute if entity @s[type=minecraft:allay] as @a[tag=cp.guide,limit=1] at @s rotated ~ 0 run summon minecraft:marker ^ ^1.5 ^-3 {Tags:[\"cp.cible\"]}",
+    "execute facing entity @e[type=minecraft:marker,tag=cp.cible,limit=1] feet positioned 0.0 0.0 0.0 run summon minecraft:marker ^ ^ ^0.3 {Tags:[\"cp.vec\"]}",
+    "data modify entity @s Motion[0] set from entity @e[type=minecraft:marker,tag=cp.vec,limit=1] Pos[0]",
+    "data modify entity @s Motion[2] set from entity @e[type=minecraft:marker,tag=cp.vec,limit=1] Pos[2]",
+    "execute if entity @s[tag=cp.vol] run data modify entity @s Motion[1] set from entity @e[type=minecraft:marker,tag=cp.vec,limit=1] Pos[1]",
+    "execute if entity @s[type=minecraft:allay] run data modify entity @s Motion[1] set from entity @e[type=minecraft:marker,tag=cp.vec,limit=1] Pos[1]",
+    "execute if entity @s[tag=!cp.vol,type=!minecraft:allay] unless block ~ ~-0.2 ~ #minecraft:replaceable facing entity @e[type=minecraft:marker,tag=cp.cible,limit=1] feet rotated ~ 0 unless block ^ ^0.3 ^0.9 #minecraft:replaceable if block ^ ^1.3 ^0.9 #minecraft:replaceable if block ^ ^2.3 ^0.9 #minecraft:replaceable run data modify entity @s Motion[1] set value 0.42d",
+    "rotate @s facing entity @e[type=minecraft:marker,tag=cp.cible,limit=1] feet",
+    "kill @e[type=minecraft:marker,tag=cp.cible]", "kill @e[type=minecraft:marker,tag=cp.vec]"])
 # le boss figé suit son porteur (ghast invisible) à chaque tick, tourné comme lui (le dragon du jeu regarde à l'envers)
 w(F + "c/visuel.mcfunction", [f"{S} operation #o cp.t = @s cp.own", f"{S} operation #s cp.t = @s cp.ser"] +
   [f"execute as @e[tag={v[4]}] if score @s cp.own = #o cp.t if score @s cp.ser = #s cp.t run tp @s ~ ~{v[3]} ~ ~{v[2]} 0" for v in VISUEL.values()])
@@ -256,7 +286,7 @@ w(F + "c/tour.mcfunction", TOUR)
 w(F + "ranger_end.mcfunction", [f"function {NS}:ranger_silence", tr("Le dragon refuse d’entrer dans l’End. Il t’attend dehors.", "light_purple")])
 w(F + "c/rejoindre.mcfunction", [
     "particle minecraft:poof ~ ~0.5 ~ 0.3 0.4 0.3 0.02 8",
-    "execute unless entity @s[tag=cp.vol] at @a[tag=cp.moi,limit=1] run tp @s ^ ^ ^-1.5",
+    "execute unless entity @s[tag=cp.vol] at @a[tag=cp.moi,limit=1] rotated ~ 0 run tp @s ^ ^ ^-3",
     "execute if entity @s[tag=cp.vol] at @a[tag=cp.moi,limit=1] rotated ~ 0 run tp @s ^ ^2 ^-5",
     "execute at @s run particle minecraft:poof ~ ~0.5 ~ 0.3 0.4 0.3 0.02 8"])
 w(F + "c/ko.mcfunction", [
@@ -421,6 +451,8 @@ w(F + "load.mcfunction", [f"scoreboard objectives add {o} dummy" for o in OBJ] +
     "scoreboard objectives add cp.kwi minecraft.killed:minecraft.wither",
     f"{S} add #next cp.t 0", f"{S} set #6 cp.t 6", f"{S} set #10 cp.t 10", f"{S} set #20 cp.t 20", f"{S} set #2 cp.t 2", f"{S} set #5 cp.t 5", f"{S} set #100 cp.t 100",
     f"execute unless data storage {NS}:noms J run data modify storage {NS}:noms J set value []",
+    # compagnons sans collision : ils ne poussent pas le joueur et ne se coincent pas contre lui
+    "team add cp.compagnons", "team modify cp.compagnons collisionRule never", "team join cp.compagnons @e[tag=cp.c]",
     f"schedule function {NS}:seconde 1s replace"])
 wj(f"data/{NS}/predicate/planeur.json", {"type": "minecraft:entity_properties", "entity": "this",
                                          "predicate": {"minecraft:flags": {"is_flying": True}}})
@@ -497,6 +529,7 @@ w(F + "invoquer/actuel.mcfunction", [f"{S} add @s cp.ser 1", f"{S} set @s cp.hp 
     f"{S} operation @e[tag=cp.nouveau] cp.typ = @s cp.out",
     f"{S} operation @e[tag=cp.nvis] cp.own = @s cp.id", f"{S} operation @e[tag=cp.nvis] cp.ser = @s cp.ser",
     f"execute as @e[tag=cp.nouveau] run function {NS}:invoquer/stats",
+    "team join cp.compagnons @e[tag=cp.nouveau]",
     f"function {NS}:invoquer/nom", "tag @e[tag=cp.nouveau] remove cp.nouveau", "tag @e[tag=cp.nvis] remove cp.nvis",
     "particle minecraft:happy_villager ~ ~1 ~ 0.5 0.5 0.5 0 12", "playsound minecraft:entity.allay.item_given neutral @s ~ ~ ~ 0.6 1.2"])
 for k, (_, cle, nom, col, ent, ico, req, suit, combat) in T.items():
@@ -802,7 +835,7 @@ if os.path.exists(MENU):
     wj("data/minecraft/tags/dialog/pause_screen_additions.json", {"values": ["serveur:menu"]})
 
 # ---------------------------------------------------------------- admin
-w(F + "version.mcfunction", tr("Version 3 : progression exponentielle, 9 compagnons dont 3 montures volantes (ghast joyeux, dragon de l’Ender, wither), niveaux 1 à 30, 36 capacités, améliorations, apparences.", "gold"))
+w(F + "version.mcfunction", tr("Version 4 : tous les compagnons te suivent pour de vrai, derrière toi et sans collision.", "gold"))
 w(F + "admin/max.mcfunction", [f"{S} set @s cp.l{k} {LMAX}" for k in T] + [f"{S} set @s cp.x{k} 0" for k in T] +
   [f"execute if score @s cp.out matches 1.. run function {NS}:invoquer/maj", tr("Tous tes compagnons passent niveau 30 (test).", "gold")])
 w(F + "admin/zero.mcfunction", [f"{S} set @s cp.l{k} 1" for k in T] + [f"{S} set @s cp.x{k} 0" for k in T] +

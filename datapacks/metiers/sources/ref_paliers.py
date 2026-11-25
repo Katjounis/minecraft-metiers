@@ -17,4 +17,4 @@ RP += ['tellraw @s [{"text":"[Métiers] ","color":"gold"},{"text":"Mise à jour 
        "playsound minecraft:entity.player.levelup master @s ~ ~ ~ 1 1.2"]
 w(F + "paliers/rattrapage.mcfunction", "\n".join(RP))
 add_lines(F + "joueur.mcfunction", [f"execute if entity @s[tag=metiers.v257] unless entity @s[tag=metiers.v258] run function {NS}:paliers/rattrapage"])
-w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 25.10 : un boss toutes les 30 minutes, récompense Chasseur ramenée à 30 % du niveau en cours","color":"gold"}')
+w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 25.11 : boss repris après déconnexion, pas d’XP en ramassant ses affaires après une mort","color":"gold"}')

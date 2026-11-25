@@ -100,14 +100,21 @@ for k, b in BOSS.items():
         f'bossbar set metiers:boss name {{"text":"{b["nom"]}","color":"{b["col"]}","bold":true}}',
         f"bossbar set metiers:boss color {b['bar']}"]))
 
+# 25/11/2026 : boss qui « s'enfuyait » quand le seul joueur se déconnectait (chunk déchargé = boss introuvable) et
+# restait ensuite orphelin, sans barre ni récompense. Combat en pause sans joueur, 5 min de grâce si le boss est
+# simplement hors des chunks chargés, et tout boss orphelin est repris dès qu'il est rechargé (boss/adopter).
 w(F + "boss/encours.mcfunction", "\n".join([
-    "scoreboard players add #temps m.boss 1",
+    "execute unless entity @a[gamemode=!spectator] run return 0",
     f"execute store result score #hp m.boss run data get entity {B} Health",
     "execute if score #hp m.boss matches 1.. store result bossbar metiers:boss value run scoreboard players get #hp m.boss",
     f"execute if entity {B} run scoreboard players operation #last m.boss = #hp m.boss",
     f"execute as @a[scores={{m.dmg=1..}}] at @s if entity @e[tag=metiers.boss,distance=..32] run function {NS}:boss/frappe",
     "scoreboard players set @a m.dmg 0",
+    f"execute unless entity {B} unless score #tue m.boss matches 1 run scoreboard players add #abs m.boss 1",
+    f"execute unless entity {B} unless score #tue m.boss matches 1 if score #abs m.boss matches ..599 run return run bossbar set metiers:boss players @a",
     f"execute unless entity {B} run return run function {NS}:boss/disparu",
+    "scoreboard players set #abs m.boss 0",
+    "scoreboard players add #temps m.boss 1",
     "bossbar set metiers:boss players @a",
     "scoreboard players set #seuil m.boss 0", "scoreboard players operation #seuil m.boss = #max m.boss",
     "scoreboard players operation #seuil m.boss *= #2 m.const",
@@ -122,6 +129,27 @@ w(F + "boss/encours.mcfunction", "\n".join([
     f"execute at {B} run function {NS}:boss/particules",
     "execute if score #type m.boss matches 5 if score #temps m.boss matches 2400.. run function metiers:boss/fuite",
     f"execute if score #temps m.boss matches 3600.. run function {NS}:boss/fuite"]))
+AD = ["tag @s add metiers.badopte",
+      f"kill @e[tag=metiers.boss,tag=!metiers.badopte]"]
+for k, b in BOSS.items():
+    AD += [f"execute if entity @s[type=minecraft:{b['etype']}] run scoreboard players set #type m.boss {k}"]
+AD += ["tag @s remove metiers.badopte",
+       "execute store result score #max m.boss run attribute @s minecraft:max_health base get",
+       "execute store result score #hp m.boss run data get entity @s Health",
+       "scoreboard players set #actif m.boss 1", "scoreboard players set #compte m.boss 0",
+       "scoreboard players set #temps m.boss 0", "scoreboard players set #abs m.boss 0",
+       "scoreboard players set #phase m.boss 0", "scoreboard players set #atk m.boss 0",
+       "scoreboard players set #tue m.boss 0", "scoreboard players set #mk m.boss 0", "scoreboard players set #fin m.boss 0",
+       "scoreboard players operation #last m.boss = #hp m.boss",
+       "scoreboard players set @a m.dmg 0", "scoreboard players set @a m.bdmg 0",
+       "execute store result bossbar metiers:boss max run scoreboard players get #max m.boss",
+       "execute store result bossbar metiers:boss value run scoreboard players get #hp m.boss",
+       "bossbar set metiers:boss style notched_10", "bossbar set metiers:boss visible true", "bossbar set metiers:boss players @a"]
+for k, b in BOSS.items():
+    AD += [f'execute if score #type m.boss matches {k} run bossbar set metiers:boss name {{"text":"{b["nom"]}","color":"{b["col"]}","bold":true}}',
+           f"execute if score #type m.boss matches {k} run bossbar set metiers:boss color {b['bar']}"]
+AD += [f'tellraw @a {PREFIX},{{"text":"Le boss est toujours là, le combat reprend !","color":"red","bold":true}}]']
+w(F + "boss/adopter.mcfunction", "\n".join(AD))
 w(F + "boss/frappe.mcfunction", "tag @s add metiers.bossp\nscoreboard players operation @s m.bdmg += @s m.dmg")
 w(F + "boss/particules.mcfunction", "\n".join(
     [f"execute if score #type m.boss matches {k} run particle {b['part']} ~ ~2.5 ~ 0.9 1.6 0.9 0.02 10" for k, b in BOSS.items()]))
