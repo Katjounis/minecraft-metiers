@@ -56,29 +56,26 @@ def entree(img, nom, col="white"):
 
 
 def groupes(items, unite="XP"):
-    """items : [(valeur, image, nom)] -> une ligne par valeur, de la plus haute à la plus basse."""
-    par = {}
-    for v, img, nom in items:
-        par.setdefault(v, []).append((img, nom))
-    out = []
-    for v in sorted(par, reverse=True):
-        out.append(f'{{text:"\\n{fr_num(v)} {unite}  ",color:"gold",bold:true}}')
-        out += [entree(img, nom) for img, nom in par[v]]
-    return out
+    """items : [(valeur, image, nom)] -> cases du barème, de la plus haute valeur à la plus basse."""
+    return [("case", f"{fr_num(v)} {unite}", img, nom) for v, img, nom in sorted(items, key=lambda t: -t[0])]
+
+
+def case(val, img, nom):
+    return [("case", val, img, nom)]
 
 
 def titre(t, col="yellow"):
-    return f'{{text:"\\n\\n{t}",color:"{col}",bold:true}}'
+    return ("titre", t)
 
 
 def note(t):
-    return f'{{text:"\\n{t}",color:"gray"}}'
+    return ("note", t)
 
 
 BONUS = ('{text:"\\n\\nBonus : ",color:"aqua",bold:true},{text:"x2 pendant l’heure du métier, +10 % par étoile de prestige, '
          '+10 % avec le cristal de Sagesse sur l’outil. Poser ou jeter ce que tu viens de récolter retire l’XP gagnée. '
          'Niveau suivant : 150 XP au niveau 1, puis +6 % à chaque niveau (2 607 au niveau 50, 45 297 au niveau 99), avec une étoile au moins 15 000 par niveau (30 000 avec deux, etc.).",color:"gray"}')
-DEFI = note("Défi du jour réussi : la moitié d’un niveau du métier, 2 diamants et 16 fioles d’expérience.")
+DEFI = ("rien",)   # le défi du jour a sa propre case d'aide en bas de page
 
 PAGES = {}
 # ---------------------------------------------------------------- Bûcheron
@@ -92,8 +89,9 @@ PAGES["f"] = [titre("Récolte ramassée (par objet)")] + groupes(
     note("Replanter carottes, patates, verrues et baies est gratuit : seule la graine posée en trop retire de l’XP."), DEFI]
 # ---------------------------------------------------------------- Mineur
 d_m = DIV["m"]
-PAGES["m"] = [titre("Minerais")] + groupes([(x / d_m, spr("b", TEX_BLOC.get(o, o)), nom_minerai(o)) for o, x in ORES.items()]) + \
-    [titre("Pierres")] + groupes([(x / d_m, spr("b", TEX_BLOC.get(s, s)), NOM_PIERRE[s]) for s, x in STONES.items()]) + [DEFI]
+# Mineur : deux pages (minerais / pierres) pour ne pas faire défiler
+PAGES["m"] = [titre("Minerais")] + groupes([(x / d_m, spr("b", TEX_BLOC.get(o, o)), nom_minerai(o)) for o, x in ORES.items()])
+PAGES["m2"] = [titre("Pierres")] + groupes([(x / d_m, spr("b", TEX_BLOC.get(s, s)), NOM_PIERRE[s]) for s, x in STONES.items()])
 # ---------------------------------------------------------------- Chasseur
 # Chasseur : deux onglets (créatures fortes / faibles et boss) pour ne pas faire défiler
 PAGES["c"] = [titre("Créatures à 5 XP et plus")] + groupes([(x, spr("i", f"{m}_spawn_egg"), NOM_MOB[m]) for m, x in MOBS.items() if x >= 5]) + [
@@ -103,16 +101,13 @@ PAGES["c2"] = [titre("Créatures à moins de 5 XP")] + groupes([(x, spr("i", f"{
     note("Boss du serveur (Colosse, Reine, Liche, Brasier, Creeper géant) : la moitié d’un niveau de Chasseur pour chaque participant, plus butin et éclats.")]
 # ---------------------------------------------------------------- Pêcheur
 w_peche = [s for s in jobs["p"]["src"] if s[0].endswith("fish_caught")][0][1]
-PAGES["p"] = [f'{{text:"\\n{w_peche} XP  ",color:"gold",bold:true}}', entree(spr("i", "cod"), "chaque prise (poisson, trésor ou déchet)"),
-              titre("Multiplicateurs (ils s’additionnent)"),
-              f'{{text:"\\n+0,5  ",color:"gold",bold:true}}', entree(spr("i", "water_bucket"), "sous la pluie"),
-              entree(spr("i", "clock_00"), "la nuit"), entree(spr("i", "heart_of_the_sea"), "en océan"),
-              f'{{text:"\\nSérie  ",color:"gold",bold:true}}', entree(spr("i", "fishing_rod"), "prises rapprochées : +0,5 dès 3, +1 dès 5, +2 dès 8"),
-              note(f"Exemple : la nuit, sous la pluie, en océan, 8e prise d’affilée : x4,5, soit {int(w_peche * 4.5)} XP."),
-              titre("Prises spéciales"),
-              f'{{text:"\\n+50 XP  ",color:"gold",bold:true}}', entree(spr("i", "tropical_fish"), "prise légendaire (2 % au niveau 0, 12 % au niveau 100)"),
-              f'{{text:"\\n+500 XP  ",color:"gold",bold:true}}', entree(spr("i", "book"), "Carnet du pêcheur complet (les 10 légendes)"),
-              note("Coffre des profondeurs : 1 % au niveau 0, 6 % au niveau 100, sans XP mais avec un butin de trésor."), DEFI]
+PAGES["p"] = case(f"{w_peche} XP", spr("i", "cod"), "Chaque prise") + case("+0,5", spr("i", "water_bucket"), "Sous la pluie") + \
+    case("+0,5", spr("i", "clock_00"), "La nuit") + case("+0,5", spr("i", "heart_of_the_sea"), "En océan") + \
+    case("+0,5 à +2", spr("i", "fishing_rod"), "Série de prises") + case("+50 XP", spr("i", "tropical_fish"), "Prise légendaire") + \
+    case("+500 XP", spr("i", "book"), "Carnet complet") + [
+    note(f"Multiplicateurs additionnés : la nuit, sous la pluie, en océan, 8e prise d’affilée = x4,5, soit {int(w_peche * 4.5)} XP. "
+         "Série : +0,5 dès 3 prises rapprochées, +1 dès 5, +2 dès 8. Légendaire : 2 % au niveau 0, 12 % au niveau 100. "
+         "Coffre des profondeurs : 1 % à 6 %, sans XP mais avec un butin de trésor.")]
 # ---------------------------------------------------------------- Éleveur
 d_e = DIV["e"]
 w_bred = [s for s in jobs["e"]["src"] if s[0].endswith("animals_bred")][0][1]
@@ -164,21 +159,65 @@ BAREME_INTRO = {"b": "Tout ce qui sort d’un tronc.", "f": "Les cultures, ramas
                 "n": "Les niveaux dépensés à la table.", "x": "La distance parcourue et les découvertes.", "t": "Les échanges avec les villageois.",
                 "k": "Les blocs de construction posés."}
 BAN_B = '{type:"minecraft:plain_message",width:310,contents:[{text:""},{text:"\ue02b",font:"commerce:recette",color:"white",shadow_color:0},{text:"\\n\\n"}]}'
-w(F + "bareme/c2.mcfunction",
-  f'dialog show @s {{type:"minecraft:multi_action",title:[{gs("metier_c")},{{text:" Barème d’XP : Chasseur (2/2)",color:"red",bold:true}}],'
-  f'can_close_with_escape:true,pause:false,body:[{BAN_B},{{type:"minecraft:plain_message",width:420,contents:[{{text:""}},{",".join(PAGES["c2"])}]}}],'
-  f'actions:[{btn(txt("◀ Créatures fortes", "red", True), 484, 200)},{btn(txt("Tous les barèmes", "white"), 480, 200)}],columns:2,'
-  f'exit_action:{{label:"Fermer",width:200}}}}')
+# 25/11/2026 : barème en grille de cases (icône, valeur, nom) au lieu d'un pavé de texte centré. Les titres de
+# section ouvrent une nouvelle rangée, les explications passent dans une ligne courte et dans les infobulles.
+VIDE_B = '{label:"",width:1}'
+BONUS_TIP = ("x2 pendant l’heure du métier, +10 % par étoile de prestige, +10 % avec le cristal de Sagesse sur l’outil.\\n"
+             "Poser ou jeter ce que tu viens de récolter retire l’XP gagnée.\\n"
+             "Niveau suivant : 150 XP au niveau 1, puis +6 % par niveau (2 607 au niveau 50, 45 297 au niveau 99) ; "
+             "avec une étoile, au moins 15 000 par niveau (30 000 avec deux, etc.).")
+DEFI_TIP = "Défi du jour réussi : la moitié d’un niveau du métier, 2 diamants et 16 fioles d’expérience."
+
+
+def _tip(t):
+    return t.replace('"', '\\"')
+
+
+def grille(elements):
+    """Rend (actions, notes) : les cases en boutons sur 3 colonnes, les notes à part."""
+    acts, notes, col = [], [], 0
+    for e in elements:
+        if e[0] == "case":
+            _, val, img, nom = e
+            acts.append(btn(f'[{img},{txt(" " + val, "gold", True)},{txt("  " + nom, "white")}]', None, 130, _tip(f"{nom} : {val}")))
+            col = (col + 1) % 3
+        elif e[0] == "titre":
+            if col:
+                acts += [VIDE_B] * (3 - col)
+            acts += [btn(txt(e[1], "yellow", True), None, 130), VIDE_B, VIDE_B]
+            col = 0
+        elif e[0] == "note":
+            notes.append(e[1])
+    if col:
+        acts += [VIDE_B] * (3 - col)
+    return acts, notes
+
+
+def page_bareme(j, d, cle, titre_txt, nav):
+    acts, notes = grille(PAGES[cle])
+    infos = [btn(txt("Bonus et malus", "aqua", True), None, 130, _tip(BONUS_TIP)),
+             btn(txt("Prestige", "gold", True), None, 130,
+                 _tip(f"Niveau 100, 5 étoiles : tu gardes tes compétences, la progression continue, +10 % d’XP par étoile "
+                      f"et la capacité {PCAP[j][0]} : {PCAP[j][1]}")),
+             btn(txt("Défi du jour", "light_purple", True), None, 130, _tip(DEFI_TIP))]
+    corps = [f'{{text:"{BAREME_INTRO[j]}",color:"white"}}'] + [f'{{text:"\\n{_tip(n)}",color:"gray"}}' for n in notes]
+    return (f'dialog show @s {{type:"minecraft:multi_action",title:[{gs("metier_" + j)},{{text:" {titre_txt}",color:"{d["color"]}",bold:true}}],'
+            f'can_close_with_escape:true,pause:false,body:[{{type:"minecraft:plain_message",width:400,contents:[{",".join(corps)}]}}],'
+            f'actions:[{",".join(acts + infos + nav)}],columns:3,exit_action:{{label:"Fermer",width:200}}}}')
+
+
+dc = jobs["c"]
+w(F + "bareme/c2.mcfunction", page_bareme("c", dc, "c2", "Barème d’XP : Chasseur (2/2)",
+  [btn(txt("◀ Créatures fortes", "red", True), 484, 130), btn(txt("Tous les barèmes", "white"), 480, 130), VIDE_B]))
+w(F + "bareme/m2.mcfunction", page_bareme("m", jobs["m"], "m2", "Barème d’XP : Mineur (2/2)",
+  [btn(txt("◀ Minerais", "gray", True), 483, 130), btn(txt("Tous les barèmes", "white"), 480, 130), VIDE_B]))
 add_lines(F + "trigger.mcfunction", [f'execute if score @s m.trig matches 491 run function {NS}:appel {{f:"bareme/c2"}}'])
+add_lines(F + "trigger.mcfunction", [f'execute if score @s m.trig matches 492 run function {NS}:appel {{f:"bareme/m2"}}'])
 for j, d in jobs.items():
-    contenu = [f'{{text:"{BAREME_INTRO[j]}",color:"white"}}'] + PAGES[j] + [BONUS,
-               f'{{text:"\\n\\nPrestige ",color:"gold",bold:true}},{{text:"(niveau 100, 5 étoiles) : tu gardes tes compétences, la progression continue, +10 % d’XP par étoile et la capacité ",color:"gray"}},{{text:"{PCAP[j][0]}",color:"gold",bold:true}},{{text:" : {PCAP[j][1]}",color:"gray"}}']
-    w(F + f"bareme/{j}.mcfunction",
-      f'dialog show @s {{type:"minecraft:multi_action",title:[{gs("metier_" + j)},{{text:" Barème d’XP : {d["name"]}",color:"{d["color"]}",bold:true}}],'
-      f'can_close_with_escape:true,pause:false,body:[{BAN_B},{{type:"minecraft:plain_message",width:420,contents:[{{text:""}},{",".join(contenu)}]}}],'
-      f'actions:[{btn(txt("Page du métier", d["color"]), 20 + d["idx"], 200)},{btn(txt("Tous les barèmes", "white"), 480, 200)}' +
-      (f',{btn(txt("Créatures faibles et boss ▶", "red", True), 491, 404)}' if j == "c" else "") + '],columns:2,'
-      f'exit_action:{{label:"Fermer",width:200}}}}')
+    nav = [btn(txt("Page du métier", d["color"]), 20 + d["idx"], 130), btn(txt("Tous les barèmes", "white"), 480, 130)]
+    nav.append(btn(txt("Faibles et boss ▶", "red", True), 491, 130) if j == "c" else
+               btn(txt("Pierres ▶", "gray", True), 492, 130) if j == "m" else VIDE_B)
+    w(F + f"bareme/{j}.mcfunction", page_bareme(j, d, j, f"Barème d’XP : {d['name']}", nav))
 hub = [btn(f'[{gs("metier_" + j)},{txt(" " + d["name"], d["color"])}]', 480 + d["idx"], 130, BAREME_INTRO[j]) for j, d in jobs.items()]
 w(F + "bareme/menu.mcfunction",
   f'dialog show @s {{type:"minecraft:multi_action",title:{{text:"Barème d’XP",color:"gold",bold:true}},can_close_with_escape:true,pause:false,'

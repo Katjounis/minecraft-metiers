@@ -38,6 +38,10 @@ Touche G (ou menu Échap) pour ouvrir le menu des métiers, ou `/trigger metiers
 
 Commandes admin : `/function metiers:boss/alerte` (boss suivant de la rotation dans 2 min), `/function metiers:heure/lancer`, `/function metiers:defis/nouveaux`, `/function metiers:defis/semaine`.
 
+## Version 26.3 (25/11/2026)
+
+Barèmes d'XP en grille de cases sur 3 colonnes (icône, valeur, nom ; détail au survol) au lieu d'un pavé de texte centré. Les titres de section ouvrent une rangée, les explications sont dans une ligne courte en tête et dans trois cases d'aide (Bonus et malus, Prestige, Défi du jour). Le Mineur passe sur deux pages comme le Chasseur (minerais, puis pierres, déclencheur 492). Plus de décor en tête des barèmes.
+
 ## Version 26.2 (25/11/2026)
 
 Arbre cliquable : chaque nœud du dessin porte une infobulle (nom, effet, coût, niveau, prérequis) et achète ou bascule la compétence au clic. Page de métier raccourcie : plus de décor en tête ni de légende, les 6 boutons de compétence tiennent sur 2 rangées. Mes métiers sur 3 colonnes (le Bâtisseur seul sur sa rangée, puis Forge, Défis, Quêtes, Armure, Sommaire, Plus).
