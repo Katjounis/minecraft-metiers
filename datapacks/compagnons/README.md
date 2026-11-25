@@ -53,6 +53,10 @@ Trois voies par compagnon, 5 rangs chacune : Robustesse (+10 % de vie par rang),
 
 `compagnons.zip` dans `world/datapacks/`, avec Métiers, Commerce et Horreur à jour (le menu G commun est le même fichier dans les quatre packs). Le resource pack commun contient le bandeau.
 
+## Version 4.2 (25/11/2026)
+
+Le loup, le bonhomme de neige et le golem attaquent ce que leur joueur frappe : au coup porté (succès `frappe`, déclencheur `player_hurt_entity`), la victime est retrouvée et le compagnon reçoit d'elle un coup symbolique de 0,01, ce qui lance sa riposte du jeu sur elle.
+
 ## Version 4.1 (25/11/2026)
 
 Suivi au pas : le compagnon repart quand il est à plus de 5 blocs et s'arrête à 3 (tag `cp.marche`), à vitesse de marche (0,12 bloc/tick, 0,15 pour les volants), en visant directement le joueur. Fini le point derrière le joueur et le décalage quand il passe devant : le golem tournait autour en courant.

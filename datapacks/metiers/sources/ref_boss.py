@@ -159,6 +159,13 @@ w(F + "boss/disparu.mcfunction", "\n".join([
     f"execute if score #last m.boss <= #seuil m.boss run return run function {NS}:boss/victoire",
     f"function {NS}:boss/fuite"]))
 w(F + "boss/tue.mcfunction", f"advancement revoke @s only {NS}:boss_tue\nscoreboard players set #tue m.boss 1\ntag @s add metiers.bossp")
+# 25/11/2026 : le succès qui déclenche boss/tue n'était plus généré ; la victoire ne tenait qu'au filet « dernier PV
+# connus sous 25 % » et le tueur n'était récompensé que s'il avait été vu frapper à moins de 32 blocs.
+wj(f"data/{NS}/advancement/boss_tue.json", {
+    "criteria": {"tue": {"trigger": "minecraft:player_killed_entity", "conditions": {"entity": {
+        "type": "minecraft:entity_properties", "entity": "this",
+        "predicate": {"minecraft:nbt": '{Tags:["metiers.boss"]}'}}}}},
+    "rewards": {"function": f"{NS}:boss/tue"}})
 
 # vagues à 66 % et 33 %
 VG = ["scoreboard players add #phase m.boss 1"]

@@ -40,6 +40,8 @@ Commandes admin : `/function metiers:boss/alerte` (boss suivant de la rotation d
 
 ## Version 25.11 (25/11/2026)
 
+Le succès `boss_tue` (boss tué par un joueur, qui déclenche `boss/tue`) n'était plus généré : il est de retour, donc le tueur est toujours récompensé, même s'il n'a pas été vu frapper.
+
 Boss : le combat se met en pause quand personne n'est connecté, et un boss hors des chunks chargés a 5 minutes de grâce avant d'être déclaré enfui. Avant, se déconnecter seul faisait « fuir » le boss alors qu'il restait dans le monde, sans barre ni récompense. Tout boss orphelin est repris dès qu'il est rechargé (`boss/adopter`) : barre remise, combat relancé, récompense à la clé.
 
 Anti-triche : pendant 5 minutes après une mort (`m.mortr`, `m.ramas`), ramasser des cultures ou de la laine ne rapporte pas d'XP. Ce sont ses propres affaires, pas une récolte. Seules ces deux sources passent par le ramassage, les autres métiers ne pouvaient pas être farmés ainsi.

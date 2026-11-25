@@ -178,6 +178,25 @@ w(F + "tick.mcfunction", [
 # de 8 à 24 blocs). Le compagnon vise un point 3,5 blocs DERRIÈRE son joueur : il reste entre 2,5 et 6 blocs, hors du
 # champ de vision, donc pas dans la pioche. Poussée par Motion (collisions et gravité respectées, pas de traversée de mur),
 # petit saut devant une marche. Pas de suivi s'il est monté, en mode « reste », ou en plein combat près du joueur.
+# 25/11/2026 v4.2 : le compagnon attaque ce que son joueur frappe. Au coup porté (succès player_hurt_entity), on
+# retrouve la victime (HurtTime 10 et ce joueur comme attaquant), puis le loup, le bonhomme de neige et le golem de ce
+# joueur reçoivent un coup symbolique « de la part » de la victime : leur riposte du jeu (HurtByTarget) les lance dessus.
+wj(f"data/{NS}/advancement/frappe.json", {"criteria": {"coup": {"trigger": "minecraft:player_hurt_entity"}},
+                                          "rewards": {"function": f"{NS}:c/frappe"}})
+w(F + "c/frappe.mcfunction", [
+    f"advancement revoke @s only {NS}:frappe",
+    "tag @s add cp.frappeur_j",
+    f"execute as @e[type=!minecraft:player,tag=!cp.c,tag=!cp.vis,distance=..8,nbt={{HurtTime:10s}}] run function {NS}:c/frappe_victime",
+    f"{S} operation #o cp.t = @s cp.id",
+    f"execute if entity @e[tag=cp.proie] as @e[tag=cp.c,type=#{NS}:combattants] if score @s cp.own = #o cp.t run damage @s 0.01 minecraft:mob_attack by @e[tag=cp.proie,limit=1]",
+    "tag @e[tag=cp.proie] remove cp.proie",
+    "tag @s remove cp.frappeur_j"])
+w(F + "c/frappe_victime.mcfunction", [
+    "tag @s add cp.teste",
+    "execute on attacker if entity @s[tag=cp.frappeur_j] run tag @e[tag=cp.teste,limit=1] add cp.proie",
+    "tag @s remove cp.teste"])
+wj(f"data/{NS}/tags/entity_type/combattants.json",
+   {"values": ["minecraft:wolf", "minecraft:snow_golem", "minecraft:iron_golem"]})
 w(F + "c/suivre.mcfunction", [
     f"{S} operation #o cp.t = @s cp.own",
     "execute as @a if score @s cp.id = #o cp.t run tag @s add cp.guide",
@@ -834,7 +853,7 @@ if os.path.exists(MENU):
     wj("data/minecraft/tags/dialog/pause_screen_additions.json", {"values": ["serveur:menu"]})
 
 # ---------------------------------------------------------------- admin
-w(F + "version.mcfunction", tr("Version 4.1 : tous les compagnons te suivent au pas, entre 3 et 5 blocs, sans collision.", "gold"))
+w(F + "version.mcfunction", tr("Version 4.2 : suivi au pas entre 3 et 5 blocs, et le compagnon attaque ce que tu frappes.", "gold"))
 w(F + "admin/max.mcfunction", [f"{S} set @s cp.l{k} {LMAX}" for k in T] + [f"{S} set @s cp.x{k} 0" for k in T] +
   [f"execute if score @s cp.out matches 1.. run function {NS}:invoquer/maj", tr("Tous tes compagnons passent niveau 30 (test).", "gold")])
 w(F + "admin/zero.mcfunction", [f"{S} set @s cp.l{k} 1" for k in T] + [f"{S} set @s cp.x{k} 0" for k in T] +
