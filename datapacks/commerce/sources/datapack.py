@@ -953,9 +953,33 @@ w(F + "relique/ok.mcfunction", [
     "playsound minecraft:entity.experience_orb.pickup master @s ~ ~ ~ 1 0.8"])
 # « Tout vendre » du Butin de boss (25.8) : chaque objet de la catégorie 17 passe par la vente normale (prix du marché,
 # bonus de métier), puis toutes les reliques à prix fixe
+# 25/11/2026 : « Tout vendre » prend aussi tout ce que lâchent les boss et qui est rangé dans une autre catégorie
+# (diamants, débris antiques, netherite, étoile du Nether, totems...). Liste lue dans les tables de butin des boss de
+# Métiers et du Croque-mitaine d'Horreur (zips des packs voisins), recoupée avec le catalogue.
+def _ids_butin(o, acc):
+    if isinstance(o, dict):
+        if o.get("type") in ("minecraft:item", "item") and "name" in o:
+            acc.add(o["name"].replace("minecraft:", ""))
+        for v in o.values():
+            _ids_butin(v, acc)
+    elif isinstance(o, list):
+        for v in o:
+            _ids_butin(v, acc)
+BOSS_IDS = set()
+for _zip, _pref in ((os.path.join(HERE, "..", "..", "metiers", "metiers.zip"), ("data/metiers/loot_table/boss/",)),
+                    (os.path.join(HERE, "..", "..", "horreur", "horreur.zip"),
+                     ("data/horreur/loot_table/creature/croque.json", "data/horreur/loot_table/bonus/croque.json"))):
+    with zipfile.ZipFile(_zip) as _z:
+        for _n in _z.namelist():
+            if _n.endswith(".json") and _n.startswith(_pref):
+                _ids_butin(json.loads(_z.read(_n)), BOSS_IDS)
+assert BOSS_IDS, "aucune table de butin de boss trouvée"
+VENTE_BOSS = [it for it in ITL if it["cat"] == 17 or it["id"] in BOSS_IDS]
+print("Tout vendre (butin de boss) :", len(VENTE_BOSS), "objets ; hors catalogue :",
+      sorted(BOSS_IDS - {it["id"] for it in ITL}))
 BT_ = ["scoreboard players set #btot c.t 0"]
-for it in ITL:
-    if it["cat"] == 17:
+for it in VENTE_BOSS:
+    if True:
         BT_ += [f"execute unless items entity @s container.* minecraft:{it['id']}{FILTRE} unless items entity @s weapon.offhand minecraft:{it['id']}{FILTRE} run scoreboard players set #i c.t 0",
                 f"execute if items entity @s container.* minecraft:{it['id']}{FILTRE} run scoreboard players set #i c.t {it['i']}",
                 f"execute if items entity @s weapon.offhand minecraft:{it['id']}{FILTRE} run scoreboard players set #i c.t {it['i']}",
@@ -1133,7 +1157,7 @@ for c in ITEMS:
             acts += [btn(L(spr("nether_star"), T("  Vendre la relique en main", "gold", True)), 7800, 160,
                          f"Une relique de boss (objet unique nommé) se vend {RELIQUE_PRIX:,} Écus. Prends-la en main puis clique.".replace(",", " ")),
                      btn(L(spr("chest") if "chest" in SPRITES else spr("nether_star"), T("  Tout vendre", "gold", True)), 7801, 160,
-                         "Vend d’un coup tout le butin de boss de ton inventaire (objets de cette page et reliques), au prix affiché.")]
+                         "Vend d’un coup tout ce que lâchent les boss (diamants, débris, netherite, objets de cette page...) et les reliques présents dans ton inventaire, au prix du marché.")]
         acts.append(btn(T("◀  Page précédente", "white"), PG(c, p - 1), 160) if p > 0 else VIDE)
         acts.append(btn(T("Page suivante  ▶", "white"), PG(c, p + 1), 160) if p < NPAGES[c] - 1 else VIDE)
         acts += [btn(T("Marché", "yellow"), 9, 160), btn(T("Accueil", "white"), 1, 160)]
