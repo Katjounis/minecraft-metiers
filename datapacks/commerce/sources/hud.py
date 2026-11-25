@@ -106,10 +106,9 @@ B_F = "    if (color.a < 0.1) {"
 assert A_F in fsh and B_F in fsh
 fsh = fsh.replace(A_F, A_F + "layout(location = 4) in float hudMark;\n")
 fsh = fsh.replace(B_F, "    if (hudMark > 0.5) {\n        color.a = min(color.a * %.1f, 1.0);\n    }\n\n" % ALPHA + B_F)
-# 25/11/2026 : shader de texte DÉBRANCHÉ. Le remplacer touche tout le texte du jeu, et en 26.3 les panneaux et les
-# noms (comptoirs) s'affichaient en lettres hachées. Le solde passe dans la barre latérale (tableau/on), le seul
-# affichage permanent de vanilla. HUD_SHADER = True rebrancherait l'encadré en haut à gauche.
-HUD_SHADER = False
+# 25/11/2026 : shader débranché un temps (panneaux illisibles en 26.3), puis rebranché à la demande de Samuel : il n'y
+# était pour rien. HUD_SHADER = False passe le solde dans la barre latérale (tableau/on) sans toucher au texte du jeu.
+HUD_SHADER = True
 if HUD_SHADER:
     SHD = os.path.join(HUD, "minecraft", "shaders", "core")
     os.makedirs(SHD, exist_ok=True)
@@ -123,7 +122,11 @@ w(H_ + "load.mcfunction", [
     "scoreboard objectives add c.quit minecraft.custom:minecraft.leave_game",
     # l'ancien tableau de la barre latérale est retiré une fois (tableau/on le remet si besoin)
     f"execute unless score #hud c.g matches 1.. run function {NS}:tableau/off",
-    "execute unless score #hud c.g matches 2.. run scoreboard players set #hud c.g 1"] + ([] if HUD_SHADER else [
+    "execute unless score #hud c.g matches 2.. run scoreboard players set #hud c.g 1"] + ([
+    # retour de l'encadré après la version sans shader (#hud = 2) : barre latérale retirée une fois
+    f"execute if score #hud c.g matches 2 run function {NS}:tableau/off",
+    "execute if score #hud c.g matches 2 run scoreboard players set @a c.hudv -1",
+    "scoreboard players set #hud c.g 1"] if HUD_SHADER else [
     # sans shader : l'encadré est retiré une fois et la barre latérale du solde est remise
     "execute unless score #hud c.g matches 2 run title @a clear",
     f"execute unless score #hud c.g matches 2 run function {NS}:tableau/on",
