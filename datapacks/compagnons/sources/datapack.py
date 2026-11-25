@@ -158,7 +158,7 @@ wj(f"data/{NS}/tags/entity_type/chasse.json", {"values": [f"minecraft:{h}" for h
 # CHARGEMENT ET BOUCLES
 # =====================================================================
 OBJ = ["cp.id", "cp.ser", "cp.out", "cp.cd", "cp.cda", "cp.mode", "cp.ag", "cp.own", "cp.typ", "cp.hp", "cp.hpm", "cp.min",
-       "cp.vie", "cp.t", "cp.tk", "cp.ok", "cp.mt"] + [f"cp.{a}{k}" for k in T for a in ("l", "x", "v", "r", "f", "m")]
+       "cp.vie", "cp.t", "cp.tk", "cp.ok", "cp.mt", "cp.att"] + [f"cp.{a}{k}" for k in T for a in ("l", "x", "v", "r", "f", "m")]
 w(F + "load.mcfunction", [f"scoreboard objectives add {o} dummy" for o in OBJ] + [
     "scoreboard objectives add compagnons trigger",
     "scoreboard objectives add cp.mk minecraft.custom:minecraft.mob_kills",
@@ -200,8 +200,13 @@ wj(f"data/{NS}/tags/entity_type/combattants.json",
 w(F + "c/suivre.mcfunction", [
     f"{S} operation #o cp.t = @s cp.own",
     "execute as @a if score @s cp.id = #o cp.t run tag @s add cp.guide",
-    f"execute if entity @a[tag=cp.guide,scores={{cp.mode=0}},distance=..24] run function {NS}:c/suivre_pas",
+    f"execute if entity @s[tag=!cp.lent,tag=!cp.vol] run return run tag @a remove cp.guide",
+    f"execute if entity @a[tag=cp.guide,scores={{cp.mode=0}}] run function {NS}:c/suivre_pas",
     "tag @a remove cp.guide"])
+w(F + "c/rejoindre_pieds.mcfunction", [
+    "particle minecraft:poof ~ ~0.5 ~ 0.3 0.4 0.3 0.02 8",
+    "tp @s @a[tag=cp.guide,limit=1]", "scoreboard players set @s cp.att 0", "tag @s remove cp.marche",
+    "execute at @s run particle minecraft:poof ~ ~0.5 ~ 0.3 0.4 0.3 0.02 8"])
 w(F + "c/suivre_pas.mcfunction", [
     "execute on passengers if entity @s[type=minecraft:player] run return 0",
     f"execute if entity @e[type=#{NS}:hostiles,distance=..8] if entity @a[tag=cp.guide,distance=..14] run return 0",
@@ -209,7 +214,10 @@ w(F + "c/suivre_pas.mcfunction", [
     # 3 blocs (tag cp.marche), à vitesse de marche (0,12 bloc/tick, 0,15 pour les volants), en visant le joueur.
     "execute unless entity @a[tag=cp.guide,distance=..5] run tag @s add cp.marche",
     "execute if entity @a[tag=cp.guide,distance=..3] run tag @s remove cp.marche",
-    "execute if entity @s[tag=!cp.marche] run return 0",
+    "execute if entity @s[tag=!cp.marche] run return run scoreboard players set @s cp.att 0",
+    # 4.2 : coincé (faille, mur, eau) ou distancé : au bout de 5 s de marche sans t'avoir rejoint, il apparaît à tes pieds
+    "scoreboard players add @s cp.att 1",
+    f"execute if score @s cp.att matches 100.. run return run function {NS}:c/rejoindre_pieds",
     "execute if entity @s[tag=!cp.vol,type=!minecraft:allay] facing entity @a[tag=cp.guide,limit=1] feet rotated ~ 0 positioned 0.0 0.0 0.0 run summon minecraft:marker ^ ^ ^0.12 {Tags:[\"cp.vec\"]}",
     "execute if entity @s[tag=cp.vol] positioned as @a[tag=cp.guide,limit=1] positioned ~ ~2 ~ run summon minecraft:marker ~ ~ ~ {Tags:[\"cp.cible\"]}",
     "execute if entity @s[type=minecraft:allay] positioned as @a[tag=cp.guide,limit=1] positioned ~ ~1.5 ~ run summon minecraft:marker ~ ~ ~ {Tags:[\"cp.cible\"]}",
@@ -288,7 +296,7 @@ TOUR = [f"execute store result score @s cp.hp run data get entity @s Health",
         "execute if entity @s[tag=cp.vol] if score #monte cp.t matches 0 as @a[tag=cp.moi,scores={cp.mt=1}] run effect give @s minecraft:slow_falling 8 0 true",
         f"{S} operation @a[tag=cp.moi] cp.mt = #monte cp.t",
         f"execute if score #monte cp.t matches 0 if entity @a[tag=cp.moi,scores={{cp.mode=0}}] unless entity @a[tag=cp.moi,distance=..24] run function {NS}:c/rejoindre",
-        f"execute if score #monte cp.t matches 0 if entity @s[tag=cp.lent,tag=!cp.vol] if entity @a[tag=cp.moi,scores={{cp.mode=0}}] unless entity @a[tag=cp.moi,distance=..8] run function {NS}:c/rejoindre",
+        f"execute if score #monte cp.t matches 0 if entity @s[tag=cp.lent,tag=!cp.vol] if entity @a[tag=cp.moi,scores={{cp.mode=0}}] unless entity @a[tag=cp.moi,distance=..16] run function {NS}:c/rejoindre",
         f"execute if score #monte cp.t matches 0 if entity @s[tag=cp.vol] if entity @a[tag=cp.moi,scores={{cp.mode=0}}] unless entity @a[tag=cp.moi,distance=..14] run function {NS}:c/rejoindre",
         # le dragon ne vole pas dans l'End (le combat du dragon du jeu pourrait le prendre pour le vrai)
         f"execute if score @s cp.typ matches 8 if entity @a[tag=cp.moi,limit=1] as @a[tag=cp.moi] at @s if dimension minecraft:the_end run return run function {NS}:ranger_end",
@@ -853,7 +861,7 @@ if os.path.exists(MENU):
     wj("data/minecraft/tags/dialog/pause_screen_additions.json", {"values": ["serveur:menu"]})
 
 # ---------------------------------------------------------------- admin
-w(F + "version.mcfunction", tr("Version 4.2 : suivi au pas entre 3 et 5 blocs, et le compagnon attaque ce que tu frappes.", "gold"))
+w(F + "version.mcfunction", tr("Version 4.3 : suivi au pas entre 3 et 5 blocs, rattrapage s’il est coincé, et le compagnon attaque ce que tu frappes.", "gold"))
 w(F + "admin/max.mcfunction", [f"{S} set @s cp.l{k} {LMAX}" for k in T] + [f"{S} set @s cp.x{k} 0" for k in T] +
   [f"execute if score @s cp.out matches 1.. run function {NS}:invoquer/maj", tr("Tous tes compagnons passent niveau 30 (test).", "gold")])
 w(F + "admin/zero.mcfunction", [f"{S} set @s cp.l{k} 1" for k in T] + [f"{S} set @s cp.x{k} 0" for k in T] +

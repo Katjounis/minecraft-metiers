@@ -53,6 +53,10 @@ Trois voies par compagnon, 5 rangs chacune : Robustesse (+10 % de vie par rang),
 
 `compagnons.zip` dans `world/datapacks/`, avec Métiers, Commerce et Horreur à jour (le menu G commun est le même fichier dans les quatre packs). Le resource pack commun contient le bandeau.
 
+## Version 4.3 (25/11/2026)
+
+Suivi guidé réservé aux compagnons sans IA de suivi du jeu (golem, bonhomme de neige, montures) ; loup, chat, perroquet et allay suivent avec leur IA normale, sans effet de laisse. Si le compagnon marche 5 secondes sans rejoindre son joueur (faille, mur, eau), il apparaît à ses pieds (`c/rejoindre_pieds`). Téléportation de rattrapage des compagnons lents à 16 blocs au lieu de 8.
+
 ## Version 4.2 (25/11/2026)
 
 Le loup, le bonhomme de neige et le golem attaquent ce que leur joueur frappe : au coup porté (succès `frappe`, déclencheur `player_hurt_entity`), la victime est retrouvée et le compagnon reçoit d'elle un coup symbolique de 0,01, ce qui lance sa riposte du jeu sur elle.
