@@ -5,7 +5,8 @@
 SCENE = lambda d: ('{type:"minecraft:plain_message",width:310,contents:[{text:""},{text:"' + chr(0xE100 + d["idx"]) +
                    '",font:"commerce:recette",color:"white",shadow_color:0},{text:"\\n\\n\\n"}]}')
 for j, d in jobs.items():
-    for fic, avant in ((f"{j}/page_dialog.mcfunction", "body:["), (f"{j}/recompenses_dialog.mcfunction", "body:["),
+    # 25/11/2026 : plus de décor en tête de la page de métier, l'arbre dessiné le remplace (page moins haute)
+    for fic, avant in ((f"{j}/recompenses_dialog.mcfunction", "body:["),
                        (f"bareme/{j}.mcfunction", "body:[" + BAN_B + ",")):
         pth = os.path.join(ROOT, F, fic)
         t = open(pth, encoding="utf-8").read()

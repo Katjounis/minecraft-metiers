@@ -127,17 +127,33 @@ def _esp(n):
     return _ESP[n]
 
 
+def _q(t):
+    return t.replace("\\", "\\\\").replace('"', '\\"')
+
+
 def arbre_texte(j):
-    """Texte (police metiers:arbre) qui pose le fond puis chaque calque ; $(sN) et $(aK) sont remplis par la page."""
+    """Composants (SNBT) qui posent le fond puis chaque calque ; $(sN) et $(aK) sont remplis par la page.
+    25/11/2026 : chaque nœud porte son infobulle (nom, effet, coût, niveau) et se clique pour acheter ou basculer."""
     A = ARB[j]
+    F_ = 'font:"metiers:arbre",color:"white",shadow_color:0'
     t = A["fond"] + _esp(-A["adv"])
     for n, s in ARB_SEG.items():
         t += _esp(s["x"]) + f"$(s{n})" + _esp(-(s["x"] + s["adv"]))
+    comps = ['{text:"' + _q(t) + '",' + F_ + '}']
+    d = jobs[j]
     for k in range(1, 7):
         x = ARB_P[k][0] - 13
         adv = A["noeuds"][k]["acquise"][1]
-        t += _esp(x) + f"$(a{k})" + _esp(-(x + adv))
-    return t + _esp(A["adv"])
+        nom, cout, req, desc = SKILLS[j][k - 1]
+        rq = " + ".join(SKILLS[j][r - 1][0] for r in req) if req else "rien"
+        bulle = (f'[{{text:"{_q(nom)}\\n",color:"gold",bold:true}},{{text:"{_q(desc)}\\n\\n",color:"white"}},'
+                 f'{{text:"Coût : {cout} points · niveau {SKILL_LVL[k - 1]} · requiert : {_q(rq)}\\n",color:"gray"}},'
+                 '{text:"Clic : acheter, ou activer/désactiver si acquise.",color:"dark_gray"}]')
+        comps.append('{text:"' + _q(_esp(x)) + f'$(a{k})' + _q(_esp(-(x + adv))) + '",' + F_ +
+                     f',click_event:{{action:"run_command",command:"trigger metiers set {TSK(d, k)}"}},'
+                     f'hover_event:{{action:"show_text",value:{bulle}}}}}')
+    comps.append('{text:"' + _q(_esp(A["adv"])) + '",' + F_ + '}')
+    return comps
 
 
 _ARB_TXT = {j: arbre_texte(j) for j in jobs}
@@ -164,6 +180,5 @@ def arbre_etats(j, sk_tag):
 
 def arbre_corps(j):
     """Élément de corps de dialogue (SNBT) : le dessin, puis des lignes vides pour lui laisser sa hauteur."""
-    txt = _ARB_TXT[j].replace("\\", "\\\\").replace('"', '\\"')
-    return ('{type:"minecraft:plain_message",width:240,contents:[{text:"' + txt + '",font:"metiers:arbre",color:"white",shadow_color:0},'
+    return ('{type:"minecraft:plain_message",width:240,contents:[' + ",".join(_ARB_TXT[j]) + ','
             '{text:"' + "\\n" * 15 + '"}]}')

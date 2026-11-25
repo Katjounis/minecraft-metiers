@@ -38,6 +38,10 @@ Touche G (ou menu Échap) pour ouvrir le menu des métiers, ou `/trigger metiers
 
 Commandes admin : `/function metiers:boss/alerte` (boss suivant de la rotation dans 2 min), `/function metiers:heure/lancer`, `/function metiers:defis/nouveaux`, `/function metiers:defis/semaine`.
 
+## Version 26.2 (25/11/2026)
+
+Arbre cliquable : chaque nœud du dessin porte une infobulle (nom, effet, coût, niveau, prérequis) et achète ou bascule la compétence au clic. Page de métier raccourcie : plus de décor en tête ni de légende, les 6 boutons de compétence tiennent sur 2 rangées. Mes métiers sur 3 colonnes (le Bâtisseur seul sur sa rangée, puis Forge, Défis, Quêtes, Armure, Sommaire, Plus).
+
 ## Version 26.1 (25/11/2026)
 
 Boss sans aucun objet : plus de tables de butin tirées (minerais, reliques comme la Masse du Brasier) ni de butin vanilla du mob (`DeathLootTable` vide). Récompense : 3 éclats (+2 au meilleur dégât), 30 % d'un niveau de Chasseur, 5 000 Écus, plus une prime de 2 500 Écus par tirage (1 par niveau de difficulté, +1 au meilleur dégât) ; le bonus rare donne 2 éclats et 5 000 Écus. Les orbes d'XP du mob tombent toujours.
