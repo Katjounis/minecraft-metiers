@@ -106,10 +106,15 @@ B_F = "    if (color.a < 0.1) {"
 assert A_F in fsh and B_F in fsh
 fsh = fsh.replace(A_F, A_F + "layout(location = 4) in float hudMark;\n")
 fsh = fsh.replace(B_F, "    if (hudMark > 0.5) {\n        color.a = min(color.a * %.1f, 1.0);\n    }\n\n" % ALPHA + B_F)
-SHD = os.path.join(HUD, "minecraft", "shaders", "core")
-os.makedirs(SHD, exist_ok=True)
-open(os.path.join(SHD, "text.vsh"), "w", encoding="utf-8").write(vsh)
-open(os.path.join(SHD, "text.fsh"), "w", encoding="utf-8").write(fsh)
+# 25/11/2026 : shader de texte DÉBRANCHÉ. Le remplacer touche tout le texte du jeu, et en 26.3 les panneaux et les
+# noms (comptoirs) s'affichaient en lettres hachées. Le solde passe dans la barre latérale (tableau/on), le seul
+# affichage permanent de vanilla. HUD_SHADER = True rebrancherait l'encadré en haut à gauche.
+HUD_SHADER = False
+if HUD_SHADER:
+    SHD = os.path.join(HUD, "minecraft", "shaders", "core")
+    os.makedirs(SHD, exist_ok=True)
+    open(os.path.join(SHD, "text.vsh"), "w", encoding="utf-8").write(vsh)
+    open(os.path.join(SHD, "text.fsh"), "w", encoding="utf-8").write(fsh)
 
 # ---------------------------------------------------------------- commandes
 H_ = F + "hud/"
@@ -117,8 +122,12 @@ w(H_ + "load.mcfunction", [
     "scoreboard objectives add c.hudv dummy", "scoreboard objectives add c.hudr dummy",
     "scoreboard objectives add c.quit minecraft.custom:minecraft.leave_game",
     # l'ancien tableau de la barre latérale est retiré une fois (tableau/on le remet si besoin)
-    f"execute unless score #hud c.g matches 1 run function {NS}:tableau/off",
-    "scoreboard players set #hud c.g 1"])
+    f"execute unless score #hud c.g matches 1.. run function {NS}:tableau/off",
+    "execute unless score #hud c.g matches 2.. run scoreboard players set #hud c.g 1"] + ([] if HUD_SHADER else [
+    # sans shader : l'encadré est retiré une fois et la barre latérale du solde est remise
+    "execute unless score #hud c.g matches 2 run title @a clear",
+    f"execute unless score #hud c.g matches 2 run function {NS}:tableau/on",
+    "scoreboard players set #hud c.g 2"]))
 HJ = [
     "execute if score @s c.quit matches 1.. run scoreboard players set @s c.hudv -1",
     "scoreboard players set @s c.quit 0",
@@ -127,7 +136,7 @@ HJ = [
     "scoreboard players add @s c.hudr 1",
     "execute if score @s c.hudr matches 1200.. run scoreboard players set @s c.hudv -1",
     f"execute unless score #hv c.t = @s c.hudv run function {NS}:hud/maj"]
-w(H_ + "joueur.mcfunction", HJ)
+w(H_ + "joueur.mcfunction", HJ if HUD_SHADER else ["return 0"])
 HM = ["scoreboard players operation @s c.hudv = #hv c.t", "scoreboard players set @s c.hudr 0",
       "scoreboard players operation #n c.t = @s c.ecus",
       "execute if score #n c.t matches 100000000.. run scoreboard players set #n c.t 99999999"]
