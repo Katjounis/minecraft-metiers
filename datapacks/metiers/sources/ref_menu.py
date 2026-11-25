@@ -66,25 +66,35 @@ for j, d in jobs.items():
            f'execute if score @s m.tmp matches 6.. unless entity @s[tag=metiers.sk.{j}1,tag=metiers.sk.{j}2,tag=metiers.sk.{j}3,tag=metiers.sk.{j}4,tag=metiers.sk.{j}5,tag=metiers.sk.{j}6] if score @s m.{j}_lvl matches 5.. run data modify storage {NS}:mn {j}_d set value "●"',
            f"scoreboard players operation @s m.tmp = @s m.{j}_lvl", "scoreboard players operation @s m.tmp /= #10 m.const",
            f'execute if score @s m.{j}_pal < @s m.tmp run data modify storage {NS}:mn {j}_d set value "●"']
+# 26/11/2026 : Mes métiers en panneau « succès » (ref_panneaux.py) : une icône par métier avec son niveau, puis les activités
+_PADN = {n: [pad((larg_txt("niv 55") - larg_txt("niv " + "5" * n)) // 2), pad(larg_txt("niv 55") - larg_txt("niv " + "5" * n) - (larg_txt("niv 55") - larg_txt("niv " + "5" * n)) // 2)] for n in (1, 2, 3)}
+for k, (j, d) in enumerate(jobs.items(), 1):
+    MN += [f'data modify storage {NS}:mn a{k} set value "{PANNEAUX["metiers"]["noeuds"][k - 1]["etats"]["on"]}"',
+           f'execute if data storage {NS}:mn {{{j}_d:"●"}} run data modify storage {NS}:mn a{k} set value "{PANNEAUX["metiers"]["noeuds"][k - 1]["etats"]["notif"]}"']
+    for n, rng in ((1, "..9"), (2, "10..99"), (3, "100..")):
+        MN += [f'execute if score @s m.{j}_lvl matches {rng} run data modify storage {NS}:mn p{k} set value "{_PADN[n][0]}"',
+               f'execute if score @s m.{j}_lvl matches {rng} run data modify storage {NS}:mn r{k} set value "{_PADN[n][1]}"']
 MN.append(f"function {NS}:menu_dialog with storage {NS}:mn")
 w(F + "menu.mcfunction", "\n".join(MN))
-acts = []
-for j, d in jobs.items():
-    lab = f'[{gs("metier_" + j)},{txt(" " + d["name"], d["color"])},{txt(" $(" + j + "_l) ", "yellow")},{{text:"$({j}_b)",font:"metiers:icones",color:"white"}},{txt("$(" + j + "_d)", "red")}]'
-    acts.append(btn(lab, 20 + d["idx"], 150, f"Ouvre la page {d['name']} : arbre de compétences, outil, progression."))
-acts += ['{label:"",width:1}', '{label:"",width:1}']   # le Bâtisseur seul sur sa rangée, la suite repart à gauche
-acts += [ib("item/netherite_upgrade_smithing_template", "Forge", "gold", 471, 150, "Forge : sertissage des cristaux dans ton outil, skins et cadres de titre.", True),
-         ib("item/clock_00", "Défis du jour", "gold", 4, 150, "Un défi par métier, chaque jour.", True),
-         ib("item/writable_book", "Quêtes", "gold", 495, 150, "Une quête de 10 étapes par métier.", True),
-         ib("item/golden_chestplate", "Armure", "gold", 6, 150, "L’Armure des Guildes, qui monte avec ton score total.", True),
-         ib("item/spyglass", "Sommaire A à Z", "gold", 540, 150, "Tout Métiers rangé par ordre alphabétique : un clic et tu y es.", True),
-         ib("item/compass_00", "Plus", "gold", 497, 150, "Guilde, classement, synergies, cadres de titre, aura, aide.", True)]
+_EXTRA = [(400, "Forge", "Sertissage des cristaux dans ton outil, skins et cadres de titre."), (4, "Défis du jour", "Un défi par métier, chaque jour."),
+          (495, "Quêtes", "Une quête de 10 étapes par métier."), (6, "Armure des Guildes", "Elle monte avec ton score total."),
+          (540, "Sommaire A à Z", "Tout Métiers rangé par ordre alphabétique."), (497, "Plus", "Guilde, classement, synergies, cadres de titre, aura, aide.")]
+_clics, _surv = {}, {}
+for k, (j, d) in enumerate(jobs.items(), 1):
+    _clics[k] = f"trigger metiers set {20 + d['idx']}"
+    _surv[k] = [{"text": d["name"] + "\n", "color": d["color"], "bold": True},
+                {"text": "Arbre de compétences, outil, progression.\nPastille jaune : des points ou une récompense t’attendent.", "color": "gray", "bold": False}]
+for i, (trg, nm, tip) in enumerate(_EXTRA, 11):
+    _clics[i] = f"trigger metiers set {trg}"
+    _surv[i] = [{"text": nm + "\n", "color": "gold", "bold": True}, {"text": tip, "color": "gray", "bold": False}]
+_corps = panneau_corps("metiers", _clics, _surv, {i: "on" for i in range(11, 17)})
+for k, (j, d) in enumerate(jobs.items(), 1):
+    _corps = _corps.replace(f'"$(i{k})"', f'"niv $({j}_l)"')
 w(F + "menu_dialog.mcfunction",
-  '$dialog show @s {type:"minecraft:multi_action",title:{text:"Mes métiers",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
-  'body:[' + decor_corps("metiers") + ',{type:"minecraft:plain_message",width:460,contents:[{text:"Score total ",color:"gray"},{text:"$(score)",color:"yellow"},'
-  '{text:"   ·   Armure des Guildes : ",color:"gray"},{text:"$(arm)",color:"gold"},{text:"   ·   ",color:"gray"},' + gs("eclat") + ',{text:" $(ecl) éclats",color:"gray"},{text:"\\n● : des points de compétence ou une récompense t\'attendent",color:"dark_gray"}]}],'
-  f'actions:[{",".join(acts)}],columns:3,'
-  f'exit_action:{{label:"Fermer",width:200}}}}')
+  '$dialog show @s {type:"minecraft:notice",title:{text:"Mes métiers",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
+  'body:[{type:"minecraft:plain_message",width:400,contents:[{text:"Score total ",color:"gray"},{text:"$(score)",color:"yellow"},'
+  '{text:"   ·   Armure : ",color:"gray"},{text:"$(arm)",color:"gold"},{text:"   ·   ",color:"gray"},' + gs("eclat") + ',{text:" $(ecl) éclats",color:"gray"}]},'
+  + _corps + '],action:{label:"Fermer",width:200}}')
 # hub « Activités » (497) : tout ce qui n'est pas un métier, en icônes sur 3 colonnes
 hub = [ib("item/name_tag", "Guilde", "gold", 770, 150, "Fonder ou rejoindre une guilde, défi de la semaine, classement."),
        ib("item/gold_ingot", "Classement", "gold", 5, 150, "Podium du serveur et meilleur de chaque métier."),
@@ -94,7 +104,7 @@ hub = [ib("item/name_tag", "Guilde", "gold", 770, 150, "Fonder ou rejoindre une 
        ib("item/paper", "Aide", "white", 460, 150, "Cristaux, éclats, Forge, défis, boss : comment ça marche.")]
 w(F + "activites.mcfunction",
   'dialog show @s {type:"minecraft:multi_action",title:{text:"Plus",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
-  'body:[{type:"minecraft:plain_message",width:310,contents:[{text:""},{text:"\ue027",font:"commerce:recette",color:"white",shadow_color:0},{text:"\\n\\n"}]}],'
+  'body:[{type:"minecraft:plain_message",width:310,contents:{text:"Guilde, classement, synergies, cadres, aura et aide.",color:"gray"}}],'
   f'actions:[{",".join(hub)}],columns:3,'
   'exit_action:{label:"Retour",width:200,action:{type:"run_command",command:"trigger metiers set 1"}}}')
 
@@ -428,7 +438,7 @@ HUB = [btn(f'[{gs("forge_marteau")},{txt("  Forger l’outil en main", "gold", T
        btn(f'[{gs("cadre_dore_g")},{txt("Cadres de titre", "gold", True)},{gs("cadre_dore_d")}]', 472, 320, "Le cadre qui entoure ton titre devant ton pseudo.")]
 w(F + "forge/menu_dialog.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Forge",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
-  f'body:[{{type:"minecraft:plain_message",width:310,contents:[{{text:""}},{{text:"\ue028",font:"commerce:recette",color:"white",shadow_color:0}},{{text:"\\n\\n"}}]}},{BOURSE}],actions:[{",".join(HUB)}],columns:1,'
+  f'body:[{BOURSE}],actions:[{",".join(HUB)}],columns:1,'
   'exit_action:{label:"Retour",width:200,action:{type:"run_command",command:"trigger metiers set 1"}}}')
 # achats
 for i, (key, (j, p, e, lv)) in enumerate(CRP.items(), 1):

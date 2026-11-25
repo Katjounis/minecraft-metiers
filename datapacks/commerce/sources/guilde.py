@@ -65,7 +65,7 @@ w(GD + "page_m.mcfunction", [
 IC = lambda i: f'{{object:"atlas",atlas:"minecraft:items",sprite:"minecraft:item/{i}"}}'
 w(GD + "page_d.mcfunction", "$" + dlg(
     T("Trésor de guilde", "gold", True),
-    [BAN(10), '{type:"minecraft:plain_message",width:380,contents:' +
+    ['{type:"minecraft:plain_message",width:380,contents:' +
      L('$(nom)', T("   niveau $(n)/5\\n", "yellow", True), T("Trésor : $(t) " + ECU + "   ·   ton compte : $(e) " + ECU + "\\n", "gold"),
        T("Avantages des membres : $(av)\\n", "green"), T("Prochain : $(suiv)\\n", "aqua"), T("$(chef)", "gray")) + '}'],
     [btn(L(IC("gold_nugget"), T("  Déposer 1 000", "yellow")), 7701, 130, "Du compte vers le trésor de la guilde."),

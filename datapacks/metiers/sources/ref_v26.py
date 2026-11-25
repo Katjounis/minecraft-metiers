@@ -56,7 +56,7 @@ for sid, a, b, nom, eff in SYN:
                 f'{{text:"  {jobs[a]["name"]} + {jobs[b]["name"]}\\n",color:"gray",bold:false}}')
 w(F + "synergie/page_d.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Synergies",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
-  f'body:[{BANDEAU(BAN_METIERS)},{{type:"minecraft:plain_message",width:400,contents:[{{text:"Deux métiers au niveau 50 (ou passés par le prestige) débloquent un bonus permanent. Survole un nom pour son effet.\\n\\n",color:"gray"}},{",".join(sy_l)}]}}],'
+  f'body:[{{type:"minecraft:plain_message",width:400,contents:[{{text:"Deux métiers au niveau 50 (ou passés par le prestige) débloquent un bonus permanent. Survole un nom pour son effet.\\n\\n",color:"gray"}},{",".join(sy_l)}]}}],'
   'actions:[{label:{text:"Retour",color:"white"},width:200,action:{type:"run_command",command:"trigger metiers set 1"}}],columns:1}')
 
 # =====================================================================
@@ -159,7 +159,7 @@ for j in JL:
     ql.append(f'{gs("metier_" + j)},{{text:" {d["name"]}  ",color:"{d["color"]}",bold:true}},{{text:"$({j}t)",color:"white"}},{{text:"$({j}p)\\n",color:"yellow"}}')
 w(F + "quete/page_d.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Quêtes des métiers",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
-  f'body:[{BANDEAU(BAN_QUETES)},{{type:"minecraft:plain_message",width:420,contents:[{{text:"Une quête par métier, 10 étapes chacune. Récompense : cristaux, un quart de niveau, des Écus, et un éclat toutes les 3 étapes.\\n\\n",color:"gray"}},{",".join(ql)}]}}],'
+  f'body:[{{type:"minecraft:plain_message",width:420,contents:[{{text:"Une quête par métier, 10 étapes chacune. Récompense : cristaux, un quart de niveau, des Écus, et un éclat toutes les 3 étapes.\\n\\n",color:"gray"}},{",".join(ql)}]}}],'
   'actions:[{label:{text:"Retour",color:"white"},width:200,action:{type:"run_command",command:"trigger metiers set 1"}}],columns:1}')
 
 # =====================================================================
@@ -347,7 +347,7 @@ w(G_ + "rang_ligne.mcfunction", "\n".join([
 w(G_ + "rang_oter.mcfunction", f"$data remove storage {NS}:gu W[{{id:$(id)}}]")
 w(G_ + "page_d.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"",extra:[$(nomc)],color:"gold",bold:true},can_close_with_escape:true,pause:false,'
-  f'body:[{BANDEAU(BAN_GUILDE)},{{type:"minecraft:plain_message",width:380,contents:[{{text:"Défi de la semaine : ",color:"gold",bold:true}},{{text:"$(x) / $(o) XP de métier gagnée ensemble",color:"white"}},{{text:"$(ok)\\n",color:"green"}},'
+  f'body:[{{type:"minecraft:plain_message",width:380,contents:[{{text:"Défi de la semaine : ",color:"gold",bold:true}},{{text:"$(x) / $(o) XP de métier gagnée ensemble",color:"white"}},{{text:"$(ok)\\n",color:"green"}},'
   '{text:"Récompense : 3 éclats de boss pour chaque membre.\\n\\n",color:"gray"},{text:"Membres : ",color:"gold",bold:true},{text:"",extra:$(M)},'
   '{text:"\\n\\nClassement des guildes\\n",color:"gold",bold:true},{text:"",extra:$(R)}]}],'
   'actions:[{label:{text:"Inviter",color:"green"},width:150,action:{type:"run_command",command:"trigger metiers set 773"}},'
@@ -358,7 +358,7 @@ w(G_ + "page_sans.mcfunction", "\n".join([
     f"function {NS}:guilde/classement", f"function {NS}:guilde/page_sans_d with storage {NS}:gu"]))
 w(G_ + "page_sans_d.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Guildes",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
-  f'body:[{BANDEAU(BAN_GUILDE)},{{type:"minecraft:plain_message",width:380,contents:[{{text:"Fonde une guilde avec tes amis : un défi commun chaque semaine (3 éclats chacun), un coffre partagé (panneau [Guilde] sur un coffre, avec le Commerce) et un classement.\\n\\n",color:"gray"}},'
+  f'body:[{{type:"minecraft:plain_message",width:380,contents:[{{text:"Fonde une guilde avec tes amis : un défi commun chaque semaine (3 éclats chacun), un coffre partagé (panneau [Guilde] sur un coffre, avec le Commerce) et un classement.\\n\\n",color:"gray"}},'
   '{text:"Le nom de la guilde est celui de l’objet renommé que tu tiens en main (une enclume suffit), sinon « Guilde de <ton pseudo> ».\\n\\n",color:"white"},'
   '{text:"Classement des guildes\\n",color:"gold",bold:true},{text:"",extra:$(R)}]}],'
   'actions:[{label:{text:"Fonder une guilde",color:"gold",bold:true},width:150,action:{type:"run_command",command:"trigger metiers set 771"}},'

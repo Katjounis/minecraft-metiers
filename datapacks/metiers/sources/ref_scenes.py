@@ -6,7 +6,7 @@ SCENE = lambda d: ('{type:"minecraft:plain_message",width:310,contents:[{text:""
                    '",font:"commerce:recette",color:"white",shadow_color:0},{text:"\\n\\n\\n"}]}')
 for j, d in jobs.items():
     # 25/11/2026 : plus de décor en tête de la page de métier, l'arbre dessiné le remplace (page moins haute)
-    for fic, avant in ((f"{j}/recompenses_dialog.mcfunction", "body:["),):   # barème : plus de décor (grille de cases)
+    for fic, avant in ():   # 26/11/2026 : plus aucune scène   # barème : plus de décor (grille de cases)
         pth = os.path.join(ROOT, F, fic)
         t = open(pth, encoding="utf-8").read()
         assert t.count(avant) >= 1, fic

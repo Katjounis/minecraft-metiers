@@ -19,25 +19,23 @@ def _bout(icone, nom, coul, tip, cmd):
             "action": {"type": "minecraft:run_command", "command": cmd}}
 
 
+# 26/11/2026 : menu G en panneau « succès » (dessiné par Métiers : metiers/sources/panneaux.json)
+exec(open(os.path.join(HERE, "..", "..", "metiers", "sources", "panneaux_lib.py"), encoding="utf-8").read())
+_SV = [("trigger metiers set 1", "Métiers", COUL_PACK["metiers"], "Niveaux, arbres de compétences, Forge, défis, quêtes, classement."),
+       ("trigger commerce set 1", "Commerce", COUL_PACK["commerce"], "Marché, bourse, banque, hôtel des ventes, spawners."),
+       ("trigger compagnons set 1", "Compagnons", COUL_PACK["compagnons"], "Loup, chat, golem, montures... qui combattent et progressent avec toi."),
+       ("trigger bestiaire set 1", "Bestiaire", COUL_PACK["bestiaire"], "Les créatures de la nuit, contrats, classement."),
+       ("trigger commerce set 30", "Mon profil", "yellow", "Tout ton parcours sur une page."),
+       ("trigger commerce set 31", "Guide", "white", "Pour bien démarrer, en 5 pages.")]
 MENU_SERVEUR = {
-    "type": "minecraft:multi_action",
+    "type": "minecraft:notice",
     "title": {"text": "Les Couillons", "color": "gold", "bold": True},
     "external_title": {"text": "Menu du serveur"},
     "can_close_with_escape": True, "pause": False,
-    "body": [{"type": "minecraft:plain_message", "width": 240, "contents": [
-                 {"text": "\ue7f0", "font": "metiers:arbre", "color": "white", "shadow_color": 0}, {"text": "\n" * 9}]},
-             {"type": "minecraft:plain_message", "width": 310, "contents": [
-                 {"text": ""}, {"text": chr(0xE020 + 14), "font": "commerce:recette", "color": "white", "shadow_color": 0}, {"text": "\n\n"},
-                 {"text": "\nMétiers, Commerce, Compagnons, Bestiaire : tout est ici.", "color": "gray"}]}],
-    "actions": [
-        _bout("iron_pickaxe", "Métiers", COUL_PACK["metiers"], "Niveaux, arbres de compétences, Forge, défis, quêtes, classement.", "trigger metiers set 1"),
-        _bout("emerald", "Commerce", COUL_PACK["commerce"], "Marché, bourse, banque, hôtel des ventes, spawners.", "trigger commerce set 1"),
-        _bout("lead", "Compagnons", COUL_PACK["compagnons"], "Loup, chat, golem, montures... qui combattent et progressent avec toi.", "trigger compagnons set 1"),
-        _bout("bone", "Bestiaire", COUL_PACK["bestiaire"], "Les créatures de la nuit, contrats, classement.", "trigger bestiaire set 1"),
-        _bout("name_tag", "Mon profil", "yellow", "Tout ton parcours sur une page.", "trigger commerce set 30"),
-        _bout("book", "Guide", "white", "Pour bien démarrer, en 5 pages.", "trigger commerce set 31")],
-    "columns": 2,
-    "exit_action": {"label": "Fermer", "width": 200}}
+    "body": [pan_corps("serveur", {i: c for i, (c, n, col, tp) in enumerate(_SV, 1)},
+                       {i: [{"text": n + "\n", "color": col, "bold": True}, {"text": tp, "color": "gray", "bold": False}] for i, (c, n, col, tp) in enumerate(_SV, 1)},
+                       {i: "on" for i in range(1, 7)})],
+    "action": {"label": "Fermer", "width": 200}}
 wj("data/serveur/dialog/menu.json", MENU_SERVEUR)
 wj("data/minecraft/tags/dialog/quick_actions.json", {"values": ["serveur:menu"]})
 wj("data/minecraft/tags/dialog/pause_screen_additions.json", {"values": ["serveur:menu"]})

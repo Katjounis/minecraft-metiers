@@ -26,7 +26,7 @@ Dans `server.properties` :
 
 ```
 resource-pack=https://github.com/Katjounis/minecraft-metiers/raw/main/metiers_resourcepack.zip
-resource-pack-sha1=48f6dc742ea8f491e209a1cbd9e29673de52e90e
+resource-pack-sha1=3775a0789f6185c379a0d27ada1d4ffe37b644ce
 require-resource-pack=true
 ```
 
@@ -37,6 +37,12 @@ Le SHA-1 doit être recalculé à chaque nouvelle version du resource pack.
 Touche G (ou menu Échap) pour ouvrir le menu des métiers, ou `/trigger metiers`.
 
 Commandes admin : `/function metiers:boss/alerte` (boss suivant de la rotation dans 2 min), `/function metiers:heure/lancer`, `/function metiers:defis/nouveaux`, `/function metiers:defis/semaine`.
+
+## Version 27.1 (26/11/2026)
+
+Menus « succès » (`sources/ref_panneaux.py`) : un fond de blocs encadré et des icônes dans les cadres de l'écran des Progrès, cliquables, avec le nom et une info courte dessous. Mes métiers (les 10 métiers avec leur niveau, puis Forge, Défis, Quêtes, Armure, Sommaire, Plus), l'accueil de Commerce, le menu G, l'accueil de Compagnons et la liste du Bestiaire. Tout tient dans un seul plain_message : la ligne 0 pose le fond et les icônes, les lignes suivantes portent les libellés placés au pixel près (table des largeurs de la police du jeu dans `sources/larg_police.json`), chaque ligne fait la largeur exacte du panneau pour que le dialogue les centre toutes pareil. Les textes variables (niveau, nom caché) sont encadrés de deux espaces de rattrapage choisis selon leur longueur. Les autres packs lisent `sources/panneaux.json` avec `sources/panneaux_lib.py` : construire Métiers avant eux (ordre : Métiers, Commerce, Métiers, Compagnons, Horreur).
+
+Arbre de la page de métier resserré (236 x 170 px) pour tenir sans défiler. Noms des branches en police normale (ils s'affichaient en carrés). Plus aucun décor ni bandeau illustré en tête des menus, dans les 4 packs.
 
 ## Version 27.0 (26/11/2026)
 

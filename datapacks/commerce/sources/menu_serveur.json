@@ -1,5 +1,5 @@
 {
- "type": "minecraft:multi_action",
+ "type": "minecraft:notice",
  "title": {
   "text": "Les Couillons",
   "color": "gold",
@@ -13,178 +13,416 @@
  "body": [
   {
    "type": "minecraft:plain_message",
-   "width": 240,
+   "width": 310,
    "contents": [
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
     },
     {
-     "text": "\n\n\n\n\n\n\n\n\n"
-    }
-   ]
-  },
-  {
-   "type": "minecraft:plain_message",
-   "width": 310,
-   "contents": [
-    {
-     "text": ""
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0,
+     "click_event": {
+      "action": "run_command",
+      "command": "trigger metiers set 1"
+     },
+     "hover_event": {
+      "action": "show_text",
+      "value": [
+       {
+        "text": "Métiers\n",
+        "color": "gold",
+        "bold": true
+       },
+       {
+        "text": "Niveaux, arbres de compétences, Forge, défis, quêtes, classement.",
+        "color": "gray",
+        "bold": false
+       }
+      ]
+     }
     },
     {
-     "text": "",
-     "font": "commerce:recette",
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0,
+     "click_event": {
+      "action": "run_command",
+      "command": "trigger commerce set 1"
+     },
+     "hover_event": {
+      "action": "show_text",
+      "value": [
+       {
+        "text": "Commerce\n",
+        "color": "green",
+        "bold": true
+       },
+       {
+        "text": "Marché, bourse, banque, hôtel des ventes, spawners.",
+        "color": "gray",
+        "bold": false
+       }
+      ]
+     }
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0,
+     "click_event": {
+      "action": "run_command",
+      "command": "trigger compagnons set 1"
+     },
+     "hover_event": {
+      "action": "show_text",
+      "value": [
+       {
+        "text": "Compagnons\n",
+        "color": "#C878FF",
+        "bold": true
+       },
+       {
+        "text": "Loup, chat, golem, montures... qui combattent et progressent avec toi.",
+        "color": "gray",
+        "bold": false
+       }
+      ]
+     }
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0,
+     "click_event": {
+      "action": "run_command",
+      "command": "trigger bestiaire set 1"
+     },
+     "hover_event": {
+      "action": "show_text",
+      "value": [
+       {
+        "text": "Bestiaire\n",
+        "color": "#D03030",
+        "bold": true
+       },
+       {
+        "text": "Les créatures de la nuit, contrats, classement.",
+        "color": "gray",
+        "bold": false
+       }
+      ]
+     }
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0,
+     "click_event": {
+      "action": "run_command",
+      "command": "trigger commerce set 30"
+     },
+     "hover_event": {
+      "action": "show_text",
+      "value": [
+       {
+        "text": "Mon profil\n",
+        "color": "yellow",
+        "bold": true
+       },
+       {
+        "text": "Tout ton parcours sur une page.",
+        "color": "gray",
+        "bold": false
+       }
+      ]
+     }
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0,
+     "click_event": {
+      "action": "run_command",
+      "command": "trigger commerce set 31"
+     },
+     "hover_event": {
+      "action": "show_text",
+      "value": [
+       {
+        "text": "Guide\n",
+        "color": "white",
+        "bold": true
+       },
+       {
+        "text": "Pour bien démarrer, en 5 pages.",
+        "color": "gray",
+        "bold": false
+       }
+      ]
+     }
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
     },
     {
-     "text": "\n\n"
+     "text": "\n",
+     "font": "minecraft:default"
     },
     {
-     "text": "\nMétiers, Commerce, Compagnons, Bestiaire : tout est ici.",
-     "color": "gray"
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "\n",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "\n",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "\n",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "Métiers",
+     "color": "gold",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "Commerce",
+     "color": "green",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "Compagnons",
+     "color": "#C878FF",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "\n",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "niveaux, arbres",
+     "color": "gray",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "marché, banque",
+     "color": "gray",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "ils t'accompagnent",
+     "color": "gray",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "\n",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "\n",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "\n",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "\n",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "\n",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "Bestiaire",
+     "color": "#D03030",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "Mon profil",
+     "color": "yellow",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "Guide",
+     "color": "white",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "\n",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "créatures de la nuit",
+     "color": "gray",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "ton parcours",
+     "color": "gray",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "bien démarrer",
+     "color": "gray",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
     }
    ]
   }
  ],
- "actions": [
-  {
-   "label": [
-    {
-     "object": "atlas",
-     "atlas": "minecraft:items",
-     "sprite": "minecraft:item/iron_pickaxe"
-    },
-    {
-     "text": "  Métiers",
-     "color": "gold",
-     "bold": true
-    }
-   ],
-   "width": 200,
-   "tooltip": {
-    "text": "Niveaux, arbres de compétences, Forge, défis, quêtes, classement."
-   },
-   "action": {
-    "type": "minecraft:run_command",
-    "command": "trigger metiers set 1"
-   }
-  },
-  {
-   "label": [
-    {
-     "object": "atlas",
-     "atlas": "minecraft:items",
-     "sprite": "minecraft:item/emerald"
-    },
-    {
-     "text": "  Commerce",
-     "color": "green",
-     "bold": true
-    }
-   ],
-   "width": 200,
-   "tooltip": {
-    "text": "Marché, bourse, banque, hôtel des ventes, spawners."
-   },
-   "action": {
-    "type": "minecraft:run_command",
-    "command": "trigger commerce set 1"
-   }
-  },
-  {
-   "label": [
-    {
-     "object": "atlas",
-     "atlas": "minecraft:items",
-     "sprite": "minecraft:item/lead"
-    },
-    {
-     "text": "  Compagnons",
-     "color": "#C878FF",
-     "bold": true
-    }
-   ],
-   "width": 200,
-   "tooltip": {
-    "text": "Loup, chat, golem, montures... qui combattent et progressent avec toi."
-   },
-   "action": {
-    "type": "minecraft:run_command",
-    "command": "trigger compagnons set 1"
-   }
-  },
-  {
-   "label": [
-    {
-     "object": "atlas",
-     "atlas": "minecraft:items",
-     "sprite": "minecraft:item/bone"
-    },
-    {
-     "text": "  Bestiaire",
-     "color": "#D03030",
-     "bold": true
-    }
-   ],
-   "width": 200,
-   "tooltip": {
-    "text": "Les créatures de la nuit, contrats, classement."
-   },
-   "action": {
-    "type": "minecraft:run_command",
-    "command": "trigger bestiaire set 1"
-   }
-  },
-  {
-   "label": [
-    {
-     "object": "atlas",
-     "atlas": "minecraft:items",
-     "sprite": "minecraft:item/name_tag"
-    },
-    {
-     "text": "  Mon profil",
-     "color": "yellow",
-     "bold": true
-    }
-   ],
-   "width": 200,
-   "tooltip": {
-    "text": "Tout ton parcours sur une page."
-   },
-   "action": {
-    "type": "minecraft:run_command",
-    "command": "trigger commerce set 30"
-   }
-  },
-  {
-   "label": [
-    {
-     "object": "atlas",
-     "atlas": "minecraft:items",
-     "sprite": "minecraft:item/book"
-    },
-    {
-     "text": "  Guide",
-     "color": "white",
-     "bold": true
-    }
-   ],
-   "width": 200,
-   "tooltip": {
-    "text": "Pour bien démarrer, en 5 pages."
-   },
-   "action": {
-    "type": "minecraft:run_command",
-    "command": "trigger commerce set 31"
-   }
-  }
- ],
- "columns": 2,
- "exit_action": {
+ "action": {
   "label": "Fermer",
   "width": 200
  }

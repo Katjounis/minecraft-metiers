@@ -1131,19 +1131,21 @@ DECOR = lambda n: ('{type:"minecraft:plain_message",width:240,contents:[{text:"'
 # 25/11/2026 : accueil allégé, 6 grandes entrées sur 3 colonnes ; le reste passe dans « Plus » (23)
 SPR_B = lambda b: '{object:"atlas",atlas:"minecraft:blocks",sprite:"minecraft:block/' + b + '"}'
 SPR_I = lambda i: '{object:"atlas",atlas:"minecraft:items",sprite:"minecraft:item/' + i + '"}'
-w(F + "page/accueil_d.mcfunction", "$" + dlg(
-    T("Commerce", "green", True),
-    [DECOR("commerce"), f'{{type:"minecraft:plain_message",width:310,contents:{L(SOLDE_TXT, T("\\nVendu : $(tv) " + ECU + "   ·   acheté : $(ta) " + ECU, "gray"), T("\\n$(ev)", "light_purple"), MSG_TXT)}}}'],
-    [btn(L(spr("emerald"), T("  Marché", "green", True)), 9, 130, "Acheter et vendre, par catégorie ou de A à Z."),
-     btn(L(spr("gold_ingot"), T("  Banque", "green", True)), 90, 130, "Virements, épargne, historique."),
-     btn(L(spr("chest"), T("  Hôtel des ventes", "green", True)), 6000, 130, "Achète et vends des objets entre joueurs."),
-     btn(L(spr("diamond"), T("  Bourse", "green", True)), 20, 130, "Évènements, tendances, tops."),
-     btn(L(SPR_B("spawner"), T("  Spawners", "green", True)), 70, 130, "Des spawners à acheter et à améliorer."),
-     btn(L(SPR_I("compass_00"), T("  Plus", "green", True)), 23, 130, "Fortunes, graphiques, cristaux de métier, trésor de guilde, comptoir, aide.")],
-    cols=3))
+# 26/11/2026 : accueil en panneau « succès » (dessiné par Métiers : metiers/sources/panneaux.json)
+exec(open(os.path.join(HERE, "..", "..", "metiers", "sources", "panneaux_lib.py"), encoding="utf-8").read())
+_AC = [(9, "Marché", "Acheter et vendre, par catégorie ou de A à Z."), (90, "Banque", "Virements, épargne, historique."),
+       (6000, "Hôtel des ventes", "Achète et vends des objets entre joueurs."), (20, "Bourse", "Évènements, tendances, tops."),
+       (70, "Spawners", "Des spawners à acheter et à améliorer."), (23, "Plus", "Fortunes, graphiques, cristaux de métier, trésor de guilde, comptoir, aide.")]
+_PAN_C = pan_snbt(pan_corps("commerce", {i: f"trigger commerce set {v}" for i, (v, _n, _t) in enumerate(_AC, 1)},
+                            {i: [{"text": n + "\n", "color": "green", "bold": True}, {"text": tp, "color": "gray", "bold": False}] for i, (v, n, tp) in enumerate(_AC, 1)},
+                            {i: "on" for i in range(1, 7)}))
+w(F + "page/accueil_d.mcfunction",
+  '$dialog show @s {type:"minecraft:notice",title:' + T("Commerce", "green", True) + ',can_close_with_escape:true,pause:false,body:['
+  + f'{{type:"minecraft:plain_message",width:310,contents:{L(SOLDE_TXT, T("\\nVendu : $(tv) " + ECU + "   ·   acheté : $(ta) " + ECU, "gray"), T("\\n$(ev)", "light_purple"), MSG_TXT)}}},'
+  + _PAN_C + '],action:{label:"Fermer",width:200}}')
 w(F + "page/plus.mcfunction", dlg(
     T("Commerce  ·  Plus", "green", True),
-    [DECOR("commerce")],
+    [f'{{type:"minecraft:plain_message",width:300,contents:{L(T("Classements, graphiques, cristaux, guilde, comptoir et aide.", "gray"))}}}'],
     [btn(L(spr("gold_ingot"), T("  Fortunes", "green", True)), 21, 130, "Le solde de tout le monde."),
      btn(L(SPR_I("clock_00"), T("  Graphiques", "green", True)), 81, 130, "Courbes et flux du marché, jour par jour."),
      btn(L(G("cristal_m"), T("  Cristaux", "green", True)), 22, 130, "Cristaux de métier : hors de prix, mais c’est le but."),
@@ -1423,7 +1425,7 @@ NL = "\\n"
 top = lambda key, col: ",".join(T(f"{k}. ", "gray") + "," + T(f"$({key}{k}n)", col) + "," + T(f"  $({key}{k}q)" + (NL if k < NTOP else ""), "gray") for k in range(1, NTOP + 1))
 w(F + "page/bourse_d.mcfunction", "$" + dlg(
     T("Bourse", "light_purple", True),
-    [BAN(2), f'{{type:"minecraft:plain_message",width:310,contents:{L(T("Indice du marché  ", "white", True), T("$(ind) %  ", "gold", True), "{text:\"\",color:\"$(varc)\",extra:$(sp)}", "{text:\"$(var)\",color:\"$(varc)\",bold:true}", T("\\n$(ev)\\n\\n", "light_purple"), T("Plus vendus cette semaine\\n", "gold", True), top("tv", "white"), T("\\n\\nPlus achetés cette semaine\\n", "yellow", True), top("ta", "white"), T("\\n\\nPlus gros marchands\\n", "green", True))[:-1]},{{text:"",extra:$(C)}}]}}'],
+    [f'{{type:"minecraft:plain_message",width:310,contents:{L(T("Indice du marché  ", "white", True), T("$(ind) %  ", "gold", True), "{text:\"\",color:\"$(varc)\",extra:$(sp)}", "{text:\"$(var)\",color:\"$(varc)\",bold:true}", T("\\n$(ev)\\n\\n", "light_purple"), T("Plus vendus cette semaine\\n", "gold", True), top("tv", "white"), T("\\n\\nPlus achetés cette semaine\\n", "yellow", True), top("ta", "white"), T("\\n\\nPlus gros marchands\\n", "green", True))[:-1]},{{text:"",extra:$(C)}}]}}'],
     [btn(T("Marché", "yellow"), 9, 150), btn(T("Graphiques", "aqua"), 81, 150), btn(T("Fortunes", "gold"), 21, 150), btn(T("Accueil", "white"), 1, 150)], 2))
 
 # ---------------------------------------------------------------- fortunes
@@ -1431,7 +1433,7 @@ w(F + "page/fortunes.mcfunction", [f'function {NS}:rang/calcul {{obj:"c.ecus",n:
     f"function {NS}:page/fortunes_d with storage {NS}:r"])
 w(F + "page/fortunes_d.mcfunction", "$" + dlg(
     T("Fortunes", "gold", True),
-    [BAN(3), f'{{type:"minecraft:plain_message",width:310,contents:[{SOLDE_TXT},{T("\\n\\nLes 10 plus riches du serveur\\n", "gold", True)},{{text:"",extra:$(C)}}]}}'],
+    [f'{{type:"minecraft:plain_message",width:310,contents:[{SOLDE_TXT},{T("\\n\\nLes 10 plus riches du serveur\\n", "gold", True)},{{text:"",extra:$(C)}}]}}'],
     [btn(T("Bourse", "light_purple"), 20, 160), btn(T("Accueil", "white"), 1, 160)]))
 
 # ---------------------------------------------------------------- cristaux
@@ -1443,7 +1445,7 @@ CR += msg_line(f"{NS}:cr") + [f"function {NS}:page/cristaux_d with storage {NS}:
 w(F + "page/cristaux.mcfunction", CR)
 w(F + "page/cristaux_d.mcfunction", "$" + dlg(
     T("Cristaux de métier", "aqua", True),
-    [BAN(4), f'{{type:"minecraft:plain_message",width:310,contents:{L(SOLDE_TXT, T("   ·   un cristal : ", "gray"), T("$(p) " + ECU, "aqua", True), T("\\nAchetés cette semaine : $(n), +5 % à chaque achat.", "gray"), T("\\n$(msg)", "yellow"))}}}'],
+    [f'{{type:"minecraft:plain_message",width:310,contents:{L(SOLDE_TXT, T("   ·   un cristal : ", "gray"), T("$(p) " + ECU, "aqua", True), T("\\nAchetés cette semaine : $(n), +5 % à chaque achat.", "gray"), T("\\n$(msg)", "yellow"))}}}'],
     [btn(L(G("cristal_" + j), T(f" {nom} ", col), T(f"($({j}))", "gray")), 400 + JIDX[j], 160, f"Acheter 1 cristal de {nom}.") for j, nom, col in JOBS] + [btn(T("Accueil", "white"), 1, 160)]))
 
 # =====================================================================

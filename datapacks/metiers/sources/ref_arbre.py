@@ -17,9 +17,9 @@ def _tex(p):
 
 
 # 26.0 (26/11/2026) : 18 nœuds sur 3 colonnes (branche gauche, tronc, branche droite) et 6 rangées de niveau
-ARB_W, ARB_H = 236, 200
+ARB_W, ARB_H = 236, 170
 ARB_COL = {"G": 38, "T": 118, "D": 198}
-ARB_ROW = [20, 52, 84, 116, 148, 180]
+ARB_ROW = [17, 44, 71, 98, 125, 152]   # 26/11/2026 : resserré, la page tient sans défiler
 ARB_P = {k: (ARB_COL["T"], ARB_ROW[k - 1]) for k in range(1, 7)}
 ARB_P.update({k: (ARB_COL["G"], ARB_ROW[k - 7]) for k in range(7, 13)})
 ARB_P.update({k: (ARB_COL["D"], ARB_ROW[k - 13]) for k in range(13, 19)})
@@ -350,12 +350,13 @@ def arbre_legende(j):
         w_ = _larg(nom)
         x = ARB_COL[col] - w_ // 2
         out.append('{text:"' + _q(_esp(x - cur)) + '",' + F_ + '}')
-        out.append(f'{{text:"{nom}",color:"{coul}",bold:true}}')
+        out.append(f'{{text:"{nom}",color:"{coul}",bold:true,font:"minecraft:default"}}')   # sinon hérite de la police de l'arbre
         cur = x + w_
     out.append('{text:"' + _q(_esp(ARB_W - cur)) + '",' + F_ + '}')   # même largeur que le dessin : même centrage
     return out
 
 
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "ref_panneaux.py"), encoding="utf-8").read())
 _ARB_TXT = {j: arbre_texte(j) for j in jobs}
 _ARB_LEG = {j: arbre_legende(j) for j in jobs}
 _prov.append({"type": "space", "advances": {c: n for n, c in _ESP.items()}})
@@ -382,4 +383,4 @@ def arbre_etats(j, sk_tag):
 def arbre_corps(j):
     """Élément de corps de dialogue (SNBT) : le dessin, des lignes vides pour lui laisser sa hauteur, puis les noms des branches."""
     return ('{type:"minecraft:plain_message",width:250,contents:[' + ",".join(_ARB_TXT[j]) + ','
-            '{text:"' + "\\n" * 22 + '"}' + "".join("," + c for c in _ARB_LEG[j]) + ']}')
+            '{text:"' + "\\n" * 19 + '"}' + "".join("," + c for c in _ARB_LEG[j]) + ']}')

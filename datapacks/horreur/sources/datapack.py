@@ -911,22 +911,46 @@ liste += ['data modify storage horreur:ui m.ok set value ""',
           'data modify storage horreur:ui m.sg set value ""',
           'execute if score #sang hr.cfg matches 1 run data modify storage horreur:ui m.sg set value "\\n☠ Nuit de sang en cours : créatures x4, butin doublé."',
           "execute store result storage horreur:ui m.tot int 1 run scoreboard players get @s hr.tot"]
+# 26/11/2026 : liste en panneau « succès » (dessiné par Métiers : metiers/sources/panneaux.json) ; nom caché tant que pas vaincue
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "metiers", "sources", "panneaux_lib.py"), encoding="utf-8").read())
+for i, c in enumerate(CREATURES, 1):
+    k = c["id"]
+    q_in = pan_pads("bestiaire", i, "q", "???")
+    liste += [f'data modify storage horreur:ui m.a{i} set value "{pan_etat("bestiaire", i, "off")}"',
+              f'data modify storage horreur:ui m.n{i} set value "???"',
+              f'data modify storage horreur:ui m.q{i} set value "{q_in[0]}"', f'data modify storage horreur:ui m.s{i} set value "{q_in[1]}"',
+              f'data modify storage horreur:ui m.v{i} set value ""', f'data modify storage horreur:ui m.x{i} set value "à trouver"']
+    nm = ["SlenderMan", "Herobrine", "Siren Head", "La Nonne", "Le Clown", "Pinhead", "Dame blanche", "Loup-garou", "Feu follet", "Rôdeur", "Croque-mitaine"][i - 1]
+    q_ok = pan_pads("bestiaire", i, "q", nm)
+    liste += [f'execute if score @s hr.k.{k} matches 1.. run data modify storage horreur:ui m.a{i} set value "{pan_etat("bestiaire", i, "on")}"',
+              f'execute if score @s hr.k.{k} matches 1.. run data modify storage horreur:ui m.n{i} set value "{nm}"',
+              f'execute if score @s hr.k.{k} matches 1.. run data modify storage horreur:ui m.q{i} set value "{q_ok[0]}"',
+              f'execute if score @s hr.k.{k} matches 1.. run data modify storage horreur:ui m.s{i} set value "{q_ok[1]}"',
+              f'execute if score @s hr.k.{k} matches 1.. store result storage horreur:ui m.v{i} int 1 run scoreboard players get @s hr.k.{k}',
+              f'execute if score @s hr.k.{k} matches 1.. run data modify storage horreur:ui m.x{i} set value " victoires"']
+    for txt_, cond in (("à trouver", f"unless score @s hr.k.{k} matches 1.."), ("5 victoires", f"if score @s hr.k.{k} matches 1..9"),
+                       ("55 victoires", f"if score @s hr.k.{k} matches 10..99"), ("555 victoires", f"if score @s hr.k.{k} matches 100..")):
+        av, ap = pan_pads("bestiaire", i, "p", txt_)
+        liste += [f'execute {cond} run data modify storage horreur:ui m.p{i} set value "{av}"', f'execute {cond} run data modify storage horreur:ui m.r{i} set value "{ap}"']
 liste += ["execute store result storage horreur:ui m.d int 1 run scoreboard players get #d hr.tmp",
           "function horreur:ui/liste_m with storage horreur:ui m"]
 w(F + "ui/liste.mcfunction", "\n".join(liste))
 d_liste = {"type": "minecraft:multi_action", "title": TITRE, "can_close_with_escape": True, "pause": False,
            # 25/11/2026 : décor de nuit encadré (glyphe U+E7F4 de metiers:arbre, dessiné par Métiers)
-           "body": [msg([{"text": "\ue7f4", "font": "metiers:arbre", "color": "white", "shadow_color": 0}, {"text": "\n" * 9}], 240),
+           "body": [
                     msg([{"text": f"§D / {len(CREATURES)} créatures découvertes   ·   §T victoires\n", "color": "gray"},
                          {"text": "Contrat de la semaine : ", "color": "dark_red"}, {"text": "§CT", "color": "gold"}, {"text": "§OK", "color": "green"},
                          {"text": "§SG", "color": "red"}])],
-           "actions": [bouton(f"§L{i}", 11 + i - 1, 150) for i in range(1, len(CREATURES) + 1)]
-                      + [bouton([IC("gold_ingot"), {"text": "  Classement", "color": "gold"}], 2, 150, "Les plus grands chasseurs de créatures."),
+           "actions": [bouton([IC("gold_ingot"), {"text": "  Classement", "color": "gold"}], 2, 150, "Les plus grands chasseurs de créatures."),
                          bouton([IC("emerald"), {"text": "  Vendre trophées", "color": "yellow"}], 3, 150, "Le Commerce rachète chaque trophée 5 fois la prime de sa créature.")],
            "columns": 3, "exit_action": {"label": {"text": "Fermer"}}}
+_PANB = pan_corps("bestiaire", {i: f"trigger bestiaire set {11 + i - 1}" for i in range(1, len(CREATURES) + 1)},
+                  {i: {"text": "Ouvre sa fiche (ou un indice si tu ne l'as jamais vaincue).", "color": "gray"} for i in range(1, len(CREATURES) + 1)})
+d_liste["body"].append(_PANB)
+d_liste["columns"] = 2
 s = snbt(d_liste).replace("§D", "$(d)").replace("§T", "$(tot)").replace("§CT", "$(ct)").replace("§OK", "$(ok)").replace("§SG", "$(sg)")
 for i in range(1, len(CREATURES) + 1):
-    s = s.replace(f'"§L{i}"', "[" + snbt(IC(ICONE.get(CREATURES[i - 1]["id"], "bone"))) + ',{"text":"  "},' + f"$(l{i})]")
+    s = s.replace(f"$(i{i})", f"$(v{i})$(x{i})")
 w(F + "ui/liste_m.mcfunction", "$dialog show @s " + s)
 
 RETOUR = bouton({"text": "◀ Retour"}, 1, 120)

@@ -305,7 +305,7 @@ for p in range(NPSP):
     w(F + f"spawner/boutique_{p}.mcfunction", SOLDE(SPB) + [f"function {NS}:spawner/boutique_{p}_d with storage {SPB}"])
     w(F + f"spawner/boutique_{p}_d.mcfunction", "$" + dlg(
         T("Spawners", "light_purple", True),
-        [BAN(5), f'{{type:"minecraft:plain_message",width:310,contents:{L(SOLDE_TXT, T(f"   ·   page {p + 1}/{NPSP}   ·   prix au survol", "gray"))}}}'], acts))
+        [f'{{type:"minecraft:plain_message",width:310,contents:{L(SOLDE_TXT, T(f"   ·   page {p + 1}/{NPSP}   ·   prix au survol", "gray"))}}}'], acts))
 for k, (m, nom, prix) in enumerate(SPM, 1):
     p = (k - 1) // PSP
     xp = "la moitié de l’XP de Chasseur habituelle" if XP_CH.get(m) else "pas d’XP de Chasseur"

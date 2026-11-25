@@ -732,7 +732,7 @@ for k, (_, cle, nom, col, ent, ico, req, suit, combat) in T.items():
              for i, (v, vn, vc, vi, vd) in enumerate(VOIES, 1)]
     w(F + f"menu/amel_{k}_d.mcfunction",
       f'$dialog show @s {{type:"minecraft:multi_action",title:[{IC(ico)},{{text:"  {nom} : améliorations",color:"{col}",bold:true}}],can_close_with_escape:true,pause:false,'
-      f'body:[{BAN},{{type:"minecraft:plain_message",width:440,contents:[{{text:"Points de dressage libres : ",color:"gray"}},{{text:"$(pt)",color:"yellow",bold:true}},'
+      f'body:[{{type:"minecraft:plain_message",width:440,contents:[{{text:"Points de dressage libres : ",color:"gray"}},{{text:"$(pt)",color:"yellow",bold:true}},'
       f'{{text:"   ·   ton compte : $(e) Écus\\n",color:"gray"}},{{text:"1 point par niveau du compagnon. Un rang coûte autant de points que son numéro, plus 4 000 Écus par rang. 30 points pour 45 au total : choisis ta voie.",color:"dark_gray"}}]}}],'
       f'actions:[{",".join(acts_)}],columns:3,'
       f'exit_action:{{label:"Retour",width:200,action:{{type:"run_command",command:"trigger compagnons set {10 + k}"}}}}}}')
@@ -780,18 +780,35 @@ for k, (_, cle, nom, col, ent, ico, (j, n, jn), suit, combat) in T.items():
         f'execute if score @s cp.out matches {k} run data modify storage {NS}:m dehors set value "{nom}"',
         f'data modify storage {NS}:m s{k} set value ""',
         f"execute if score #deb cp.t matches 1 store result storage {NS}:m s{k} int 1 run {S} get @s cp.l{k}"]
+# 26/11/2026 : accueil en panneau « succès » (dessiné par Métiers : metiers/sources/panneaux.json)
+exec(open(os.path.join(ICI, "..", "..", "metiers", "sources", "panneaux_lib.py"), encoding="utf-8").read())
+for k in T:
+    A += [f'data modify storage {NS}:m a{k} set value "{pan_etat("compagnons", k, "off")}"',
+          f'data modify storage {NS}:m v{k} set value "verrouillé"', f'data modify storage {NS}:m l{k} set value ""']
+    A += deblocage(k) + [
+        f'execute if score #deb cp.t matches 1 run data modify storage {NS}:m a{k} set value "{pan_etat("compagnons", k, "on")}"',
+        f'execute if score @s cp.out matches {k} run data modify storage {NS}:m a{k} set value "{pan_etat("compagnons", k, "notif")}"',
+        f'execute if score #deb cp.t matches 1 run data modify storage {NS}:m v{k} set value "niv "',
+        f"execute if score #deb cp.t matches 1 store result storage {NS}:m l{k} int 1 run {S} get @s cp.l{k}"]
+    for txt_, cond in (("verrouillé", "if score #deb cp.t matches 0"), ("niv 5", f"if score #deb cp.t matches 1 if score @s cp.l{k} matches ..9"),
+                       ("niv 55", f"if score #deb cp.t matches 1 if score @s cp.l{k} matches 10..")):
+        av, ap = pan_pads("compagnons", k, "p", txt_)
+        A += [f'execute {cond} run data modify storage {NS}:m p{k} set value "{av}"', f'execute {cond} run data modify storage {NS}:m r{k} set value "{ap}"']
 A.append(f"function {NS}:menu/accueil_b with storage {NS}:m")
 w(F + "menu/accueil.mcfunction", A)
-acts = []
+_cl, _sv = {}, {}
 for k, (_, cle, nom, col, ent, ico, (j, n, jn), suit, combat) in T.items():
-    tip = f"{nom} : {BASE[k]}\\nSe débloque au {COND(k)}."
-    acts.append(btn(f'[{IC(ico)},$(b{k}),{{text:"$(s{k})",color:"yellow"}}]', 10 + k, 150, tip))
-acts += [btn(f'[{IC("lead")},{txt("  Ranger", "gray")}]', 2, 150, "Fait rentrer ton compagnon."),
-         btn(f'[{IC("compass_00")},{txt("  Suivre / Rester", "aqua")}]', 3, 150, "Il te suit, ou il reste là où il est pour garder la zone."),
-         btn(f'[{IC("book")},{txt("  Comment ça marche", "white")}]', 4, 150, "Un compagnon à la fois. Il se débloque avec tes métiers (et les boss pour le dragon et le wither), gagne ses niveaux, ses capacités et des améliorations. Ghast, dragon et wither se montent d’un clic droit. K.O. : retour 60 s plus tard.")]
+    _cl[k] = f"trigger compagnons set {10 + k}"
+    _sv[k] = [{"text": nom + "\n", "color": col, "bold": True}, {"text": f"{BASE[k]}\nSe débloque au {COND(k)}.", "color": "gray", "bold": False}]
+_corps = pan_snbt(pan_corps("compagnons", _cl, _sv))
+for k in T:
+    _corps = _corps.replace(f"$(i{k})", f"$(v{k})$(l{k})")
+acts = [btn(f'[{IC("lead")},{txt("  Ranger", "gray")}]', 2, 150, "Fait rentrer ton compagnon."),
+        btn(f'[{IC("compass_00")},{txt("  Suivre / Rester", "aqua")}]', 3, 150, "Il te suit, ou il reste là où il est pour garder la zone."),
+        btn(f'[{IC("book")},{txt("  Comment ça marche", "white")}]', 4, 150, "Déblocage, niveaux, capacités, montures, dressage.")]
 w(F + "menu/accueil_b.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Compagnons",color:"#C878FF",bold:true},can_close_with_escape:true,pause:false,'
-  f'body:[{{type:"minecraft:plain_message",width:240,contents:[{{text:"\ue7f3",font:"metiers:arbre",color:"white",shadow_color:0}},{{text:"\\n\\n\\n\\n\\n\\n\\n\\n\\n"}}]}},{{type:"minecraft:plain_message",width:400,contents:[{{text:"Compagnon dehors : ",color:"gray"}},{{text:"$(dehors)",color:"#C878FF"}},{{text:"   ·   $(md)",color:"gray"}}]}}],'
+  f'body:[{{type:"minecraft:plain_message",width:400,contents:[{{text:"Compagnon dehors : ",color:"gray"}},{{text:"$(dehors)",color:"#C878FF"}},{{text:"   ·   $(md)   ·   clique sur un compagnon",color:"gray"}}]}},{_corps}],'
   f'actions:[{",".join(acts)}],columns:3,'
   'exit_action:{label:"Fermer",width:200}}')
 
@@ -865,7 +882,7 @@ AIDE_CP = [
 ]
 w(F + "menu/aide.mcfunction",
   'dialog show @s {type:"minecraft:multi_action",title:{text:"Compagnons : comment ça marche",color:"#E0A040",bold:true},can_close_with_escape:true,pause:false,'
-  f'body:[{BAN},{{type:"minecraft:plain_message",width:300,contents:[{{text:"Survole un sujet pour lire son explication.",color:"gray"}}]}}],'
+  f'body:[{{type:"minecraft:plain_message",width:300,contents:[{{text:"Survole un sujet pour lire son explication.",color:"gray"}}]}}],'
   'actions:[' + ",".join(f'{{label:{{text:"{tt}",color:"#E0A040"}},width:100,tooltip:{{text:"{dd}"}},action:{{type:"run_command",command:"trigger compagnons set 4"}}}}' for tt, dd in AIDE_CP) +
   '],columns:3,exit_action:{label:"Retour",width:200,action:{type:"run_command",command:"trigger compagnons set 1"}}}')
 

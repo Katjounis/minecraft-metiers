@@ -418,7 +418,7 @@ w(F + "stat/global_v3.mcfunction", [
 LEGG = L(T("■ ", C_V), T("ventes   ", "gray"), T("■ ", C_A), T("achats   ", "gray"), T("$(lg)", "dark_gray"))
 w(F + "stat/global_d.mcfunction", "$" + dlg(
     T("Statistiques du marché", "light_purple", True),
-    [BAN(6), f'{{type:"minecraft:plain_message",width:310,contents:{L(T("$(ti)", "white", True), T("\\nmax $(mx)   ·   min $(mn)\\n", "gray"))[:-1]},{CHART()},{{text:"\\n"}},{{text:"",extra:{LEGG}}}]}}'],
+    [f'{{type:"minecraft:plain_message",width:310,contents:{L(T("$(ti)", "white", True), T("\\nmax $(mx)   ·   min $(mn)\\n", "gray"))[:-1]},{CHART()},{{text:"\\n"}},{{text:"",extra:{LEGG}}}]}}'],
     [btn_cmd(T(nom, f"$(k{v})", True), f"trigger commerce set {80 + v}") for v, nom in GVUES]
     + [btn(T("Bourse", "light_purple"), 20, 160), btn(T("Accueil", "white"), 1, 160)]))
 
