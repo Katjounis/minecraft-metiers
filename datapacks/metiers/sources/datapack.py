@@ -1414,7 +1414,7 @@ def outil_give(j, k):
             f'{{text:"Palier {k}/10, il évolue tous les 10 niveaux",color:"gray",italic:false}}' +
             {"e": ',{text:"Clic droit : les animaux proches te suivent",color:"light_purple",italic:false}',
              "n": ',{text:"Clic droit : points de téléportation",color:"light_purple",italic:false}',
-             "t": f',{{text:"Mets-y 1 bloc : ceux que tu ramasses ensuite sont détruits",color:"light_purple",italic:false}},{{text:"{3 + k} sortes de blocs au plus",color:"light_purple",italic:false}}',
+             "t": f',{{text:"Mets-y 1 bloc : ceux que tu ramasses ensuite sont vendus",color:"light_purple",italic:false}},{{text:"{3 + k} sortes de blocs au plus",color:"light_purple",italic:false}}',
              "k": f',{{text:"Tenue dans une main : portée +{1 + k // 5} pour poser et casser",color:"#C08850",italic:false}}'}.get(j, "") +
             # 26.0 : capacités des anciens objets de la Forge, débloquées par palier sur l'outil du métier
             "".join(f',{{text:"{txt_}",color:"aqua",italic:false}}' for jj, kk, txt_ in CAPA_OUTIL if jj == j and k >= kk) + ']')
@@ -1468,7 +1468,8 @@ for j, d in jobs.items():
     w(F + f"{j}/outil_donner.mcfunction", "\n".join(OD))
     if j == "t":
         # ---- Dank Null (26/11/2026, remplace la Bourse) : chaque sorte d'objet rangée dans le sac sert de filtre,
-        # tout exemplaire de cette sorte qui arrive dans l'inventaire est détruit (3 sortes au palier 0, +1 par palier).
+        # tout exemplaire de cette sorte qui arrive dans l'inventaire est vendu au marché, ou détruit s'il ne se vend pas
+        # (3 sortes au palier 0, +1 par palier).
         # Les objets nommés, à données (outils de métier...) ou qui contiennent d'autres objets ne sont jamais détruits.
         DK = f"{NS}:dk"
         w(F + "t/dank/capter.mcfunction", "\n".join([
@@ -1491,7 +1492,12 @@ for j, d in jobs.items():
             f"function {NS}:t/dank/vider with storage {DK} c[0]",
             f"data remove storage {DK} c[0]", "scoreboard players add #dn m.tmp 1",
             f"function {NS}:t/dank/boucle"]))
+        # 26/11/2026 : le Commerce vend d'abord ces objets au prix du marché (tag #metiers:dank_vendre, rempli par
+        # Commerce) ; ce qu'il ne rachète pas (ou sans Commerce) est détruit comme avant
+        wj(f"data/{NS}/tags/function/dank_vendre.json", {"values": []})
         w(F + "t/dank/vider.mcfunction", "\n".join([
+            f'$data modify storage {DK} vid set value "$(id)"',
+            f"function #{NS}:dank_vendre",
             "$execute store result score #x m.tmp run clear @s $(id)[!minecraft:custom_data,!minecraft:custom_name,!minecraft:container,!minecraft:bundle_contents]",
             "scoreboard players operation #dv m.tmp += #x m.tmp"]))
         # ancienne Bourse : remplacée toute seule si elle est vide, sinon on prévient (ses objets deviendraient des filtres)
@@ -1502,7 +1508,7 @@ for j, d in jobs.items():
             'execute if score @s m.dkav matches 1 run title @s actionbar {"text":"Vide ta Bourse de Marchand : elle va devenir un Dank Null.","color":"light_purple"}']))
         w(F + "t/dank/convertir.mcfunction", "\n".join([
             f"function {NS}:t/outil_donner",
-            tr("Ta Bourse devient un Dank Null : mets-y un bloc (terre, cobble, granite...), tous ceux que tu ramasses ensuite sont détruits. Clic droit sur le sac pour ressortir un filtre.", "light_purple")]))
+            tr("Ta Bourse devient un Dank Null : mets-y un bloc (terre, cobble, granite...), tous ceux que tu ramasses ensuite sont vendus au marché. Clic droit sur le sac pour ressortir un filtre.", "light_purple")]))
     OP = [f"scoreboard players add @s m.ceff_{j} 0", f"scoreboard players add @s m.cfor_{j} 0", f"scoreboard players add @s m.skin_{j} 0"]
     for k in range(11):
         be = tool_ench(j, k).get("efficiency", 0)

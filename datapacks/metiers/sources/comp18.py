@@ -57,7 +57,7 @@ NOUVELLES = {
         ("Allumeur", "Dans le noir, une torche de ton inventaire se pose toute seule à tes pieds.", "item/glow_ink_sac"),
         ("Aimant", "Les objets et l'XP au sol à 8 blocs viennent à toi. Clic sur la compétence pour le couper.", "item/iron_ingot"),
         ("Lanterne", "Débloque la Lanterne (onglet Outil, en Écus) : en main secondaire, la lumière te suit.", "item/lantern"),
-        ("Pioche large", "Accroupi, ta pioche creuse en 3x3 dans la direction visée.", "item/iron_pickaxe"),
+        ("Pioche large", "Ta pioche creuse en 3x3 dans la direction visée (Désactiver dans l'arbre pour la couper). Accroupi : elle casse toute la veine du bloc visé, 48 blocs au plus (pas la pierre, la deepslate ni la netherrack).", "item/iron_pickaxe"),
         ("Lave apprivoisée", "Toucher la lave donne 15 s de Résistance au feu (recharge 2 min).", "item/lava_bucket"),
         ("Stature de pierre", "+4 d'armure, +2 de robustesse et moitié moins de recul.", "item/netherite_chestplate")],
     "c": [
