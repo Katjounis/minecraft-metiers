@@ -81,9 +81,11 @@ vsh = open(os.path.join(SH, "text.vsh"), encoding="utf-8").read()
 fsh = open(os.path.join(SH, "text.fsh"), encoding="utf-8").read()
 A_V = "layout(location = 3) out vec2 texCoord0;\n"
 assert A_V in vsh and vsh.rstrip().endswith("}")
-vsh = vsh.replace(A_V, A_V + "layout(location = 4) out float hudMark;\n")
+vsh = vsh.replace(A_V, A_V + "#ifdef IS_GUI\nlayout(location = 4) out float hudMark;\n#endif\n")
 vsh = vsh.rstrip()[:-1] + f'''
     // Commerce : encadré du solde. Le « title » (échelle 4, centré) est ramené en haut à gauche, échelle 1.
+    // Interface seulement (IS_GUI) : le texte du monde garde le code vanilla tel quel.
+#ifdef IS_GUI
     hudMark = 0.0;
     ivec3 hudRgb = ivec3(round(Color.rgb * 255.0));
     if (hudRgb == ivec3(254, 254, 253) || hudRgb == ivec3(254, 200, 65)) {{
@@ -99,20 +101,17 @@ vsh = vsh.rstrip()[:-1] + f'''
         float ny = 8.0 + ly;
         gl_Position = vec4(nx / sw * 2.0 - 1.0, 1.0 - ny / sh * 2.0, clip.z / clip.w, 1.0);
     }}
+#endif
 }}
 '''
 A_F = "layout(location = 3) in vec2 texCoord0;\n"
 B_F = "    if (color.a < 0.1) {"
 assert A_F in fsh and B_F in fsh
-fsh = fsh.replace(A_F, A_F + "layout(location = 4) in float hudMark;\n")
-fsh = fsh.replace(B_F, "    if (hudMark > 0.5) {\n        color.a = min(color.a * %.1f, 1.0);\n    }\n\n" % ALPHA + B_F)
-# 25/11/2026 : pseudos, panneaux et noms de villageois en lettres hachées pour les joueurs en vanilla 26.3 (pas sous
-# Fabric). Seul le texte du monde, vu de loin donc rétréci, était touché : la texture des lettres est lue au niveau de
-# détail 0, sans les réductions (mipmaps) que le jeu calcule pour le texte du monde et qui sortaient corrompues.
-for _a, _b in (("texture(Sampler0, texCoord0).rrrr", "textureLod(Sampler0, texCoord0, 0.0).rrrr"),
-               ("texture(Sampler0, texCoord0);", "textureLod(Sampler0, texCoord0, 0.0);")):
-    assert _a in fsh, _a
-    fsh = fsh.replace(_a, _b)
+fsh = fsh.replace(A_F, A_F + "#ifdef IS_GUI\nlayout(location = 4) in float hudMark;\n#endif\n")
+fsh = fsh.replace(B_F, "#ifdef IS_GUI\n    if (hudMark > 0.5) {\n        color.a = min(color.a * %.1f, 1.0);\n    }\n#endif\n\n" % ALPHA + B_F)
+# 26/11/2026 : texte du monde (panneaux, noms) en lettres hachées tant que ce shader le traitait, même en vanilla
+# (test : pack sans shader = texte net). Toutes les modifications sont réservées à l'interface (IS_GUI) et la lecture
+# textureLod du 25/11 est retirée : dans le monde, le jeu compile exactement le shader vanilla.
 # 25/11/2026 : shader débranché un temps (panneaux illisibles en 26.3), puis rebranché à la demande de Samuel : il n'y
 # était pour rien. HUD_SHADER = False passe le solde dans la barre latérale (tableau/on) sans toucher au texte du jeu.
 HUD_SHADER = True

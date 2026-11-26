@@ -62,9 +62,7 @@ def fusionner():
                     with open(full, "rb") as f:
                         z.writestr(zi, f.read())
                     ajoutes += 1
-    sys.path.insert(0, OUTILS)
-    import allege_polices
-    donnees, reduites, _, _ = allege_polices.alleger(sortie.getvalue())   # texte du monde lisible en 26.3
+    donnees = sortie.getvalue()
     with open(ZIP, "wb") as f:
         f.write(donnees)
     sha = hashlib.sha1(donnees).hexdigest()
