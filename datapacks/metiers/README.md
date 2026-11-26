@@ -5,6 +5,10 @@ Datapack vanilla de métiers (Bûcheron, Fermier, Mineur, Chasseur, Pêcheur, É
 ![Aperçu des outils](apercu/outils.png)
 
 
+## Toucher de soie (26/11/2026)
+
+En vanilla, un minerai cassé en Toucher de soie ne lâche aucune orbe d'XP. Le serveur la rend : avec une pioche en Toucher de soie en main, chaque minerai donne l'XP moyenne du vanilla (charbon et or du Nether 1, lapis, redstone et quartz 3, diamant et émeraude 5 ; fer, cuivre et or restent à 0 comme en vanilla, leur XP vient de la cuisson). Poser un de ces minerais retire la même XP (solde `m.sxp`), pour qu'on ne puisse pas poser et recasser en boucle. L'XP de Mineur n'a jamais dépendu du mode : elle compte de la même façon en Fortune et en Toucher de soie. Code dans `ref_soie.py`.
+
 ## Dank Null du Marchand (26/11/2026)
 
 La Bourse du Marchand devient le **Dank Null** (même sac, même place dans l'onglet Outil). On range 1 exemplaire d'un bloc dedans (terre, cobble, granite, gravier...) : tant que le sac est dans l'inventaire ou en main secondaire, tous les exemplaires de ce bloc qui arrivent dans l'inventaire sont détruits (vérifié toutes les 10 ticks, petite particule violette). 3 sortes de filtres au palier 0, une de plus par palier, 13 au palier 10 ; au-delà, les filtres en trop sont ignorés. Pour retirer un filtre, clic droit sur le sac comme une bourse normale. Ne sont jamais détruits : les objets nommés, les objets à données (outils de métier, objets des packs) et ceux qui contiennent d'autres objets (boîtes de Shulker, sacs). Les filtres passent d'un palier à l'autre. Une ancienne Bourse vide est remplacée toute seule par le Dank Null ; si elle contient encore des objets, un message demande de la vider d'abord (ses objets deviendraient des filtres). Fonctions `t/dank/*`, branchement dans `ref_dank.py`.
