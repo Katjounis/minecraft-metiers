@@ -55,8 +55,10 @@ def _volute(px, x0, y0, sx, sy, c1, c2):
         px[x0 + sx * i, y0 + sy * j] = c2 + (255,)
 
 
-def _fond_livre(W, H, noeuds_xy=(), graine="livre"):
-    """Livre ouvert de W x H (la bande des signets LIVRE_T en haut reste vide). noeuds_xy : centres des icônes."""
+def _fond_livre(W, H, noeuds_xy=(), graine="livre", une_page=False, filigrane=None, rayon=17):
+    """Livre ouvert de W x H (la bande des signets LIVRE_T en haut reste vide). noeuds_xy : centres des icônes.
+    une_page : une seule grande page (arbres de compétences), sans reliure au milieu ;
+    filigrane : (image, cx, cy) imprimée à l'encre très pâle sous le dessin."""
     im = _Img.new("RGBA", (W, H))
     px = im.load()
     T = LIVRE_T
@@ -97,11 +99,24 @@ def _fond_livre(W, H, noeuds_xy=(), graine="livre"):
             u = dsp / max(1, demi)                       # 0 à la reliure, 1 au bord extérieur
             bombe = .9 * (1 - _m.sin(u * _m.pi * .92))   # plus clair au milieu de chaque page
             gouttiere = max(0, 6 - dsp) * .22            # ombre douce de la reliure (pas de trait : des libellés passent dessus)
+            if une_page:
+                bombe, gouttiere = .9 * (1 - u ** 2), 0
             bord = min(x - X0, X1 - x, y - P0, P1 - y)
             brun = max(0, 4 - bord) * .55                # bords brunis
             v = .9 + bombe * .7 + gouttiere + brun + (gros[y][x] - .5) * 1.6 + (fin[y][x] - .5) * .9 + (y - P0) / (P1 - P0) * .5
             px[x, y] = _tr(PAPIER, v, x, y) + (255,)
-        # pli de la reliure
+    if filigrane:   # motif imprimé à l'encre pâlie (sépia), sous les fibres et les ornements
+        fi, fx, fy = filigrane
+        fp = fi.load()
+        for j in range(fi.height):
+            for i in range(fi.width):
+                a = fp[i, j][3]
+                x, y = fx - fi.width // 2 + i, fy - fi.height // 2 + j
+                if a and X0 < x < X1 and P0 < y < P1:
+                    l = sum(fp[i, j][:3]) / 765
+                    r, g, b, _a = px[x, y]
+                    k = .1 + .08 * (1 - l)
+                    px[x, y] = (int(r * (1 - k) + 120 * k), int(g * (1 - k) + 88 * k), int(b * (1 - k) + 50 * k), 255)
     # fibres et taches de rousseur
     for _ in range(W * H // 260):
         x, y = rnd.randint(X0 + 3, X1 - 6), rnd.randint(P0 + 3, P1 - 3)
@@ -118,25 +133,27 @@ def _fond_livre(W, H, noeuds_xy=(), graine="livre"):
             px[x + dx, y + dy] = (198, 164, 118, 255)
     # ---------------- ornements à l'encre
     m = 5
-    for (cx, cy, sx, sy) in ((X0 + m, P0 + m, 1, 1), (SP - 3 - m, P0 + m, -1, 1), (SP + 3 + m, P0 + m, 1, 1), (X1 - m, P0 + m, -1, 1),
-                             (X0 + m, P1 - m, 1, -1), (SP - 3 - m, P1 - m, -1, -1), (SP + 3 + m, P1 - m, 1, -1), (X1 - m, P1 - m, -1, -1)):
+    coins = [(X0 + m, P0 + m, 1, 1), (X1 - m, P0 + m, -1, 1), (X0 + m, P1 - m, 1, -1), (X1 - m, P1 - m, -1, -1)]
+    if not une_page:
+        coins += [(SP - 3 - m, P0 + m, -1, 1), (SP + 3 + m, P0 + m, 1, 1), (SP - 3 - m, P1 - m, -1, -1), (SP + 3 + m, P1 - m, 1, -1)]
+    for (cx, cy, sx, sy) in coins:
         _volute(px, cx, cy, sx, sy, ENCRE_L, ENCRE_F)
     # ---------------- médaillon gaufré sous chaque icône : disque éclairci, bord en relief, filet d'encre pâlie
     for (nx, ny) in noeuds_xy:
-        for y in range(ny - 18, ny + 19):
-            for x in range(nx - 18, nx + 19):
+        for y in range(ny - rayon - 1, ny + rayon + 2):
+            for x in range(nx - rayon - 1, nx + rayon + 2):
                 if not (P0 < y < P1 and X0 < x < X1):
                     continue
                 d = _m.hypot(x - nx, y - ny)
-                if d > 17.5:
+                if d > rayon + .5:
                     continue
                 r, g, b, _a = px[x, y]
                 haut = (y - ny) + (x - nx) * .4 < 0
-                if d < 14:
+                if d < rayon - 3:
                     k = 1.035
-                elif d < 15.5:
+                elif d < rayon - 1.5:
                     k = 1.06 if haut else .9
-                elif d < 16.5:
+                elif d < rayon - .5:
                     r, g, b = [int(v * .7 + e * .3) for v, e in zip((r, g, b), ENCRE_L)]
                     k = 1
                 else:
@@ -160,7 +177,7 @@ def _fond_livre(W, H, noeuds_xy=(), graine="livre"):
         for (dx, dy, c) in ((0, 0, _LAIT[0]), (1, 0, _LAIT[1]), (0, 1, _LAIT[1]), (1, 1, _LAIT[4]), (2, 1, _LAIT[4]), (1, 2, _LAIT[4])):
             px[rx + dx, ry + dy] = c + (255,)
     # ---------------- tranchefiles (haut et bas de la reliure)
-    for yy in (H - 4, H - 3):   # tranchefile : petit boudin rayé rouge et crème au pied de la reliure
+    for yy in (() if une_page else (H - 4, H - 3)):   # tranchefile : petit boudin rayé rouge et crème au pied de la reliure
         for xx in range(SP - 4, SP + 4):
             c = (186, 44, 44) if xx % 2 else (236, 214, 160)
             px[xx, yy] = (tuple(int(v * .75) for v in c) if yy == H - 3 else c) + (255,)
