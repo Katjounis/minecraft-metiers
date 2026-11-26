@@ -417,7 +417,8 @@ NEW_ATK = {
 }
 for k, (nom, L_) in NEW_ATK.items():
     w(F + f"boss/a_{nom}.mcfunction", "\n".join(L_))
-AT2 = ["scoreboard players set #atk m.boss 0"]
+AT2 = ["tag @s add metiers.atk",   # 26/11/2026 : signal pour le modèle animé du pack Boss
+       "scoreboard players set #atk m.boss 0"]
 for k, b in BOSS.items():
     atks = list(b["atks"]) + [NEW_ATK[k][0]]
     AT2.append(f"execute if score #type m.boss matches {k} store result score #r m.boss run random value 1..{len(atks)}")

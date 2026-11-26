@@ -83,6 +83,7 @@ for d, t, bi in (("grimoire", "bibliotheque", "bibliotheque"), ("corbeau", "cham
 wj(f"data/{NS}/predicate/accroupi.json", {"type": "minecraft:entity_properties", "entity": "this", "predicate": {"flags": {"is_sneaking": True}}})
 wj(f"data/{NS}/predicate/au_sol.json", {"type": "minecraft:entity_properties", "entity": "this", "predicate": {"flags": {"is_on_ground": True}}})
 wj(f"data/{NS}/predicate/plane.json", {"type": "minecraft:entity_properties", "entity": "this", "predicate": {"flags": {"is_flying": True}}})
+wj(f"data/{NS}/predicate/bouge.json", {"type": "minecraft:entity_properties", "entity": "this", "predicate": {"movement": {"horizontal_speed": {"min": 0.6}}}})
 wj(f"data/{NS}/predicate/monte.json", {"type": "minecraft:entity_properties", "entity": "this", "predicate": {"vehicle": {}}})
 wj(f"data/{NS}/tags/block/passable.json", {"values": ["#minecraft:air", "minecraft:light", "minecraft:short_dry_grass", "minecraft:tall_dry_grass",
                                                      "minecraft:dead_bush", "#minecraft:wool_carpets", "minecraft:candle"]})
@@ -102,7 +103,7 @@ fn("load", [f"scoreboard objectives add {o} dummy" for o in OBJ] + [
     "execute unless score #etat bs.ev matches 0.. run scoreboard players set #etat bs.ev 0",
     "execute unless score #eid bs.ev matches 0.. run scoreboard players set #eid bs.ev 0",
     f"execute unless score #t bs.ev matches 0.. run function {NS}:ev/prochain",
-    'bossbar add boss:combat ""', "bossbar set boss:combat style notched_10",
+    'bossbar add boss:combat ""', "kill @e[type=minecraft:item_display,tag=bs.mh]", "bossbar set boss:combat style notched_10",
     # un rechargement pendant un combat : on clot proprement (les joueurs rentrent chez eux)
     f"execute if score #etat bs.ev matches 1.. run function {NS}:ev/interrompu",
 ])

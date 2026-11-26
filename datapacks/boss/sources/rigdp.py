@@ -8,10 +8,14 @@ from commun import fn, NS
 from rig import snbt_matrice
 
 
-def generer(R, anims, defaut_fn, luminosite=10, view=4.0):
+def generer(R, anims, defaut_fn, luminosite=10, view=4.0, racine=None):
     """defaut_fn : fonction appelee a la fin d'une animation non bouclee (choisit l'animation suivante)."""
     nom = R.nom
-    repos = R.matrices({})
+    from rig import mul, echelle as _ech
+    _s, _tag = racine if racine else (1.0, None)
+    _mat = R.matrices
+    R_matrices = (lambda pose=None: {k: mul(_ech(_s), v) for k, v in _mat(pose).items()}) if racine else _mat
+    repos = R_matrices({})
     pieces = R.pieces()
     # ---------------------------------------------------------------- invoquer (a la position courante)
     lignes = []
@@ -19,7 +23,7 @@ def generer(R, anims, defaut_fn, luminosite=10, view=4.0):
         pid = R.ident_piece(o, lueur)
         br = "brightness:{sky:15,block:15}" if lueur else f"brightness:{{sky:0,block:{luminosite}}}"
         lignes.append(
-            f'summon minecraft:item_display ~ ~ ~ {{Tags:["bs.e","bs.os","bs.os.{nom}","bs.p.{pid}"],'
+            f'summon minecraft:item_display ~ ~ ~ {{Tags:["bs.e","bs.os","bs.os.{nom}","bs.p.{pid}"{(',"' + _tag + '"') if _tag else ""}],'
             f'item:{{id:"minecraft:paper",count:1,components:{{"minecraft:item_model":"{NS}:{pid}"}}}},item_display:"none",'
             f'teleport_duration:1,interpolation_duration:0,view_range:{view}f,shadow_radius:0f,{br},'
             f'transformation:{snbt_matrice(repos[pid])}}}')
@@ -31,7 +35,7 @@ def generer(R, anims, defaut_fn, luminosite=10, view=4.0):
     for i, (an, A) in enumerate(anims.items(), start=1):
         ids[an] = i
         cles = A["cles"]
-        mats = [R.matrices(p) for _, p in cles]
+        mats = [R_matrices(p) for _, p in cles]
         prev = None
         temps = 0
         t_lignes = []

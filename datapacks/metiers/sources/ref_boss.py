@@ -208,7 +208,9 @@ for k, L in VAGUE.items():
     w(F + f"boss/vague_{k}.mcfunction", "\n".join(L))
 
 # attaques (exécutées par le boss, à sa position)
-AT = ["scoreboard players set #atk m.boss 0"]
+AT = ["scoreboard players set #atk m.boss 0",
+      # 26/11/2026 : signal pour le pack Boss (le modèle animé du boss joue son attaque)
+      "tag @s add metiers.atk"]
 for k, b in BOSS.items():
     n = len(b["atks"])
     AT.append(f"execute if score #type m.boss matches {k} store result score #r m.boss run random value 1..{n}")

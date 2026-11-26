@@ -491,6 +491,14 @@ def generer():
         ecrire_json(f"items/trophee_{k}.json", {"model": {"type": "minecraft:model", "model": f"horreur:item/trophee_{k}"}})
     ecrire_json("models/item/ballon.json", ballon().construire(32))
     ecrire_json("items/ballon.json", {"model": {"type": "minecraft:model", "model": "horreur:item/ballon"}})
+    # 26/11/2026 : trophees en tetes 3D (tetes.py) et squelettes animes des creatures (rigs.py)
+    import tetes, rigs
+    for k, pid in tetes.generer(A).items():
+        m = json.load(open(os.path.join(A, "models", "item", "boss", pid + ".json"), encoding="utf-8"))
+        ecrire_json(f"models/item/trophee_{k}.json", m)
+    for k, f in rigs.CREATURES_RIG.items():
+        R, _ = f()
+        R.construire(A, "horreur")
     import sons
     sons.generer_rp(A)
     n = sum(len(f) for _, _, f in os.walk(OUT))

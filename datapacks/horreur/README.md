@@ -4,6 +4,11 @@ Datapack pour Minecraft Java 26.x, sans mod. La nuit, des créatures de la pop-c
 
 Inspiration : *Spooky Scary Creatures*. Aucun asset n'en est repris : textures et modèles sont générés par `sources/resourcepack.py`.
 
+
+## Modèles animés (26/11/2026)
+
+Toutes les créatures sont maintenant des squelettes d'item_display articulés (`sources/rigs.py`, moteur du pack Boss), passagers de leur mob invisible, avec trois animations : repos, marche (quand le mob se déplace) et attaque (quand il te frappe). SlenderMan a six tentacules dans le dos, Siren Head ses deux sirènes qui cherchent, le Loup-garou un museau et une queue, Pinhead ses épingles et ses chaînes, la Nonne et la Dame blanche glissent, le Clown tient son ballon, le Croque-mitaine porte cape, cornes et sac. Les trophées et les fiches du bestiaire montrent la tête en 3D de la créature (`sources/tetes.py`), ce qui corrige SlenderMan affiché couché. Le pack Boss doit être présent dans le dépôt pour fabriquer Horreur (il fournit `rig.py` et `peintres.py`).
+
 ## Créatures
 
 | Créature | Où, quand | Ce qu'elle fait |

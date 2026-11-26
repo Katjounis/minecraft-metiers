@@ -131,7 +131,7 @@ for c in CREATURES:
 
 # ---------------------------------------------------------------------------------------------
 # Chargement, boucles
-objs = ["hr.tmp", "hr.cfg", "hr.cd", "hr.vie", "hr.age", "hr.etat", "hr.t", "hr.r", "hr.tot", "hr.cw"] + [f"hr.k.{i}" for i in IDS]
+objs = ["hr.tmp", "hr.cfg", "hr.cd", "hr.vie", "hr.age", "hr.etat", "hr.t", "hr.r", "hr.tot", "hr.cw", "hr.an", "hr.af"] + [f"hr.k.{i}" for i in IDS]
 w(F + "load.mcfunction", "\n".join(
     [f"scoreboard objectives add {o} dummy" for o in objs]
     + ["scoreboard objectives add bestiaire trigger",
@@ -173,6 +173,7 @@ execute as @e[tag=hr.c] on passengers run tag @s add hr.ok
 execute as @e[type=item_display,tag=hr.vis,tag=!hr.ok] at @s run function horreur:vis/orphelin
 execute as @e[type=item_display,tag=hr.envol] at @s run function horreur:vis/envol
 execute as @e[tag=hr.statue] run function horreur:vis/tourner
+execute as @e[tag=hr.c] run function horreur:rig/tick
 # Statues animees : 4 poses par cycle de 4 s, le jeu interpole entre elles (balancement, respiration, rotation)
 scoreboard players add #anim hr.tmp 1
 execute if score #anim hr.tmp matches 80.. run scoreboard players set #anim hr.tmp 0
@@ -327,6 +328,48 @@ scoreboard players set #ok hr.tmp 1""")
 # ---------------------------------------------------------------------------------------------
 # Invocation
 HAUT = {"zombie": 1.95, "husk": 1.95, "vex": 0.8}
+import rigs
+from rig import mul, trans, echelle as _ech, snbt_matrice
+wj(f"data/{NS}/predicate/bouge.json", {"type": "minecraft:entity_properties", "entity": "this",
+                                       "predicate": {"movement": {"horizontal_speed": {"min": 0.6}}}})
+RIGS_C = {}
+
+
+def _racine(c):
+    return mul(trans(0, -HAUT[c["base"]] * c["echelle"], 0), _ech(rigs.TAILLE[c["id"]]))
+
+
+def _facteurs(R):
+    fac = {}
+    for o, lueur in R.pieces():
+        bx = [b for b in o.boites if bool(b[3].get("lueur")) == lueur]
+        ext = max(max(abs(cc[i]) + s[i] / 2 for i in range(3)) for cc, s, _, _ in bx)
+        f_ = 1.0
+        while ext / f_ > 23.5:
+            f_ *= 2
+        fac[R.ident_piece(o, lueur)] = f_
+    R.facteurs = fac
+
+
+def rig_passagers(c):
+    k = c["id"]
+    if k not in RIGS_C:
+        R, A = rigs.CREATURES_RIG[k]()
+        _facteurs(R)
+        RIGS_C[k] = (R, A)
+    R, A = RIGS_C[k]
+    M = R.matrices({})
+    out = []
+    for o, lueur in R.pieces():
+        pid = R.ident_piece(o, lueur)
+        br = ",brightness:{sky:15,block:15}" if lueur else ""
+        out.append('{id:"minecraft:item_display",Tags:' + snbt(["hr.e", "hr.vis", "hr.rig", "hr.p." + pid]) + br
+                   + ',item:{id:"minecraft:paper",count:1,components:{"minecraft:item_model":"horreur:' + pid + '"}},'
+                   + 'item_display:"none",teleport_duration:2,view_range:' + ("4f" if c["echelle"] > 2 else "2.5f")
+                   + ',transformation:' + snbt_matrice(mul(_racine(c), M[pid])) + '}')
+    return out
+
+
 
 
 def item_nbt(slot, k):
@@ -373,8 +416,7 @@ def pose(c, i):
 def summon(c):
     k = c["id"]
     tags = ["hr.e", "hr.c", "hr.c." + k, "hr.neuf"]
-    if c["apparence"] == "statue":
-        tags.append("hr.statue")
+    tags.append("hr.statue")
     if c["nuit"]:
         tags.append("hr.nuit")
     attrs = [("max_health", c["vie"]), ("attack_damage", c["degats"]), ("armor", c["armure"]),
@@ -387,18 +429,9 @@ def summon(c):
            "active_effects:[{id:\"minecraft:invisibility\",duration:-1,amplifier:0b,show_particles:0b,show_icon:0b},"
            "{id:\"minecraft:fire_resistance\",duration:-1,amplifier:0b,show_particles:0b,show_icon:0b}]",
            "drop_chances:{head:0f,chest:0f,legs:0f,feet:0f,mainhand:0f,offhand:0f}"]
-    passagers = []
-    if c["apparence"] == "habit":
-        nbt.append("equipment:{head:" + item_nbt("head", k) + ",chest:" + item_nbt("chest", k)
-                   + ",feet:" + item_nbt("feet", k) + "}")
-    else:
-        nbt.append("equipment:{head:" + VIDE + "}")
-        s = c["statue_echelle"]
-        # Le passager est accroche au sommet du mob : on redescend le modele (pieds du modele a y = -16 px)
-        t = 1.5 * s - HAUT[c["base"]] * c["echelle"]
-        passagers.append(display(k, ["hr.statue_vis", "hr.vis." + k], s, t, portee=4.0 if c["echelle"] > 2 else 2.0, lumineux=(k == "feu")))
-    if c.get("ballon"):
-        passagers.append(display("ballon", ["hr.ballon"], 1.0, 0.9 + 1.0 - HAUT[c["base"]] * c["echelle"], x=0.45))
+    # 26/11/2026 : l'apparence est un squelette anime (rigs.py) porte en passagers par le mob invisible
+    nbt.append("equipment:{head:" + VIDE + "}")
+    passagers = rig_passagers(c)
     if passagers:
         nbt.append("Passengers:[" + ",".join(passagers) + "]")
     return f"summon minecraft:{c['base']} ~ ~ ~ {{" + ",".join(nbt) + "}"
@@ -702,7 +735,8 @@ COUPS = {
 for k, lignes in COUPS.items():
     wj(f"data/{NS}/advancement/coup/{k}.json", {"criteria": {"c": {"trigger": "minecraft:entity_hurt_player", "conditions": {
         "damage": {"type": {"source_entity": {"minecraft:nbt": tags_nbt("hr.c." + k)}}}}}}, "rewards": {"function": f"{NS}:coup/{k}"}})
-    w(F + f"coup/{k}.mcfunction", "\n".join([f"advancement revoke @s only horreur:coup/{k}"] + lignes))
+    w(F + f"coup/{k}.mcfunction", "\n".join([f"advancement revoke @s only horreur:coup/{k}",
+                                             f"execute as @e[tag=hr.c.{k},sort=nearest,limit=1] run function horreur:rig/{k}/jouer_attaque"] + lignes))
 
 # ---------------------------------------------------------------------------------------------
 # Bestiaire : kills, paliers
@@ -979,7 +1013,7 @@ for c in CREATURES:
                "actions": [RETOUR], "exit_action": {"label": {"text": "Fermer"}}}
     fiche = {"type": "minecraft:multi_action", "title": {"text": c["nom"], "color": c["couleur"], "bold": True},
              "can_close_with_escape": True, "pause": False,
-             "body": [{"type": "minecraft:item", "item": {"id": "minecraft:paper", "components": {"minecraft:item_model": f"horreur:{k}" if c["apparence"] == "statue" else f"horreur:trophee_{k}"}},
+             "body": [{"type": "minecraft:item", "item": {"id": "minecraft:paper", "components": {"minecraft:item_model": f"horreur:trophee_{k}"}},
                        "show_decorations": False, "show_tooltip": False,
                        "description": {"width": 220, "contents": [{"text": c["desc"] + "\n", "color": "white"},
                                        {"text": f"Vie {c['vie']}  ·  dégâts {c['degats']}  ·  XP Chasseur {c['xp']}  ·  prime {PRIMES[k]} Écus", "color": "gray"}]}},
@@ -1019,6 +1053,51 @@ for _i in range(4):
         for k in POSES if k in C and C[k]["apparence"] == "statue"))
 
 # ---------------------------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------------------------
+# 26/11/2026 : squelettes animes des creatures (rigs.py, moteur du pack Boss). Une creature = son mob invisible +
+# des item_display passagers (tags hr.rig, hr.p.<piece>). Etat d'animation sur le mob : hr.an (animation), hr.af (tick).
+# Choix : attaque (quand elle te frappe) > marche (si elle bouge) > repos.
+for c in CREATURES:
+    k = c["id"]
+    rig_passagers(c)
+    R, A = RIGS_C[k]
+    ids = {}
+    tick = ["scoreboard players add @s hr.af 1"]
+    for i, (an, An) in enumerate(A.items(), start=1):
+        ids[an] = i
+        cles = An["cles"]
+        prev = None
+        temps = 0
+        tl = []
+        for j, (d, pose) in enumerate(cles):
+            M = R.matrices(pose)
+            l = []
+            for pid, m in M.items():
+                if prev is not None and prev[pid] == m:
+                    continue
+                l.append(f"execute on passengers if entity @s[tag=hr.p.{pid}] run data merge entity @s "
+                         f"{{start_interpolation:0,interpolation_duration:{d},transformation:{snbt_matrice(mul(_racine(c), m))}}}")
+            w(F + f"rig/{k}/{an}/k{j}.mcfunction", "\n".join(l) or "return 0")
+            if j > 0:
+                tl.append(f"execute if score @s hr.af matches {temps} run function {NS}:rig/{k}/{an}/k{j}")
+            temps += d
+            prev = M
+        if An["boucle"]:
+            tl.append(f"execute if score @s hr.af matches {temps}.. run scoreboard players set @s hr.af 0")
+            tl.append(f"execute if score @s hr.af matches 0 run function {NS}:rig/{k}/{an}/k0")
+        else:
+            tl.append(f"execute if score @s hr.af matches {temps}.. run function {NS}:rig/{k}/jouer_repos")
+        w(F + f"rig/{k}/{an}/t.mcfunction", "\n".join(tl))
+        w(F + f"rig/{k}/jouer_{an}.mcfunction", f"scoreboard players set @s hr.an {i}\nscoreboard players set @s hr.af 0\nfunction {NS}:rig/{k}/{an}/k0")
+        tick.append(f"execute if score @s hr.an matches {i} run function {NS}:rig/{k}/{an}/t")
+    choix = [f"execute if score @s hr.an matches {ids['attaque']} run return 0",
+             f"execute if predicate {NS}:bouge unless score @s hr.an matches {ids['marche']} run function {NS}:rig/{k}/jouer_marche",
+             f"execute unless predicate {NS}:bouge unless score @s hr.an matches {ids['repos']} run function {NS}:rig/{k}/jouer_repos"]
+    w(F + f"rig/{k}/tick.mcfunction", "\n".join(choix + tick))
+w(F + "rig/tick.mcfunction", "\n".join(f"execute if entity @s[tag=hr.c.{c['id']}] run return run function {NS}:rig/{c['id']}/tick" for c in CREATURES))
+add_rig = True
+
 import resourcepack
 resourcepack.generer()
 n = 0

@@ -240,3 +240,52 @@ def tnt(img, x0, y0, w, h, R, o):
 
 
 PEINTRES.update({"cristal": cristal, "lave": lave, "metal": metal, "tnt": tnt})
+
+
+def fourrure(img, x0, y0, w, h, R, o):
+    """Poils : meches verticales, ombre en bas, pointes claires."""
+    base = hexa(o.get("c", "#5e4e3e"))
+    for x in range(w):
+        dec = int((R.random() - .5) * 18)
+        for y in range(h):
+            v = dec + int((R.random() - .5) * 22) - int(18 * y / max(h, 1))
+            if (x + y * 2) % 5 == 0:
+                v -= 14
+            img.set(x0 + x, y0 + y, tuple(max(0, min(255, base[i] + v)) for i in range(3)) + (255,))
+    for _ in range(w * h // 12):
+        x, y = int(R.random() * w), int(R.random() * h)
+        img.set(x0 + x, y0 + y, tuple(min(255, base[i] + 30) for i in range(3)) + (255,))
+
+
+def peau(img, x0, y0, w, h, R, o):
+    """Peau marbree : taches, veines sombres optionnelles."""
+    base = hexa(o.get("c", "#c8b8a0"))
+    for y in range(h):
+        for x in range(w):
+            v = int((R.random() - .5) * o.get("bruit", 14)) + int(6 * math.sin(x * .7 + y * .4))
+            img.set(x0 + x, y0 + y, tuple(max(0, min(255, base[i] + v)) for i in range(3)) + (255,))
+    for _ in range(int(w * h * o.get("veines", 0) / 40)):
+        x, y = int(R.random() * w), int(R.random() * h)
+        for k in range(int(3 + R.random() * 5)):
+            if 0 <= x < w and 0 <= y < h:
+                img.set(x0 + x, y0 + y, hexa(o.get("cv", "#6a4a5a")))
+            x += int(R.random() * 3) - 1
+            y += 1
+
+
+def tissu(img, x0, y0, w, h, R, o):
+    """Tissu tisse avec plis : trame, ombres verticales, usure."""
+    base = hexa(o.get("c", "#1a1a1e"))
+    plis = [int(R.random() * w) for _ in range(max(1, w // 4))]
+    for y in range(h):
+        for x in range(w):
+            v = (6 if (x + y) % 2 else -4) + int((R.random() - .5) * o.get("bruit", 10))
+            if any(abs(x - p) <= 0 for p in plis):
+                v -= 16
+            img.set(x0 + x, y0 + y, tuple(max(0, min(255, base[i] + v)) for i in range(3)) + (255,))
+    if o.get("ourlet"):
+        for x in range(w):
+            img.set(x0 + x, y0 + h - 1, hexa(o["ourlet"]))
+
+
+PEINTRES.update({"fourrure": fourrure, "peau": peau, "tissu": tissu})

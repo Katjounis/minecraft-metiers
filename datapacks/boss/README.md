@@ -45,14 +45,14 @@ Un épouvantail décharné de 9 blocs attaché à sa croix, tête en sac cousu a
 
 PV : Grimoire 500 + 250 par joueur, Corbeau 600 + 250 par joueur (au-delà de 1 000, Résistance). Attaques plus rapprochées (le Grimoire attaque toutes les 4,5 s puis 2,7 s en phase 3, le Corbeau toutes les 4,5 s puis 3,5 s), flaque d'encre sous un joueur à chaque attaque du Grimoire en phase 2, tentacule en plus à chaque attaque en phase 3, corbeaux pendant la pluie de plumes du Corbeau, nuit qui ronge plus fort (2 dégâts toutes les 2 s).
 
-## Boss de Métiers habillés
+## Boss de Métiers redessinés
 
-Le pack habille aussi les 5 boss de Métiers dès qu'ils apparaissent, sans changer leur IA :
-- Colosse : armure de forge peinte, casque à cornes, marteau de forge géant ;
-- Liche du givre : robe de givre, couronne de pics de glace, bâton à cristal ;
-- Reine arachnide : couronne d'épines et yeux rouges qui brillent, dos hérissé de cristaux et de cocons ;
-- Brasier ancestral : anneau de plaques d'obsidienne veinées de lave qui tourne autour de lui, couronne de feu ;
-- Creeper géant : fagot de TNT dans le dos, noyau de cristal vert sur la tête.
+Les 5 boss de Métiers deviennent invisibles et un squelette animé les suit (repos, marche, attaque quand Métiers lance une attaque) :
+- Colosse : forgeron géant en armure de plaques, cœur de forge rougeoyant, casque à cornes, marteau ;
+- Reine arachnide : huit pattes articulées, gros abdomen marqué de violet, crocs, huit yeux rouges, couronne d'épines ;
+- Liche du givre : crâne dans une capuche, longue robe bordée de givre, couronne de glace, bâton à cristal, éclats en orbite ;
+- Brasier ancestral : tête de magma sous un masque d'obsidienne, deux anneaux de bâtons de feu qui tournent ;
+- Creeper géant : pierre moussue fendue de lueurs vertes, fagot de TNT, cristal sur la tête.
 
 ## Commandes admin
 
