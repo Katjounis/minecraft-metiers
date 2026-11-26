@@ -344,9 +344,7 @@ RELIQUE = {
 }
 RARE = [EN("enchanted_golden_apple", 3), EN("totem_of_undying", 3), EN("netherite_ingot", 3), EN("heart_of_the_sea", 2),
         EN("shulker_shell", 2, 2, 4), EN("nether_star", 1)]
-for k, ent in BUTIN.items():
-    wj(f"data/{NS}/loot_table/boss/{k}.json", {"type": "minecraft:generic", "pools": [{"rolls": 4, "entries": ent}]})
-    wj(f"data/{NS}/loot_table/boss/rare_{k}.json", {"type": "minecraft:generic", "pools": [{"rolls": 1, "entries": RARE + [RELIQUE[k]]}]})
+# 26/11/2026 : tables plus écrites (plus aucun objet de boss, et surtout plus d'arme ni d'armure nulle part)
 # 25/11/2026 : plus aucun objet en butin de boss (ni minerais, ni reliques), seulement éclats, Écus et XP. Les tables
 # de butin ci-dessus restent écrites mais ne sont plus tirées. Chaque tirage (1 par niveau de difficulté, +1 pour le
 # meilleur dégât) rapporte 2 500 Écus ; le « butin rare » devient 2 éclats et 5 000 Écus de plus.
