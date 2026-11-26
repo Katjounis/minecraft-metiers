@@ -127,9 +127,10 @@ add_lines(F + "defis/nouveaux.mcfunction", ["scoreboard players reset * m.kbj"])
 # Prestige : + étoiles x f(99), donc le niveau 1 d'une étoile demande toujours plus que le niveau 99 sans étoile.
 # Table précalculée, cherchée par tranches de 10 niveaux (~20 commandes au lieu de 100).
 # 25.4 (24/11/2026, « encore beaucoup trop simple ») : 150 x 1,06^(L-1), 798 000 XP pour le niveau 100
-XPF = {L: round(150 * 1.06 ** (L - 1)) for L in range(1, 101)}
+# 25.8 (26/11/2026, « vraiment hard ») : même forme, tout x0,6 (niveau 50 en ~12 h au lieu de ~20), prestige aussi
+XPF = {L: round(90 * 1.06 ** (L - 1)) for L in range(1, 101)}
 # prestige (25.5) : chaque étoile démarre à 15 000 XP par niveau, la courbe normale reprend quand elle dépasse (max des deux)
-add_lines(F + "refonte/load.mcfunction", ["scoreboard players set #F99 m.const 15000"])
+add_lines(F + "refonte/load.mcfunction", ["scoreboard players set #F99 m.const 9000"])
 w(F + "xp/table.mcfunction", "\n".join(
     [f"execute if score #L m.tmp matches {a}..{a + 9} run return run function {NS}:xp/table_{a // 10}" for a in range(1, 101, 10)] +
     [f"scoreboard players set #N m.tmp {XPF[100]}"]))

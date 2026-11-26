@@ -74,7 +74,7 @@ def note(t):
 
 BONUS = ('{text:"\\n\\nBonus : ",color:"aqua",bold:true},{text:"x2 pendant l’heure du métier, +10 % par étoile de prestige, '
          '+10 % avec le cristal de Sagesse sur l’outil. Poser ou jeter ce que tu viens de récolter retire l’XP gagnée. '
-         'Niveau suivant : 150 XP au niveau 1, puis +6 % à chaque niveau (2 607 au niveau 50, 45 297 au niveau 99), avec une étoile au moins 15 000 par niveau (30 000 avec deux, etc.).",color:"gray"}')
+         'Niveau suivant : 90 XP au niveau 1, puis +6 % à chaque niveau (1 564 au niveau 50, 27 178 au niveau 99), avec une étoile au moins 9 000 par niveau (18 000 avec deux, etc.).",color:"gray"}')
 DEFI = ("rien",)   # le défi du jour a sa propre case d'aide en bas de page
 
 PAGES = {}
@@ -167,8 +167,8 @@ BAN_B = '{type:"minecraft:plain_message",width:310,contents:[{text:""},{text:"\u
 VIDE_B = '{label:"",width:1}'
 BONUS_TIP = ("x2 pendant l’heure du métier, +10 % par étoile de prestige, +10 % avec le cristal de Sagesse sur l’outil.\\n"
              "Poser ou jeter ce que tu viens de récolter retire l’XP gagnée.\\n"
-             "Niveau suivant : 150 XP au niveau 1, puis +6 % par niveau (2 607 au niveau 50, 45 297 au niveau 99) ; "
-             "avec une étoile, au moins 15 000 par niveau (30 000 avec deux, etc.).")
+             "Niveau suivant : 90 XP au niveau 1, puis +6 % par niveau (1 564 au niveau 50, 27 178 au niveau 99) ; "
+             "avec une étoile, au moins 9 000 par niveau (18 000 avec deux, etc.).")
 DEFI_TIP = "Défi du jour réussi : la moitié d’un niveau du métier, 2 diamants et 16 fioles d’expérience."
 
 

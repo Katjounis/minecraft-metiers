@@ -5,6 +5,12 @@ Datapack vanilla de métiers (Bûcheron, Fermier, Mineur, Chasseur, Pêcheur, É
 ![Aperçu des outils](apercu/outils.png)
 
 
+## Courbe d'XP allégée, version 25.8 (26/11/2026)
+
+Monter de niveau coûte 40 % d'XP en moins, avec la même forme de courbe : 90 XP au niveau 1 puis +6 % par niveau (1 564 au niveau 50, 27 178 au niveau 99), environ 24 600 XP pour atteindre le niveau 50 (à peu près 12 h de jeu au lieu de 20) et 479 000 pour le niveau 100. Le prestige baisse pareil : au moins 9 000 XP par niveau et par étoile (au lieu de 15 000). Table dans `ref_batisseur.py` (`XPF`, `#F99`).
+
+Recalcul unique à la connexion (`ref_recalcul2.py`, tag `metiers.c258`) : l'XP déjà gagnée dans l'étoile en cours est rejouée sur la nouvelle courbe, donc chacun monte d'un coup (sans étoile : niveau 20 devient 26, 30 devient 37, 50 devient 58, 75 devient 83 ; avec une étoile : 30 devient 49, 50 devient 82). Les étoiles ne changent pas et le niveau est plafonné à 100. Les points de compétence suivent le nouveau niveau, les récompenses des paliers atteints se récupèrent dans le menu G comme d'habitude.
+
 ## Toucher de soie (26/11/2026)
 
 En vanilla, un minerai cassé en Toucher de soie ne lâche aucune orbe d'XP. Le serveur la rend : avec une pioche en Toucher de soie en main, chaque minerai donne l'XP moyenne du vanilla (charbon et or du Nether 1, lapis, redstone et quartz 3, diamant et émeraude 5 ; fer, cuivre et or restent à 0 comme en vanilla, leur XP vient de la cuisson). Poser un de ces minerais retire la même XP (solde `m.sxp`), pour qu'on ne puisse pas poser et recasser en boucle. L'XP de Mineur n'a jamais dépendu du mode : elle compte de la même façon en Fortune et en Toucher de soie. Code dans `ref_soie.py`.
