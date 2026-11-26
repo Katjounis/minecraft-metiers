@@ -173,18 +173,62 @@ def _tip(t):
     return t.replace('"', '\\"')
 
 
+# 26/11/2026 : libellés statiques. Un texte plus large que son bouton défile de gauche à droite ; on le coupe
+# avec « … » pour qu'il tienne (largeurs de la police du jeu, larg_police.json), le texte complet reste dans l'infobulle.
+_LARGB = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "larg_police.json"), encoding="utf-8"))
+
+
+def _larg(s, gras=False):
+    return sum(_LARGB.get(c, 6) + (1 if gras else 0) for c in s)
+
+
+def _couper(nom, place):
+    if _larg(nom) <= place:
+        return nom
+    while nom and _larg(nom.rstrip() + "…") > place:
+        nom = nom[:-1]
+    return nom.rstrip() + "…"
+
+
+LB = 160   # largeur d'une case (3 colonnes)
+
+
+COURT = {  # libellé court dans la case, texte complet dans l'infobulle
+    "Ardoise taillée et carrelage": "Ardoise taillée", "Briques de pierre (toutes)": "Briques de pierre",
+    "Briques et briques de boue": "Briques", "Béton (16 couleurs)": "Béton", "Lapis-lazuli (abîmes)": "Lapis (abîmes)",
+    "Escaliers, dalles, barrières, trappes": "Escaliers, dalles", "Obsidienne pleureuse": "Obs. pleureuse",
+    "Pierre taillée et pavés": "Pierre taillée", "Pierres polies, tuf taillé": "Pierres polies",
+    "Prismarine taillée et sombre": "Prismarine", "Quartz (bloc, briques, pilier, lisse)": "Quartz",
+    "Terre cuite (et colorée)": "Terre cuite", "Terre cuite émaillée": "Terre émaillée", "Échelles, chaînes, barreaux": "Échelles",
+    "bibliothèque fabriquée (casser une bibliothèque la retire)": "Bibliothèque",
+    "en plus, un bloc acheté au Commerce à 1 Écu pièce ou plus (256 par jour au plus)": "Bloc acheté (bonus)",
+    "enchantement à 1 niveau": "Enchant. 1 niveau", "enchantement à 2 niveaux": "Enchant. 2 niveaux", "enchantement à 3 niveaux": "Enchant. 3 niveaux",
+    "laine ramassée (par bloc, toutes couleurs)": "Laine ramassée", "naissance d’un animal que tu fais reproduire": "Naissance",
+    "n’importe quel bloc posé (terre, sable, roche...), 2 XP par minute au plus": "Tout bloc posé",
+    "échange avec un villageois (chaque échange)": "Échange", "Ardoise des abîmes": "Ardoise", "Araignée venimeuse": "Araignée venim.",
+    "Zombie-villageois": "Zombie-villag.", "Poisson d'argent": "Poisson d'argent",
+    "Découvertes (une fois chacune)": "Découvertes", "Récolte ramassée (par objet)": "Récolte ramassée",
+    "Créatures à 5 XP et plus": "5 XP et plus", "Créatures à moins de 5 XP": "Moins de 5 XP", "Bonus en plus du bloc posé": "Bonus de bloc",
+    "Table d’enchantement": "Table", "Planches (12 bois)": "Planches", "Série de prises": "Série",
+    "Émeraude (abîmes)": "Émeraude (ab.)", "Diamant (abîmes)": "Diamant (ab.)"}
+COURT[f"nouvelle structure ({len(STRUCTS)} : villages, temples, forteresses...)"] = "Structure"
+COURT[f"nouveau biome ({len(BIOMES)})"] = "Biome"
+
+
 def grille(elements):
     """Rend (actions, notes) : les cases en boutons sur 3 colonnes, les notes à part."""
     acts, notes, col = [], [], 0
     for e in elements:
         if e[0] == "case":
             _, val, img, nom = e
-            acts.append(btn(f'[{img},{txt(" " + val, "gold", True)},{txt("  " + nom, "white")}]', None, 130, _tip(f"{nom} : {val}")))
+            place = LB - 10 - 9 - _larg(" " + val, True) - _larg("  ")
+            court = _couper(COURT.get(nom, nom), place)
+            acts.append(btn(f'[{img},{txt(" " + val, "gold", True)},{txt("  " + court, "white")}]', None, LB, _tip(f"{nom} : {val}")))
             col = (col + 1) % 3
         elif e[0] == "titre":
             if col:
                 acts += [VIDE_B] * (3 - col)
-            acts += [btn(txt(e[1], "yellow", True), None, 130), VIDE_B, VIDE_B]
+            acts += [btn(txt(_couper(COURT.get(e[1], e[1]), LB - 14 - len(e[1])), "yellow", True), None, LB, _tip(e[1])), VIDE_B, VIDE_B]
             col = 0
         elif e[0] == "note":
             notes.append(e[1])
@@ -195,11 +239,11 @@ def grille(elements):
 
 def page_bareme(j, d, cle, titre_txt, nav):
     acts, notes = grille(PAGES[cle])
-    infos = [btn(txt("Bonus et malus", "aqua", True), None, 130, _tip(BONUS_TIP)),
-             btn(txt("Prestige", "gold", True), None, 130,
+    infos = [btn(txt("Bonus et malus", "aqua", True), None, LB, _tip(BONUS_TIP)),
+             btn(txt("Prestige", "gold", True), None, LB,
                  _tip(f"Niveau 100, 5 étoiles : tu gardes tes compétences, la progression continue, +10 % d’XP par étoile "
                       f"et la capacité {PCAP[j][0]} : {PCAP[j][1]}")),
-             btn(txt("Défi du jour", "light_purple", True), None, 130, _tip(DEFI_TIP))]
+             btn(txt("Défi du jour", "light_purple", True), None, LB, _tip(DEFI_TIP))]
     corps = [f'{{text:"{BAREME_INTRO[j]}",color:"white"}}'] + [f'{{text:"\\n{_tip(n)}",color:"gray"}}' for n in notes]
     return (f'dialog show @s {{type:"minecraft:multi_action",title:[{gs("metier_" + j)},{{text:" {titre_txt}",color:"{d["color"]}",bold:true}}],'
             f'can_close_with_escape:true,pause:false,body:[{{type:"minecraft:plain_message",width:400,contents:[{",".join(corps)}]}}],'
@@ -208,17 +252,17 @@ def page_bareme(j, d, cle, titre_txt, nav):
 
 dc = jobs["c"]
 w(F + "bareme/c2.mcfunction", page_bareme("c", dc, "c2", "Barème d’XP : Chasseur (2/2)",
-  [btn(txt("◀ Créatures fortes", "red", True), 484, 130), btn(txt("Tous les barèmes", "white"), 480, 130), VIDE_B]))
+  [btn(txt("◀ Créatures fortes", "red", True), 484, LB), btn(txt("Tous les barèmes", "white"), 480, LB), VIDE_B]))
 w(F + "bareme/m2.mcfunction", page_bareme("m", jobs["m"], "m2", "Barème d’XP : Mineur (2/2)",
-  [btn(txt("◀ Minerais", "gray", True), 483, 130), btn(txt("Tous les barèmes", "white"), 480, 130), VIDE_B]))
+  [btn(txt("◀ Minerais", "gray", True), 483, LB), btn(txt("Tous les barèmes", "white"), 480, LB), VIDE_B]))
 add_lines(F + "trigger.mcfunction", [f'execute if score @s m.trig matches 491 run function {NS}:appel {{f:"bareme/c2"}}'])
 add_lines(F + "trigger.mcfunction", [f'execute if score @s m.trig matches 492 run function {NS}:appel {{f:"bareme/m2"}}'])
 for j, d in jobs.items():
-    nav = [btn(txt("Page du métier", d["color"]), 20 + d["idx"], 130), btn(txt("Tous les barèmes", "white"), 480, 130)]
-    nav.append(btn(txt("Faibles et boss ▶", "red", True), 491, 130) if j == "c" else
-               btn(txt("Pierres ▶", "gray", True), 492, 130) if j == "m" else VIDE_B)
+    nav = [btn(txt("Page du métier", d["color"]), 20 + d["idx"], LB), btn(txt("Tous les barèmes", "white"), 480, LB)]
+    nav.append(btn(txt("Faibles et boss ▶", "red", True), 491, LB) if j == "c" else
+               btn(txt("Pierres ▶", "gray", True), 492, LB) if j == "m" else VIDE_B)
     w(F + f"bareme/{j}.mcfunction", page_bareme(j, d, j, f"Barème d’XP : {d['name']}", nav))
-hub = [btn(f'[{gs("metier_" + j)},{txt(" " + d["name"], d["color"])}]', 480 + d["idx"], 130, BAREME_INTRO[j]) for j, d in jobs.items()]
+hub = [btn(f'[{gs("metier_" + j)},{txt(" " + d["name"], d["color"])}]', 480 + d["idx"], LB, BAREME_INTRO[j]) for j, d in jobs.items()]
 w(F + "bareme/menu.mcfunction",
   f'dialog show @s {{type:"minecraft:multi_action",title:{{text:"Barème d’XP",color:"gold",bold:true}},can_close_with_escape:true,pause:false,'
   f'body:[{{type:"minecraft:plain_message",width:400,contents:{{text:"Ce que rapporte chaque action, métier par métier, avec les images du jeu.",color:"gray"}}}}],'
