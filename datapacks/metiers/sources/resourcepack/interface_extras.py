@@ -11,17 +11,15 @@
 # Usage : python3 interface_extras.py metiers_resourcepack.zip <dossier gui/sprites vanilla>
 import io, os, sys, json, math, zipfile
 from PIL import Image
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from palette import *   # deepslate et cuivre (palette.py)
 
 ZIP, VAN = sys.argv[1], sys.argv[2]
 VGUI = os.path.dirname(VAN.rstrip("/\\"))  # .../textures/gui
 GUI = "assets/minecraft/textures/gui/"
 BAY = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]
-PIERRE = [(146, 130, 112), (132, 117, 100), (119, 105, 89), (106, 93, 79), (93, 81, 69), (80, 70, 60)]
-PIERRE_CLAIRE = [(214, 202, 180), (202, 189, 166), (190, 176, 152), (176, 162, 138), (160, 146, 122)]
-PIERRE_SOMBRE = [(70, 60, 52), (60, 52, 45), (52, 45, 39), (44, 38, 33), (36, 31, 27)]
 PARCHEMIN = [(244, 234, 208), (236, 224, 194), (226, 212, 180), (212, 196, 162)]
-LAITON = [(255, 236, 160), (236, 196, 104), (206, 160, 70), (166, 120, 44), (118, 82, 28)]
-SOMBRE = (30, 22, 14)
 
 
 def tram(r, v, x, y):

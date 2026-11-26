@@ -11,15 +11,15 @@
 # Usage : python3 interface_animations.py metiers_resourcepack.zip [dossier_apercus]
 import io, sys, json, math, zipfile, random
 from PIL import Image
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from palette import *   # deepslate et cuivre (palette.py)
 
 ZIP = sys.argv[1]
 APERCUS = sys.argv[2] if len(sys.argv) > 2 else None
 GUI = "assets/minecraft/textures/gui/sprites/"
 BAY = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]
 
-PIERRE = [(146, 130, 112), (132, 117, 100), (119, 105, 89), (106, 93, 79), (93, 81, 69), (80, 70, 60)]
-LAITON = [(255, 236, 160), (236, 196, 104), (206, 160, 70), (166, 120, 44), (118, 82, 28)]
-SOMBRE = (30, 22, 14)
 TEINTES = {  # du plus clair au plus sombre
     "blue": [(196, 234, 255), (120, 190, 250), (72, 146, 228), (46, 104, 190), (28, 66, 136)],
     "red": [(255, 196, 186), (246, 118, 100), (214, 66, 54), (164, 38, 34), (110, 22, 22)],

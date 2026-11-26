@@ -7,16 +7,14 @@
 # Usage : python3 interface_finition.py metiers_resourcepack.zip
 import io, sys, zipfile, random
 from PIL import Image
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from palette import *   # deepslate et cuivre (palette.py)
 
 ZIP = sys.argv[1]
 GUI = "assets/minecraft/textures/gui/"
 BAY = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]
 
-PIERRE = [(146, 130, 112), (132, 117, 100), (119, 105, 89), (106, 93, 79), (93, 81, 69), (80, 70, 60)]
-JOINT = (78, 67, 57)
-LAITON = [(255, 232, 150), (236, 196, 104), (206, 160, 70), (166, 120, 44), (118, 82, 28)]
-SOMBRE = (34, 24, 14)
-CASE = [(56, 49, 44), (47, 41, 37), (39, 34, 31), (31, 27, 25)]
 
 
 def tramage(rampe, v, x, y):
@@ -70,6 +68,7 @@ def finit_panneau(im):
     x0 = min(p[0] for p in pierre)
     y0 = min(p[1] for p in pierre)
     rnd = random.Random(W * 1000 + H + len(pierre))
+    briques = set(pierre)
     tons = {}
     for (x, y) in pierre:
         rang = (y - y0) // 8
@@ -115,6 +114,29 @@ def finit_panneau(im):
             px[x, y] = tramage([(20, 18, 20), (28, 26, 28), (38, 34, 32), (50, 44, 38)], t * 3.2, x, y) + (255,)
         for x in range(min(xs) + 1, max(xs)):
             px[x, ya] = LAITON[3] + (255,)
+    # or de la forge -> cuivre ; tout le reste (cadre brun, ombres) passe en gris froid de deepslate
+    for y in range(H):
+        for x in range(W):
+            r, g, b, a = px[x, y]
+            if not a or (x, y) in briques:
+                continue
+            l = (r * 3 + g * 6 + b) / 10
+            if r > 110 and r - b > 55:
+                px[x, y] = LAITON[0 if l > 200 else 1 if l > 150 else 2 if l > 115 else 3 if l > 85 else 4] + (a,)
+            elif r > b + 4:
+                v = int(l * .92)
+                px[x, y] = (v, v, min(255, v + 6), a)
+    # bandeaux clairs sous les titres (le jeu les écrit en gris foncé) : ligne du titre et ligne « Inventaire »
+    hp = im.getbbox()[3]   # hauteur du panneau : le jeu écrit le titre à y = 6 et « Inventaire » à y = hauteur - 94
+    for (ya, yb) in ((5, 14), (hp - 95, hp - 86)):
+        for y in range(ya, yb + 1):
+            for x in range(W):
+                if (x, y) in briques:
+                    px[x, y] = tramage(PLAQUE, .4 + (y - ya) / max(1, yb - ya) * 2.2, x, y) + (255,)
+        for y, yv in ((ya - 1, ya), (yb + 1, yb)):
+            for x in range(W):
+                if (x, y) in briques and (x, yv) in briques:
+                    px[x, y] = LAITON[3] + (255,)
     return im
 
 
@@ -239,9 +261,11 @@ def ecrit(nom, im):
 
 
 nb = 0
+BASE = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "base_forge")   # panneaux tels qu'interface_forge.py les rend
 for nom in sorted(fichiers):
     if nom.startswith(GUI + "container/") and nom.endswith(".png"):
-        im = finit_panneau(Image.open(io.BytesIO(fichiers[nom])))
+        src = _os.path.join(BASE, nom[len(GUI + "container/"):])
+        im = finit_panneau(Image.open(src if _os.path.exists(src) else io.BytesIO(fichiers[nom])))
         if im is not None:
             ecrit(nom, im)
             nb += 1

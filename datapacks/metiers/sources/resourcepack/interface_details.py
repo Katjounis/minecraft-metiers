@@ -8,14 +8,13 @@
 # Usage : python3 interface_details.py metiers_resourcepack.zip <dossier gui/sprites vanilla>
 import io, os, sys, zipfile, colorsys
 from PIL import Image
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from palette import *   # deepslate et cuivre (palette.py)
 
 ZIP, VAN = sys.argv[1], sys.argv[2]
 GUI = "assets/minecraft/textures/gui/sprites/"
 BAY = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]
-PIERRE = [(146, 130, 112), (132, 117, 100), (119, 105, 89), (106, 93, 79), (93, 81, 69), (80, 70, 60)]
-LAITON = [(255, 236, 160), (236, 196, 104), (206, 160, 70), (166, 120, 44), (118, 82, 28)]
-SOMBRE = (30, 22, 14)
-CASE = [(56, 49, 44), (47, 41, 37), (39, 34, 31), (31, 27, 25)]
 CONTOUR = (34, 24, 18)
 
 
