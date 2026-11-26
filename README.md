@@ -14,6 +14,7 @@ Ce dépôt sert à fabriquer des datapacks pour Minecraft Java 26.x (vanilla, sa
 | `datapacks/boss/` | **Boss** : le Grimoire Vivant et le Corbeau-Épouvantail, boss de serveur modélisés et animés dans leurs propres arènes (dimensions), qui se réveillent toutes les 3 à 5 h. Voir son [README](datapacks/boss/README.md) |
 | `labo/outils/badges.py` | Faces dessinées des boutons (essai du 24/11/2026), débranché à la demande de Samuel : plus appelé par les packs, gardé pour mémoire. |
 | `metiers_resourcepack.zip` | Resource pack commun à tous les packs, car le serveur n'en impose qu'un. Il reste à la racine parce que son URL est utilisée par le serveur. `python labo\outils\fusion_rp.py` y verse les textures des autres packs (`build/<nom>_rp/`). Le décor des menus en jeu (paysage de nuit animé calculé par un shader à la place du flou, `decor_menu.fsh`) se pose avec `python datapacks\metiers\sources\resourcepack\fond_menus.py metiers_resourcepack.zip`. |
+| `datapacks/metiers/sources/resourcepack/interface_finition.py` | Finition de l'interface « Forge », à relancer après `interface_forge.py` : briques ombrées sur la pierre des panneaux, cases creusées en dégradé, niche en dégradé à la place des aplats noirs, boutons pierre sombre et laiton, barre d'action et bossbars à embouts en laiton. S'applique directement au zip : `python datapacks\metiers\sources\resourcepack\interface_finition.py metiers_resourcepack.zip`. |
 | `labo/` | Scripts du serveur de test. Voir [labo/LISEZMOI.md](labo/LISEZMOI.md) |
 
 ## Ajouter un pack
