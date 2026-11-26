@@ -9,6 +9,10 @@
 BR_LVL = [10, 20, 30, 45, 60, 80]
 BR_COUT = [4, 6, 8, 10, 12, 14]
 SKILL_LVL = [5, 20, 20, 45, 45, 70] + BR_LVL + BR_LVL
+# 26/11/2026 : niveaux propres à un nœud (sinon celui de sa rangée). Ailes de l'Explorateur au niveau 25.
+LVL_SPE = {("x", 9): 25}
+def slvl(j, k):
+    return LVL_SPE.get((j, k), SKILL_LVL[k - 1])
 # noms des branches (gauche, droite) affichés sous l'arbre
 BRANCHES = {
     "b": ("Récolte", "Combat"), "f": ("Récolte", "Terroir"), "m": ("Filons", "Galeries"), "c": ("Lame", "Arc"),
@@ -111,8 +115,8 @@ NOUVELLES = {
     "x": [
         ("Endurance", "Courir ne te donne plus faim.", "item/sugar"),
         ("Saut de géant", "Tu sautes plus haut et la chute fait mal 2 blocs plus tard.", "item/rabbit_foot"),
-        ("Grimpeur", "Avance contre un mur : tu le grimpes.", "item/string"),
         ("Ailes", "Tu reçois des élytres incassables (onglet Outil pour les récupérer si tu les perds).", "item/elytra"),
+        ("Grimpeur", "Avance contre un mur : tu le grimpes.", "item/string"),
         ("Propulseur", "En vol avec des élytres : une fusée offerte toutes les 15 s (3 au plus sur toi).", "item/firework_rocket"),
         ("Vent arrière", "Après 5 s de course : Vitesse III.", "item/wind_charge"),
         ("Pilleur", "Les coffres de structure que tu ouvres en premier ont 30 % de chance d'un second butin.", "item/gold_nugget"),

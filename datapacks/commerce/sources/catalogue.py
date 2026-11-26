@@ -289,7 +289,7 @@ for t in [
     ("nether_star", "Étoile du Nether", 1500.0, 4, "c"), ("dragon_breath", "Souffle de dragon", 20.0, 32, "c"),
     ("dragon_head", "Tête de dragon", 2000.0, 2, "c"), ("heavy_core", "Noyau lourd", 500.0, 4, "x"),
     ("goat_horn", "Corne de chèvre", 30.0, 16, "e"), ("sniffer_egg", "Oeuf de renifleur", 100.0, 8, "e"),
-    ("trident", "Trident", 400.0, 4, "c"), ("elytra", "Élytres", 2000.0, 2, "x"),
+    ("trident", "Trident", 400.0, 4, "c"),
     ("enchanted_golden_apple", "Pomme de Notch", 1000.0, 4, ""),
 ]:
     I(15, *t)

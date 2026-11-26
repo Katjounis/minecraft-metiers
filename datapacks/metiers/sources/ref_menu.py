@@ -171,7 +171,7 @@ for j, d in jobs.items():
     # niveau pris en compte pour débloquer une compétence : 100 dès qu'on est passé par le prestige
     P += [f"scoreboard players operation #lve m.tmp = @s m.{j}_lvl", f"execute if score @s m.{j}_pr matches 1.. run scoreboard players set #lve m.tmp 100"]
     for k, (name, cost, req, desc) in enumerate(sk, 1):
-        lv = SKILL_LVL[k - 1]
+        lv = slvl(j, k)
         cond = f"execute if entity @s[{reqsel2(req)}]" if req else "execute if entity @s"
         P += [f'data modify storage {NS}:pg l{k} set value "✖ {name}"', f'data modify storage {NS}:pg c{k} set value "dark_gray"',
               f'execute unless score #lve m.tmp matches {lv}.. run data modify storage {NS}:pg l{k} set value "✖ {name}"',
@@ -208,7 +208,7 @@ for j, d in jobs.items():
     sbtn = []
     for k, (name, cost, req, desc) in enumerate(sk, 1):
         rq = " + ".join(sk[r - 1][0] for r in req) if req else "rien"
-        tip = (f"{desc}\\nCoût : {cost} points · niveau {SKILL_LVL[k - 1]} · requiert : {rq}\\nUne fois acquise : clic pour l’activer ou la désactiver."
+        tip = (f"{desc}\\nCoût : {cost} points · niveau {slvl(j, k)} · requiert : {rq}\\nUne fois acquise : clic pour l’activer ou la désactiver."
                "\\n\\nVert ✔ acquise · jaune disponible · rouge points manquants · gris ✖ niveau trop bas · ○ désactivée")
         sbtn.append(f'{{label:{{text:"$(l{k})",color:"$(c{k})"}},width:130,tooltip:{{text:"{tip}"}},action:{{type:"run_command",command:"trigger metiers set {TSK(d, k)}"}}}}')
     # 25/11/2026 : les compétences posées en arbre cliquable (grille de 3 colonnes, cases vides d'un pixel) :

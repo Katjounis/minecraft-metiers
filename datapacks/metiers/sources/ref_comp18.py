@@ -347,7 +347,7 @@ TK = [
     # Chasseur : flèches tirées (Œil de faucon, Flèches perçantes)
     f"execute as @e[type=#minecraft:arrows,tag=!{NS}.fv] run function {NS}:comp/fleche",
     # Explorateur : Grimpeur
-    f"execute as @a[{SK('x', 9)},predicate={NS}:avance] at @s rotated ~ 0 unless block ^ ^0.5 ^0.6 #{NS}:vide unless block ^ ^0.5 ^0.6 #minecraft:replaceable run function {NS}:comp/x_grimpe",
+    f"execute as @a[{SK('x', 10)},predicate={NS}:avance] at @s rotated ~ 0 unless block ^ ^0.5 ^0.6 #{NS}:vide unless block ^ ^0.5 ^0.6 #minecraft:replaceable run function {NS}:comp/x_grimpe",
     f"execute as @a[tag={NS}.grimpe] at @s rotated ~ 0 if block ^ ^0.5 ^0.6 #{NS}:vide run function {NS}:comp/x_lache",
     f"execute as @a[tag={NS}.grimpe,predicate=!{NS}:avance] run function {NS}:comp/x_lache",
     # Pêcheur : Canne grappin

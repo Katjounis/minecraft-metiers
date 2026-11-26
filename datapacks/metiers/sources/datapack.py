@@ -1055,8 +1055,8 @@ scoreboard players operation @s m.tmp += #ppr m.tmp
 
     for k, (name, cost, req, desc) in enumerate(sk, 1):
         B = [f"execute if entity @s[tag=metiers.sk.{j}{k}] run return run function {NS}:{j}/basculer_{k}",
-             f'execute unless score @s m.{j}_lvl matches {SKILL_LVL[k-1]}.. unless score @s m.{j}_pr matches 1.. run tellraw @s ' + PREFIX + f',{{"text":"Il faut être niveau {SKILL_LVL[k-1]} en {d["name"]}.","color":"red"}}]',
-             f"execute unless score @s m.{j}_lvl matches {SKILL_LVL[k-1]}.. unless score @s m.{j}_pr matches 1.. run return run function {NS}:{j}/arbre",
+             f'execute unless score @s m.{j}_lvl matches {slvl(j, k)}.. unless score @s m.{j}_pr matches 1.. run tellraw @s ' + PREFIX + f',{{"text":"Il faut être niveau {slvl(j, k)} en {d["name"]}.","color":"red"}}]',
+             f"execute unless score @s m.{j}_lvl matches {slvl(j, k)}.. unless score @s m.{j}_pr matches 1.. run return run function {NS}:{j}/arbre",
              f"function {NS}:{j}/points"]
         if req:
             B += [f'execute unless entity @s[{reqsel(req)}] run tellraw @s ' + PREFIX + f',{{"text":"Il faut d\'abord débloquer : {" + ".join(sk[r-1][0] for r in req)}.","color":"red"}}]',
@@ -1070,7 +1070,7 @@ scoreboard players operation @s m.tmp += #ppr m.tmp
               "playsound minecraft:block.enchantment_table.use master @s ~ ~ ~ 1 1"]
         if j == "b" and k == 2:
             B += [f"scoreboard players set @s a.{l} 0" for l in LOGS]
-        if j == "x" and k == 10:   # 26/11/2026 : les élytres passent du palier 6 à la compétence Ailes
+        if j == "x" and k == 9:   # 26/11/2026 : les élytres passent du palier 6 à la compétence Ailes
             B.append(f"function {NS}:objets/donner_elytres")
         B.append(f"function {NS}:{j}/arbre")
         w(F + f"{j}/acheter_{k}.mcfunction", "\n".join(B))

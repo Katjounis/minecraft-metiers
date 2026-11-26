@@ -282,7 +282,7 @@ add_lines(F + "refonte/tick.mcfunction", [
     "scoreboard players set @a s.bow2 0"])
 add_lines(F + "refonte/load.mcfunction", ["scoreboard objectives add s.bow2 minecraft.used:minecraft.bow"])
 for nom_, sel_, fn_, j_, pal_ in (("arc", ARCSEL, "donner_arc", "c", 5), ("elytres", ELYSEL, "donner_elytres", "x", 6)):
-    cond_ = (f"execute unless entity @s[tag={NS}.sk.x10] run return run {tr('Il faut la compétence Ailes (Explorateur).', 'red')}" if nom_ == "elytres"
+    cond_ = (f"execute unless entity @s[tag={NS}.sk.x9] run return run {tr('Il faut la compétence Ailes (Explorateur).', 'red')}" if nom_ == "elytres"
              else f"execute unless score @s m.{j_}_pal matches {pal_}.. run return run {tr(f'Il faut avoir récupéré la récompense du palier {pal_}.', 'red')}")
     w(O_ + f"recup_{nom_}.mcfunction", "\n".join([
         cond_,
@@ -305,7 +305,7 @@ for key, e_ in COMMUN.items():
 RB += [f"scoreboard players set @s m.fo_{key} 0" for key in list(CRP) + list(COMMUN)]
 for j in ("m", "f", "e", "n", "t"):
     RB.append(f"execute if items entity @s container.* {SEL(j)} run function {NS}:{j}/outil_donner")
-RB += [f"execute if entity @s[tag={NS}.sk.x10] run function {NS}:objets/donner_elytres",
+RB += [f"execute if entity @s[tag={NS}.sk.x9] run function {NS}:objets/donner_elytres",
        tr("Mise à jour 26 : les objets de la Forge disparaissent. Ce que tu avais payé (cristaux et éclats) t'est rendu, "
           "et leurs capacités passent sur tes outils de métier (voir l'onglet Outil).", "gold")]
 w(O_ + "migration.mcfunction", "\n".join(RB))
