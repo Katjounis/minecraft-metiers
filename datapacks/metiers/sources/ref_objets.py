@@ -16,7 +16,7 @@ OBJETS = {
                     "Pose-le : plus aucun monstre à 24 blocs. Casse-le pour le reprendre."),
     "dynamite": ("m", 10, "Dynamite", "snowball", "minecraft:tnt", 150,
                  "Lance-la : elle creuse 5x5x5 sans toucher aux minerais, ce qu'elle casse revient dans ton inventaire."),
-    "lanterne": ("m", 15, "Lanterne", "paper", "minecraft:lantern", 8000, "En main secondaire : la lumière te suit. Se garde."),
+    "lanterne": ("m", 13, "Lanterne", "paper", "minecraft:lantern", 8000, "En main secondaire : la lumière te suit. Se garde."),
     "piege": ("c", 16, "Piège à mâchoires", "armor_stand", "minecraft:tripwire_hook", 800,
               "Pose-le : il bloque et blesse le premier monstre qui passe (recharge 10 s). Casse-le pour le reprendre."),
     "filet": ("p", 9, "Filet de pêche", "armor_stand", "minecraft:cobweb", 15000,
@@ -157,9 +157,12 @@ TO = [f"execute as @e[type=minecraft:snowball,tag=!{NS}.pv] run function {NS}:ob
       f"execute as @e[type=minecraft:armor_stand,tag={NS}.onew] at @s run function {NS}:objets/pose",
       # Mineur : compétence Aimant (26/11/2026, remplace la Bourse aimantée du Marchand)
       f'execute as @a[tag={NS}.sk.m14] at @s run function {NS}:objets/aimant',
-      # Mineur : Pioche large (26/11/2026) : 3x3 debout tant que la compétence est active (Désactiver dans l'arbre),
-      # accroupi c'est le minage de veine (ref_prestige.py, m/veine_tick)
+      # Mineur : Pioche large (m16, 26/11/2026) : 3x3 tant que la compétence est active (Désactiver dans l'arbre) ;
+      # accroupi, c'est la Veine (m15, ref_prestige.py, m/veine_tick) si elle est acquise
       f'execute as @a[predicate=!{NS}:accroupi] if items entity @s weapon.mainhand #minecraft:pickaxes if entity @s[tag={NS}.sk.m16] at @s run function {NS}:objets/marteau',
+      # accroupi sans la Veine (pas acquise ou désactivée), le 3x3 marche aussi
+      f'execute as @a[predicate={NS}:accroupi,tag=!{NS}.sk.m15] if items entity @s weapon.mainhand #minecraft:pickaxes if entity @s[tag={NS}.sk.m16] at @s run function {NS}:objets/marteau',
+      f'execute as @a[predicate={NS}:accroupi,tag={NS}.skoff.m15] if items entity @s weapon.mainhand #minecraft:pickaxes if entity @s[tag={NS}.sk.m16] at @s run function {NS}:objets/marteau',
       "scoreboard players set @a s.pk 0"]
 _ELY = "*[minecraft:custom_data~{metiers_elytres:1b}]"
 TO += [f"clear @a[tag=!{NS}.sk.x9] {_ELY}", f"clear @a[tag={NS}.skoff.x9] {_ELY}"]
