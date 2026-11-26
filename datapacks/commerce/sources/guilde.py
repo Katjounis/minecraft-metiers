@@ -4,7 +4,7 @@
 #   niveau 1 : +2 % sur les ventes au marché        niveau 2 : +4 % ventes, épargne à 3 % par semaine
 #   niveau 3 : +6 % ventes, épargne 3 %, +5 % d'XP de métier     niveau 4 : +8 % ventes, épargne 4 % (plafond doublé), +5 % XP
 #   niveau 5 : +10 % ventes, épargne 4 %, +10 % XP de métier
-# Pas de remise à l'achat : avec les bonus de vente cumulés, racheter moins cher que 4 fois la base ouvrirait un
+# Pas de remise à l'achat : avec les bonus de vente cumulés, racheter moins cher que 10 fois la base ouvrirait un
 # achat-revente gagnant (la vente monte jusqu'à 3,85 fois la base au plus avec le bonus de guilde).
 # Le niveau de la guilde est recopié toutes les 5 secondes dans le score c.gn de chaque membre en ligne : c'est lui que
 # lisent les prix (prix/bonus, prix/vente) et Métiers (gain d'XP). Le chef peut aussi reprendre des Écus du trésor.

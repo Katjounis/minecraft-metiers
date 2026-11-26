@@ -5,6 +5,12 @@ Datapack vanilla de métiers (Bûcheron, Fermier, Mineur, Chasseur, Pêcheur, É
 ![Aperçu des outils](apercu/outils.png)
 
 
+## Dank Null du Marchand (26/11/2026)
+
+La Bourse du Marchand devient le **Dank Null** (même sac, même place dans l'onglet Outil). On range 1 exemplaire d'un bloc dedans (terre, cobble, granite, gravier...) : tant que le sac est dans l'inventaire ou en main secondaire, tous les exemplaires de ce bloc qui arrivent dans l'inventaire sont détruits (vérifié toutes les 10 ticks, petite particule violette). 3 sortes de filtres au palier 0, une de plus par palier, 13 au palier 10 ; au-delà, les filtres en trop sont ignorés. Pour retirer un filtre, clic droit sur le sac comme une bourse normale. Ne sont jamais détruits : les objets nommés, les objets à données (outils de métier, objets des packs) et ceux qui contiennent d'autres objets (boîtes de Shulker, sacs). Les filtres passent d'un palier à l'autre. Une ancienne Bourse vide est remplacée toute seule par le Dank Null ; si elle contient encore des objets, un message demande de la vider d'abord (ses objets deviendraient des filtres). Fonctions `t/dank/*`, branchement dans `ref_dank.py`.
+
+Le bonus Bâtisseur « bloc acheté au Commerce » ne compte plus que les blocs à 2,5 Écus pièce ou plus (rachat du Commerce passé à 10 et 20 fois la base).
+
 ## Barème d'XP rééquilibré (26/11/2026)
 
 Objectif : environ 20 h de jeu actif pour le niveau 50 dans chaque métier.

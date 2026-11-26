@@ -300,7 +300,7 @@ TOOL = {"b": ("axe", "Hache", "Hache du Dieu de la Forêt"), "m": ("pickaxe", "P
         "f": ("hoe", "Houe", "Faux du Dieu des Moissons"), "c": ("sword", "Lame", "Lame du Dieu de la Chasse"),
         "p": ("fishing_rod", "Canne", "Canne du Dieu des Mers"), "e": ("carrot_on_a_stick", "Houlette", "Houlette du Dieu des Troupeaux"),
         "n": ("carrot_on_a_stick", "Grimoire", "Grimoire du Dieu des Arcanes"), "x": ("shovel", "Pelle", "Pelle du Dieu Voyageur"),
-        "t": ("bundle", "Bourse", "Bourse du Dieu du Commerce"), "k": ("brush", "Truelle", "Truelle du Dieu Bâtisseur")}
+        "t": ("bundle", "Dank Null", "Dank Null du Dieu du Commerce"), "k": ("brush", "Truelle", "Truelle du Dieu Bâtisseur")}
 MAT = ["diamond", "diamond", "netherite", "netherite", "netherite", "netherite", "netherite", "netherite", "netherite", "netherite", "netherite"]
 MAIN = [2, 3, 4, 4, 4, 5, 5, 5, 5, 5, 5]
 UNB = [1, 2, 3, 3, 3, None, None, None, None, None, None]
@@ -1411,13 +1411,14 @@ def outil_give(j, k):
             f'{{text:"Palier {k}/10, il évolue tous les 10 niveaux",color:"gray",italic:false}}' +
             {"e": ',{text:"Clic droit : les animaux proches te suivent",color:"light_purple",italic:false}',
              "n": ',{text:"Clic droit : points de téléportation",color:"light_purple",italic:false}',
+             "t": f',{{text:"Mets-y 1 bloc : ceux que tu ramasses ensuite sont détruits",color:"light_purple",italic:false}},{{text:"{3 + k} sortes de blocs au plus",color:"light_purple",italic:false}}',
              "k": f',{{text:"Tenue dans une main : portée +{1 + k // 5} pour poser et casser",color:"#C08850",italic:false}}'}.get(j, "") +
             # 26.0 : capacités des anciens objets de la Forge, débloquées par palier sur l'outil du métier
             "".join(f',{{text:"{txt_}",color:"aqua",italic:false}}' for jj, kk, txt_ in CAPA_OUTIL if jj == j and k >= kk) + ']')
     comps = [f"minecraft:enchantments={{{e}}}",
              f'minecraft:custom_name=[{{text:"$(et)",color:"gold",bold:true,italic:false}},{{text:"{name}",color:"{color}",bold:true,italic:false}}]',
              f"minecraft:lore={lore}",
-             (f'minecraft:custom_data={{metiers_outil:"{j}",palier:{k},o:$(o),s:$(s)}}' if j in ("n", "t", "e", "k") else
+             (f'minecraft:custom_data={{metiers_outil:"{j}",palier:{k},o:$(o),s:$(s){",dk:1b" if j == "t" else ""}}}' if j in ("n", "t", "e", "k") else
               f'minecraft:custom_data={{metiers_outil:"{j}",palier:{k},max:{ {"fishing_rod": 64, "carrot_on_a_stick": 25}.get(iid, MAXDUR.get(iid.split("_")[0], 250))},o:$(o),s:$(s)}}'),
              f'minecraft:item_model="metiers:{j}_{k}"',
              'minecraft:custom_model_data={strings:["$(skin)"]}',
@@ -1426,6 +1427,8 @@ def outil_give(j, k):
              'minecraft:rarity="epic"']
     if unb:
         comps.append("minecraft:unbreakable={}")
+    if j == "t":   # 26/11/2026 : Dank Null, les filtres (contenu du sac) passent d'un palier à l'autre
+        comps.append("minecraft:bundle_contents=$(bc)")
     if j == "f":   # 26.0 : la houe récolte au clic droit (détecté par « using_item »), comme l'ancienne Faux
         comps.append('minecraft:consumable={consume_seconds:100000,animation:"none",has_consume_particles:false,sound:"minecraft:intentionally_empty"}')
     if j == "k":   # truelle : portée de pose et de casse, quelle que soit la main
@@ -1443,7 +1446,8 @@ for j, d in jobs.items():
                 f"$execute if score @s m.{j}_out matches {k} if entity @s[tag=metiers.o_feet] run item replace entity @s armor.feet with {it}",
                 f"$execute if score @s m.{j}_out matches {k} if entity @s[tag=!metiers.o_main,tag=!metiers.o_off,tag=!metiers.o_feet] run give @s {it}"]
     w(F + f"{j}/outil_donner_m.mcfunction", "\n".join(ODM))
-    OD = ["tag @s remove metiers.o_main", "tag @s remove metiers.o_off", "tag @s remove metiers.o_feet",
+    OD = ([f"function {NS}:t/dank/capter", f"data modify storage {NS}:tmp bc set from storage {NS}:dk c"] if j == "t" else []) + [
+          "tag @s remove metiers.o_main", "tag @s remove metiers.o_off", "tag @s remove metiers.o_feet",
           f"execute if items entity @s weapon.mainhand {sel} run tag @s add metiers.o_main",
           f"execute if items entity @s weapon.offhand {sel} run tag @s add metiers.o_off",
           f"execute if items entity @s armor.feet {sel} run tag @s add metiers.o_feet",
@@ -1457,6 +1461,43 @@ for j, d in jobs.items():
           "tag @s remove metiers.o_main", "tag @s remove metiers.o_off", "tag @s remove metiers.o_feet",
           "playsound minecraft:block.anvil.use master @s ~ ~ ~ 0.6 1.4"]
     w(F + f"{j}/outil_donner.mcfunction", "\n".join(OD))
+    if j == "t":
+        # ---- Dank Null (26/11/2026, remplace la Bourse) : chaque sorte d'objet rangée dans le sac sert de filtre,
+        # tout exemplaire de cette sorte qui arrive dans l'inventaire est détruit (3 sortes au palier 0, +1 par palier).
+        # Les objets nommés, à données (outils de métier...) ou qui contiennent d'autres objets ne sont jamais détruits.
+        DK = f"{NS}:dk"
+        w(F + "t/dank/capter.mcfunction", "\n".join([
+            f"data remove storage {DK} o", f"data modify storage {DK} l set value []", f"data modify storage {DK} c set value []",
+            f"execute if items entity @s weapon.offhand {sel} run data modify storage {DK} o set from entity @s equipment.offhand",
+            f'execute unless data storage {DK} o run data modify storage {DK} l append from entity @s Inventory[{{components:{{"minecraft:custom_data":{{metiers_outil:"t"}}}}}}]',
+            f"execute unless data storage {DK} o run data modify storage {DK} o set from storage {DK} l[0]",
+            f'data modify storage {DK} c set from storage {DK} o.components."minecraft:bundle_contents"']))
+        w(F + "t/dank/tick.mcfunction", "\n".join([
+            f"execute unless items entity @s container.* {sel} unless items entity @s weapon.offhand {sel} run return 0",
+            f"function {NS}:t/dank/capter",
+            f'execute unless data storage {DK} o.components."minecraft:custom_data".dk run return run function {NS}:t/dank/ancienne',
+            f'execute store result score #dmax m.tmp run data get storage {DK} o.components."minecraft:custom_data".palier',
+            "scoreboard players add #dmax m.tmp 3", "scoreboard players set #dn m.tmp 0", "scoreboard players set #dv m.tmp 0",
+            f"function {NS}:t/dank/boucle",
+            "execute if score #dv m.tmp matches 1.. run particle minecraft:reverse_portal ~ ~1 ~ 0.3 0.5 0.3 0.02 6 normal @s"]))
+        w(F + "t/dank/boucle.mcfunction", "\n".join([
+            f"execute unless data storage {DK} c[0] run return 0",
+            "execute if score #dn m.tmp >= #dmax m.tmp run return 0",
+            f"function {NS}:t/dank/vider with storage {DK} c[0]",
+            f"data remove storage {DK} c[0]", "scoreboard players add #dn m.tmp 1",
+            f"function {NS}:t/dank/boucle"]))
+        w(F + "t/dank/vider.mcfunction", "\n".join([
+            "$execute store result score #x m.tmp run clear @s $(id)[!minecraft:custom_data,!minecraft:custom_name,!minecraft:container,!minecraft:bundle_contents]",
+            "scoreboard players operation #dv m.tmp += #x m.tmp"]))
+        # ancienne Bourse : remplacée toute seule si elle est vide, sinon on prévient (ses objets deviendraient des filtres)
+        w(F + "t/dank/ancienne.mcfunction", "\n".join([
+            f'execute unless data storage {DK} o.components."minecraft:bundle_contents"[0] run return run function {NS}:t/dank/convertir',
+            "scoreboard players add @s m.dkav 1",
+            "execute if score @s m.dkav matches 12.. run scoreboard players set @s m.dkav 0",
+            'execute if score @s m.dkav matches 1 run title @s actionbar {"text":"Vide ta Bourse de Marchand : elle va devenir un Dank Null.","color":"light_purple"}']))
+        w(F + "t/dank/convertir.mcfunction", "\n".join([
+            f"function {NS}:t/outil_donner",
+            tr("Ta Bourse devient un Dank Null : mets-y un bloc (terre, cobble, granite...), tous ceux que tu ramasses ensuite sont détruits. Clic droit sur le sac pour ressortir un filtre.", "light_purple")]))
     OP = [f"scoreboard players add @s m.ceff_{j} 0", f"scoreboard players add @s m.cfor_{j} 0", f"scoreboard players add @s m.skin_{j} 0"]
     for k in range(11):
         be = tool_ench(j, k).get("efficiency", 0)
@@ -2265,7 +2306,7 @@ playsound minecraft:ui.toast.in master @s ~ ~ ~ 0.6 1.4
 """)
 
 # REFONTE (v24) : objets, armure 11 paliers, compétences, menus, Forge, skins, boss, défis
-for _mod in ("ref_base.py", "ref_skills.py", "ref_comp18.py", "ref_objets.py", "ref_menu.py", "ref_boss.py", "ref_defis.py", "ref_bareme.py", "ref_prestige.py", "ref_v26.py", "ref_batisseur.py", "ref_fermier.py", "ref_recalcul.py", "ref_paliers.py", "ref_scenes.py", "ref_classement.py", "ref_arbre_ecrire.py"):
+for _mod in ("ref_base.py", "ref_skills.py", "ref_comp18.py", "ref_objets.py", "ref_menu.py", "ref_boss.py", "ref_defis.py", "ref_bareme.py", "ref_prestige.py", "ref_v26.py", "ref_batisseur.py", "ref_fermier.py", "ref_dank.py", "ref_recalcul.py", "ref_paliers.py", "ref_scenes.py", "ref_classement.py", "ref_arbre_ecrire.py"):
     exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), _mod), encoding="utf-8").read())
 
 # Compétences désactivables : une compétence achetée garde son tag metiers.sk.XN (achat, prérequis, menus),

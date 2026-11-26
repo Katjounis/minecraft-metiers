@@ -11,9 +11,9 @@
 #
 # Cohérence (contrôlée par coherence.py avec les recettes de la 26.1) : un objet fabriqué ou cuit ne se vend
 # pas plus de 5 % au-dessus de ses ingrédients, sinon on pourrait racheter, crafter et revendre avec profit
-# en cumulant bonus de métier, pénurie et marché tendu (x3,64 au plus, contre x4 au rachat).
+# en cumulant bonus de métier, pénurie et marché tendu (x3,64 au plus, contre x10 au rachat).
 
-ACHAT = 4
+ACHAT = 10
 
 CATEGORIES = [
     # (numéro, nom, objet vitrine, couleur, description)

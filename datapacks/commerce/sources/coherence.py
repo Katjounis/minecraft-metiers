@@ -3,7 +3,7 @@
 #   1. chaque id existe dans le jeu, sans doublon ;
 #   2. aucune boucle « racheter les ingrédients, crafter ou cuire, revendre » n'est rentable.
 # Le pire cas pour le vendeur est x3,64 (marché tendu x1,3, pénurie x1,6, bonus de métier x1,75) ;
-# le rachat ne descend jamais sous x4. Un objet fabriqué ne doit donc pas dépasser 1,05 fois ses ingrédients.
+# le rachat ne descend jamais sous x10. Un objet fabriqué ne doit donc pas dépasser 1,05 fois ses ingrédients.
 import os, sys, json
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)

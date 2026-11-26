@@ -362,6 +362,7 @@ for it in ITL:
         f"scoreboard players set #b c.t {it['b']}", f"scoreboard players set #V c.t {it['V']}",
         f"scoreboard players set #mj c.t {it['mj']}", f"scoreboard players set #rare c.t {1 if it['rare'] else 0}",
         f"scoreboard players set #blk c.t {1 if POSABLE(it) else 0}",
+        f"scoreboard players set #cher c.t {1 if (POSABLE(it) or it['cat'] == 8) else 0}",
         f'data modify storage {NS}:t it set value {{id:"{it["id"]}",n:"{it["n"]}",i3:"{it["i3"]}",cn:"{cn}",cb:{100 + it["cat"]}}}',
         f"scoreboard players operation #p c.t = {H(it)} c.p", f"scoreboard players operation #h c.t = {H(it)} c.h",
         f"scoreboard players operation #vs c.t = {H(it)} c.vs", f"scoreboard players operation #as c.t = {H(it)} c.as",
@@ -404,8 +405,8 @@ w(F + "prix/vente.mcfunction", [
     "execute if score #f c.t matches ..999 run scoreboard players set #f c.t 1000",
     "scoreboard players operation #a c.t *= #f c.t", "scoreboard players operation #a c.t /= #1000 c.g",
     "scoreboard players operation #a c.t *= #achat c.g",
-    # 25.6 : les blocs posables s'achètent 2 fois plus cher (rachat 8 x la base au lieu de 4), la revente ne change pas
-    "execute if score #blk c.t matches 1 run scoreboard players operation #a c.t *= #2 c.g"])
+    # 26/11/2026 : blocs posables et minerais/métaux s'achètent 2 fois plus cher (rachat 20 x la base au lieu de 10), la revente ne change pas
+    "execute if score #cher c.t matches 1 run scoreboard players operation #a c.t *= #2 c.g"])
 BO = ["scoreboard players set #bon c.t 1000", "scoreboard players set #lv c.t 0"]
 BO += [f"execute if score #mj c.t matches {JIDX[j]} run scoreboard players operation #lv c.t = @s m.{j}_lvl" for j, *_ in JOBS]
 BO += ["execute if score #lv c.t matches 101.. run scoreboard players set #lv c.t 100",
@@ -543,7 +544,7 @@ w(F + "op/acheter.mcfunction", [
     f"execute if score @s m.tcb matches 1 if score #r c.t matches ..5 run function {NS}:op/contrebande",
     f"function {NS}:op/donner with storage {NS}:t it",
     # bonus du Bâtisseur : seulement pour les blocs à 1 Écu pièce ou plus (sinon de la terre devenait une machine à XP)
-    "execute if score #blk c.t matches 1 if score #a c.t matches 100.. run scoreboard players operation @s c.kb += #q c.t",
+    "execute if score #blk c.t matches 1 if score #a c.t matches 250.. run scoreboard players operation @s c.kb += #q c.t",
     "scoreboard players operation #p c.t += #d c.t",
     "execute if score #p c.t matches ..-301 run scoreboard players set #p c.t -300",
     "scoreboard players operation #as c.t += #q c.t",
@@ -1101,7 +1102,7 @@ w(F + "page/verrou_d.mcfunction", "$" + dlg(
 AIDE = [
     ("Écus", "Sur un compte, impossible à perdre ou à voler. Tout le monde voit les fortunes."),
     ("Gagner", "Vendre ce que tu récoltes, paliers de métier (250 x le palier), défis (150 à 1 500), boss (600)."),
-    ("Prix", "Plus le serveur rachète un objet, plus son prix baisse, puis il remonte en une heure de jeu. Acheter coûte au moins 4 fois la vente."),
+    ("Prix", "Plus le serveur rachète un objet, plus son prix baisse, puis il remonte en une heure de jeu. Acheter coûte au moins 10 fois la vente (20 fois pour les blocs et les métaux)."),
     ("Bonus", "+0,5 % par niveau du métier lié à l’objet, +25 % pendant l’heure du métier."),
     ("Cristaux", "2 500 Écus le premier, +5 % à chaque achat de la semaine."),
     ("Comptoir", "Un par joueur, clic droit pour ouvrir. Mon comptoir le range pour le reposer ailleurs."),
