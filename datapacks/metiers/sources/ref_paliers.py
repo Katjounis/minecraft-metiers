@@ -18,3 +18,17 @@ RP += ['tellraw @s [{"text":"[Métiers] ","color":"gold"},{"text":"Mise à jour 
 w(F + "paliers/rattrapage.mcfunction", "\n".join(RP))
 add_lines(F + "joueur.mcfunction", [f"execute if entity @s[tag=metiers.v257] unless entity @s[tag=metiers.v258] run function {NS}:paliers/rattrapage"])
 w(F + "version.mcfunction", 'tellraw @s {"text":"[Métiers] Version 27.0 : arbres à 18 compétences, objets de métier, capacités de la Forge sur les outils","color":"gold"}')
+
+
+# 26/11/2026 : remise à zéro de toutes les compétences de tous les joueurs, une seule fois (tag metiers.rz2611).
+# Les points reviennent d'eux-mêmes (recalculés d'après les compétences acquises).
+RZ = ["tag @s add metiers.rz2611"]
+for j in jobs:
+    for k in range(1, NB_SK[j] + 1):
+        RZ += [f"tag @s remove metiers.sk.{j}{k}", f"tag @s remove metiers.skoff.{j}{k}"]
+    RZ += [f"advancement revoke @s only {NS}:{j}/competence_{k}" for k in range(1, NB_SK[j] + 1)]
+RZ += [f"function {NS}:objets/retirer_elytres", "tag @s remove metiers.grimpe",
+       'tellraw @s [{"text":"[Métiers] ","color":"gold"},{"text":"Remise à zéro des compétences : tous tes points te sont rendus, reconstruis tes arbres comme tu veux (touche G).","color":"yellow"}]',
+       "playsound minecraft:block.beacon.activate master @s ~ ~ ~ 1 1.2"]
+w(F + "paliers/rz_competences.mcfunction", "\n".join(RZ))
+add_lines(F + "joueur.mcfunction", [f"execute unless entity @s[tag=metiers.rz2611] run function {NS}:paliers/rz_competences"])
