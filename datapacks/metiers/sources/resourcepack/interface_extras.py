@@ -207,7 +207,7 @@ bande = Image.new("RGBA", (100, 100 * N), (0, 0, 0, 0))
 for k, im in enumerate(images):
     bande.paste(im, (0, 100 * k))
 png(TT + "legendaire_frame.png", bande)
-meta(TT + "legendaire_frame.png", {**NS10, "animation": {"frametime": 2, "interpolate": True}})
+meta(TT + "legendaire_frame.png", {**NS10, "animation": {"frametime": 2, "interpolate": True, "width": 100, "height": 100}})
 png(TT + "legendaire_background.png", fond_infobulle((236, 180, 60)))
 meta(TT + "legendaire_background.png", NS9)
 
