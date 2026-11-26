@@ -68,7 +68,6 @@ ATT = [  # (modificateur, attribut, valeur, opération, condition supplémentair
     ("b18", "max_health", 8, "add_value", ""),
     ("f13a", "attack_damage", 3, "add_value", f"if items entity @s {HOUE}"),
     ("f13b", "sweeping_damage_ratio", 0.5, "add_value", f"if items entity @s {HOUE}"),
-    ("m14", "explosion_knockback_resistance", 1, "add_value", ""),
     ("m18a", "armor", 4, "add_value", ""), ("m18b", "armor_toughness", 2, "add_value", ""),
     ("m18c", "knockback_resistance", 0.5, "add_value", ""),
     ("p13", "oxygen_bonus", 3, "add_value", ""),
@@ -105,8 +104,6 @@ J_ += [
     # Mineur
     "execute if score @s m.arcd matches 1.. run scoreboard players remove @s m.arcd 1",
     f"execute if entity @s[{SK('m', 13)}] unless score @s m.arcd matches 1.. if predicate {NS}:sombre if block ~ ~ ~ minecraft:air unless block ~ ~-1 ~ #{NS}:vide if items entity @s container.* minecraft:torch run function {NS}:comp/m_torche",
-    f"execute if entity @s[{SK('m', 14)}] if entity @e[type=minecraft:creeper,distance=..5] run effect give @s minecraft:resistance 2 1 true",
-    f"execute if entity @s[{SK('m', 14)}] if entity @e[type=minecraft:tnt,distance=..5] run effect give @s minecraft:resistance 2 1 true",
     "execute if score @s m.lavcd matches 1.. run scoreboard players remove @s m.lavcd 1",
     f"execute if entity @s[{SK('m', 17)}] unless score @s m.lavcd matches 1.. if block ~ ~ ~ minecraft:lava run function {NS}:comp/m_lave",
     f"execute if entity @s[{SK('m', 17)}] unless score @s m.lavcd matches 1.. if block ~ ~0.5 ~ minecraft:lava run function {NS}:comp/m_lave",

@@ -137,7 +137,8 @@ jobs["n"]["src"].append(("minecraft.crafted:minecraft.bookshelf", 2, 1, "n.shelf
 jobs["n"]["src"].append(("minecraft.mined:minecraft.bookshelf", 2, -1, "n.shelfmi", []))
 jobs["t"]["src"].append(("minecraft.custom:minecraft.traded_with_villager", 6, 1, "t.trade",
                          [("t1", "chance_15", "give @s minecraft:emerald 1"), ("t3", "chance_03", "give @s minecraft:diamond 1"),
-                          ("t6", "chance_01", "give @s minecraft:netherite_scrap 1")]))
+                          ("t6", "chance_01", "give @s minecraft:netherite_scrap 1"),
+                          ("t10", None, "execute if score @s c.ecus matches -2147483648.. run scoreboard players add @s c.ecus 5")]))
 # Bâtisseur : 4 points = 1 XP par bloc de construction POSÉ (les blocs bruts restent au Mineur et au Bûcheron) ;
 # casser un de ces blocs retire le même nombre de points, donc poser puis casser ne rapporte rien.
 BOIS_K = ["oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "mangrove", "cherry", "pale_oak", "bamboo", "crimson", "warped"]

@@ -155,8 +155,8 @@ TO = [f"execute as @e[type=minecraft:snowball,tag=!{NS}.pv] run function {NS}:ob
       f"execute as @e[type=minecraft:marker,tag={NS}.lum] at @s run function {NS}:objets/lumiere_verif",
       # objets posés : nouveaux
       f"execute as @e[type=minecraft:armor_stand,tag={NS}.onew] at @s run function {NS}:objets/pose",
-      # Marchand : bourse en main secondaire au palier 4 (ancien Aimant)
-      f'execute as @a if items entity @s weapon.offhand {SEL("t")} if entity @s[tag={NS}.sk.t10] at @s run function {NS}:objets/aimant',
+      # Mineur : compétence Aimant (26/11/2026, remplace la Bourse aimantée du Marchand)
+      f'execute as @a[tag={NS}.sk.m14] at @s run function {NS}:objets/aimant',
       # Mineur : 3x3 accroupi, pioche du métier au palier 5 (ancien Marteau)
       f'execute as @a[predicate={NS}:accroupi] if items entity @s weapon.mainhand #minecraft:pickaxes if entity @s[tag={NS}.sk.m16] at @s run function {NS}:objets/marteau',
       "scoreboard players set @a s.pk 0"]
