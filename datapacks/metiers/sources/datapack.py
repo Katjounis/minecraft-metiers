@@ -2306,7 +2306,7 @@ playsound minecraft:ui.toast.in master @s ~ ~ ~ 0.6 1.4
 """)
 
 # REFONTE (v24) : objets, armure 11 paliers, compétences, menus, Forge, skins, boss, défis
-for _mod in ("ref_base.py", "ref_skills.py", "ref_comp18.py", "ref_objets.py", "ref_menu.py", "ref_boss.py", "ref_defis.py", "ref_bareme.py", "ref_prestige.py", "ref_v26.py", "ref_batisseur.py", "ref_fermier.py", "ref_dank.py", "ref_soie.py", "ref_recalcul.py", "ref_recalcul2.py", "ref_paliers.py", "ref_scenes.py", "ref_classement.py", "ref_arbre_ecrire.py"):
+for _mod in ("ref_base.py", "ref_skills.py", "ref_comp18.py", "ref_objets.py", "ref_menu.py", "ref_boss.py", "ref_defis.py", "ref_bareme.py", "ref_prestige.py", "ref_v26.py", "ref_batisseur.py", "ref_fermier.py", "ref_dank.py", "ref_soie.py", "ref_recalcul.py", "ref_recalcul2.py", "ref_paliers.py", "ref_scenes.py", "ref_classement.py", "ref_arbre_ecrire.py", "ref_boss2.py"):
     exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), _mod), encoding="utf-8").read())
 
 # Compétences désactivables : une compétence achetée garde son tag metiers.sk.XN (achat, prérequis, menus),

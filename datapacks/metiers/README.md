@@ -5,6 +5,22 @@ Datapack vanilla de métiers (Bûcheron, Fermier, Mineur, Chasseur, Pêcheur, É
 ![Aperçu des outils](apercu/outils.png)
 
 
+## Boss durcis et calés sur le joueur (26/11/2026)
+
+Les 5 boss se calent sur le score de métiers (`m.total` : somme des niveaux, +100 par étoile) du joueur près de qui ils apparaissent, par paliers de 50 points : rang 0 à 24 (1 200 points et plus). Ça remplace l'ancien bonus au niveau moyen de Chasseur. Tout est dans `sources/ref_boss2.py`, exécuté en dernier.
+
+| Par rang | Effet |
+|---|---|
+| PV | +15 % (au-delà de 1 024, Résistance I, II puis III) |
+| Dégâts | +8 % sur les coups et sur toutes les attaques scriptées (`boss/coup`) |
+| Armure | +1 (30 au plus) |
+| Cadence | une attaque toutes les 5 s au rang 0, toutes les 2,5 s dès le rang 20 |
+| Récompenses | Écus, XP de Chasseur et prime de combat +15 %, +1 éclat tous les 4 rangs |
+
+Deux attaques de plus par boss, avec un cercle au sol qui prévient avant de frapper : Colosse (Forge sous chaque joueur, Enclumes dès 200 points), Reine (Ponte, Bond venimeux dès 200), Liche (Prison de glace, Rayon de givre dès 200), Brasier (Comètes, Anneau de flammes dès 200), Creeper géant (Mines, Aspiration dès 200).
+
+Ensorcellements : régénération dès 150 points, ronces (une touche sur trois renvoie un coup) dès 300, bouclier d'absorption à chaque vague dès 500, aura qui ronge à 4 blocs dès 700, furie (dernier souffle à 30 % au lieu de 15 %) dès 900. Le rang et les ensorcellements sont annoncés à l'apparition.
+
 ## Courbe d'XP allégée, version 25.8 (26/11/2026)
 
 Monter de niveau coûte 40 % d'XP en moins, avec la même forme de courbe : 90 XP au niveau 1 puis +6 % par niveau (1 564 au niveau 50, 27 178 au niveau 99), environ 24 600 XP pour atteindre le niveau 50 (à peu près 12 h de jeu au lieu de 20) et 479 000 pour le niveau 100. Le prestige baisse pareil : au moins 9 000 XP par niveau et par étoile (au lieu de 15 000). Table dans `ref_batisseur.py` (`XPF`, `#F99`).

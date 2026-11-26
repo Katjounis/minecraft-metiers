@@ -136,10 +136,70 @@ CREATURES = [
          base="zombie", echelle=2.2,
          vie=800, degats=14, vitesse=0.3, vitesse_chasse=0.3, armure=12, recul=1.0,
          xp=300, chance=0, lieu="boss", nuit=True, distance=(14, 20),
-         butin=[("diamond", 4, 8, 1), ("netherite_scrap", 2, 4, 1), ("emerald_block", 2, 4, 1)],
-         rare=[("netherite_ingot", 1, 2, 2), ("totem_of_undying", 1, 2, 2), ("enchanted_golden_apple", 1, 2, 2)],
+         # 26/11/2026 : plus aucun objet (Samuel). Récompense : cristaux des 10 métiers, Écus et XP (datapack.py, croque/recompense)
+         butin=[], rare=[],
          ou="Seulement pendant une Nuit de sang, vers minuit.",
          desc="Le cauchemar des enfants, revenu pour les grands. Il ne sort que les nuits de sang.",
-         comportement="Il se téléporte dans ton dos, éteint la lumière et appelle ses ombres. Un vrai boss.",
+         comportement="Il se téléporte dans ton dos, éteint la lumière et appelle ses ombres. Enragé à la moitié de sa vie, il plonge tout le monde dans le noir au dernier quart.",
          titre="Plus peur du noir"),
 ]
+
+
+# ---------------------------------------------------------------------------------------------
+# Rang (26/11/2026) : chaque créature se cale sur le score de métiers (somme des niveaux, +100 par étoile)
+# du joueur près de qui elle apparaît, par paliers de 50 points (rang 0 à 24, plafond à 1 200 points).
+# Par rang : +15 % de vie, +8 % de dégâts (coups et sorts), +1 d'armure (30 au plus), +0,5 de robustesse,
+# sorts plus rapprochés (jusqu'à deux fois plus à 1 000 points) ; récompenses (prime, XP Chasseur) +15 % par rang.
+PALIER_RANG = 50
+RANG_MAX = 24
+# Ensorcellements gagnés avec le rang : (rang minimal, tag, nom, description)
+ENSORCELLEMENTS = [
+    (3, "hr.regen", "Chair maudite", "se régénère en continu"),
+    (6, "hr.ronce", "Ronces", "une fois sur trois, te renvoie une partie de tes coups"),
+    (10, "hr.vamp", "Vampirisme", "se soigne à chaque coup porté"),
+    (14, "hr.aura", "Aura de terreur", "ronge la vie de ceux qui restent collés à elle"),
+    (18, "hr.rage", "Furie", "s'enrage sous 30 % de vie (plus forte, plus rapide, sorts plus fréquents)"),
+]
+# Sorts : (rang minimal, nom, ce qu'il fait). Rang 2 = 100 points, rang 6 = 300 points.
+# Délai de base entre deux sorts en ticks (SORT_CD), réduit de 1/40 par rang (moitié au rang 20).
+SORT_CD = {"slender": 100, "herobrine": 100, "siren": 120, "nonne": 100, "clown": 100, "pinhead": 110,
+           "dame": 100, "loup": 90, "feu": 100, "rodeur": 100, "croque": 100}
+SORTS = {
+    "slender": [(0, "Statique", "brouille la vue et blesse tous ceux qui sont proches"),
+                (2, "Pas d'ombre", "réapparaît dans ton dos et frappe"),
+                (6, "Tentacules", "t'attire vers lui et te fait dépérir")],
+    "herobrine": [(0, "Foudre", "un cercle crépite sous tes pieds, puis la foudre tombe"),
+                  (2, "Malédiction", "faiblesse, faim et fatigue"),
+                  (6, "Tempête", "quatre éclairs autour de toi")],
+    "siren": [(0, "Hurlement", "onde sonore à 20 blocs, assourdit et ralentit"),
+              (2, "Bond", "saute sur toi et écrase le sol"),
+              (6, "Échos", "appelle deux échos décharnés")],
+    "nonne": [(0, "Prière impie", "se soigne et t'affaiblit"),
+              (2, "Anathème", "Wither, cécité et dégâts"),
+              (6, "Sœurs damnées", "appelle deux spectres")],
+    "clown": [(0, "Ballons piégés", "des ballons rouges se posent autour de toi et explosent"),
+              (2, "Boîte à surprise", "surgit dans ton dos"),
+              (6, "Rire hystérique", "te retourne, nausée et lenteur")],
+    "pinhead": [(0, "Crochets", "des chaînes jaillissent du sol sous tes pieds"),
+                (2, "Boîte de Lemarchand", "t'enchaîne sur place"),
+                (6, "Second appel", "rappelle des cénobites au dernier quart de sa vie")],
+    "dame": [(0, "Cri", "blesse et éteint la vue à 14 blocs"),
+             (2, "Linceul glacé", "gel et lenteur au contact"),
+             (6, "Étreinte", "surgit dans ton dos et boit ta vie")],
+    "loup": [(0, "Bond", "saute sur toi de loin"),
+             (2, "Frénésie", "Force et Vitesse"),
+             (6, "Saignée", "lacère et fait saigner longtemps")],
+    "feu": [(0, "Souffle glacé", "gel et lenteur"),
+            (2, "Division", "se divise en deux lueurs"),
+            (6, "Leurre", "te soulève et t'aveugle")],
+    "rodeur": [(0, "Griffes", "lacère au contact"),
+               (2, "Ténèbres", "plonge la grotte dans le noir et accélère"),
+               (6, "Éboulis", "la voûte s'effondre sur toi")],
+    "croque": [(0, "Ombres", "appelle ses ombres"),
+               (0, "Pas de loup", "se téléporte dans ton dos et t'aveugle"),
+               (0, "Nuit noire", "obscurité et lenteur à 24 blocs"),
+               (0, "Cauchemar", "un cercle de sang sous chaque joueur, puis l'ombre mord"),
+               (0, "Faux", "fauche tout à 5 blocs"),
+               (4, "Cage de terreur", "cloue tout le monde sur place dans le noir"),
+               (8, "Dévoreur d'âmes", "aspire la vie de tous et se soigne")],
+}

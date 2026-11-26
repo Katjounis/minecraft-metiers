@@ -45,6 +45,15 @@ Un épouvantail décharné de 9 blocs attaché à sa croix, tête en sac cousu a
 
 PV : Grimoire 500 + 250 par joueur, Corbeau 600 + 250 par joueur (au-delà de 1 000, Résistance). Attaques plus rapprochées (le Grimoire attaque toutes les 4,5 s puis 2,7 s en phase 3, le Corbeau toutes les 4,5 s puis 3,5 s), flaque d'encre sous un joueur à chaque attaque du Grimoire en phase 2, tentacule en plus à chaque attaque en phase 3, corbeaux pendant la pluie de plumes du Corbeau, nuit qui ronge plus fort (2 dégâts toutes les 2 s).
 
+## Rang et nouveaux sorts (26/11/2026)
+
+Le boss se cale sur le meilleur score de métiers parmi les combattants (somme des niveaux, +100 par étoile), par paliers de 50 points (rang 0 à 24), annoncé au lancement. Par rang : +15 % de PV (Résistance au-delà de 1 024, jusqu'à III), +8 % sur tous les dégâts scriptés (la règle du K.O. tient compte des dégâts réels), attaques plus rapprochées (jusqu'à -40 %), récompenses +15 % (Écus, XP de Chasseur) et +1 éclat tous les 4 rangs. Régénération dès 150 points, bouclier d'absorption à la phase 2 dès 500.
+
+- **Grimoire, Marque d'encre** : une rune suit un joueur 2,5 s puis explose (10 dégâts à 3 blocs de lui) : il faut s'écarter de lui. **Festin de pages** (dès 300 points) : 4 dégâts à tous, le Grimoire se soigne.
+- **Corbeau, Épouvante** : cri à 10 blocs (5 dégâts, Obscurité, Lenteur). **Picorage** (dès 300 points) : trois cercles sous des joueurs, les corbeaux piquent 1,5 s plus tard (8 dégâts).
+
+Correctif : les PV du boss étaient rangés dans `#max bs.ev`, qui est aussi la borne haute de l'intervalle entre deux boss. Après un combat, l'intervalle passait à 3 à 16 h. Les PV ont maintenant leur propre score (`#pvmax`), et une borne abîmée est remise à 300 min une fois au chargement.
+
 ## Boss de Métiers redessinés
 
 Les 5 boss de Métiers deviennent invisibles et un squelette animé les suit (repos, marche, attaque quand Métiers lance une attaque) :

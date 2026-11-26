@@ -10,7 +10,7 @@ import json, os, shutil, sys, zipfile
 
 ICI = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, ICI)
-from creatures import CREATURES, PALIERS, PRIMES, RELIQUES
+from creatures import CREATURES, PALIERS, PRIMES, RELIQUES, SORTS, SORT_CD, ENSORCELLEMENTS, PALIER_RANG, RANG_MAX
 import sons
 
 # Sons personnalises presents dans le resource pack (sons.py) ; sinon on garde un son vanilla
@@ -58,6 +58,17 @@ def tags_nbt(tag):
 
 
 C = {c["id"]: c for c in CREATURES}
+JOBS = "bfmcpenxtk"   # métiers du pack Métiers (cristaux m.cr_<j>)
+
+
+def deg(base, sel, typ="magic"):
+    """Dégâts d'un sort, mis à l'échelle du rang : base x puissance (@s hr.pw, 100 + 8 par rang) / 100.
+    @s est la créature ou la zone qui lance le sort ; la source est la créature la plus proche."""
+    return [f"scoreboard players set #d hr.tmp {base}", "scoreboard players operation #d hr.tmp *= @s hr.pw",
+            "scoreboard players operation #d hr.tmp /= #k100 hr.cfg",
+            "execute store result storage horreur:t d.n int 1 run scoreboard players get #d hr.tmp",
+            f'data modify storage horreur:t d.t set value "minecraft:{typ}"',
+            f"execute as {sel} run function horreur:sort/frapper with storage horreur:t d"]
 IDS = [c["id"] for c in CREATURES]
 REG = [c["id"] for c in CREATURES if not c.get("boss")]   # créatures « normales » (le boss ne sort que pendant la Nuit de sang)
 
@@ -131,7 +142,8 @@ for c in CREATURES:
 
 # ---------------------------------------------------------------------------------------------
 # Chargement, boucles
-objs = ["hr.tmp", "hr.cfg", "hr.cd", "hr.vie", "hr.age", "hr.etat", "hr.t", "hr.r", "hr.tot", "hr.cw", "hr.an", "hr.af"] + [f"hr.k.{i}" for i in IDS]
+objs = ["hr.tmp", "hr.cfg", "hr.cd", "hr.vie", "hr.age", "hr.etat", "hr.t", "hr.r", "hr.tot", "hr.cw", "hr.an", "hr.af",
+        "hr.rg", "hr.pw", "hr.s", "hr.scd", "hr.pv", "hr.rgk", "hr.au", "hr.ph"] + [f"hr.k.{i}" for i in IDS]
 w(F + "load.mcfunction", "\n".join(
     [f"scoreboard objectives add {o} dummy" for o in objs]
     + ["scoreboard objectives add bestiaire trigger",
@@ -145,6 +157,9 @@ w(F + "load.mcfunction", "\n".join(
        "scoreboard players add #sang hr.cfg 0", "scoreboard players add #contrat hr.cfg 0", "scoreboard players add #cw hr.cfg 0",
        "scoreboard players add #semh hr.cfg 0",
        "execute unless score #contrat hr.cfg matches 1.. run function horreur:contrat/nouveau",
+       "scoreboard players set #k100 hr.cfg 100", "scoreboard players set #k50 hr.cfg %d" % PALIER_RANG,
+       "scoreboard players set #k15 hr.cfg 15", "scoreboard players set #k8 hr.cfg 8", "scoreboard players set #k40 hr.cfg 40",
+       "scoreboard players set #k2 hr.cfg 2", "scoreboard players set #k3 hr.cfg 3",
        "schedule function horreur:seconde 20t replace"]))
 w(F + "config/defaut.mcfunction", "\n".join(
     [f"scoreboard players set #ch_{c['id']} hr.cfg {c['chance']}" for c in CREATURES]
@@ -303,6 +318,7 @@ execute as @e[type=minecraft:marker,tag=hr.pt,limit=1] at @s run function horreu
 execute unless score #ok hr.tmp matches 1 run return run function horreur:spawn/essai with storage horreur:t s
 scoreboard players operation @s hr.cd = #cd hr.cfg
 execute if score #sang hr.cfg matches 1 run scoreboard players set @s hr.cd 180
+function horreur:rang/calc
 $execute at @e[type=minecraft:marker,tag=hr.pt,limit=1] run function horreur:invoquer/$(c)
 execute at @e[type=minecraft:marker,tag=hr.pt,limit=1] run tellraw @a[distance=..64,gamemode=!spectator] {"text":"Quelque chose rôde près d'ici...","color":"dark_gray","italic":true}""")
 
@@ -468,10 +484,14 @@ for c in CREATURES:
     w(F + f"invoquer/{k}.mcfunction", summon(c) + f"\nexecute as @e[tag=hr.neuf] at @s run function horreur:c/init_{k}")
     w(F + f"c/init_{k}.mcfunction", "\n".join(
         ["tag @s remove hr.neuf", "scoreboard players set @s hr.vie 120", "scoreboard players set @s hr.age 0",
+         "scoreboard players set @s hr.s 0", "scoreboard players set @s hr.au 0", "scoreboard players set @s hr.ph 0",
+         f"function horreur:rang/appliquer_{k}",
          "scoreboard players set @s hr.etat 0", "scoreboard players set @s hr.t 0", "scoreboard players set @s hr.r 0"]
         + INIT_EXTRA[k]))
 w(F + "invoquer.mcfunction", """
 # Admin : /function horreur:invoquer {c:"slender"}  (slender, herobrine, siren, nonne, clown, pinhead)
+# la créature se cale sur le score de métiers de celui qui l'invoque
+function horreur:rang/calc
 # 4 blocs devant soi a l'horizontale (le regard vers le bas ne compte pas), pose au sol ; sinon aux pieds
 scoreboard players set #lim hr.tmp 6
 scoreboard players set #h hr.tmp 2
@@ -502,8 +522,8 @@ for c in CREATURES:
 
 # ---------------------------------------------------------------------------------------------
 # Comportements (toutes les 5 ticks, en tant que creature)
-w(F + "c/comportement.mcfunction", "\n".join(
-    f"execute if entity @s[tag=hr.c.{k}] run return run function horreur:c/{k}" for k in IDS))
+w(F + "c/comportement.mcfunction", "\n".join(["function horreur:c/commun"] + [
+    f"execute if entity @s[tag=hr.c.{k}] run return run function horreur:c/{k}" for k in IDS]))
 
 JOUEUR = "gamemode=!spectator"
 # Regard : rayon depuis les yeux de chaque joueur proche, arrêté par les blocs pleins ; les joueurs qui voient
@@ -611,7 +631,7 @@ w(F + "c/siren_frappe.mcfunction", f"""
 scoreboard players set @s hr.r 0
 particle minecraft:explosion ~ ~0.5 ~ 2 0.2 2 0 6
 playsound minecraft:entity.ravager.attack hostile @a[distance=..32] ~ ~ ~ 2 0.5
-execute as @a[distance=..6.5,{JOUEUR}] run damage @s 14 minecraft:mob_attack by @e[tag=hr.c.siren,sort=nearest,limit=1]
+""" + "\n".join(deg(14, f"@a[distance=..6.5,{JOUEUR}]", "mob_attack")) + f"""
 execute as @a[distance=..6.5,{JOUEUR}] at @s facing entity @e[tag=hr.c.siren,sort=nearest,limit=1] feet rotated ~180 0 positioned ^ ^0.6 ^1.5 if block ~ ~ ~ #horreur:passable if block ~ ~1 ~ #horreur:passable run tp @s ~ ~ ~
 effect give @a[distance=..6.5,{JOUEUR}] minecraft:nausea 5 0 true""")
 w(F + "c/siren_cri.mcfunction", f"""
@@ -632,7 +652,9 @@ w(F + "c/pinhead.mcfunction", f"""
 scoreboard players add @s hr.t 5
 execute if score @s hr.t matches 80.. if entity @a[distance=..16,{JOUEUR}] run function horreur:c/pinhead_chaines
 execute if score @s hr.etat matches 0 store result score #hp hr.tmp run data get entity @s Health
-execute if score @s hr.etat matches 0 if score #hp hr.tmp matches ..60 run function horreur:c/pinhead_cenobites""")
+# 26/11/2026 : seuil en pourcentage de la vie max (la vie dépend du rang)
+execute if score @s hr.etat matches 0 run function horreur:c/pct
+execute if score @s hr.etat matches 0 if score #hp hr.tmp matches ..50 run function horreur:c/pinhead_cenobites""")
 w(F + "c/pinhead_chaines.mcfunction", f"""
 scoreboard players set @s hr.t 0
 playsound {son('pinhead_chaines', 'minecraft:block.anvil.land')} hostile @a[distance=..24] ~ ~ ~ 1.5 1
@@ -711,23 +733,38 @@ execute if score #ok hr.tmp matches 1 run function horreur:c/teleporter
 kill @e[type=minecraft:marker,tag=hr.pt2]""")
 OMBRE = ('summon minecraft:vex ~ ~1 ~ {Tags:["hr.e","hr.serv"],CustomName:{"text":"Ombre","color":"dark_gray"},'
          'DeathLootTable:"minecraft:empty",attributes:[{id:"minecraft:max_health",base:10d}],Health:10f}')
-w(F + "c/croque.mcfunction", f"""
+w(F + "c/croque.mcfunction", """
 particle minecraft:smoke ~ ~2 ~ 0.6 1.5 0.6 0.01 6
 execute store result bossbar horreur:boss value run data get entity @s Health
 bossbar set horreur:boss players @a[distance=..96]
-scoreboard players add @s hr.t 5
-execute if score @s hr.t matches 120.. run function horreur:c/croque_attaque""")
-w(F + "c/croque_attaque.mcfunction", f"""
-scoreboard players set @s hr.t 0
-execute store result score #r hr.tmp run random value 1..3
-execute if score #r hr.tmp matches 1 run function horreur:c/rodeur_cache
-execute if score #r hr.tmp matches 1 run effect give @a[distance=..8,{JOUEUR}] minecraft:blindness 2 0 true
-execute if score #r hr.tmp matches 2 run {OMBRE}
-execute if score #r hr.tmp matches 2 run {OMBRE}
-execute if score #r hr.tmp matches 2 run tellraw @a[distance=..48] {{"text":"Le Croque-mitaine appelle ses ombres !","color":"dark_red"}}
-execute if score #r hr.tmp matches 3 run effect give @a[distance=..24,{JOUEUR}] minecraft:darkness 8 0 true
-execute if score #r hr.tmp matches 3 run effect give @a[distance=..24,{JOUEUR}] minecraft:slowness 4 1 true
-execute if score #r hr.tmp matches 3 run playsound {son('croque_grondement', 'minecraft:entity.warden.roar')} hostile @a[distance=..48] ~ ~ ~ 2.5 {P('croque_grondement', 0.7)}""")
+# 26/11/2026 : ses attaques passent par les sorts (sort/croque) ; deux phases, à 50 % et 25 % de sa vie
+function horreur:c/pct
+execute if score @s hr.ph matches 0 if score #hp hr.tmp matches ..50 run function horreur:c/croque_p2
+execute if score @s hr.ph matches 1 if score #hp hr.tmp matches ..25 run function horreur:c/croque_p3""")
+w(F + "c/croque_p2.mcfunction", f"""
+scoreboard players set @s hr.ph 1
+effect give @s minecraft:strength infinite 0 true
+effect give @s minecraft:speed infinite 0 true
+scoreboard players operation @s hr.scd *= #k2 hr.cfg
+scoreboard players operation @s hr.scd /= #k3 hr.cfg
+particle minecraft:large_smoke ~ ~2 ~ 1.5 2 1.5 0.05 120
+playsound {son('croque_grondement', 'minecraft:entity.warden.roar')} hostile @a[distance=..64] ~ ~ ~ 3 {P('croque_grondement', 0.5)}
+tellraw @a[distance=..96] {{"text":"Le Croque-mitaine enrage !","color":"dark_red","bold":true}}""")
+w(F + "c/croque_p3.mcfunction", f"""
+scoreboard players set @s hr.ph 2
+{OMBRE}
+{OMBRE}
+{OMBRE}
+{OMBRE}
+effect give @a[distance=..48,{JOUEUR}] minecraft:darkness 15 0 true
+effect give @s minecraft:resistance 10 1 true
+playsound {son('croque_grondement', 'minecraft:entity.warden.emerge')} hostile @a[distance=..64] ~ ~ ~ 3 {P('croque_grondement', 0.4)}
+tellraw @a[distance=..96] {{"text":"Le Croque-mitaine éteint la nuit... ses ombres sortent de partout.","color":"dark_red","bold":true}}""")
+# pourcentage de vie restant dans #hp (vie max retenue dans hr.pv au moment de l'apparition)
+w(F + "c/pct.mcfunction", """
+execute store result score #hp hr.tmp run data get entity @s Health
+scoreboard players operation #hp hr.tmp *= #k100 hr.cfg
+scoreboard players operation #hp hr.tmp /= @s hr.pv""")
 
 # Coups recus par un joueur (progres « mob blesse joueur »)
 COUPS = {
@@ -746,7 +783,8 @@ for k, lignes in COUPS.items():
     wj(f"data/{NS}/advancement/coup/{k}.json", {"criteria": {"c": {"trigger": "minecraft:entity_hurt_player", "conditions": {
         "damage": {"type": {"source_entity": {"minecraft:nbt": tags_nbt("hr.c." + k)}}}}}}, "rewards": {"function": f"{NS}:coup/{k}"}})
     w(F + f"coup/{k}.mcfunction", "\n".join([f"advancement revoke @s only horreur:coup/{k}",
-                                             f"execute as @e[tag=hr.c.{k},sort=nearest,limit=1] run function horreur:rig/{k}/jouer_attaque"] + lignes))
+                                             f"execute as @e[tag=hr.c.{k},sort=nearest,limit=1] run function horreur:rig/{k}/jouer_attaque",
+                                             f"execute as @e[tag=hr.c.{k},tag=hr.vamp,sort=nearest,limit=1] at @s run function horreur:sort/vampire"] + lignes))
 
 # ---------------------------------------------------------------------------------------------
 # Bestiaire : kills, paliers
@@ -769,7 +807,15 @@ for c in CREATURES:
     w(F + f"tue/{k}.mcfunction", f"""
 advancement revoke @s only horreur:tue/{k}
 scoreboard players add @s hr.k.{k} 1
-execute unless score @s m.afk matches 240.. if score @s m.c_bal matches -2147483648.. run scoreboard players add @s m.c_bal {max(0, c['xp'] - XP_BASE.get(c['base'], 0))}
+# 26/11/2026 : récompenses proportionnelles au rang de la créature (hr.rgk, posé par la créature sur les joueurs proches)
+scoreboard players set #m hr.tmp 0
+scoreboard players operation #m hr.tmp = @s hr.rgk
+scoreboard players operation #m hr.tmp *= #k15 hr.cfg
+scoreboard players add #m hr.tmp 100
+scoreboard players set #x hr.tmp {max(0, c['xp'] - XP_BASE.get(c['base'], 0))}
+scoreboard players operation #x hr.tmp *= #m hr.tmp
+scoreboard players operation #x hr.tmp /= #k100 hr.cfg
+execute unless score @s m.afk matches 240.. if score @s m.c_bal matches -2147483648.. run scoreboard players operation @s m.c_bal += #x hr.tmp
 execute if score @s hr.k.{k} matches {PALIERS[0]} run function horreur:palier/{k}_1
 execute if score @s hr.k.{k} matches {PALIERS[1]} run function horreur:palier/{k}_2
 execute if score @s hr.k.{k} matches {PALIERS[2]} run function horreur:palier/{k}_3
@@ -780,9 +826,13 @@ execute if score @s hr.k.{k} matches 10..49 run scoreboard players add #pr hr.tm
 execute if score @s hr.k.{k} matches 50..99 run scoreboard players add #pr hr.tmp {PRIMES[k] // 2}
 execute if score @s hr.k.{k} matches 100.. run scoreboard players add #pr hr.tmp {PRIMES[k]}
 execute if score #sang hr.cfg matches 1 run scoreboard players operation #pr hr.tmp += #pr hr.tmp
+scoreboard players operation #pr hr.tmp *= #m hr.tmp
+scoreboard players operation #pr hr.tmp /= #k100 hr.cfg
 execute if score @s c.ecus matches -2147483648.. run scoreboard players operation @s c.ecus += #pr hr.tmp
 execute if score @s c.ecus matches -2147483648.. run tellraw @s [{PREF},{{"text":"Prime : +","color":"gold"}},{{"score":{{"name":"#pr","objective":"hr.tmp"}},"color":"gold"}},{{"text":" Écus","color":"gold"}}]
-""" + (f"execute if score #contrat hr.cfg matches {REG.index(k) + 1} unless score @s hr.cw = #cw hr.cfg run function horreur:contrat/paye_{k}\n" if k in REG else "") + f"""execute if score #sang hr.cfg matches 1 run loot give @s loot horreur:bonus/{k}""")
+""" + (f"execute if score #contrat hr.cfg matches {REG.index(k) + 1} unless score @s hr.cw = #cw hr.cfg run function horreur:contrat/paye_{k}\n" if k in REG else "")
+      + ("tag @s add hr.tueur\nexecute at @s as @a[distance=..48,gamemode=!spectator] run function horreur:croque/recompense\ntag @s remove hr.tueur"
+         if c.get("boss") else f"execute if score #sang hr.cfg matches 1 run loot give @s loot horreur:bonus/{k}"))
     nom_c = snbt({"text": nom, "color": c["couleur"], "bold": True})
     w(F + f"palier/{k}_1.mcfunction", f"""
 tellraw @s [{PREF},{{"text":"Nouvelle créature découverte : ","color":"gray"}},{nom_c},{{"text":" ! (touche G ou /trigger bestiaire)","color":"gray"}}]
@@ -798,7 +848,11 @@ playsound minecraft:ui.toast.challenge_complete master @a ~ ~ ~ 1 0.5""")
     w(F + f"palier/{k}_2.mcfunction", f"""
 tellraw @s [{PREF},{{"text":"{PALIERS[1]} victoires contre ","color":"gray"}},{nom_c},{{"text":" : voici ton trophée !","color":"gold"}}]
 playsound minecraft:entity.player.levelup master @s ~ ~ ~ 1 0.7
-{trophee(c)}""")
+{trophee(c)}""" if not c.get("boss") else "\n".join(
+        # 26/11/2026 : le boss ne donne plus aucun objet : 25 cristaux de chaque métier à la place du trophée
+        [f"tellraw @s [{PREF},{{\"text\":\"{PALIERS[1]} victoires contre \",\"color\":\"gray\"}},{nom_c},{{\"text\":\" : +25 cristaux dans chaque métier !\",\"color\":\"aqua\"}}]",
+         "playsound minecraft:entity.player.levelup master @s ~ ~ ~ 1 0.7"]
+        + [f"execute if score @s m.cr_{j} matches -2147483648.. run scoreboard players add @s m.cr_{j} 25" for j in JOBS]))
     w(F + f"palier/{k}_3.mcfunction", f"""
 tellraw @a [{PREF},{{"selector":"@s","color":"gold"}},{{"text":" a vaincu {PALIERS[2]} fois ","color":"gray"}},{nom_c},{{"text":" et devient « {c['titre']} » !","color":"gold"}}]
 playsound minecraft:ui.toast.challenge_complete master @a ~ ~ ~ 1 0.6""")
@@ -1026,12 +1080,19 @@ for c in CREATURES:
              "body": [{"type": "minecraft:item", "item": {"id": "minecraft:paper", "components": {"minecraft:item_model": f"horreur:trophee_{k}"}},
                        "show_decorations": False, "show_tooltip": False,
                        "description": {"width": 220, "contents": [{"text": c["desc"] + "\n", "color": "white"},
-                                       {"text": f"Vie {c['vie']}  ·  dégâts {c['degats']}  ·  XP Chasseur {c['xp']}  ·  prime {PRIMES[k]} Écus", "color": "gray"}]}},
+                                       {"text": f"Vie {c['vie']}  ·  dégâts {c['degats']}  ·  XP Chasseur {c['xp']}  ·  prime {PRIMES[k]} Écus\n", "color": "gray"},
+                                       {"text": f"Valeurs pour 0 point : +15 % de vie et de récompense, +8 % de dégâts par tranche de {PALIER_RANG} points de métiers de celui près de qui elle apparaît.", "color": "dark_gray"}]}},
                       msg([{"text": "Où : ", "color": "dark_red"}, {"text": c["ou"], "color": "gray"}]),
                       msg([{"text": "Danger : ", "color": "dark_red"}, {"text": c["comportement"], "color": "gray"}]),
+                      msg([{"text": "Sorts : ", "color": "dark_purple"}] + [
+                          {"text": f"{nom}" + (f" (dès {r * PALIER_RANG} pts)" if r else "") + f" : {quoi}" + ("\n" if i < len(SORTS[k]) - 1 else ""), "color": "gray"}
+                          for i, (r, nom, quoi) in enumerate(SORTS[k])]),
+                      msg([{"text": "Ensorcellements : ", "color": "dark_purple"}] + [
+                          {"text": f"{nom} (dès {r * PALIER_RANG} pts) : {quoi}" + ("\n" if i < len(ENSORCELLEMENTS) - 1 else ""), "color": "gray"}
+                          for i, (r, _t, nom, quoi) in enumerate(ENSORCELLEMENTS)]),
                       msg([{"text": "Vaincue : ", "color": "dark_red"}, {"text": "§N fois", "color": "white"}]),
                       msg([{"text": f"✔ {PALIERS[0]} : fiche découverte\n", "color": "green"},
-                           {"text": f"§P2 {PALIERS[1]} : trophée (tête de {c['nom']})\n", "color": "§C2"},
+                           {"text": f"§P2 {PALIERS[1]} : " + ("25 cristaux de chaque métier" if c.get("boss") else f"trophée (tête de {c['nom']})") + "\n", "color": "§C2"},
                            {"text": f"§P3 {PALIERS[2]} : titre « {c['titre']} »\n", "color": "§C3"},
                            {"text": f"§P4 {PALIERS[3]} : prime de 5 000 Écus", "color": "§C4"}])],
              "actions": [RETOUR], "exit_action": {"label": {"text": "Fermer"}}}
@@ -1107,6 +1168,9 @@ for c in CREATURES:
     w(F + f"rig/{k}/tick.mcfunction", "\n".join(choix + tick))
 w(F + "rig/tick.mcfunction", "\n".join(f"execute if entity @s[tag=hr.c.{c['id']}] run return run function {NS}:rig/{c['id']}/tick" for c in CREATURES))
 add_rig = True
+
+import sorts
+sorts.ecrire(globals())
 
 import resourcepack
 resourcepack.generer()

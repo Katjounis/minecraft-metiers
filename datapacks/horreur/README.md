@@ -9,6 +9,18 @@ Inspiration : *Spooky Scary Creatures*. Aucun asset n'en est repris : textures e
 
 Toutes les créatures sont maintenant des squelettes d'item_display articulés (`sources/rigs.py`, moteur du pack Boss), passagers de leur mob invisible, avec trois animations : repos, marche (quand le mob se déplace) et attaque (quand il te frappe). SlenderMan a six tentacules dans le dos, Siren Head ses deux sirènes qui cherchent, le Loup-garou un museau et une queue, Pinhead ses épingles et ses chaînes, la Nonne et la Dame blanche glissent, le Clown tient son ballon, le Croque-mitaine porte cape, cornes et sac. Les trophées et les fiches du bestiaire montrent la tête en 3D de la créature (`sources/tetes.py`), ce qui corrige SlenderMan affiché couché. Le pack Boss doit être présent dans le dépôt pour fabriquer Horreur (il fournit `rig.py` et `peintres.py`).
 
+## Sorts, rang et Croque-mitaine sans objet (26/11/2026)
+
+**Rang.** Chaque créature se cale sur le score de métiers (somme des niveaux, +100 par étoile, score `m.total` du pack Métiers) du joueur près de qui elle apparaît, par paliers de 50 points (rang 0 à 24). Par rang : +15 % de vie, +8 % de dégâts (coups et sorts), +1 d'armure (30 au plus), +0,5 de robustesse, sorts plus rapprochés (deux fois plus à 1 000 points). La prime en Écus et l'XP de Chasseur suivent : +15 % par rang. Les valeurs du tableau ci-dessous sont celles du rang 0. Sans Métiers, tout reste au rang 0.
+
+**Sorts.** Chaque créature a trois sorts (le 2e dès 100 points, le 3e dès 300), lancés quand un joueur est à moins de 24 blocs. SlenderMan, Herobrine et la Dame blanche n'en lancent qu'une fois réveillés. Les sorts de zone (foudre d'Herobrine, ballons du Clown, crochets de Pinhead, éboulis du Rôdeur, cauchemar du Croque-mitaine) font briller un cercle au sol avant de frapper : on a le temps de sortir. Liste complète dans `SORTS` (`sources/creatures.py`) et sur chaque fiche du bestiaire.
+
+**Ensorcellements** gagnés avec le rang : Chair maudite (régénération, 150 points), Ronces (une fois sur trois, renvoie une partie des coups, 300), Vampirisme (se soigne en frappant, 500), Aura de terreur (ronge à 4 blocs, 700), Furie (s'enrage sous 30 %, 900).
+
+**Croque-mitaine.** Sept sorts (Cage de terreur dès 200 points, Dévoreur d'âmes dès 400), enragé à 50 % de sa vie, nuit totale et quatre ombres à 25 %. Le rang et ses PV sont annoncés à sa sortie. Il ne donne plus aucun objet (ni butin, ni butin doublé de la Nuit de sang, ni trophée) : tous les joueurs à 48 blocs du coup final gagnent 10 cristaux dans chacun des 10 métiers (x rang), 300 points d'XP, la prime en Écus et l'XP de Chasseur ; 25 cristaux de chaque métier à 10 victoires à la place du trophée.
+
+Fichiers : `sources/sorts.py` (rang, sorts, zones, récompense du Croque-mitaine), réglages dans `sources/creatures.py` (`SORTS`, `SORT_CD`, `ENSORCELLEMENTS`, `PALIER_RANG`).
+
 ## Créatures
 
 | Créature | Où, quand | Ce qu'elle fait |

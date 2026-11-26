@@ -100,6 +100,15 @@ fn("load", [f"scoreboard objectives add {o} dummy" for o in OBJ] + [
     "execute unless score #on bs.ev matches 0..1 run scoreboard players set #on bs.ev 1",
     "execute unless score #min bs.ev matches 1.. run scoreboard players set #min bs.ev 180",
     "execute unless score #max bs.ev matches 1.. run scoreboard players set #max bs.ev 300",
+    # 26/11/2026 : les PV du boss écrasaient #max (maximum de l'intervalle) : 3 à 16 h entre deux boss après un combat.
+    # Une fois, on remet l'intervalle par défaut si sa borne haute a été abîmée par des PV.
+    "execute unless score #v_int bs.ev matches 1 if score #max bs.ev matches 301.. run scoreboard players set #max bs.ev 300",
+    "scoreboard players set #v_int bs.ev 1",
+    "scoreboard players set #8 bs.tmp 8", "scoreboard players set #15 bs.tmp 15", "scoreboard players set #50 bs.tmp 50",
+    "scoreboard players set #3 bs.tmp 3", "scoreboard players set #40 bs.tmp 40",
+    "execute unless score #pw bs.ev matches 1.. run scoreboard players set #pw bs.ev 100",
+    "execute unless score #mul bs.ev matches 1.. run scoreboard players set #mul bs.ev 100",
+    "execute unless score #rg bs.ev matches 0.. run scoreboard players set #rg bs.ev 0",
     "execute unless score #etat bs.ev matches 0.. run scoreboard players set #etat bs.ev 0",
     "execute unless score #eid bs.ev matches 0.. run scoreboard players set #eid bs.ev 0",
     f"execute unless score #t bs.ev matches 0.. run function {NS}:ev/prochain",
@@ -239,11 +248,28 @@ fn("ev/intro", [
     f"execute if score #intro bs.ev matches ..0 run function {NS}:ev/lancer"])
 fn("ev/lancer", [
     "scoreboard players set #etat bs.ev 3", "scoreboard players set #lance bs.ev 1",
+    f"function {NS}:rang",
     f"execute if score #boss bs.ev matches 1 run function {NS}:g/lancer",
     f"execute if score #boss bs.ev matches 2 run function {NS}:c/lancer",
-    "execute store result bossbar boss:combat max run scoreboard players get #max bs.ev",
-    "execute store result bossbar boss:combat value run scoreboard players get #max bs.ev",
+    "execute store result bossbar boss:combat max run scoreboard players get #pvmax bs.ev",
+    "execute store result bossbar boss:combat value run scoreboard players get #pvmax bs.ev",
     "bossbar set boss:combat visible true"])
+# 26/11/2026 : rang = meilleur score de métiers (somme des niveaux, +100 par étoile) parmi les combattants, par
+# paliers de 50 points (0 à 24). Par rang : +15 % de PV et de récompenses, +8 % de dégâts, attaques plus rapprochées.
+fn("rang", [
+    "scoreboard players set #rgj bs.ev 0",
+    "execute as @a[tag=bs.joue] if score @s m.total matches 1.. run scoreboard players operation #rgj bs.ev > @s m.total",
+    "scoreboard players operation #rg bs.ev = #rgj bs.ev", "scoreboard players operation #rg bs.ev /= #50 bs.tmp",
+    "execute if score #rg bs.ev matches 25.. run scoreboard players set #rg bs.ev 24",
+    "scoreboard players operation #pw bs.ev = #rg bs.ev", "scoreboard players operation #pw bs.ev *= #8 bs.tmp",
+    "scoreboard players add #pw bs.ev 100",
+    "scoreboard players operation #mul bs.ev = #rg bs.ev", "scoreboard players operation #mul bs.ev *= #15 bs.tmp",
+    "scoreboard players add #mul bs.ev 100",
+    dire("@a[tag=bs.joue]", ("Le boss se cale sur le meilleur d'entre vous (", "gray"), {"score": {"name": "#rgj", "objective": "bs.ev"}, "color": "yellow"},
+         (" points de métiers) : rang ", "gray"), {"score": {"name": "#rg", "objective": "bs.ev"}, "color": "red", "bold": True}, (".", "gray"))])
+fn("rang_boss", [
+    # ensorcellements du boss (en tant que hitbox) : régénération dès 150 points
+    "execute if score #rg bs.ev matches 3.. run effect give @s minecraft:regeneration infinite 0 true"])
 fn("ev/combat_s", [
     "scoreboard players add #duree bs.ev 1",
     "execute in boss:grimoire run bossbar set boss:combat players @a[distance=0..]",
@@ -399,8 +425,14 @@ fn("joueur/entrer", [
     "scoreboard players set @s bs.vu 0"])
 # degats scriptes : K.O. plutot que la mort
 fn("joueur/blesse", [
-    "$execute if score @s bs.pv matches ..$(lim) run return run function boss:joueur/ko",
-    "$damage @s $(d) minecraft:mob_attack"])
+    # 26/11/2026 : dégâts x (100 + 8 par rang) / 100 ; K.O. si le coup laisserait moins de 3 cœurs
+    "$scoreboard players set #d bs.tmp $(d)",
+    "scoreboard players operation #d bs.tmp *= #pw bs.ev", "scoreboard players operation #d bs.tmp /= #100 bs.tmp",
+    "scoreboard players operation #lim bs.tmp = #d bs.tmp", "scoreboard players add #lim bs.tmp 6",
+    "execute if score @s bs.pv <= #lim bs.tmp run return run function boss:joueur/ko",
+    "execute store result storage boss:t bl.d int 1 run scoreboard players get #d bs.tmp",
+    "function boss:joueur/blesse2 with storage boss:t bl"])
+fn("joueur/blesse2", "$damage @s $(d) minecraft:mob_attack")
 fn("joueur/ko", [
     "tag @s remove bs.joue", "tag @s add bs.ko",
     "effect give @s minecraft:instant_health 1 3 true", "effect give @s minecraft:regeneration 10 1 true",
@@ -525,18 +557,22 @@ LIVRE = disp_nbt("livre_a", ["bs.e", "bs.mind"], 1.5, -0.3, lum=11)
 
 def pv_max(base, par_joueur):
     return [f"scoreboard players set #c bs.tmp {par_joueur}",
-            "scoreboard players operation #max bs.ev = #n bs.ev", "scoreboard players operation #max bs.ev *= #c bs.tmp",
-            f"scoreboard players add #max bs.ev {base}",
+            "scoreboard players operation #pvmax bs.ev = #n bs.ev", "scoreboard players operation #pvmax bs.ev *= #c bs.tmp",
+            f"scoreboard players add #pvmax bs.ev {base}",
+            "scoreboard players operation #pvmax bs.ev *= #mul bs.ev", "scoreboard players operation #pvmax bs.ev /= #100 bs.tmp",
             "scoreboard players set #res bs.ev 0",
-            "execute if score #max bs.ev matches 1100.. run scoreboard players set #res bs.ev 1",
-            "execute if score #max bs.ev matches 1500.. run scoreboard players set #res bs.ev 2",
-            "execute if score #max bs.ev matches 1001.. run scoreboard players set #max bs.ev 1000",
-            "execute store result storage boss:t hp int 1 run scoreboard players get #max bs.ev"]
+            "execute if score #pvmax bs.ev matches 1100.. run scoreboard players set #res bs.ev 1",
+            "execute if score #pvmax bs.ev matches 1500.. run scoreboard players set #res bs.ev 2",
+            "execute if score #pvmax bs.ev matches 2400.. run scoreboard players set #res bs.ev 3",
+            "execute if score #pvmax bs.ev matches 1001.. run scoreboard players set #pvmax bs.ev 1000",
+            "execute store result storage boss:t hp int 1 run scoreboard players get #pvmax bs.ev"]
 
 
 def resistance(tag):
     return [f"execute if score #res bs.ev matches 1 run effect give @e[tag={tag},limit=1] minecraft:resistance infinite 0 true",
-            f"execute if score #res bs.ev matches 2 run effect give @e[tag={tag},limit=1] minecraft:resistance infinite 1 true"]
+            f"execute if score #res bs.ev matches 2 run effect give @e[tag={tag},limit=1] minecraft:resistance infinite 1 true",
+            f"execute if score #res bs.ev matches 3 run effect give @e[tag={tag},limit=1] minecraft:resistance infinite 2 true",
+            f"execute as @e[tag={tag},limit=1] run function {NS}:rang_boss"]
 
 
 HB_ATTR = '{{id:"minecraft:max_health",base:$(hp)d}},{{id:"minecraft:knockback_resistance",base:1d}}'
@@ -583,7 +619,7 @@ fn("g/ia", [
     f"execute if score #tk bs.ev matches 10 run function {NS}:g/pupitres",
     "execute store result score #hp bs.g run data get entity @s Health",
     "scoreboard players operation #pct bs.g = #hp bs.g", "scoreboard players operation #pct bs.g *= #100 bs.tmp",
-    "scoreboard players operation #pct bs.g /= #max bs.ev",
+    "scoreboard players operation #pct bs.g /= #pvmax bs.ev",
     f"execute if score #ph bs.g matches 1 if score #pct bs.g matches ..60 run function {NS}:g/phase2",
     f"execute if score #ph bs.g matches 2 if score #pct bs.g matches ..30 run function {NS}:g/phase3"])
 fn("g/vol", [
@@ -600,6 +636,12 @@ fn("g/attaque", [
     f'execute if score #ph bs.g matches 2.. as @r[tag=bs.joue] at @s run summon minecraft:marker ~ {GY + 1} ~ {{Tags:["bs.e","bs.fx","bs.encre"]}}',
     # phase 3 : une tentacule accompagne chaque attaque
     f"execute if score #ph bs.g matches 3 as @r[tag=bs.joue] at @s run function {NS}:g/at/tent_cible",
+    # 26/11/2026 : attaques plus rapprochées avec le rang (jusqu'à -40 %), Marque d'encre dès 0 point, Festin de pages dès 300
+    "scoreboard players operation #red bs.tmp = #atk bs.g", "scoreboard players operation #red bs.tmp *= #rg bs.ev",
+    "scoreboard players operation #red bs.tmp /= #40 bs.tmp", "scoreboard players operation #atk bs.g -= #red bs.tmp",
+    "execute store result score #r2 bs.tmp run random value 1..4",
+    f"execute if score #r2 bs.tmp matches 1 run return run function {NS}:g/at/marque",
+    f"execute if score #r2 bs.tmp matches 2 if score #rg bs.ev matches 6.. run return run function {NS}:g/at/festin",
     "execute if score #ph bs.g matches 1 store result score #r bs.tmp run random value 1..3",
     "execute if score #ph bs.g matches 2.. store result score #r bs.tmp run random value 1..5",
     f"execute if score #r bs.tmp matches 1 run return run function {NS}:g/at/pages",
@@ -732,7 +774,8 @@ fn("g/effets", [
     f"execute as @e[type=minecraft:marker,tag=bs.frappe] at @s run function {NS}:g/at/frappe_tick",
     *[f"execute as @e[type=minecraft:item_display,tag=bs.tentd{i}] at @s run function {NS}:g/at/tentd{i}" for i in range(len(TENT_P))],
     f"execute as @e[type=minecraft:marker,tag=bs.encre] at @s run function {NS}:g/at/encre_tick",
-    f"execute as @e[type=minecraft:item_display,tag=bs.proj] at @s run function {NS}:g/at/rune_tick"])
+    f"execute as @e[type=minecraft:item_display,tag=bs.proj] at @s run function {NS}:g/at/rune_tick",
+    f"execute as @e[type=minecraft:marker,tag=bs.zone] at @s run function {NS}:zone/tick"])
 # --- pupitres de scellement
 fn("g/pupitres", [
     f"execute as @e[type=minecraft:marker,tag=bs.pu,tag=!bs.pu.mort] at @s run function {NS}:g/pupitre/tick",
@@ -781,6 +824,7 @@ fn("g/remonte", ["tp @s ~ ~0.25 ~", f"execute if entity @s[y={GY + 6},dy=50] run
                  f"execute if entity @s[y={GY + 6},dy=50] run scoreboard players set #t bs.g 61"])
 fn("g/phase2", [
     "scoreboard players set #ph bs.g 2", "scoreboard players set #atk bs.g 70", "scoreboard players set #pilier bs.g 1",
+    "execute if score #rg bs.ev matches 10.. run effect give @s minecraft:absorption 60 4 true",
     f"execute unless score #etat bs.g matches 1 run function {NS}:rig/grimoire/jouer/rugit",
     *titre("@a[tag=bs.joue]", "PHASE 2", "Livres et runes !", "light_purple", "white"),
     barre("@a[tag=bs.joue]", "Un pilier s'effondre", "gold"),
@@ -809,7 +853,7 @@ fn("c/lancer", pv_max(600, 250) + [
     "scoreboard players set #etat bs.c 6", "scoreboard players set #t bs.c -10", "scoreboard players set #atk bs.c 120",
     "scoreboard players set #ph bs.c 1", "scoreboard players set #disp bs.c 0", "scoreboard players set #soin bs.c 0",
     "scoreboard players set #arr bs.c 0",
-    "scoreboard players operation #unite bs.c = #max bs.ev", "scoreboard players set #c bs.tmp 40", "scoreboard players operation #unite bs.c /= #c bs.tmp",
+    "scoreboard players operation #unite bs.c = #pvmax bs.ev", "scoreboard players set #c bs.tmp 40", "scoreboard players operation #unite bs.c /= #c bs.tmp",
     "execute if score #unite bs.c matches ..0 run scoreboard players set #unite bs.c 1",
     *titre("@a[tag=bs.joue]", "LE CORBEAU", "Croix qui craque : saute !", "dark_red", "white"),
     "execute as @a[tag=bs.joue] at @s run playsound minecraft:entity.wither.spawn master @s ~ ~ ~ 0.7 0.6",
@@ -849,7 +893,7 @@ fn("c/ia", [
     "execute unless score #etat bs.c matches 0 run return 0",
     "execute store result score #hp bs.c run data get entity @s Health",
     "scoreboard players operation #pct bs.c = #hp bs.c", "scoreboard players operation #pct bs.c *= #100 bs.tmp",
-    "scoreboard players operation #pct bs.c /= #max bs.ev",
+    "scoreboard players operation #pct bs.c /= #pvmax bs.ev",
     f"execute if score #ph bs.c matches 1 if score #pct bs.c matches ..60 run function {NS}:c/phase2",
     f"execute if score #ph bs.c matches 2 if score #pct bs.c matches ..30 run function {NS}:c/phase3"])
 # attente (apparition, reformation) : immobile, puis il repart
@@ -863,6 +907,12 @@ fn("c/marche", [
     f"execute if score #atk bs.c matches ..0 run function {NS}:c/attaque"])
 fn("c/attaque", [
     "scoreboard players set #atk bs.c 90", "execute if score #ph bs.c matches 2 run scoreboard players set #atk bs.c 70",
+    # 26/11/2026 : attaques plus rapprochées avec le rang (jusqu'à -40 %), Épouvante dès 0 point, Picorage dès 300
+    "scoreboard players operation #red bs.tmp = #atk bs.c", "scoreboard players operation #red bs.tmp *= #rg bs.ev",
+    "scoreboard players operation #red bs.tmp /= #40 bs.tmp", "scoreboard players operation #atk bs.c -= #red bs.tmp",
+    "execute store result score #r2 bs.tmp run random value 1..4",
+    f"execute if score #r2 bs.tmp matches 1 run return run function {NS}:c/at/epouvante",
+    f"execute if score #r2 bs.tmp matches 2 if score #rg bs.ev matches 6.. run return run function {NS}:c/at/picorage",
     "execute store result score #r bs.tmp run random value 1..4",
     f"execute if score #r bs.tmp matches 1..2 run return run function {NS}:c/at/fauchage",
     f"execute if score #r bs.tmp matches 3 run return run function {NS}:c/at/nuee",
@@ -955,7 +1005,7 @@ fn("c/reformer", [
     "data merge entity @s {Invulnerable:0b,NoGravity:0b}",
     "execute store result score #hp bs.c run data get entity @s Health",
     "scoreboard players operation #hp bs.c += #soin bs.c",
-    "execute if score #hp bs.c > #max bs.ev run scoreboard players operation #hp bs.c = #max bs.ev",
+    "execute if score #hp bs.c > #pvmax bs.ev run scoreboard players operation #hp bs.c = #pvmax bs.ev",
     "execute store result entity @s Health float 1 run scoreboard players get #hp bs.c",
     f"function {NS}:rig/corbeau/jouer/reforme",
     "execute at @e[type=minecraft:marker,tag=bs.cible,limit=1] run particle minecraft:large_smoke ~ ~ ~ 1 2 1 0.05 60",
@@ -966,6 +1016,7 @@ fn("c/reformer", [
     "playsound minecraft:entity.zombie.attack_wooden_door hostile @a[distance=..48] ~ ~ ~ 2 0.4"])
 fn("c/phase2", [
     "scoreboard players set #ph bs.c 2", "scoreboard players set #disp bs.c 60", "scoreboard players set #atk bs.c 150",
+    "execute if score #rg bs.ev matches 10.. run effect give @s minecraft:absorption 60 4 true",
     *titre("@a[tag=bs.joue]", "PHASE 2", "Tue les corbeaux en vol !", "dark_red", "white"),
     barre("@a[tag=bs.joue]", "Reste près des citrouilles", "gold"),
     "execute as @a[tag=bs.joue] at @s run playsound minecraft:entity.ravager.roar master @s ~ ~ ~ 1 0.6"])
@@ -1043,7 +1094,8 @@ fn("c/effets", [
     f"execute as @e[tag=bs.frag] at @s if entity @e[type=minecraft:marker,tag=bs.cible,distance=..1.6] run function {NS}:c/frag_arrive",
     f"execute as @e[type=minecraft:marker,tag=bs.plume] at @s run function {NS}:c/plume_tick",
     f"execute if entity @e[type=minecraft:marker,tag=bs.regarde] run function {NS}:c/at/regard_tick",
-    f"execute if score #ph bs.c matches 2.. if score #tk bs.ev matches 0 run function {NS}:c/nuit"])
+    f"execute if score #ph bs.c matches 2.. if score #tk bs.ev matches 0 run function {NS}:c/nuit",
+    f"execute as @e[type=minecraft:marker,tag=bs.zone] at @s run function {NS}:zone/tick"])
 fn("c/nuit", [
     "execute at @e[type=minecraft:marker,tag=bs.cit] run particle minecraft:dust{color:[1,0.6,0.1],scale:1.2} ~ ~0.3 ~ 3 0 3 0 14",
     "scoreboard players add #nuit bs.c 1", "execute if score #nuit bs.c matches ..1 run return 0", "scoreboard players set #nuit bs.c 0",
@@ -1085,13 +1137,19 @@ FAMILIER = ('minecraft:paper[minecraft:item_model="boss:grimoire_encre_racine",m
             f'{js({"text": "Résistance II, runes autour de toi.", "color": "blue", "italic": False})}],'
             'minecraft:rarity="epic",minecraft:enchantment_glint_override=true,minecraft:custom_data={bs_familier:1b}]')
 fn("recompense/donner", [
-    "execute if score @s c.ecus matches -2147483648.. run scoreboard players add @s c.ecus 15000",
-    "execute unless score @s m.afk matches 240.. if score @s m.c_bal matches -2147483648.. run scoreboard players add @s m.c_bal 600",
-    "execute if score @s m.ecl matches -2147483648.. run scoreboard players add @s m.ecl 3",
+    # 26/11/2026 : x (100 + 15 x rang) / 100
+    "scoreboard players set #ec bs.tmp 15000", "scoreboard players operation #ec bs.tmp *= #mul bs.ev", "scoreboard players operation #ec bs.tmp /= #100 bs.tmp",
+    "scoreboard players set #xc bs.tmp 600", "scoreboard players operation #xc bs.tmp *= #mul bs.ev", "scoreboard players operation #xc bs.tmp /= #100 bs.tmp",
+    "scoreboard players operation #el bs.tmp = #rg bs.ev", "scoreboard players operation #el bs.tmp /= #4 bs.tmp", "scoreboard players add #el bs.tmp 3",
+    "execute if score @s c.ecus matches -2147483648.. run scoreboard players operation @s c.ecus += #ec bs.tmp",
+    "execute unless score @s m.afk matches 240.. if score @s m.c_bal matches -2147483648.. run scoreboard players operation @s m.c_bal += #xc bs.tmp",
+    "execute if score @s m.ecl matches -2147483648.. run scoreboard players operation @s m.ecl += #el bs.tmp",
     "xp add @s 500 points",
     f"execute if score #boss bs.ev matches 1 run function {NS}:recompense/grimoire",
     f"execute if score #boss bs.ev matches 2 run function {NS}:recompense/corbeau",
-    dire("@s", ("Récompense : ", "gold"), ("15 000 Écus, 600 XP Chasseur, 3 éclats de boss, 500 points d'XP.", "yellow"))])
+    dire("@s", ("Récompense : ", "gold"), {"score": {"name": "#ec", "objective": "bs.tmp"}, "color": "yellow"}, (" Écus, ", "yellow"),
+         {"score": {"name": "#xc", "objective": "bs.tmp"}, "color": "yellow"}, (" XP Chasseur, ", "yellow"),
+         {"score": {"name": "#el", "objective": "bs.tmp"}, "color": "yellow"}, (" éclats de boss, 500 points d'XP.", "yellow"))])
 fn("recompense/grimoire", [
     "scoreboard players add @s bs.v1 1",
     f"execute if score @s bs.v1 matches 1 run give @s {FAMILIER} 1",
@@ -1111,6 +1169,56 @@ fn("cape/runes", ["particle minecraft:dust{color:[0.7,0.4,1.0],scale:0.7} ~ ~1.1
                   "effect give @s minecraft:strength 3 1 true", "effect give @s minecraft:resistance 3 1 true"])
 fn("cape/plumes", ["particle minecraft:dust{color:[0.06,0.06,0.09],scale:1.4} ^ ^0.4 ^-0.9 0.35 0.15 0.35 0 3",
                    "particle minecraft:white_ash ^ ^0.4 ^-1.2 0.3 0.2 0.3 0 2"])
+
+# =============================================================================================== sorts ajoutés (26/11/2026)
+def _anneau(part, r, n=16):
+    return [f"particle {part} ~{r * math.cos(i * 2 * math.pi / n):.2f} ~0.15 ~{r * math.sin(i * 2 * math.pi / n):.2f} 0 0 0 0 1" for i in range(n)]
+
+
+# Grimoire : Marque d'encre. Une rune suit un joueur 2,5 s, puis explose : tout le monde à 3 blocs de lui est touché.
+fn("g/at/marque", [
+    "tag @a remove bs.marque", "tag @r[tag=bs.joue] add bs.marque",
+    'execute as @a[tag=bs.marque] at @s run summon minecraft:marker ~ ~ ~ {Tags:["bs.e","bs.fx","bs.zone","bs.z.marque"]}',
+    "playsound minecraft:block.enchantment_table.use hostile @a[tag=bs.joue] ~ ~ ~ 2 0.5",
+    barre("@a[tag=bs.marque]", "Une rune d'encre te marque : éloigne-toi des autres !", "light_purple"),
+    barre("@a[tag=bs.joue,tag=!bs.marque]", "Un joueur est marqué : écartez-vous de lui !", "light_purple")])
+fn("zone/marque", ["execute if entity @a[tag=bs.marque] run tp @s @a[tag=bs.marque,limit=1]",
+                   f"execute if score @s bs.k matches ..49 if score #m4 bs.ev matches 0 at @s run function {NS}:zone/marque_a",
+                   "execute if score @s bs.k matches ..49 run return 0",
+                   "particle minecraft:squid_ink ~ ~1 ~ 1.5 0.6 1.5 0.1 80", "particle minecraft:enchant ~ ~1 ~ 1.5 1 1.5 1 80",
+                   "playsound minecraft:entity.generic.explode hostile @a[distance=..32] ~ ~ ~ 1.5 0.8",
+                   f"execute as @a[tag=bs.joue,distance=..3] run {blesse(10)}", "tag @a remove bs.marque", "kill @s"])
+fn("zone/marque_a", _anneau("minecraft:dust{color:[0.6,0.2,0.9],scale:1.4}", 3.0))
+# Grimoire (dès 300 points) : Festin de pages. Les pages aspirent un peu de vie à chacun et le soignent.
+fn("g/at/festin", [
+    f"execute as @a[tag=bs.joue] run {blesse(4)}",
+    "execute as @a[tag=bs.joue] at @s run particle minecraft:enchant ~ ~1 ~ 0.4 0.8 0.4 1.5 30",
+    "effect give @s minecraft:regeneration 4 2 true",
+    "playsound minecraft:item.book.page_turn hostile @a[tag=bs.joue] ~ ~ ~ 3 0.4",
+    barre("@a[tag=bs.joue]", "Le Grimoire se nourrit de vos pages de vie !", "light_purple")])
+# Corbeau : Épouvante. Un cri qui glace tout le monde à 10 blocs.
+fn("c/at/epouvante", [
+    "playsound minecraft:entity.phantom.death hostile @a[distance=..32] ~ ~ ~ 2 0.5",
+    "particle minecraft:large_smoke ~ ~4 ~ 3 2 3 0.05 80",
+    f"execute as @a[tag=bs.joue,distance=..10] run {blesse(5)}",
+    "effect give @a[tag=bs.joue,distance=..10] minecraft:darkness 4 0 true",
+    "effect give @a[tag=bs.joue,distance=..10] minecraft:slowness 3 1 true",
+    barre("@a[tag=bs.joue]", "Le Corbeau hurle : l'épouvante vous glace !", "dark_red")])
+# Corbeau (dès 300 points) : Picorage. Des cercles sous trois joueurs, puis les corbeaux piquent.
+fn("c/at/picorage", [
+    'execute as @a[tag=bs.joue,sort=random,limit=3] at @s run summon minecraft:marker ~ ~0.1 ~ {Tags:["bs.e","bs.fx","bs.zone","bs.z.pique"]}',
+    "playsound minecraft:entity.parrot.imitate.phantom hostile @a[distance=..32] ~ ~ ~ 2 0.6",
+    barre("@a[tag=bs.joue]", "Les corbeaux visent les cercles : bouge !", "red")])
+fn("zone/pique", [f"execute if score @s bs.k matches ..29 if score #m4 bs.ev matches 0 run function {NS}:zone/pique_a",
+                  "execute if score @s bs.k matches ..29 run return 0",
+                  "particle minecraft:crit ~ ~1 ~ 1 1 1 0.3 40", "playsound minecraft:entity.phantom.bite hostile @a[distance=..24] ~ ~ ~ 2 0.7",
+                  f"execute as @a[tag=bs.joue,distance=..2.2] run {blesse(8)}", "kill @s"])
+fn("zone/pique_a", _anneau("minecraft:dust{color:[0.9,0.1,0.1],scale:1.3}", 2.2))
+fn("zone/tick", ["scoreboard players add @s bs.k 1",
+                 f"execute if entity @s[tag=bs.z.marque] run return run function {NS}:zone/marque",
+                 f"execute if entity @s[tag=bs.z.pique] run return run function {NS}:zone/pique",
+                 "kill @s"])
+
 
 # =============================================================================================== administration
 fn("forcer", [f"execute unless score #etat bs.ev matches 0 run return run {dire('@s', ('Un événement de boss est déjà en cours.', 'gray'))}",
