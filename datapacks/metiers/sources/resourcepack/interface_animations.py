@@ -279,6 +279,8 @@ def png(nom, im):
     sortie[GUI + nom] = b.getvalue()
 
 
+# Images non carrées : l'animation doit donner la taille d'une image (width, height), sinon le jeu ne découpe pas
+# la bande et affiche la texture manquante (corrigé le 26/11/2026).
 def meta(nom, contenu):
     sortie[GUI + nom + ".mcmeta"] = json.dumps(contenu).encode()
 
@@ -291,7 +293,7 @@ for teinte in TEINTES:
     png(f"boss_bar/{teinte}_background.png", fond)
     images = [boss_rempli(teinte, k, N) for k in range(N)]
     png(f"boss_bar/{teinte}_progress.png", empile(images))
-    meta(f"boss_bar/{teinte}_progress.png", {"animation": {"frametime": 2, "interpolate": False}})
+    meta(f"boss_bar/{teinte}_progress.png", {"animation": {"frametime": 2, "interpolate": False, "width": BW, "height": BH}})
     apercus[teinte] = images
 for n in (6, 10, 12, 20):
     for genre in ("background", "progress"):
@@ -299,7 +301,7 @@ for n in (6, 10, 12, 20):
 png("hud/experience_bar_background.png", xp_fond())
 xp = [xp_rempli(k, N) for k in range(N)]
 png("hud/experience_bar_progress.png", empile(xp))
-meta("hud/experience_bar_progress.png", {"animation": {"frametime": 2}})
+meta("hud/experience_bar_progress.png", {"animation": {"frametime": 2, "width": BW, "height": BH}})
 
 cle_bouton = GUI + "widget/button_highlighted.png"
 base = Image.open(io.BytesIO(fichiers[cle_bouton])).convert("RGBA").crop((0, 0, 200, 20))  # 1re image si déjà animé
@@ -307,12 +309,12 @@ NB = 28
 bts = [bouton_survol(base, k, NB) for k in range(NB)]
 png("widget/button_highlighted.png", empile(bts))
 meta("widget/button_highlighted.png", {"gui": {"scaling": {"type": "nine_slice", "width": 200, "height": 20, "border": 3}},
-                                       "animation": {"frametime": 2}})
+                                       "animation": {"frametime": 2, "width": 200, "height": 20}})
 
 NS = 12
 sels = [selection(k, NS) for k in range(NS)]
 png("hud/hotbar_selection.png", empile(sels))
-meta("hud/hotbar_selection.png", {"animation": {"frametime": 3, "interpolate": True}})
+meta("hud/hotbar_selection.png", {"animation": {"frametime": 3, "interpolate": True, "width": 24, "height": 23}})
 
 NF = 6
 fl = [flamme(k, NF) for k in range(NF)]
