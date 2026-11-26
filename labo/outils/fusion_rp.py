@@ -62,9 +62,12 @@ def fusionner():
                     with open(full, "rb") as f:
                         z.writestr(zi, f.read())
                     ajoutes += 1
+    sys.path.insert(0, OUTILS)
+    import allege_polices
+    donnees, reduites, _, _ = allege_polices.alleger(sortie.getvalue())   # texte du monde lisible en 26.3
     with open(ZIP, "wb") as f:
-        f.write(sortie.getvalue())
-    sha = hashlib.sha1(sortie.getvalue()).hexdigest()
+        f.write(donnees)
+    sha = hashlib.sha1(donnees).hexdigest()
     print(f"Fusionne : {', '.join(n for n, _ in rps)} ({ajoutes} fichiers) -> metiers_resourcepack.zip")
     print(f"SHA-1 : {sha}")
     print("Prod : apres commit + push, recopier ce SHA-1 dans resource-pack-sha1 du server.properties.")

@@ -189,6 +189,15 @@ execute if score #t5 hr.tmp matches 0 as @e[tag=hr.c] at @s run function horreur
 w(F + "vis/tourner.mcfunction", """
 data modify storage horreur:t r set from entity @s Rotation[0]
 execute on passengers if entity @s[tag=hr.vis] run data modify entity @s Rotation[0] set from storage horreur:t r""")
+# 26/11/2026 : les créatures invoquées avant les squelettes animés gardaient leur ancienne statue (SlenderMan couché).
+# Toute apparence sans hr.rig est d'avant : la créature et sa statue sont retirées, le spawn normal en remet une neuve.
+w(F + "vis/ancien.mcfunction", """
+execute on vehicle run function horreur:vis/ancien_mob
+kill @s""")
+w(F + "vis/ancien_mob.mcfunction", """
+execute on passengers run kill @s
+execute at @s run tp @s ~ -1000 ~
+kill @s""")
 w(F + "vis/orphelin.mcfunction", """
 execute if entity @s[tag=hr.ballon] run return run function horreur:vis/lacher
 particle minecraft:large_smoke ~ ~1 ~ 0.3 0.8 0.3 0.02 25
@@ -203,6 +212,7 @@ scoreboard players add @s hr.t 1
 execute if score @s hr.t matches 100.. run kill @s""")
 
 w(F + "seconde.mcfunction", """
+execute as @e[type=minecraft:item_display,tag=hr.vis,tag=!hr.rig,tag=!hr.envol] run function horreur:vis/ancien
 schedule function horreur:seconde 20t replace
 scoreboard players enable @a bestiaire
 scoreboard players remove @a[scores={hr.cd=1..}] hr.cd 1

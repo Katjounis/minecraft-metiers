@@ -35,7 +35,7 @@ def colosse():
         R.boite(H, (0, y, 4.15), (6, 0.6, 0.3), "uni", U("#050505", 2))                          # visiere
     R.boite(H, (0, 4, 4.3), (4, 0.4, 0.3), "uni", L("#ff6a2a", 20))
     R.boite(H, (0, 8.6, 0), (2, 1.6, 8.6), "uni", U("#c89a3a", 8))
-    M = R.art(B["avbras_d"], (0, -6, 0), (-70, 0, 0), nom="marteau")
+    M = R.art(B["avbras_d"], (0, -6, 0), (70, 0, 0), nom="marteau")     # tete vers l avant (+Z)
     R.boite(M, (0, 4, 0), (1.4, 18, 1.4), "bois_mort", {"pal": ["#5a3a22", "#4a2e1a", "#6b4529"]})
     R.boite(M, (0, 13, 0), (9, 5, 5), "metal")
     R.boite(M, (0, 13, 0), (1.2, 5.4, 5.4), "uni", U("#c89a3a", 8))
@@ -141,7 +141,7 @@ def liche():
         R.boite(a, (0, -3.5, 0), (1.2, 7, 1.2), *OS_)
         for f in range(3):
             R.boite(a, ((f - 1) * 0.6, -8, 0.3), (0.35, 3, 0.35), *OS_)
-    B2 = R.art(R.os[[o.nom for o in R.os].index("avbras_d")], (0, -7, 0), (-80, 0, 0), nom="baton")
+    B2 = R.art(R.os[[o.nom for o in R.os].index("avbras_d")], (0, -7, 0), (80, 0, 0), nom="baton")
     R.boite(B2, (0, 4, 0), (1.2, 30, 1.2), "bois_mort", {"pal": ["#2a3442", "#1e2632", "#36404e"]})
     R.boite(B2, (0, 19, 0), (2.8, 1.4, 2.8), "uni", U("#a8c8e0", 8))
     for (x, y, z, w, h) in ((0, 22.5, 0, 2.8, 6), (1.6, 21, 0.4, 1.2, 3.4), (-1.4, 21.4, -0.6, 1.2, 3), (0, 20.5, 1.6, 1, 2.6)):
