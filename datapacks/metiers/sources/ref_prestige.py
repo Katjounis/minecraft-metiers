@@ -124,6 +124,59 @@ w(F + "m/filon_viser.mcfunction", "\n".join(
 add_lines(F + "refonte/tick.mcfunction", [
     f"execute as @a[tag=metiers.sk.pm1,gamemode=!spectator] at @s if items entity @s weapon.mainhand #minecraft:pickaxes run function {NS}:m/filon_tick"])
 
+# ---------------------------------------------------------------- Mineur : minage de veine accroupi (Pioche large, 26/11/2026)
+# Même mécanique que le Filon (repère sur le bloc visé, veine cassée quand il devient de l'air), mais pour les minerais
+# et les roches et blocs naturels qu'on creuse à la pioche ; jamais la pierre, la deepslate ni la netherrack.
+VEINE_EXTRA = ["granite", "diorite", "andesite", "tuff", "calcite", "dripstone_block", "basalt", "smooth_basalt", "blackstone",
+               "obsidian", "crying_obsidian", "amethyst_block", "glowstone", "magma_block", "end_stone", "sandstone",
+               "red_sandstone", "terracotta", "packed_ice", "blue_ice", "cobblestone", "mossy_cobblestone", "cobbled_deepslate",
+               "raw_iron_block", "raw_copper_block", "raw_gold_block", "bone_block", "prismarine", "purpur_block"]
+VFAM = {**{f_: lst for f_, lst in FAM.items()}, **{b: [b] for b in VEINE_EXTRA}}
+VFAMS = list(VFAM)
+for f_, lst in VFAM.items():
+    wj(f"data/{NS}/tags/block/veine_{f_}.json", {"values": [f"minecraft:{o}" for o in lst]})
+for code, f_ in enumerate(VFAMS, 1):
+    w(F + f"m/veine_{f_}_voisins.mcfunction", "\n".join(
+        f"execute if score #fn m.tmp < #fmax m.tmp positioned ~{dx} ~{dy} ~{dz} if block ~ ~ ~ #{NS}:veine_{f_} run function {NS}:m/veine_{f_}_bloc"
+        for dx, dy, dz in VOIS))
+    w(F + f"m/veine_{f_}_bloc.mcfunction", "\n".join(
+        ["scoreboard players add #fn m.tmp 1"] +
+        [f"execute if block ~ ~ ~ minecraft:{o} run scoreboard players add @s m.m_raw {ORES[o]}" for o in VFAM[f_] if o in ORES] +
+        ["loot give @s mine ~ ~ ~ mainhand", "setblock ~ ~ ~ minecraft:air",
+         "particle minecraft:block{block_state:\"minecraft:stone\"} ~ ~ ~ 0.3 0.3 0.3 0 4",
+         f"function {NS}:m/veine_{f_}_voisins"]))
+w(F + "m/veine_depart.mcfunction", "\n".join(
+    ["scoreboard players set #fn m.tmp 0", "scoreboard players set #fmax m.tmp 48"] +
+    [f"execute if score #vgo m.tmp matches {c} run function {NS}:m/veine_{f_}_voisins" for c, f_ in enumerate(VFAMS, 1)] +
+    ["execute if score #fn m.tmp matches 1.. run playsound minecraft:block.deepslate.break master @s ~ ~ ~ 1 0.7"]))
+VK = "@e[type=minecraft:marker,tag=metiers.vvise]"
+w(F + "m/veine_tick.mcfunction", "\n".join([
+    "scoreboard players operation #pid m.tmp = @s m.id",
+    "scoreboard players set #vgo m.tmp 0",
+    f"execute as {VK} if score @s m.own = #pid m.tmp if score @s m.vk matches 1.. at @s if block ~ ~ ~ #{NS}:vide run function {NS}:m/veine_casse",
+    f"execute if score #vgo m.tmp matches 1.. at @e[type=minecraft:marker,tag=metiers.vgo,limit=1] run function {NS}:m/veine_depart",
+    "tag @e[type=minecraft:marker,tag=metiers.vgo] remove metiers.vgo",
+    f"execute as @e[type=minecraft:marker,tag=metiers.vvise,distance=16..] if score @s m.own = #pid m.tmp run kill @s",
+    "scoreboard players set #fm m.tmp 0",
+    f"execute as {VK} if score @s m.own = #pid m.tmp run scoreboard players set #fm m.tmp 1",
+    f'execute if score #fm m.tmp matches 0 run summon minecraft:marker ~ ~ ~ {{Tags:["metiers.vvise","metiers.vnew"]}}',
+    "scoreboard players operation @e[type=minecraft:marker,tag=metiers.vnew] m.own = #pid m.tmp",
+    "tag @e[type=minecraft:marker,tag=metiers.vnew] remove metiers.vnew",
+    "scoreboard players set #vk m.tmp 0", "scoreboard players set #fpas m.tmp 0",
+    f"execute anchored eyes positioned ^ ^ ^ run function {NS}:m/veine_rayon",
+    f"execute as {VK} if score @s m.own = #pid m.tmp run scoreboard players operation @s m.vk = #vk m.tmp"]))
+w(F + "m/veine_casse.mcfunction", "scoreboard players operation #vgo m.tmp = @s m.vk\ntag @s add metiers.vgo\nscoreboard players set @s m.vk 0")
+w(F + "m/veine_rayon.mcfunction", "\n".join([
+    f"execute unless block ~ ~ ~ #{NS}:vide run return run function {NS}:m/veine_viser",
+    "scoreboard players add #fpas m.tmp 1",
+    f"execute if score #fpas m.tmp matches ..55 positioned ^ ^ ^0.1 run function {NS}:m/veine_rayon"]))
+w(F + "m/veine_viser.mcfunction", "\n".join(
+    [f"execute if block ~ ~ ~ #{NS}:veine_{f_} run scoreboard players set #vk m.tmp {c}" for c, f_ in enumerate(VFAMS, 1)] +
+    [f"execute if score #vk m.tmp matches 1.. align xyz positioned ~0.5 ~0.5 ~0.5 as {VK} if score @s m.own = #pid m.tmp run tp @s ~ ~ ~"]))
+add_lines(F + "refonte/load.mcfunction", ["scoreboard objectives add m.vk dummy"])
+add_lines(F + "refonte/tick.mcfunction", [
+    f"execute as @a[tag=metiers.sk.m16,predicate={NS}:accroupi,gamemode=!spectator] at @s if items entity @s weapon.mainhand #minecraft:pickaxes run function {NS}:m/veine_tick"])
+
 # ---------------------------------------------------------------- Fermier : Moisson (même récolte que la Faux de la Forge)
 for r in (1, 2, 3):
     w(F + f"f/moisson_{r}.mcfunction", "\n".join(

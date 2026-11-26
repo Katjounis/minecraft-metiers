@@ -1206,6 +1206,25 @@ TI += ["scoreboard players set #lot c.t 0", "scoreboard players operation #btot 
        f"function {NS}:page/marche"]
 w(F + "page/tout_inventaire.mcfunction", TI)
 
+# 26/11/2026 : Dank Null du Marchand (Métiers) : au lieu de détruire les objets filtrés, il les vend ici.
+# Métiers met l'identifiant dans metiers:dk vid et appelle #metiers:dank_vendre ; un objet hors catalogue n'a pas de
+# fonction : la ligne échoue, rien n'est vendu et Métiers le détruit comme avant.
+wj("data/metiers/tags/function/dank_vendre.json", {"values": [f"{NS}:dank/vendre"]})
+w(F + "dank/vendre.mcfunction", [
+    "data modify storage commerce:t dk set value {}",
+    "data modify storage commerce:t dk.id set string storage metiers:dk vid 10",
+    f"function {NS}:dank/vendre_m with storage commerce:t dk"])
+w(F + "dank/vendre_m.mcfunction", f"$function {NS}:dank/i/$(id)")
+for it in ITL:
+    if it["id"] in GARDES:
+        continue
+    w(F + f"dank/i/{it['id']}.mcfunction", [
+        f"scoreboard players set #i c.t {it['i']}", "scoreboard players set #tot c.t 0", "scoreboard players set #act c.t 3",
+        "scoreboard players set #q c.t 0", "scoreboard players set #lot c.t 1",
+        f"function {NS}:op/vendre", "scoreboard players set #lot c.t 0",
+        "scoreboard players operation #tot c.t /= #100 c.g",
+        f'execute if score #tot c.t matches 1.. run title @s actionbar {L(T("Dank Null : ", "light_purple"), "{score:{name:\"#tot\",objective:\"c.t\"},color:\"gold\",bold:true}", T(" Écus", "gold"))}'])
+
 # ---------------------------------------------------------------- une page de catégorie : 10 boutons, prix en infobulle
 w(F + "page/ligne.mcfunction", [
     f"function {NS}:item/charger", "scoreboard players set #d c.t 0", f"function {NS}:prix/mid",

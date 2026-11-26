@@ -311,8 +311,14 @@ for ax, offs in ((0, [(dx, 0, dz) for dx in (-1, 0, 1) for dz in (-1, 0, 1)]), (
                  (2, [(dx, dy, 0) for dx in (-1, 0, 1) for dy in (-1, 0, 1)])):
     for (dx, dy, dz) in offs:
         if (dx, dy, dz) == (0, 0, 0): continue
-        CS.append(f"execute if score @s m.ax matches {ax} positioned ~{dx} ~{dy} ~{dz} if block ~ ~ ~ #minecraft:mineable/pickaxe unless block ~ ~ ~ #{NS}:marteau_exclu run setblock ~ ~ ~ minecraft:air destroy")
+        CS.append(f"execute if score @s m.ax matches {ax} positioned ~{dx} ~{dy} ~{dz} if block ~ ~ ~ #minecraft:mineable/pickaxe unless block ~ ~ ~ #{NS}:marteau_exclu run function {NS}:forge/marteau_bloc")
 w(F + "forge/marteau_casser.mcfunction", "\n".join(CS))
+# 26/11/2026 : les 8 blocs autour tombent comme si la pioche du joueur les cassait (Toucher de soie, Fortune),
+# et plus comme un bloc cassé à la main (« setblock ... destroy » ignorait l'enchantement)
+w(F + "forge/marteau_bloc.mcfunction", "\n".join([
+    "execute as @a if score @s m.id = #pid m.tmp run loot spawn ~ ~ ~ mine ~ ~ ~ mainhand",
+    "particle minecraft:block{block_state:\"minecraft:stone\"} ~ ~ ~ 0.3 0.3 0.3 0 6",
+    "setblock ~ ~ ~ minecraft:air"]))
 
 # arc à triple tir : deux flèches en plus, tirées à ±10°
 w(F + "forge/arc3.mcfunction", f"""

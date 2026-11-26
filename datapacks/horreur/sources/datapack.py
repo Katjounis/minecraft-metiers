@@ -186,9 +186,12 @@ scoreboard players add #t5 hr.tmp 1
 execute if score #t5 hr.tmp matches 5.. run scoreboard players set #t5 hr.tmp 0
 execute if score #t5 hr.tmp matches 0 as @e[tag=hr.c] at @s run function horreur:c/comportement""")
 
+# 26/11/2026 : le squelette garde la direction du mob mais reste droit (inclinaison 0) : le SlenderMan et le Croque-mitaine,
+# très grands, regardent le joueur de haut et basculaient en arrière quand leur affichage prenait cette inclinaison.
 w(F + "vis/tourner.mcfunction", """
-data modify storage horreur:t r set from entity @s Rotation[0]
-execute on passengers if entity @s[tag=hr.vis] run data modify entity @s Rotation[0] set from storage horreur:t r""")
+data modify storage horreur:t r set value [0f,0f]
+data modify storage horreur:t r[0] set from entity @s Rotation[0]
+execute on passengers if entity @s[tag=hr.vis] run data modify entity @s Rotation set from storage horreur:t r""")
 # 26/11/2026 : les créatures invoquées avant les squelettes animés gardaient leur ancienne statue (SlenderMan couché).
 # Toute apparence sans hr.rig est d'avant : la créature et sa statue sont retirées, le spawn normal en remet une neuve.
 w(F + "vis/ancien.mcfunction", """
