@@ -513,7 +513,7 @@
     },
     {
      "text": "Mon profil",
-     "color": "#87872D",
+     "color": "#8C6A08",
      "font": "minecraft:default",
      "shadow_color": 0
     },
@@ -577,6 +577,16 @@
     },
     {
      "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "\n",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0

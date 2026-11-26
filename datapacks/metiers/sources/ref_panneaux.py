@@ -57,78 +57,7 @@ LIVRE_ONGLETS = [("item/iron_pickaxe", "Métiers", "trigger metiers set 1", (214
                  ("item/name_tag", "Mon profil", "trigger commerce set 30", (220, 190, 70)),
                  ("item/book", "Guide", "trigger commerce set 31", (170, 170, 176))]
 LIVRE_ACTIF = {"metiers": 0, "commerce": 1, "compagnons": 2, "bestiaire": 3, "serveur": None}
-_BAYL = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]
-_LAIT = [(255, 236, 160), (236, 196, 104), (206, 160, 70), (166, 120, 44), (118, 82, 28)]
-_SOMB = (30, 22, 14)
-
-
-def _tr(r, v, x, y):
-    i = int(v + (_BAYL[y % 4][x % 4] + .5) / 16)
-    return r[max(0, min(len(r) - 1, i))]
-
-
-def _fond_livre(W, H):
-    """Livre ouvert : couverture (à partir de LIVRE_T), coins en laiton rivetés, page de parchemin, tranche en bas."""
-    im = _Img.new("RGBA", (W, H))
-    px = im.load()
-    T = LIVRE_T
-    for y in range(T, H):
-        for x in range(W):
-            d = min(x, y - T, W - 1 - x, H - 1 - y)
-            if d == 0:
-                c = _SOMB
-            elif d == 1:
-                c = _LAIT[3] if min(x, y - T) == 1 else _LAIT[4]
-            else:
-                c = _tr([(74, 58, 46), (64, 50, 40), (54, 42, 34), (46, 36, 29)], .6 + (y - T) / (H - T) * 2.4, x, y)
-            px[x, y] = c + (255,)
-    for (cx, haut) in ((0, True), (W - 12, True), (0, False), (W - 12, False)):
-        cy = T if haut else H - 12
-        for j in range(12):
-            for i in range(12):
-                ii = i if cx == 0 else 11 - i
-                jj = j if haut else 11 - j
-                if ii + jj > 13:
-                    continue
-                px[cx + i, cy + j] = (_LAIT[1] if ii + jj < 7 else _LAIT[2] if ii + jj < 11 else _LAIT[3]) + (255,)
-        rx, ry = (cx + 3 if cx == 0 else cx + 7), (cy + 3 if haut else cy + 7)
-        for (dx, dy, c) in ((0, 0, _LAIT[0]), (1, 0, _LAIT[2]), (0, 1, _LAIT[2]), (1, 1, _LAIT[4])):
-            px[rx + dx, ry + dy] = c + (255,)
-    P0, P1, SP = T + 7, H - 9, W // 2
-    PAR = [(242, 232, 206), (234, 222, 192), (224, 210, 178), (208, 192, 158), (186, 168, 134)]
-    for y in range(P0, P1):
-        for x in range(9, W - 9):
-            bord = min(x - 9, W - 10 - x, y - P0, P1 - 1 - y)
-            v = .3 + max(0, 5 - abs(x - SP)) * .22 + max(0, 3 - bord) * .45 + (y - P0) / (P1 - P0) * .7
-            px[x, y] = _tr(PAR, v, x, y) + (255,)
-    for k, yy in enumerate((P1, P1 + 1, P1 + 2)):
-        for x in range(11 + k, W - 11 - k):
-            px[x, yy] = ((214, 200, 168) if k % 2 == 0 else (170, 152, 120)) + (255,)
-    return im
-
-
-def _signet(ic, col, actif, TW):
-    """Signet en tissu de la couleur du pack, icône au centre ; l'actif est plus haut et plus vif."""
-    h = LIVRE_T + 4
-    im = _Img.new("RGBA", (TW, h))
-    px = im.load()
-    top = 0 if actif else 4
-    col = col if actif else tuple(int(v * .82) for v in col)
-    fonce = tuple(int(v * .62) for v in col)
-    clair = tuple(min(255, int(v * 1.22)) for v in col)
-    for y in range(top, h):
-        for x in range(TW):
-            if x in (0, TW - 1) or y == top:
-                c = _SOMB
-            elif x == 1 or y == top + 1:
-                c = clair
-            elif x == TW - 2:
-                c = fonce
-            else:
-                c = _tr([clair, col, fonce], .7 + (y - top) / h * 1.6, x, y)
-            px[x, y] = c + (255,)
-    im.alpha_composite(ic, ((TW - 16) // 2, top + 2))
-    return im
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "ref_livre.py"), encoding="utf-8").read())   # dessin du livre
 
 
 _NOMMEES = {"black": "000000", "dark_blue": "0000AA", "dark_green": "00AA00", "dark_aqua": "00AAAA", "dark_red": "AA0000",
@@ -145,6 +74,8 @@ def encre(col):
         return "#3E2A1A"
     if max(r, g, b) - min(r, g, b) < 24:
         return "#3E2A1A" if max(r, g, b) > 200 else "#6B5640"
+    if r > 200 and g > 200 and b < 140:   # jaune : un or sombre plutôt qu'un kaki
+        return "#8C6A08"
     k = 135 / max(r, g, b)
     return "#%02X%02X%02X" % (int(r * k), int(g * k), int(b * k))
 
@@ -155,8 +86,8 @@ def panneau(nom, W, H, mix, cases):
     livre = nom in LIVRE_ACTIF
     if livre:   # 26/11/2026 : page du livre, sous la bande des signets
         cases = [dict(c, ligne=c["ligne"] + LIVRE_T // 9) for c in cases]
-        H += LIVRE_T
-        im = _fond_livre(W, H)
+        H += LIVRE_T + 9   # + une ligne de marge en bas pour les ornements
+        im = _fond_livre(W, H, [(c["x"], 9 * c["ligne"] - 15) for c in cases], "livre-" + nom)
     else:
         im = _fond_mixte(mix, W, H, "panneau-" + nom)   # blocs mêlés + cadre de pierre noire (ref_arbre.py)
     cf, af = fond_glyphes(f"pan_{nom}", im)
