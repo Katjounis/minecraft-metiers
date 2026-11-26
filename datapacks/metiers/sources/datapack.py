@@ -41,13 +41,14 @@ DETTE_MAX = 64  # dette anti-triche maximale (blocs posés non compensés), voir
 ORE_DROP = {"coal": "coal 1", "copper": "raw_copper 2", "iron": "raw_iron 1", "gold": "raw_gold 1",
             "redstone": "redstone 4", "lapis": "lapis_lazuli 4", "diamond": "diamond 1",
             "emerald": "emerald 1", "nether_gold": "gold_nugget 3", "nether_quartz": "quartz 1"}
-# Fermier : 3 points = 1 XP (un plant de blé = 1 XP, une carotte = 1/3 XP car un plant en donne 2 à 5)
-CROPS = {"wheat": 3, "carrot": 1, "potato": 1, "beetroot": 3, "nether_wart": 1, "sweet_berries": 1, "glow_berries": 1}
+# Fermier : 2 points = 1 XP. 26/11/2026 (« vraiment léger ») : tout x2, carottes, patates, verrues et baies x3
+# (blé 3 XP, carotte 1,5 XP par objet ramassé), plus labour, poudre d'os et compost (ref_fermier.py)
+CROPS = {"wheat": 6, "carrot": 3, "potato": 3, "beetroot": 6, "nether_wart": 3, "sweet_berries": 3, "glow_berries": 3}
 PLANTABLE = ["carrot", "potato", "nether_wart", "sweet_berries", "glow_berries"]
 # bloc cassé : (points, objet posé qui annule le gain, objet donné par Main verte)
-CROP_BLOCKS = {"melon": (4, "melon", "melon_slice"), "pumpkin": (4, "pumpkin", "pumpkin"),
-               "sugar_cane": (2, "sugar_cane", "sugar_cane"), "cocoa": (2, "cocoa_beans", "cocoa_beans"),
-               "cactus": (1, "cactus", "cactus")}
+CROP_BLOCKS = {"melon": (8, "melon", "melon_slice"), "pumpkin": (8, "pumpkin", "pumpkin"),
+               "sugar_cane": (4, "sugar_cane", "sugar_cane"), "cocoa": (4, "cocoa_beans", "cocoa_beans"),
+               "cactus": (2, "cactus", "cactus")}
 BOSSES = {"wither": 800, "ender_dragon": 1200, "warden": 400, "elder_guardian": 180}   # 25.6 : x4
 
 jobs = {
@@ -104,6 +105,9 @@ for c, (x, placed, drop) in CROP_BLOCKS.items():
                              [("f1", "chance_25", f"give @s minecraft:{drop} 2"),
                               ("f5", "chance_02", "give @s minecraft:glistering_melon_slice 1")]))
     jobs["f"]["src"].append((f"minecraft.used:minecraft.{placed}", x, -1, f"f.up.{c}", []))
+# poudre d'os sortie du composteur (ramassée) : 3 XP ; la jeter la retire
+jobs["f"]["src"].append(("minecraft.picked_up:minecraft.bone_meal", 6, 1, "f.pu.bone_meal", []))
+jobs["f"]["src"].append(("minecraft.dropped:minecraft.bone_meal", 6, -1, "f.dr.bone_meal", []))
 # XP selon la créature tuée (mob_kills ne sert plus qu'à la compétence Soif de sang)
 MOBS = {'chicken': 1, 'cow': 1, 'pig': 1, 'sheep': 1, 'rabbit': 1, 'goat': 1, 'mooshroom': 1, 'silverfish': 1, 'slime': 1, 'magma_cube': 1, 'zombie': 3, 'husk': 3, 'zombie_villager': 3, 'spider': 3, 'piglin': 3, 'zombified_piglin': 1, 'drowned': 3, 'skeleton': 4, 'cave_spider': 4, 'vex': 4, 'stray': 5, 'bogged': 5, 'creeper': 5, 'phantom': 6, 'pillager': 6, 'witch': 5, 'enderman': 3, 'blaze': 5, 'guardian': 3, 'hoglin': 7, 'creaking': 8, 'vindicator': 9, 'shulker': 9, 'zoglin': 9, 'ghast': 11, 'wither_skeleton': 11, 'breeze': 11, 'piglin_brute': 13, 'evoker': 15, 'ravager': 21}
 MOBS = {m: (2 * x if x >= 9 else x) for m, x in MOBS.items()}   # 25.6 : mobs rares (9 XP et plus) x2
@@ -117,7 +121,8 @@ jobs["c"]["src"].append(("minecraft.custom:minecraft.mob_kills", 0, 1, "c.kills"
                          []))
 for b, x in BOSSES.items():
     jobs["c"]["src"].append((f"minecraft.killed:minecraft.{b}", x, 1, f"c.k.{b}", []))
-jobs["p"]["src"].append(("minecraft.custom:minecraft.fish_caught", 8, 1, "p.fish",
+# 26/11/2026 : Pêcheur un peu freiné (8 -> 6 XP par prise), c'était le métier le plus rapide
+jobs["p"]["src"].append(("minecraft.custom:minecraft.fish_caught", 6, 1, "p.fish",
                          [("p3", "chance_20", "loot give @s loot minecraft:gameplay/fishing/fish"),
                           ("p5", "chance_08", "loot give @s loot minecraft:gameplay/fishing/treasure"),
                           ("pp5", "chance_25", "loot give @s loot minecraft:gameplay/fishing/fish")]))
@@ -178,7 +183,7 @@ XDIV = {"crouch_one_cm": 2, "aviate_one_cm": 6, "horse_one_cm": 3, "swim_one_cm"
 XMUL = {"sprint_one_cm": 2}
 
 ALL_STATS = [s for j in jobs.values() for s in j["src"]]
-WEIGHTS = sorted({s[1] for s in ALL_STATS} | {2, 3, 4, 6, 10, 15, 20, 30, 40, 60, 100, 1000, 2000, 7200, 20000})
+WEIGHTS = sorted({s[1] for s in ALL_STATS} | {2, 3, 4, 6, 10, 15, 17, 20, 30, 40, 60, 100, 1000, 2000, 7200, 20000})
 
 # =====================================================================
 # ARBRES DE COMPÉTENCES (1 point par niveau, 49 points au niveau 50 = tout l'arbre)
@@ -868,9 +873,10 @@ for j, d in jobs.items():
             if st in XMUL:
                 S += [f"scoreboard players operation @s s.x.{st} *= #{XMUL[st]} m.const"]
             S += [f"scoreboard players operation @s m.x_acc += @s s.x.{st}", f"scoreboard players set @s s.x.{st} 0"]
-        # XP versée par tranche de 200 m (20 XP d'un coup) pour éviter un message tous les 10 m
+        # XP versée par tranche de 200 m pour éviter un message tous les 10 m. 26/11/2026 : 17 XP par tranche
+        # (1 XP tous les 12 m environ) au lieu de 10, l'Explorateur à pied était le métier le plus lent
         S += ["scoreboard players operation @s m.tmp = @s m.x_acc", "scoreboard players operation @s m.tmp /= #20000 m.const",
-              "scoreboard players operation @s m.tmp *= #10 m.const",
+              "scoreboard players operation @s m.tmp *= #17 m.const",
               "scoreboard players operation @s m.x_bal += @s m.tmp", "scoreboard players operation @s m.x_acc %= #20000 m.const"]
     # anti-ferme : pas d'XP de Pêcheur ni de Chasseur quand le joueur est AFK
     b0 = f"scoreboard players operation @s m.b0 = @s m.{j}_bal"
@@ -2259,7 +2265,7 @@ playsound minecraft:ui.toast.in master @s ~ ~ ~ 0.6 1.4
 """)
 
 # REFONTE (v24) : objets, armure 11 paliers, compétences, menus, Forge, skins, boss, défis
-for _mod in ("ref_base.py", "ref_skills.py", "ref_comp18.py", "ref_objets.py", "ref_menu.py", "ref_boss.py", "ref_defis.py", "ref_bareme.py", "ref_prestige.py", "ref_v26.py", "ref_batisseur.py", "ref_recalcul.py", "ref_paliers.py", "ref_scenes.py", "ref_classement.py", "ref_arbre_ecrire.py"):
+for _mod in ("ref_base.py", "ref_skills.py", "ref_comp18.py", "ref_objets.py", "ref_menu.py", "ref_boss.py", "ref_defis.py", "ref_bareme.py", "ref_prestige.py", "ref_v26.py", "ref_batisseur.py", "ref_fermier.py", "ref_recalcul.py", "ref_paliers.py", "ref_scenes.py", "ref_classement.py", "ref_arbre_ecrire.py"):
     exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), _mod), encoding="utf-8").read())
 
 # Compétences désactivables : une compétence achetée garde son tag metiers.sk.XN (achat, prérequis, menus),

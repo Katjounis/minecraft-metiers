@@ -86,7 +86,10 @@ d_f = DIV["f"]
 PAGES["f"] = [titre("Récolte ramassée (par objet)")] + groupes(
     [(x / d_f, spr("i", c), NOM_CULTURE[c]) for c, x in CROPS.items()]) + [titre("Bloc cassé")] + groupes(
     [(x / d_f, spr(*TEX_CULTURE.get(c, ("b", TEX_BLOC.get(c, c)))), NOM_CULTURE[c]) for c, (x, _, _) in CROP_BLOCKS.items()]) + [
-    note("Replanter carottes, patates, verrues et baies est gratuit : seule la graine posée en trop retire de l’XP."), DEFI]
+    titre("Autres travaux")] + case("0,5 XP", spr("i", "iron_hoe"), "Labourer") + case("1 XP", spr("i", "bone_meal"), "Poudre d’os sur culture") + \
+    case("0,5 XP", spr("b", "composter_side"), "Composter") + case("3 XP", spr("i", "bone_meal"), "Poudre d’os du composteur") + [
+    note("Replanter carottes, patates, verrues et baies est gratuit : seule la graine posée en trop retire de l’XP. "
+         "Labourer et composter : 15 XP par minute au plus à eux deux."), DEFI]
 # ---------------------------------------------------------------- Mineur
 d_m = DIV["m"]
 # Mineur : deux pages (minerais / pierres) pour ne pas faire défiler
@@ -121,7 +124,7 @@ PAGES["n"] = [titre("Table d’enchantement")] + groupes([(60, spr("b", "enchant
                                                          (20, spr("b", "enchanting_table_top"), "enchantement à 1 niveau")]) + \
     groupes([(w_shelf, spr("b", "bookshelf"), "bibliothèque fabriquée (casser une bibliothèque la retire)")]) + [DEFI]
 # ---------------------------------------------------------------- Explorateur (1 XP tous les 20 m à pied, versé par tranche de 200 m)
-BASE_M = 20
+BASE_M = 12   # 26/11/2026 : 17 XP par tranche de 200 m (environ 1 XP tous les 12 m)
 DIST = [("walk_one_cm", "i", "leather_boots", "à pied"), ("sprint_one_cm", "i", "sugar", "en courant"),
         ("climb_one_cm", "b", "ladder", "en grimpant"), ("crouch_one_cm", "i", "leather_leggings", "accroupi"),
         ("swim_one_cm", "i", "water_bucket", "à la nage"), ("horse_one_cm", "i", "saddle", "à cheval"),
@@ -132,7 +135,7 @@ for st, k, tex, lib in DIST:
     dist_items.append((m, spr(k, tex), lib))
 PAGES["x"] = [titre("1 XP tous les...")] + groupes(dist_items, "m") + [titre("Découvertes (une fois chacune)")] + groupes(
     [(60, spr("i", "map"), f"nouvelle structure ({len(STRUCTS)} : villages, temples, forteresses...)"),
-     (40, spr("i", "compass_00"), f"nouveau biome ({len(BIOMES)})")]) + [note("L’XP de distance arrive par tranche de 200 m (10 XP d’un coup)."), DEFI]
+     (40, spr("i", "compass_00"), f"nouveau biome ({len(BIOMES)})")]) + [note("L’XP de distance arrive par tranche de 200 m (17 XP d’un coup à pied)."), DEFI]
 # ---------------------------------------------------------------- Marchand
 w_trade = [s for s in jobs["t"]["src"] if s[0].endswith("traded_with_villager")][0][1]
 PAGES["t"] = groupes([(w_trade, spr("i", "emerald"), "échange avec un villageois (chaque échange)")]) + [DEFI]
@@ -210,7 +213,7 @@ COURT = {  # libellé court dans la case, texte complet dans l'infobulle
     "Découvertes (une fois chacune)": "Découvertes", "Récolte ramassée (par objet)": "Récolte ramassée",
     "Créatures à 5 XP et plus": "5 XP et plus", "Créatures à moins de 5 XP": "Moins de 5 XP", "Bonus en plus du bloc posé": "Bonus de bloc",
     "Table d’enchantement": "Table", "Planches (12 bois)": "Planches", "Série de prises": "Série",
-    "Émeraude (abîmes)": "Émeraude (ab.)", "Diamant (abîmes)": "Diamant (ab.)"}
+    "Émeraude (abîmes)": "Émeraude (ab.)", "Poudre d’os sur culture": "Poudre d’os", "Poudre d’os du composteur": "Os du compost", "Diamant (abîmes)": "Diamant (ab.)"}
 COURT[f"nouvelle structure ({len(STRUCTS)} : villages, temples, forteresses...)"] = "Structure"
 COURT[f"nouveau biome ({len(BIOMES)})"] = "Biome"
 

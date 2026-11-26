@@ -4,6 +4,15 @@ Datapack vanilla de métiers (Bûcheron, Fermier, Mineur, Chasseur, Pêcheur, É
 
 ![Aperçu des outils](apercu/outils.png)
 
+
+## Barème d'XP rééquilibré (26/11/2026)
+
+Objectif : environ 20 h de jeu actif pour le niveau 50 dans chaque métier.
+
+- **Fermier** : tout x2 et carottes, patates, verrues et baies x3 (blé et betterave 3 XP, carotte, patate, verrue et baies 1,5 XP par objet ramassé ; pastèque et citrouille 4 XP, canne et cacao 2 XP, cactus 1 XP par bloc). Nouvelles sources : labourer 0,5 XP et composter 0,5 XP (15 XP par minute au plus à eux deux), poudre d'os qui fait pousser une culture 1 XP, poudre d'os ramassée en sortie de composteur 3 XP (la jeter la retire). Détail dans `sources/ref_fermier.py`.
+- **Pêcheur** : 6 XP par prise au lieu de 8 (c'était le métier le plus rapide), multiplicateurs inchangés.
+- **Explorateur** : 17 XP par tranche de 200 m au lieu de 10 (environ 1 XP tous les 12 m à pied, mêmes coefficients pour la course, le cheval, le bateau et les élytres).
+
 ## Contenu
 
 | Fichier | Rôle |
