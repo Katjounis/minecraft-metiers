@@ -108,3 +108,5 @@ Avec deux packs dans la touche G, le jeu affiche d'abord la liste « Métiers / 
 ## Prévu ensuite
 
 Virements entre joueurs, historique des opérations, hôtel des ventes, courbes de prix sur 24 h, icône d'Écu et fond illustré dans le resource pack, métier Bâtisseur (Métiers v25) avec crédits de pose des blocs achetés.
+
+Marché en page du livre (26/11/2026) : les 17 catégories, l'index A à Z, la Bourse et « Tout vendre » sont des icônes du panneau `marche` dessiné par Métiers (`ref_panneaux.py`, ordre de `catalogue.py`). « Tout vendre » (déclencheurs 7990 puis 7991) demande une confirmation, puis vend tout ce que l'inventaire contient et que le marché rachète, toutes catégories confondues ; restent les objets renommés, de métier ou spéciaux (`FILTRE`), les reliques, et la pioche en diamant, la canne à pêche, les cisailles et les totems (`GARDES`).

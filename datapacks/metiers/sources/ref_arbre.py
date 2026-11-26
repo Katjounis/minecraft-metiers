@@ -6,6 +6,7 @@
 # Tout est posé par-dessus le fond avec des espaces négatifs : chaque calque revient à l'origine après lui.
 # Exécuté depuis ref_menu.py (mêmes variables globales). Textures du jeu copiées dans sources/textures_arbre/.
 from PIL import Image as _Img, ImageDraw as _Draw
+from math import sin as _m_sin
 
 _TA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "textures_arbre")
 _RPF = os.path.join(ROOT, "..", "metiers_rp", "assets", "metiers")
@@ -17,9 +18,13 @@ def _tex(p):
 
 
 # 26.0 (26/11/2026) : 18 nœuds sur 3 colonnes (branche gauche, tronc, branche droite) et 6 rangées de niveau
-ARB_W, ARB_H = 260, 190   # 26/11/2026 : cadre de pierre noire de 12 px autour
-ARB_COL = {"G": 50, "T": 130, "D": 210}
-ARB_ROW = [27, 54, 81, 108, 135, 162]   # 26/11/2026 : resserré, la page tient sans défiler
+# 26/11/2026 (soir) : l'arbre devient une page du livre des menus : bande des marque-pages en haut (ARB_T),
+# grande page de parchemin, légende des branches à l'encre en bas de la page.
+ARB_T = 18
+ARB_W, ARB_H = 280, 240
+ARB_COL = {"G": 60, "T": 140, "D": 220}
+ARB_ROW = [45 + 31 * i for i in range(6)]   # rangées plus aérées : les liens se voient entre les cadres
+ARB_LEG_L = 24   # ligne de texte de la légende (en bas de la page)
 ARB_P = {k: (ARB_COL["T"], ARB_ROW[k - 1]) for k in range(1, 7)}
 ARB_P.update({k: (ARB_COL["G"], ARB_ROW[k - 7]) for k in range(7, 13)})
 ARB_P.update({k: (ARB_COL["D"], ARB_ROW[k - 13]) for k in range(13, 19)})
@@ -78,30 +83,77 @@ def _glyphe(nom, im, top, car=None):
 
 # ---------------------------------------------------------------- liens (gris / blanc), communs à tous les métiers
 ARB_SEG = {}
+_ENC_P = (150, 118, 80)                       # encre pâlie : lien pas encore ouvert (pointillé)
+_LIEN_OR = [(255, 226, 140), (226, 178, 84), (150, 104, 36)]   # lien ouvert : trait d'or cerné d'encre
+_LIEN_CERNE = (78, 52, 28)
+
+
+def _trait(pts, etat, w, h):
+    """Dessine une suite de points (déjà dans l'image) : pointillé d'encre pâlie, ou trait d'or de 2 px cerné."""
+    im = _Img.new("RGBA", (w, h))
+    px = im.load()
+    if etat == "gris":
+        for i, (x, y) in enumerate(pts):
+            if i % 4 < 2:
+                px[x, y] = _ENC_P + (230,)
+    else:
+        corps = set()
+        for (x, y) in pts:
+            corps |= {(x, y), (x + 1, y), (x, y + 1)}
+        for (x, y) in corps:
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                q = (x + dx, y + dy)
+                if q not in corps and 0 <= q[0] < w and 0 <= q[1] < h:
+                    px[q] = _LIEN_CERNE + (255,)
+        for (x, y) in corps:
+            if 0 <= x < w and 0 <= y < h:
+                px[x, y] = (_LIEN_OR[0] if (x - 1, y) not in corps and (x, y - 1) not in corps else
+                            _LIEN_OR[2] if (x + 1, y) not in corps and (x, y + 1) not in corps else _LIEN_OR[1]) + (255,)
+    px[w - 1, h // 2] = (0, 0, 0, 3) if px[w - 1, h // 2][3] == 0 else px[w - 1, h // 2]   # même avance pour les 2 états
+    return im
+
+
 for n, (a_, b_) in enumerate(ARB_LIENS, 1):
     (x1, y1), (x2, y2) = ARB_P[a_], ARB_P[b_]
     var = {}
-    for etat, coul in (("gris", (110, 110, 110, 255)), ("blanc", (255, 255, 255, 255))):
-        if y1 == y2:      # lien horizontal (racine vers une branche), entre les bords des cadres
-            xa, xb = sorted((x1, x2))
-            x0, ytop = xa + 13, y1 - 1
-            im = _Img.new("RGBA", (xb - 13 - x0, 3))
-            d = _Draw.Draw(im)
-            d.rectangle([(0, 0), (im.width - 1, 2)], fill=(0, 0, 0, 255))
-            d.line([(0, 1), (im.width - 1, 1)], fill=coul, width=1)
-        else:             # lien vertical dans une colonne
-            x0, ytop = x1 - 1, y1 + 13
-            im = _Img.new("RGBA", (3, y2 - 13 - ytop))
-            d = _Draw.Draw(im)
-            d.rectangle([(0, 0), (2, im.height - 1)], fill=(0, 0, 0, 255))
-            d.line([(1, 0), (1, im.height - 1)], fill=coul, width=1)
-        var[etat] = _glyphe(f"lien_{n}_{etat}", im, ytop)
+    if y1 == y2:      # racine vers une branche : arc qui s'élève entre les cadres
+        xa, xb = sorted((x1, x2))
+        x0, ytop = xa + 14, y1 - 8
+        lw, lh = xb - 14 - x0, 12
+        pts = []
+        for i in range(lw):
+            t = i / max(1, lw - 1)
+            pts.append((i, int(round(7 - 5 * _m_sin(t * 3.14159)))))
+    else:             # dans une colonne : liane légèrement ondulée, une fois à gauche, une fois à droite
+        x0, ytop = x1 - 4, y1 + 9      # passe sous les cadres (posés après) : le trait paraît continu
+        lw, lh = 9, y2 - 9 - ytop
+        sens = 1 if n % 2 else -1
+        pts = [(4 + int(round(sens * 1.5 * _m_sin(i / max(1, lh - 1) * 3.14159))), i) for i in range(max(1, lh))]
+    for etat in ("gris", "blanc"):
+        var[etat] = _glyphe(f"lien_{n}_{etat}", _trait(pts, etat, lw + 1, lh + 1), ytop)
     assert var["gris"][1] == var["blanc"][1]
     ARB_SEG[n] = {"x": x0, "gris": var["gris"][0], "blanc": var["blanc"][0], "adv": var["gris"][1], "ab": (a_, b_)}
 
 # ---------------------------------------------------------------- fond et nœuds de chaque métier
 _CAD = {(t_, o): _tex(f"cadre/{t_}_frame_{'obtained' if o else 'unobtained'}").resize((26, 26), _Img.NEAREST)
         for t_ in ("task", "goal", "challenge") for o in (True, False)}
+
+
+def _sepia(im):
+    """26/11/2026 : cadre « pas encore obtenu » en pierre sépia (le gris clair du jeu jurait sur le parchemin)."""
+    out = im.copy()
+    px = out.load()
+    for y in range(out.height):
+        for x in range(out.width):
+            r, g, b, a = px[x, y]
+            if a and abs(r - g) < 12 and abs(g - b) < 12:
+                l = r / 255
+                px[x, y] = (int(40 + 150 * l), int(30 + 130 * l), int(22 + 100 * l), a)
+    return out
+
+
+for _t_ in ("task", "goal", "challenge"):
+    _CAD[(_t_, False)] = _sepia(_CAD[(_t_, False)])
 _PAST = {"dispo": (255, 255, 85, 255), "points": (255, 85, 85, 255)}
 ARB = {}
 
@@ -213,8 +265,19 @@ def fond_glyphes(nom, im):
     return cf, af
 
 
+LIVRE_T = ARB_T
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "ref_livre.py"), encoding="utf-8").read())   # dessin du livre
+
+
+def _fond_arbre(j):
+    """Page du livre : grand filigrane de l'outil du métier au centre, médaillon sous chaque nœud."""
+    ic = _tex(ARB_IC[j][0]).resize((96, 96), _Img.NEAREST)
+    return _fond_livre(ARB_W, ARB_H, [ARB_P[k] for k in range(1, NB_SK[j] + 1)], "arbre-" + j, une_page=True, rayon=15,
+                       filigrane=(ic, ARB_W // 2, (ARB_ROW[0] + ARB_ROW[-1]) // 2))
+
+
 for j in jobs:
-    fond = _fond_mixte(j)
+    fond = _fond_arbre(j)
     cf, af = fond_glyphes(f"fond_{j}", fond)
     nd = {}
     icones = ARB_IC[j] + ([ic for _n, _d, ic in NOUVELLES[j]] if j in NOUVELLES else [])
@@ -403,8 +466,21 @@ def arbre_texte(j):
         comps.append('{text:"' + _q(_esp(x)) + f'$(a{k})' + _q(_esp(-(x + adv))) + '",' + F_ +
                      f',click_event:{{action:"run_command",command:"trigger metiers set {TSK(d, k)}"}},'
                      f'hover_event:{{action:"show_text",value:{bulle}}}}}')
+    # marque-pages du livre (Métiers ouvert), comme sur les menus
+    xs = livre_colonnes(ARB_W, 3, 0) + livre_colonnes(ARB_W, 3, 1)
+    for i, (ic, nm, cmd, col) in enumerate(LIVRE_ONGLETS):
+        if i not in _ARB_SIG:
+            _ARB_SIG[i] = _glyphe(f"arbre_onglet{i}", _signet(_tex(ic).resize((16, 16), _Img.NEAREST), col, i == 0), 0)
+        car, adv = _ARB_SIG[i]
+        x = xs[i] - SIG_W // 2
+        comps.append('{text:"' + _q(_esp(x)) + car + _q(_esp(-(x + adv))) + '",' + F_ +
+                     f',click_event:{{action:"run_command",command:"{cmd}"}},'
+                     f'hover_event:{{action:"show_text",value:{{text:"{nm}",color:"#%02X%02X%02X",bold:true}}}}}}' % col)
     comps.append('{text:"' + _q(_esp(A["adv"])) + '",' + F_ + '}')
     return comps
+
+
+_ARB_SIG = {}
 
 
 def arbre_legende(j):
@@ -417,7 +493,7 @@ def arbre_legende(j):
         w_ = _larg(nom)
         x = ARB_COL[col] - w_ // 2
         out.append('{text:"' + _q(_esp(x - cur)) + '",' + F_ + '}')
-        out.append(f'{{text:"{nom}",color:"{coul}",bold:true,font:"minecraft:default"}}')   # sinon hérite de la police de l'arbre
+        out.append(f'{{text:"{nom}",color:"{encre(coul)}",bold:true,shadow_color:0,font:"minecraft:default"}}')   # encre sur le parchemin
         cur = x + w_
     out.append('{text:"' + _q(_esp(ARB_W - cur)) + '",' + F_ + '}')   # même largeur que le dessin : même centrage
     return out
@@ -450,5 +526,6 @@ def arbre_etats(j, sk_tag):
 
 def arbre_corps(j):
     """Élément de corps de dialogue (SNBT) : le dessin, des lignes vides pour lui laisser sa hauteur, puis les noms des branches."""
+    fin = (ARB_H + 8) // 9 + 1 - ARB_LEG_L
     return ('{type:"minecraft:plain_message",width:' + str(ARB_W + 20) + ',contents:[' + ",".join(_ARB_TXT[j]) + ','
-            '{text:"' + "\\n" * 21 + '"}' + "".join("," + c for c in _ARB_LEG[j]) + ']}')
+            '{text:"' + "\\n" * ARB_LEG_L + '"}' + "".join("," + c for c in _ARB_LEG[j]) + ',{text:"' + "\\n" * fin + '"}]}')
