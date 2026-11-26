@@ -37,7 +37,7 @@ ARB_IC = {
     "x": ["item/chainmail_boots", "item/sugar", "item/feather", "item/wind_charge", "item/spyglass", "item/map"],
     "t": ["item/emerald", "item/name_tag", "item/ink_sac", "item/goat_horn", "item/bundle", "block/emerald_block"],
     "k": ["item/stick", "item/iron_boots", "block/scaffolding_side", "item/clock_00", "block/bricks", "item/golden_pickaxe"]}
-ARB_ETATS = ("acquise", "dispo", "points", "bloquee")
+ARB_ETATS = ("acquise", "dispo", "points", "bloquee", "off")   # off (26/11/2026) : acquise mais désactivée, cadre rouge
 _ASC0 = 7                       # ascent du fond : le haut du dessin à 7 px au-dessus de la ligne de base
 _prov, _code = [], [0xE800]
 ARB_FICHIERS = []   # écrits à la fin par ref_arbre_ecrire.py : ref_batisseur.py vide build/metiers_rp entre-temps
@@ -104,6 +104,19 @@ _CAD = {(t_, o): _tex(f"cadre/{t_}_frame_{'obtained' if o else 'unobtained'}").r
         for t_ in ("task", "goal", "challenge") for o in (True, False)}
 _PAST = {"dispo": (255, 255, 85, 255), "points": (255, 85, 85, 255)}
 ARB = {}
+
+
+def _rouge(im):
+    """Cadre « obtenu » (doré) repeint en rouge, même relief : compétence acquise mais désactivée."""
+    out = im.copy()
+    px = out.load()
+    for y in range(out.height):
+        for x in range(out.width):
+            r, g, b, a = px[x, y]
+            if a:
+                l = (r + g + b) // 3
+                px[x, y] = (min(255, l * 3 // 2 + 30), l * 2 // 5, l * 2 // 5, a)
+    return out
 
 
 def _gris(ic, alpha):
@@ -210,9 +223,9 @@ for j in jobs:
         cadre = "challenge" if k in (12, 18) else ("goal" if k == 6 else "task")
         nd[k] = {}
         for e in ARB_ETATS:
-            im = _CAD[(cadre, e == "acquise")].copy()
-            # 26.0 : seule une compétence acquise garde ses couleurs ; les autres sont grisées
-            icn = ic if e == "acquise" else _gris(ic, 8 if e == "dispo" else (7 if e == "points" else 4))
+            im = _rouge(_CAD[(cadre, True)]) if e == "off" else _CAD[(cadre, e == "acquise")].copy()
+            # 26.0 : seule une compétence acquise garde ses couleurs ; les autres sont grisées (désactivée : à moitié)
+            icn = ic if e == "acquise" else _gris(ic, 8 if e in ("dispo", "off") else (7 if e == "points" else 4))
             im.alpha_composite(icn, (5, 5))
             if e in _PAST:
                 dd = _Draw.Draw(im)
@@ -426,7 +439,8 @@ def arbre_etats(j, sk_tag):
         L += [f'data modify storage {NS}:pg a{k} set value "{n["bloquee"][0]}"',
               f'execute if data storage {NS}:pg {{c{k}:"yellow"}} run data modify storage {NS}:pg a{k} set value "{n["dispo"][0]}"',
               f'execute if data storage {NS}:pg {{c{k}:"red"}} run data modify storage {NS}:pg a{k} set value "{n["points"][0]}"',
-              f'execute if entity @s[tag={sk_tag}{k}] run data modify storage {NS}:pg a{k} set value "{n["acquise"][0]}"']
+              f'execute if entity @s[tag={sk_tag}{k}] run data modify storage {NS}:pg a{k} set value "{n["acquise"][0]}"',
+              f'execute if entity @s[tag={sk_tag}{k},tag={sk_tag.replace(".sk.", ".skoff.")}{k}] run data modify storage {NS}:pg a{k} set value "{n["off"][0]}"']
     for n, s in _liens(j):
         a_, b_ = s["ab"]
         L += [f'data modify storage {NS}:pg s{n} set value "{s["gris"]}"',

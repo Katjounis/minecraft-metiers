@@ -1072,7 +1072,7 @@ scoreboard players operation @s m.tmp += #ppr m.tmp
         if j == "b" and k == 2:
             B += [f"scoreboard players set @s a.{l} 0" for l in LOGS]
         if j == "x" and k == 9:   # 26/11/2026 : les élytres passent du palier 6 à la compétence Ailes
-            B.append(f"function {NS}:objets/donner_elytres")
+            B += [f"function {NS}:objets/retirer_elytres", f"function {NS}:objets/donner_elytres"]
         B.append(f"function {NS}:{j}/arbre")
         w(F + f"{j}/acheter_{k}.mcfunction", "\n".join(B))
 

@@ -248,7 +248,7 @@ for j, d in jobs.items():
            '{text:"$(bar)",font:"metiers:icones",color:"white"},{text:"  $(xp) / $(need) XP\\n",color:"gray"},'
            '{text:"$(pts) points de compétence",color:"yellow"},{text:"   ·   ",color:"gray"},'
            f'{gs("cristal_" + j)},{{text:" $(cr) cristaux",color:"aqua"}}]}}')
-    leg = ('{type:"minecraft:plain_message",width:380,contents:{text:"Vert acquise · jaune disponible · rouge points manquants · '
+    leg = ('{type:"minecraft:plain_message",width:380,contents:{text:"Cadre doré acquise · cadre rouge désactivée · pastille jaune disponible · pastille rouge points manquants · '
            'gris niveau trop bas. Survole un nœud pour son effet et son coût.",color:"dark_gray"}}')
     RET = f'{{label:"Retour",width:130,action:{{type:"run_command",command:"trigger metiers set 1"}}}}'
     ARBRE = f'{{label:"Retour à l’arbre",width:200,action:{{type:"run_command",command:"trigger metiers set {20 + d["idx"]}"}}}}'
@@ -284,10 +284,12 @@ for j, d in jobs.items():
     for k, (name, cost, req, desc) in enumerate(sk, 1):
         w(F + f"{j}/basculer_{k}.mcfunction", "\n".join([
             f"execute if entity @s[tag=metiers.skoff.{j}{k}] run return run function {NS}:{j}/activer_{k}",
-            f"tag @s add metiers.skoff.{j}{k}", tr(f"{name} est désactivée. Tu la gardes : reclique pour la réactiver.", "gold"),
+            f"tag @s add metiers.skoff.{j}{k}", tr(f"{name} est désactivée. Tu la gardes : reclique pour la réactiver.", "gold")]
+            + ([f"function {NS}:objets/retirer_elytres"] if (j, k) == ("x", 9) else []) + [
             "playsound minecraft:block.lever.click master @s ~ ~ ~ 1 0.7", f"function {NS}:{j}/arbre"]))
         w(F + f"{j}/activer_{k}.mcfunction", "\n".join([
-            f"tag @s remove metiers.skoff.{j}{k}", tr(f"{name} est réactivée.", "green"),
+            f"tag @s remove metiers.skoff.{j}{k}", tr(f"{name} est réactivée.", "green")]
+            + ([f"function {NS}:objets/retirer_elytres", f"function {NS}:objets/donner_elytres"] if (j, k) == ("x", 9) else []) + [
             "playsound minecraft:block.lever.click master @s ~ ~ ~ 1 1.2", f"function {NS}:{j}/arbre"]))
     # bascule du titre de ce métier
     w(F + f"{j}/titre.mcfunction", "\n".join([

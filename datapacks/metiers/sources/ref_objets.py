@@ -160,6 +160,11 @@ TO = [f"execute as @e[type=minecraft:snowball,tag=!{NS}.pv] run function {NS}:ob
       # Mineur : 3x3 accroupi, pioche du métier au palier 5 (ancien Marteau)
       f'execute as @a[predicate={NS}:accroupi] if items entity @s weapon.mainhand #minecraft:pickaxes if entity @s[tag={NS}.sk.m16] at @s run function {NS}:objets/marteau',
       "scoreboard players set @a s.pk 0"]
+_ELY = "*[minecraft:custom_data~{metiers_elytres:1b}]"
+TO += [f"clear @a[tag=!{NS}.sk.x9] {_ELY}", f"clear @a[tag={NS}.skoff.x9] {_ELY}"]
+# retirer les élytres partout sur le joueur (inventaire, armure et coffre de l'Ender) : une seule paire existe à la fois
+w(O_ + "retirer_elytres.mcfunction", "\n".join([f"clear @s {_ELY}"] + [
+    f"execute if items entity @s enderchest.{n} {_ELY} run item replace entity @s enderchest.{n} with minecraft:air" for n in range(27)]))
 w(O_ + "tick.mcfunction", "\n".join(TO))
 add_lines(F + "refonte/tick.mcfunction", [f"function {NS}:objets/tick"])
 w(O_ + "lance.mcfunction", "\n".join(
