@@ -112,7 +112,7 @@ NOUVELLES = {
         ("Endurance", "Courir ne te donne plus faim.", "item/sugar"),
         ("Saut de géant", "Tu sautes plus haut et la chute fait mal 2 blocs plus tard.", "item/rabbit_foot"),
         ("Grimpeur", "Avance contre un mur : tu le grimpes.", "item/string"),
-        ("Marcheur du Nether", "Vitesse II sur le sable et la terre des âmes, aucun dégât du magma.", "item/magma_cream"),
+        ("Ailes", "Tu reçois des élytres incassables (onglet Outil pour les récupérer si tu les perds).", "item/elytra"),
         ("Propulseur", "En vol avec des élytres : une fusée offerte toutes les 15 s (3 au plus sur toi).", "item/firework_rocket"),
         ("Vent arrière", "Après 5 s de course : Vitesse III.", "item/wind_charge"),
         ("Pilleur", "Les coffres de structure que tu ouvres en premier ont 30 % de chance d'un second butin.", "item/gold_nugget"),

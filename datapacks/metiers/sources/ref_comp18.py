@@ -140,8 +140,6 @@ J_ += [
     f"execute if score #h m.tmp matches 1.. if score @s m.lvrest matches 1.. run function {NS}:comp/n_rendre",
     # Explorateur
     f"execute if entity @s[{SK('x', 7)}] if predicate {NS}:court run effect give @s minecraft:saturation 1 0 true",
-    f"execute if entity @s[{SK('x', 10)}] if block ~ ~-0.2 ~ #minecraft:soul_speed_blocks run effect give @s minecraft:speed 2 1 true",
-    f"execute if entity @s[{SK('x', 10)}] if block ~ ~-0.2 ~ minecraft:magma_block run effect give @s minecraft:fire_resistance 2 0 true",
     f"execute if entity @s[{SK('x', 11)}] if predicate {NS}:plane run function {NS}:comp/x_propulseur",
     f"execute if entity @s[{SK('x', 12)}] if predicate {NS}:court run scoreboard players add @s m.sprt 1",
     f"execute unless predicate {NS}:court run scoreboard players set @s m.sprt 0",

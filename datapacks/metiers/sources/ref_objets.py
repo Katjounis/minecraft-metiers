@@ -270,21 +270,22 @@ ARC = ('minecraft:bow[minecraft:custom_name={text:"Arc du Chasseur",color:"red",
        'minecraft:item_model="metiers:forge_arc3",minecraft:custom_data={metiers_arc:1b},minecraft:enchantments={"minecraft:power":4},'
        'minecraft:unbreakable={},minecraft:max_stack_size=1,minecraft:rarity="epic"] 1')
 ELY = ('minecraft:elytra[minecraft:custom_name={text:"Élytres de l\'Explorateur",color:"blue",bold:true,italic:false},'
-       'minecraft:lore=[{text:"Incassables.",color:"gray",italic:false},{text:"Récompense du palier 6 d\'Explorateur",color:"gold",italic:false}],'
+       'minecraft:lore=[{text:"Incassables.",color:"gray",italic:false},{text:"Compétence Ailes de l\'Explorateur",color:"gold",italic:false}],'
        'minecraft:custom_data={metiers_elytres:1b},minecraft:unbreakable={},minecraft:rarity="epic"] 1')
 w(O_ + "donner_arc.mcfunction", f"give @s {ARC}")
 w(O_ + "donner_elytres.mcfunction", f"give @s {ELY}")
 ARCSEL = "*[minecraft:custom_data~{metiers_arc:1b}]"
 ELYSEL = "*[minecraft:custom_data~{metiers_elytres:1b}]"
-add_lines(F + "x/donner_6.mcfunction", [f"function {NS}:objets/donner_elytres", tr("Palier 6 : des élytres incassables sont dans ton inventaire.", "blue")])
 add_lines(F + "refonte/tick.mcfunction", [
     f"execute as @a[scores={{s.bow2=1..}},tag={NS}.sk.c17] at @s run function {NS}:forge/arc3",
     f"execute as @a[scores={{s.bow2=1..}},tag=!{NS}.sk.c17] at @s if items entity @s weapon.mainhand {ARCSEL} run function {NS}:forge/arc3",
     "scoreboard players set @a s.bow2 0"])
 add_lines(F + "refonte/load.mcfunction", ["scoreboard objectives add s.bow2 minecraft.used:minecraft.bow"])
 for nom_, sel_, fn_, j_, pal_ in (("arc", ARCSEL, "donner_arc", "c", 5), ("elytres", ELYSEL, "donner_elytres", "x", 6)):
+    cond_ = (f"execute unless entity @s[tag={NS}.sk.x10] run return run {tr('Il faut la compétence Ailes (Explorateur).', 'red')}" if nom_ == "elytres"
+             else f"execute unless score @s m.{j_}_pal matches {pal_}.. run return run {tr(f'Il faut avoir récupéré la récompense du palier {pal_}.', 'red')}")
     w(O_ + f"recup_{nom_}.mcfunction", "\n".join([
-        f"execute unless score @s m.{j_}_pal matches {pal_}.. run return run {tr(f'Il faut avoir récupéré la récompense du palier {pal_}.', 'red')}",
+        cond_,
         f"execute if items entity @s container.* {sel_} run return run {tr('Tu l’as déjà sur toi.', 'gold')}",
         f"execute if items entity @s armor.chest {sel_} run return run {tr('Tu l’as déjà sur toi.', 'gold')}",
         f"execute if items entity @s enderchest.* {sel_} run return run {tr('Il est dans ton coffre de l’Ender.', 'gold')}",
@@ -304,7 +305,7 @@ for key, e_ in COMMUN.items():
 RB += [f"scoreboard players set @s m.fo_{key} 0" for key in list(CRP) + list(COMMUN)]
 for j in ("m", "f", "e", "n", "t"):
     RB.append(f"execute if items entity @s container.* {SEL(j)} run function {NS}:{j}/outil_donner")
-RB += [f"execute if score @s m.x_pal matches 6.. run function {NS}:objets/donner_elytres",
+RB += [f"execute if entity @s[tag={NS}.sk.x10] run function {NS}:objets/donner_elytres",
        tr("Mise à jour 26 : les objets de la Forge disparaissent. Ce que tu avais payé (cristaux et éclats) t'est rendu, "
           "et leurs capacités passent sur tes outils de métier (voir l'onglet Outil).", "gold")]
 w(O_ + "migration.mcfunction", "\n".join(RB))

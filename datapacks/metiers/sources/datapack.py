@@ -309,7 +309,7 @@ EXTRAS = {
     "b": {1: ["oak_log 64", "apple 16"], 2: ["cherry_log 64", "golden_apple 2"], 3: ["mangrove_log 64", "experience_bottle 32"],
           4: ["pale_oak_log 64", "golden_apple 6"], 5: ["totem_of_undying 1", "experience_bottle 64"],
           6: ["enchanted_golden_apple 1", "crimson_stem 64"], 7: ["enchanted_golden_apple 2", "warped_stem 64"],
-          8: ["elytra 1", "golden_apple 16"], 9: ["enchanted_golden_apple 4", "experience_bottle 64"],
+          8: ["totem_of_undying 1", "golden_apple 16"], 9: ["enchanted_golden_apple 4", "experience_bottle 64"],
           10: ["enchanted_golden_apple 8", "totem_of_undying 2"]},
     "f": {1: ["bone_meal 64", "bread 32"], 2: ["golden_carrot 32", "cake 1"], 3: ["golden_carrot 64", "experience_bottle 32"],
           4: ["golden_apple 8", "glistering_melon_slice 16"], 5: ["enchanted_golden_apple 1", "hay_block 32"],
@@ -343,7 +343,7 @@ EXTRAS = {
           8: ["enchanted_golden_apple 3", "diamond_block 2"], 9: ["netherite_ingot 3", "experience_bottle 64"],
           10: ["enchanted_golden_apple 6", "beacon 1"]},
     "x": {1: ["cooked_beef 32", "map 4"], 2: ["firework_rocket 32", "golden_apple 4"], 3: ["ender_pearl 8", "experience_bottle 32"],
-          4: ["firework_rocket 64", "diamond 8"], 5: ["elytra 1", "firework_rocket 64"],
+          4: ["firework_rocket 64", "diamond 8"], 5: ["golden_apple 8", "firework_rocket 64"],
           6: ["ender_pearl 16", "enchanted_golden_apple 1"], 7: ["totem_of_undying 1", "firework_rocket 64"],
           8: ["shulker_box 1", "netherite_ingot 1"], 9: ["netherite_ingot 3", "enchanted_golden_apple 3"],
           10: ["enchanted_golden_apple 6", "beacon 1"]},
@@ -356,7 +356,7 @@ EXTRAS = {
 EXTRAS["k"] = {1: ["stone_bricks 64", "oak_planks 64"], 2: ["glass 64", "lantern 16"], 3: ["quartz_block 64", "experience_bottle 32"],
                4: ["deepslate_tiles 64", "golden_apple 6"], 5: ["scaffolding 64", "enchanted_golden_apple 1"],
                6: ["end_stone_bricks 64", "totem_of_undying 1"], 7: ["shulker_box 1", "experience_bottle 64"],
-               8: ["netherite_ingot 2", "quartz_block 64"], 9: ["elytra 1", "enchanted_golden_apple 3"],
+               8: ["netherite_ingot 2", "quartz_block 64"], 9: ["netherite_ingot 2", "enchanted_golden_apple 3"],
                10: ["enchanted_golden_apple 6", "beacon 1"]}
 UNSTACK = {"totem_of_undying", "saddle", "cake", "elytra", "diamond_horse_armor", "anvil", "bell", "shulker_box"}
 
@@ -1070,6 +1070,8 @@ scoreboard players operation @s m.tmp += #ppr m.tmp
               "playsound minecraft:block.enchantment_table.use master @s ~ ~ ~ 1 1"]
         if j == "b" and k == 2:
             B += [f"scoreboard players set @s a.{l} 0" for l in LOGS]
+        if j == "x" and k == 10:   # 26/11/2026 : les élytres passent du palier 6 à la compétence Ailes
+            B.append(f"function {NS}:objets/donner_elytres")
         B.append(f"function {NS}:{j}/arbre")
         w(F + f"{j}/acheter_{k}.mcfunction", "\n".join(B))
 
