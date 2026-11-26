@@ -54,10 +54,10 @@ NOUVELLES = {
         ("Dynamite", "Débloque la Dynamite (onglet Outil, en Écus) : lancée, elle creuse 5x5x5 sans toucher aux minerais et te rapporte tout.", "item/gunpowder"),
         ("Diamant brut", "Casser de la deepslate : 0,2 % de chance de diamant.", "item/diamond"),
         ("Cœur de diamant", "Les minerais donnent deux fois plus d'XP vanilla.", "item/experience_bottle"),
-        ("Allumeur", "Dans le noir, une torche de ton inventaire se pose toute seule à tes pieds.", "item/glow_ink_sac"),
+        ("Allumeur", "Dans le noir, une torche de ton inventaire se pose toute seule à tes pieds. Débloque aussi la Lanterne (onglet Outil, en Écus).", "item/glow_ink_sac"),
         ("Aimant", "Les objets et l'XP au sol à 8 blocs viennent à toi. Clic sur la compétence pour le couper.", "item/iron_ingot"),
-        ("Lanterne", "Débloque la Lanterne (onglet Outil, en Écus) : en main secondaire, la lumière te suit.", "item/lantern"),
-        ("Pioche large", "Ta pioche creuse en 3x3 dans la direction visée (Désactiver dans l'arbre pour la couper). Accroupi : elle casse toute la veine du bloc visé, 48 blocs au plus (pas la pierre, la deepslate ni la netherrack).", "item/iron_pickaxe"),
+        ("Veine", "Accroupi, ta pioche casse toute la veine du bloc visé, 48 blocs au plus : minerais, roches, obsidienne... jamais la pierre, la deepslate ni la netherrack.", "item/raw_iron"),
+        ("Pioche large", "Ta pioche creuse en 3x3 dans la direction visée. Clic sur la compétence pour la désactiver ou la réactiver.", "item/iron_pickaxe"),
         ("Lave apprivoisée", "Toucher la lave donne 15 s de Résistance au feu (recharge 2 min).", "item/lava_bucket"),
         ("Stature de pierre", "+4 d'armure, +2 de robustesse et moitié moins de recul.", "item/netherite_chestplate")],
     "c": [

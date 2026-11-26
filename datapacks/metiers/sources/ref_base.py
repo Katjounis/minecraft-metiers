@@ -461,19 +461,21 @@ w(F + "sac/tenu.mcfunction", "\n".join([
     f"execute if score @s m.saco matches 5.. run function {NS}:sac/entretien"]))
 # la barque se place DEVANT le joueur, sur l'axe du regard, à 2 blocs : jamais sur sa tête (sinon il est forcé de ramper).
 # Face à un mur proche (regard à peu près horizontal), elle se rapproche pour rester devant le mur, sans descendre sous 1,25 bloc.
+# 26/11/2026 : la barque reste à hauteur des yeux, droit devant (inclinaison ignorée) : en regardant ses pieds on la
+# posait sous soi, on montait dessus et on « volait » en sautant. À hauteur des yeux, son dessous est plus haut qu'un saut.
 w(F + "sac/placer.mcfunction", "\n".join([
-    f"execute if entity @s[x_rotation=-30..30] anchored eyes unless block ^ ^ ^1.5 #{NS}:vide run return run function {NS}:sac/placer_d {{d:1.25}}",
-    f"execute if entity @s[x_rotation=-30..30] anchored eyes unless block ^ ^ ^1.75 #{NS}:vide run return run function {NS}:sac/placer_d {{d:1.5}}",
-    f"execute if entity @s[x_rotation=-30..30] anchored eyes unless block ^ ^ ^2 #{NS}:vide run return run function {NS}:sac/placer_d {{d:1.75}}",
+    f"execute anchored eyes rotated ~ 0 unless block ^ ^ ^1.5 #{NS}:vide run return run function {NS}:sac/placer_d {{d:1.25}}",
+    f"execute anchored eyes rotated ~ 0 unless block ^ ^ ^1.75 #{NS}:vide run return run function {NS}:sac/placer_d {{d:1.5}}",
+    f"execute anchored eyes rotated ~ 0 unless block ^ ^ ^2 #{NS}:vide run return run function {NS}:sac/placer_d {{d:1.75}}",
     f"function {NS}:sac/placer_d {{d:2}}"]))
-w(F + "sac/placer_d.mcfunction", f"$execute anchored eyes positioned ^ ^ ^$(d) as {SACB} if score @s m.own = #pid m.tmp run tp @s ~ ~-0.28 ~")
+w(F + "sac/placer_d.mcfunction", f"$execute anchored eyes rotated ~ 0 positioned ^ ^ ^$(d) as {SACB} if score @s m.own = #pid m.tmp run tp @s ~ ~-0.28 ~")
 w(F + "sac/creer.mcfunction", "\n".join([
     "scoreboard players set @s m.sact 1",
     "execute if score @s m.x_lvl matches 50.. run scoreboard players set @s m.sact 2",
     "execute if score @s m.x_lvl matches 80.. run scoreboard players set @s m.sact 3",
     "execute unless score @s m.sacp matches 1..2 run scoreboard players set @s m.sacp 1",
     "execute if score @s m.sact matches ..2 run scoreboard players set @s m.sacp 1",
-    f'execute anchored eyes positioned ^ ^ ^2 run summon {SACT} ~ ~-0.28 ~ {{Tags:["metiers.sac","metiers.sacnew"],Invulnerable:1b,NoGravity:1b,Silent:1b,'
+    f'execute anchored eyes rotated ~ 0 positioned ^ ^ ^2 run summon {SACT} ~ ~-0.28 ~ {{Tags:["metiers.sac","metiers.sacnew"],Invulnerable:1b,NoGravity:1b,Silent:1b,'
     f'CustomName:{{text:"Sac à dos",color:"blue"}},Passengers:[{{id:"minecraft:item_display",Tags:["metiers.sacpass"]}}]}}',
     "scoreboard players operation @e[tag=metiers.sacnew] m.own = #pid m.tmp",
     "scoreboard players operation @e[tag=metiers.sacnew] m.sacp = @s m.sacp",

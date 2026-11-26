@@ -124,7 +124,7 @@ w(F + "m/filon_viser.mcfunction", "\n".join(
 add_lines(F + "refonte/tick.mcfunction", [
     f"execute as @a[tag=metiers.sk.pm1,gamemode=!spectator] at @s if items entity @s weapon.mainhand #minecraft:pickaxes run function {NS}:m/filon_tick"])
 
-# ---------------------------------------------------------------- Mineur : minage de veine accroupi (Pioche large, 26/11/2026)
+# ---------------------------------------------------------------- Mineur : compétence Veine (m15, ex-Lanterne), accroupi (26/11/2026)
 # Même mécanique que le Filon (repère sur le bloc visé, veine cassée quand il devient de l'air), mais pour les minerais
 # et les roches et blocs naturels qu'on creuse à la pioche ; jamais la pierre, la deepslate ni la netherrack.
 VEINE_EXTRA = ["granite", "diorite", "andesite", "tuff", "calcite", "dripstone_block", "basalt", "smooth_basalt", "blackstone",
@@ -175,7 +175,7 @@ w(F + "m/veine_viser.mcfunction", "\n".join(
     [f"execute if score #vk m.tmp matches 1.. align xyz positioned ~0.5 ~0.5 ~0.5 as {VK} if score @s m.own = #pid m.tmp run tp @s ~ ~ ~"]))
 add_lines(F + "refonte/load.mcfunction", ["scoreboard objectives add m.vk dummy"])
 add_lines(F + "refonte/tick.mcfunction", [
-    f"execute as @a[tag=metiers.sk.m16,predicate={NS}:accroupi,gamemode=!spectator] at @s if items entity @s weapon.mainhand #minecraft:pickaxes run function {NS}:m/veine_tick"])
+    f"execute as @a[tag=metiers.sk.m15,predicate={NS}:accroupi,gamemode=!spectator] at @s if items entity @s weapon.mainhand #minecraft:pickaxes run function {NS}:m/veine_tick"])
 
 # ---------------------------------------------------------------- Fermier : Moisson (même récolte que la Faux de la Forge)
 for r in (1, 2, 3):
