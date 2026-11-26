@@ -52,26 +52,49 @@ def empile(images):
 BW, BH, CAP = 728, 20, 16
 
 
-def embouts(px):
+FER = [(150, 146, 142), (118, 113, 110), (92, 87, 84), (68, 64, 62)]
+
+
+def embouts(px, teinte=None, k=.5):
+    """Embouts thématisés : rouge (boss, horreur) en fer noirci et braise, violet en laiton et améthyste,
+    autres couleurs en laiton avec une pierre de la couleur de la barre. k (0..1) fait respirer la pierre."""
+    corps = FER if teinte == "red" else LAITON[1:]
     for side in (0, 1):
         for i in range(CAP):
             x = i if side == 0 else BW - 1 - i
             for y in range(BH):
-                bord = y in (0, BH - 1) or (i == 0)
-                if bord:
+                if y in (0, BH - 1) or i == 0:
                     c = SOMBRE
+                elif i >= CAP - 2:
+                    c = LAITON[4]
+                elif y in (1, BH - 2) and teinte == "red":
+                    c = LAITON[3]
                 else:
                     t = (y - 1) / (BH - 3)
-                    c = LAITON[1] if t < .25 else LAITON[2] if t < .6 else LAITON[3]
-                    if i == CAP - 1 or i == CAP - 2:
-                        c = LAITON[4]
+                    c = corps[0] if t < .25 else corps[1] if t < .6 else corps[2]
                 px[x, y] = c + (255,)
         cx = 7 if side == 0 else BW - 8
-        for (dx, dy, c) in ((0, 0, LAITON[0]), (1, 0, LAITON[1]), (0, 1, LAITON[1]), (1, 1, LAITON[3]), (-1, 0, LAITON[3]), (0, -1, LAITON[1])):
-            px[cx + dx, 9 + dy] = c + (255,)
+        if teinte is None:
+            for (dx, dy, c) in ((0, 0, LAITON[0]), (1, 0, LAITON[1]), (0, 1, LAITON[1]), (1, 1, LAITON[3]), (-1, 0, LAITON[3]), (0, -1, LAITON[1])):
+                px[cx + dx, 9 + dy] = c + (255,)
+            continue
+        T = TEINTES[teinte]
+        # pierre taillée qui remplit l'embout, cerclée de métal
+        for y in range(3, BH - 3):
+            for i in range(3, CAP - 4):
+                x = i if side == 0 else BW - 1 - i
+                if y in (3, BH - 4) or i in (3, CAP - 5):
+                    c = SOMBRE
+                else:
+                    u = (i - 4) / (CAP - 10) if side == 0 else 1 - (i - 4) / (CAP - 10)
+                    f = u + (y - 4) / (BH - 9)
+                    c = T[0] if f < .45 else T[1] if f < 1.0 else T[2] if f < 1.5 else T[3]
+                    if f < .45:
+                        c = mix(c, (255, 255, 255), .35 * k)
+                px[x, y] = c + (255,)
 
 
-def boss_fond():
+def boss_fond(teinte=None):
     im = Image.new("RGBA", (BW, BH), (0, 0, 0, 0))
     px = im.load()
     for x in range(CAP, BW - CAP):
@@ -91,16 +114,18 @@ def boss_fond():
         for y in range(3, BH - 3):
             px[tx, y] = (64, 56, 48, 255)
             px[tx + 1, y] = (24, 20, 18, 255)
-    embouts(px)
+    embouts(px, teinte)
     return im
 
 
-def boss_rempli(teinte, phase, n):
+def boss_rempli(teinte, phase, n, gemme=True):
     im = Image.new("RGBA", (BW, BH), (0, 0, 0, 0))
     px = im.load()
     T = TEINTES[teinte]
     larg = BW - 2 * CAP
-    centre = -80 + (larg + 160) * phase / n
+    balayage = n // 2  # moitié des images pour le reflet, moitié de pause : plus discret
+    centre = -80 + (larg + 160) * phase / balayage if phase < balayage else -10000
+    k = .5 + .5 * math.sin(2 * math.pi * phase / n)
     for x in range(CAP, BW - CAP):
         for y in range(BH):
             if y in (0, BH - 1):
@@ -117,13 +142,13 @@ def boss_rempli(teinte, phase, n):
                     c = tramage(T, 1.0 + t * 2.6, x, y)
                 d = (x - CAP) - centre - (y - BH / 2) * 3
                 if abs(d) < 26:
-                    c = mix(c, (255, 255, 255), .45 * (1 - abs(d) / 26))
+                    c = mix(c, (255, 255, 255), .35 * (1 - abs(d) / 26))
             px[x, y] = c + (255,)
     for k in range(1, 10):
         tx = CAP + int(larg * k / 10)
         for y in range(4, BH - 3):
             px[tx, y] = mix(px[tx, y][:3], (0, 0, 0), .35) + (255,)
-    embouts(px)
+    embouts(px, teinte if gemme else None, k)
     return im
 
 
@@ -147,11 +172,11 @@ def crans(n, genre):
 
 # ------------------------------------------------------------------ barre d'expérience (même gabarit, plus fine)
 def xp_fond():
-    return boss_fond()
+    return boss_fond(None)
 
 
 def xp_rempli(phase, n):
-    return boss_rempli("green", phase, n)
+    return boss_rempli("green", phase, n, gemme=False)
 
 
 # ------------------------------------------------------------------ bouton survolé : éclat qui traverse la pierre
@@ -159,13 +184,13 @@ def bouton_survol(base, phase, n):
     im = base.copy()
     px = im.load()
     w, h = im.size
-    centre = -40 + (w + 80) * phase / n
+    centre = -40 + (w + 80) * phase / (n // 2) if phase < n // 2 else -10000
     for y in range(3, h - 3):
         for x in range(3, w - 3):
             d = x - centre - (y - h / 2) * 2
             if abs(d) < 12:
                 r, g, b, a = px[x, y]
-                px[x, y] = mix((r, g, b), (255, 236, 180), .38 * (1 - abs(d) / 12)) + (a,)
+                px[x, y] = mix((r, g, b), (255, 236, 180), .3 * (1 - abs(d) / 12)) + (a,)
     return im
 
 
@@ -259,9 +284,10 @@ def meta(nom, contenu):
 
 
 apercus = {}
-N = 16
-fond = boss_fond()
+N = 32
+fonds = {}
 for teinte in TEINTES:
+    fond = fonds[teinte] = boss_fond(teinte)
     png(f"boss_bar/{teinte}_background.png", fond)
     images = [boss_rempli(teinte, k, N) for k in range(N)]
     png(f"boss_bar/{teinte}_progress.png", empile(images))
@@ -276,8 +302,8 @@ png("hud/experience_bar_progress.png", empile(xp))
 meta("hud/experience_bar_progress.png", {"animation": {"frametime": 2}})
 
 cle_bouton = GUI + "widget/button_highlighted.png"
-base = Image.open(io.BytesIO(fichiers[cle_bouton])).convert("RGBA")
-NB = 14
+base = Image.open(io.BytesIO(fichiers[cle_bouton])).convert("RGBA").crop((0, 0, 200, 20))  # 1re image si déjà animé
+NB = 28
 bts = [bouton_survol(base, k, NB) for k in range(NB)]
 png("widget/button_highlighted.png", empile(bts))
 meta("widget/button_highlighted.png", {"gui": {"scaling": {"type": "nine_slice", "width": 200, "height": 20, "border": 3}},
@@ -314,7 +340,7 @@ if APERCUS:
     for k in range(N):
         planche = Image.new("RGBA", (BW // 2 + 20, (BH // 2 + 14) * 8 + 10), (24, 26, 32, 255))
         for i, teinte in enumerate(TEINTES):
-            barre = fond.copy()
+            barre = fonds[teinte].copy()
             plein = apercus[teinte][k]
             frac = [.32, .68, .55, .8, .45, .9, .6][i]
             barre.paste(plein.crop((0, 0, int(BW * frac), BH)), (0, 0))
