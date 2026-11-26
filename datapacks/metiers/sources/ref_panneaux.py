@@ -57,6 +57,13 @@ LIVRE_ONGLETS = [("item/iron_pickaxe", "Métiers", "trigger metiers set 1", (214
                  ("item/name_tag", "Mon profil", "trigger commerce set 30", (220, 190, 70)),
                  ("item/book", "Guide", "trigger commerce set 31", (170, 170, 176))]
 LIVRE_ACTIF = {"metiers": 0, "commerce": 1, "compagnons": 2, "bestiaire": 3, "serveur": None}
+# rangement des icônes par page : (ligne, cases de la page gauche, cases de la page droite), rien sur la reliure
+LIVRE_DISPO = {
+    "metiers": [(5, [1, 2, 3], [4, 5, 6]), (11, [7, 8], [9, 10]), (17, [11, 12, 13], [14, 15, 16])],
+    "serveur": [(5, [1, 2], [3, 4]), (11, [5], [6])],
+    "commerce": [(5, [1, 2], [3, 4]), (11, [5], [6])],
+    "compagnons": [(5, [1, 2], [3, 4]), (11, [5, 6], [7]), (17, [8], [9])],
+    "bestiaire": [(5, [1, 2], [3, 4]), (11, [5, 6], [7, 8]), (17, [9, 10], [11])]}
 exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "ref_livre.py"), encoding="utf-8").read())   # dessin du livre
 
 
@@ -84,7 +91,14 @@ def panneau(nom, W, H, mix, cases):
     """cases : liste de dicts {x, ligne (ligne du nom sous l'icône), icone, cadre, nom, couleur, info (texte fixe ou None),
     var (True si l'info est variable : $(iK) puis $(pK)), est (largeur estimée de l'info variable)}."""
     livre = nom in LIVRE_ACTIF
-    if livre:   # 26/11/2026 : page du livre, sous la bande des signets
+    if livre:   # 26/11/2026 : page du livre, sous la bande des signets ; les icônes sont rangées par page (LIVRE_DISPO)
+        W = max(W, 400)
+        if nom in LIVRE_DISPO:
+            cases = [dict(c) for c in cases]
+            for ligne, gauche, droite in LIVRE_DISPO[nom]:
+                for page, ks in ((0, gauche), (1, droite)):
+                    for k, x in zip(ks, livre_colonnes(W, len(ks), page)):
+                        cases[k - 1]["x"], cases[k - 1]["ligne"] = x, ligne
         cases = [dict(c, ligne=c["ligne"] + LIVRE_T // 9) for c in cases]
         H += LIVRE_T + 9   # + une ligne de marge en bas pour les ornements
         im = _fond_livre(W, H, [(c["x"], 9 * c["ligne"] - 15) for c in cases], "livre-" + nom)
@@ -98,13 +112,12 @@ def panneau(nom, W, H, mix, cases):
         et = {e: _glyphe(f"pan_{nom}_{k}_{e}", _noeud_img(ic, c.get("cadre", "task"), e), cy - 13) for e in PAN_ETATS}
         noeuds.append({"x": c["x"] - 13, "etats": {e: v[0] for e, v in et.items()}, "adv": et["on"][1]})
     if livre:
-        n_ = len(LIVRE_ONGLETS)
-        TW = min(52, (W - 40) // n_ - 4)
-        x0 = (W - (n_ * (TW + 4) - 4)) // 2
+        # marque-pages : 3 sur chaque page, alignés sur les colonnes de la page
+        xs = livre_colonnes(W, 3, 0) + livre_colonnes(W, 3, 1)
         for i, (ic, nm, cmd, col) in enumerate(LIVRE_ONGLETS):
-            img = _signet(_tex(ic).resize((16, 16), _Img.NEAREST), col, LIVRE_ACTIF[nom] == i, TW)
+            img = _signet(_tex(ic).resize((16, 16), _Img.NEAREST), col, LIVRE_ACTIF[nom] == i)
             car, adv = _glyphe(f"pan_{nom}_onglet{i}", img, 0)
-            noeuds.append({"x": x0 + i * (TW + 4), "etats": {e: car for e in PAN_ETATS}, "adv": adv, "fixe": "on",
+            noeuds.append({"x": xs[i] - SIG_W // 2, "etats": {e: car for e in PAN_ETATS}, "adv": adv, "fixe": "on",
                            "clic": cmd, "survol": [{"text": nm, "color": "#%02X%02X%02X" % col, "bold": True}]})
     PANNEAUX[nom] = {"W": W, "H": H, "fond": cf, "adv": af, "cases": cases, "noeuds": noeuds, "livre": livre}
 
@@ -198,7 +211,7 @@ panneau("commerce", 400, 136, _MIXC, [{"x": 80 + (i % 3) * 120, "ligne": 5 if i 
 
 _MIXS = ("dark_oak_planks", [("oak_planks", 3), ("stone_bricks", 2), ("mossy_stone_bricks", 1), ("bookshelf", 1)])
 _SC = [("item/iron_pickaxe", "Métiers", "gold", "niveaux, arbres"), ("item/emerald", "Commerce", "green", "marché, banque"),
-       ("item/lead", "Compagnons", "#C878FF", "ils t'accompagnent"), ("item/bone", "Bestiaire", "#D03030", "créatures de la nuit"),
+       ("item/lead", "Compagnons", "#C878FF", "ils te suivent"), ("item/bone", "Bestiaire", "#D03030", "monstres, primes"),
        ("item/name_tag", "Mon profil", "yellow", "ton parcours"), ("item/book", "Guide", "white", "bien démarrer")]
 panneau("serveur", 400, 136, _MIXS, [{"x": 80 + (i % 3) * 120, "ligne": 5 if i < 3 else 11, "icone": ic, "nom": nm, "couleur": col,
                                        "info": inf, "cadre": "goal" if i < 4 else "task"} for i, (ic, nm, col, inf) in enumerate(_SC)])

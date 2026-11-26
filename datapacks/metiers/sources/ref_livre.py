@@ -173,34 +173,56 @@ def _fond_livre(W, H, noeuds_xy=(), graine="livre"):
     return im
 
 
-def _signet(ic, col, actif, TW):
-    """Signet du haut : tissu tissé de la couleur du pack, couture en pointillé, icône ; l'actif est plus haut et plus vif."""
-    h = LIVRE_T + 6
-    im = _Img.new("RGBA", (TW, h))
+def livre_colonnes(W, n, page):
+    """Centres de n colonnes réparties dans une page (0 : gauche, 1 : droite) d'un livre de largeur W."""
+    SP = W // 2
+    a, b = (10 + 8, SP - 6) if page == 0 else (SP + 6, W - 11 - 8)
+    return [int(a + (b - a) * (2 * i + 1) / (2 * n)) for i in range(n)]
+
+
+SIG_W = 22                 # largeur d'un marque-page
+SIG_H = LIVRE_T + 13       # il dépasse au-dessus du livre, passe sur la couverture et se glisse sous le haut de la page
+
+
+def _signet(ic, col, actif, TW=SIG_W):
+    """Marque-page en ruban : bout coupé en queue d'aronde au-dessus du livre, passe sur le bord de la couverture
+    (ombre portée à droite), se pose sur la page puis s'y glisse. Celui de la page ouverte dépasse plus haut."""
+    w, h = TW + 1, SIG_H
+    im = _Img.new("RGBA", (w, h))
     px = im.load()
-    top = 0 if actif else 4
-    base = col if actif else tuple(int(v * .78) for v in col)
+    top = 0 if actif else 6
+    base = col if actif else tuple(int(v * .8) for v in col)
     clair = tuple(min(255, int(v * 1.25)) for v in base)
     fonce = tuple(int(v * .66) for v in base)
     tres_fonce = tuple(int(v * .45) for v in base)
-    for y in range(top, h):
-        for x in range(TW):
-            if x in (0, TW - 1) or y == top:
-                c = _SOMB
-            elif x == 1 or y == top + 1:
+    P0 = LIVRE_T + 8           # haut de la page
+    fin = h - 1
+    mid = (TW - 1) / 2
+    masque = {(x, y) for y in range(top, fin + 1) for x in range(TW)
+              if not ((y - top) < 5 and abs(x - mid) < (5 - (y - top)) * 1.15)}   # queue d'aronde
+    for (x, y) in masque:
+        if any((x + dx, y + dy) not in masque for dx, dy in ((1, 0), (-1, 0), (0, -1))):
+            c = _SOMB
+        elif (x - 1, y) not in masque or x == 1:
+            c = clair
+        elif x == TW - 2:
+            c = fonce
+        else:
+            tissage = .25 if (x + y // 2) % 2 == 0 else 0
+            c = _tr([clair, base, fonce, tres_fonce], .6 + (y - top) / h * 1.2 + tissage, x, y)
+            if x in (3, TW - 4) and (y % 3) and y > top + 5:      # coutures
                 c = clair
-            elif x == TW - 2:
-                c = fonce
-            else:
-                tissage = .25 if (x + (y // 2)) % 2 == 0 else 0
-                c = _tr([clair, base, fonce, tres_fonce], .5 + (y - top) / h * 1.6 + tissage, x, y)
-                if (x == 3 or x == TW - 4 or y == top + 3) and (x + y) % 3 != 0 and 3 <= x <= TW - 4 and y >= top + 3:
-                    c = clair if actif else tuple(min(255, int(v * 1.1)) for v in base)   # couture
-            if y >= LIVRE_T + 2:   # ombre où le signet entre dans le livre
-                c = tuple(int(v * .6) for v in c)
-            px[x, y] = c + (255,)
+        if LIVRE_T <= y < P0:          # sur la couverture
+            c = tuple(int(v * .88) for v in c)
+        if y >= fin - 1:               # il se glisse sous le haut de la page : bord assombri
+            c = tuple(int(v * .55) for v in c)
+        px[x, y] = c + (255,)
+    for y in range(max(top + 5, LIVRE_T), fin + 1):   # ombre portée à droite, sur la couverture et sur la page
+        px[TW, y] = (0, 0, 0, 90)
+    # icône dans la partie qui dépasse
     sh = _Img.new("RGBA", (16, 16), (0, 0, 0, 0))
-    sh.putalpha(ic.split()[3].point(lambda a: 90 if a else 0))
-    im.alpha_composite(sh, ((TW - 16) // 2 + 1, top + 4))
-    im.alpha_composite(ic, ((TW - 16) // 2, top + 3))
+    sh.putalpha(ic.split()[3].point(lambda a: 100 if a else 0))
+    iy = top + 5
+    im.alpha_composite(sh, ((TW - 16) // 2 + 1, iy + 1))
+    im.alpha_composite(ic, ((TW - 16) // 2, iy))
     return im
