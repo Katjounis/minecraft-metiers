@@ -1072,6 +1072,8 @@ TR = ["scoreboard players operation #v c.t = @s commerce", "scoreboard players s
       f"execute if score #v c.t matches 7700..7799 run return run function {NS}:guilde/entree",
       f"execute if score #v c.t matches 7800 run return run function {NS}:relique/vendre",
       f"execute if score #v c.t matches 7801 run return run function {NS}:relique/tout",
+      f"execute if score #v c.t matches 7990 run return run function {NS}:page/tout_inventaire_confirmer",
+      f"execute if score #v c.t matches 7991 run return run function {NS}:page/tout_inventaire",
       f"execute if score #v c.t matches 81..84 run return run function {NS}:stat/global",
       f"execute if score #v c.t matches 70 run return run function {NS}:spawner/entree",
       f"execute if score #v c.t matches 700..799 run return run function {NS}:spawner/entree",
@@ -1158,14 +1160,51 @@ w(F + "page/plus.mcfunction", dlg(
 # ---------------------------------------------------------------- index du marché : une ligne de texte, puis les boutons
 CATSHOW = {c: (vit, col, desc) for c, _, vit, col, desc in CATEGORIES}
 w(F + "page/marche.mcfunction", SOLDE(f"{NS}:mk") + [f"function {NS}:page/marche_d with storage {NS}:mk"])
-w(F + "page/marche_d.mcfunction", "$" + dlg(
-    T("Marché", "green", True),
-    [f'{{type:"minecraft:plain_message",width:310,contents:{L(SOLDE_TXT)}}}'],
-    [btn(L(SPR_I("spyglass"), T("  Index A à Z", "gold", True)), 3000, 130, "Trouver un objet par la première lettre de son nom."),
-     btn(L(spr("diamond"), T("  Bourse", "green", True)), 20, 130, "Évènements, tendances, tops."),
-     btn(T("Accueil", "white"), 1, 130)]
-    + [btn(L(spr(CATSHOW[c][0]), T("  " + (CATNAME[c] if len(CATNAME[c]) <= 16 else CATNAME[c][:15].rstrip() + "…"), "white")), PG(c, 0), 130, CATNAME[c] + " : " + CATSHOW[c][2]) for c in ITEMS],
-    cols=3))
+# 26/11/2026 : page Marché en page du livre (panneau « marche » dessiné par Métiers) : les 17 catégories, l'index A à Z,
+# la Bourse et « Tout vendre » (tout l'inventaire, quelle que soit la catégorie, après confirmation)
+_ORD = [c for c, *_ in CATEGORIES]
+assert len(_ORD) == 17, "panneau marche de Métiers : 17 catégories attendues"
+_MCL = {i: f"trigger commerce set {PG(c, 0)}" for i, c in enumerate(_ORD, 1)}
+_MSV = {i: [{"text": CATNAME[c] + "\n", "color": CATSHOW[c][1], "bold": True}, {"text": CATSHOW[c][2], "color": "gray", "bold": False}]
+        for i, c in enumerate(_ORD, 1)}
+_MCL.update({18: "trigger commerce set 3000", 19: "trigger commerce set 20", 20: "trigger commerce set 7990"})
+_MSV.update({18: [{"text": "Index A à Z\n", "color": "gold", "bold": True}, {"text": "Trouver un objet par la première lettre de son nom.", "color": "gray", "bold": False}],
+             19: [{"text": "Bourse\n", "color": "green", "bold": True}, {"text": "Évènements, tendances, tops.", "color": "gray", "bold": False}],
+             20: [{"text": "Tout vendre\n", "color": "gold", "bold": True},
+                  {"text": "Vend d’un coup tout ce que ton inventaire contient et que le marché rachète, toutes catégories confondues. Une confirmation est demandée.", "color": "gray", "bold": False}]})
+_PAN_M = pan_snbt(pan_corps("marche", _MCL, _MSV, {i: "on" for i in range(1, 21)}))
+w(F + "page/marche_d.mcfunction",
+  'playsound minecraft:item.book.page_turn player @s ~ ~ ~ 0.7 1\n$dialog show @s {type:"minecraft:notice",title:' + T("Marché", "green", True) +
+  ',can_close_with_escape:true,pause:false,body:['
+  + f'{{type:"minecraft:plain_message",width:310,contents:{L(SOLDE_TXT, T("   ·   clique une catégorie, prix au survol", "gray"))}}},'
+  + _PAN_M + '],action:{label:"Accueil du Commerce",width:200,action:{type:"run_command",command:"trigger commerce set 1"}}}')
+
+# « Tout vendre » de tout l'inventaire : confirmation (7990) puis vente (7991). Les objets que l'on garde souvent en main
+# (pioche en diamant, canne à pêche, cisailles, totem) restent ; les objets renommés, de métier ou spéciaux aussi (FILTRE).
+GARDES = {"diamond_pickaxe", "fishing_rod", "shears", "totem_of_undying"}
+w(F + "page/tout_inventaire_confirmer.mcfunction",
+  'dialog show @s {type:"minecraft:confirmation",title:' + T("Tout vendre ?", "gold", True) + ',can_close_with_escape:true,pause:false,'
+  'body:[{type:"minecraft:plain_message",width:300,contents:' + L(
+      T("Tout ce que ton inventaire contient et que le marché rachète sera vendu au prix du jour, toutes catégories confondues.\\n\\n", "white"),
+      T("Gardés : objets renommés, outils de métier, reliques, et ta pioche en diamant, ta canne à pêche, tes cisailles et tes totems.", "gray")) + '}],'
+  'yes:{label:' + T("Tout vendre", "gold", True) + ',width:150,action:{type:"run_command",command:"trigger commerce set 7991"}},'
+  'no:{label:' + T("Annuler", "white") + ',width:150,action:{type:"run_command",command:"trigger commerce set 9"}}}')
+TI = ["scoreboard players set #btot c.t 0", "scoreboard players set #lot c.t 1"]
+for it in ITL:
+    if it["id"] in GARDES:
+        continue
+    TI += [f"execute unless items entity @s container.* minecraft:{it['id']}{FILTRE} unless items entity @s weapon.offhand minecraft:{it['id']}{FILTRE} run scoreboard players set #i c.t 0",
+           f"execute if items entity @s container.* minecraft:{it['id']}{FILTRE} run scoreboard players set #i c.t {it['i']}",
+           f"execute if items entity @s weapon.offhand minecraft:{it['id']}{FILTRE} run scoreboard players set #i c.t {it['i']}",
+           "scoreboard players set #tot c.t 0", "scoreboard players set #act c.t 3", "scoreboard players set #q c.t 0",
+           f"execute if score #i c.t matches 1.. run function {NS}:op/vendre",
+           "scoreboard players operation #btot c.t += #tot c.t"]
+TI += ["scoreboard players set #lot c.t 0", "scoreboard players operation #btot c.t /= #100 c.g",
+       f'execute if score #btot c.t matches ..0 run tellraw @s {L(PREFIX, T("Rien à vendre dans ton inventaire (les objets renommés ou spéciaux sont gardés).", "red"))}',
+       f'execute if score #btot c.t matches 1.. run tellraw @s {L(PREFIX, T("Inventaire vendu : ", "gray"), "{score:{name:\"#btot\",objective:\"c.t\"},color:\"gold\",bold:true}", T(" Écus", "gold"))}',
+       "execute if score #btot c.t matches 1.. run playsound minecraft:entity.player.levelup master @s ~ ~ ~ 0.7 1.4",
+       f"function {NS}:page/marche"]
+w(F + "page/tout_inventaire.mcfunction", TI)
 
 # ---------------------------------------------------------------- une page de catégorie : 10 boutons, prix en infobulle
 w(F + "page/ligne.mcfunction", [

@@ -56,14 +56,15 @@ LIVRE_ONGLETS = [("item/iron_pickaxe", "Métiers", "trigger metiers set 1", (214
                  ("item/bone", "Bestiaire", "trigger bestiaire set 1", (190, 46, 46)),
                  ("item/name_tag", "Mon profil", "trigger commerce set 30", (220, 190, 70)),
                  ("item/book", "Guide", "trigger commerce set 31", (170, 170, 176))]
-LIVRE_ACTIF = {"metiers": 0, "commerce": 1, "compagnons": 2, "bestiaire": 3, "serveur": None}
+LIVRE_ACTIF = {"metiers": 0, "commerce": 1, "compagnons": 2, "bestiaire": 3, "serveur": None, "marche": 1}
 # rangement des icônes par page : (ligne, cases de la page gauche, cases de la page droite), rien sur la reliure
 LIVRE_DISPO = {
     "metiers": [(5, [1, 2, 3], [4, 5, 6]), (11, [7, 8], [9, 10]), (17, [11, 12, 13], [14, 15, 16])],
     "serveur": [(5, [1, 2], [3, 4]), (11, [5], [6])],
     "commerce": [(5, [1, 2], [3, 4]), (11, [5], [6])],
     "compagnons": [(5, [1, 2], [3, 4]), (11, [5, 6], [7]), (17, [8], [9])],
-    "bestiaire": [(5, [1, 2], [3, 4]), (11, [5, 6], [7, 8]), (17, [9, 10], [11])]}
+    "bestiaire": [(5, [1, 2], [3, 4]), (11, [5, 6], [7, 8]), (17, [9, 10], [11])],
+    "marche": [(5, [1, 2, 3], [4, 5, 6]), (10, [7, 8, 9], [10, 11, 12]), (15, [13, 14, 15], [16, 17]), (20, [18, 19], [20])]}
 exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "ref_livre.py"), encoding="utf-8").read())   # dessin du livre
 
 
@@ -208,6 +209,20 @@ _CC = [("item/emerald", "Marché", "430 objets"), ("item/gold_ingot", "Banque", 
        ("item/clock_00", "Bourse", "cours du jour"), ("item/blaze_powder", "Spawners", "à poser chez toi"), ("item/compass_00", "Plus", "classements, aide")]
 panneau("commerce", 400, 136, _MIXC, [{"x": 80 + (i % 3) * 120, "ligne": 5 if i < 3 else 11, "icone": ic, "nom": nm, "info": inf,
                                         "couleur": "green", "cadre": "goal" if i == 0 else "task"} for i, (ic, nm, inf) in enumerate(_CC)])
+
+# 26/11/2026 : page Marché du Commerce (les 17 catégories dans l'ordre de commerce/sources/catalogue.py, puis Index,
+# Bourse et « Tout vendre »). Noms courts : le nom complet et la description sont dans l'infobulle, posée par Commerce.
+MARCHE_CASES = [("block/stone_bricks", "Pierres", "gray"), ("block/grass_block_side", "Terre, glace", "green"),
+                ("block/poppy", "Plantes", "red"), ("block/oak_log", "Bûches", "gold"), ("block/oak_planks", "Planches", "gold"),
+                ("block/red_wool", "Laines", "red"), ("block/cyan_concrete", "Béton", "aqua"),
+                ("block/light_blue_stained_glass", "Verre", "aqua"), ("item/iron_ingot", "Minerais", "gray"),
+                ("block/quartz_block_side", "Nether, End", "dark_red"), ("item/wheat", "Agriculture", "green"),
+                ("item/leather", "Élevage", "light_purple"), ("item/salmon", "Pêche", "aqua"), ("item/bread", "Cuisine", "gold"),
+                ("item/lantern", "Utilitaires", "gold"), ("item/diamond", "Trésors", "light_purple"), ("item/nether_star", "Boss", "gold"),
+                ("item/spyglass", "Index A à Z", "gold"), ("item/clock_00", "Bourse", "green"), ("item/bundle", "Tout vendre", "dark_red")]
+panneau("marche", 440, 203, None, [{"x": 0, "ligne": 5, "icone": ic, "nom": nm, "couleur": col,
+                                    "cadre": "challenge" if i == 19 else ("goal" if i >= 17 else "task")}
+                                   for i, (ic, nm, col) in enumerate(MARCHE_CASES)])
 
 _MIXS = ("dark_oak_planks", [("oak_planks", 3), ("stone_bricks", 2), ("mossy_stone_bricks", 1), ("bookshelf", 1)])
 _SC = [("item/iron_pickaxe", "Métiers", "gold", "niveaux, arbres"), ("item/emerald", "Commerce", "green", "marché, banque"),
