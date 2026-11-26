@@ -16,13 +16,13 @@
    "width": 410,
    "contents": [
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0,
@@ -47,7 +47,7 @@
      }
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0,
@@ -72,7 +72,7 @@
      }
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0,
@@ -97,7 +97,7 @@
      }
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0,
@@ -122,7 +122,7 @@
      }
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0,
@@ -147,7 +147,7 @@
      }
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0,
@@ -172,7 +172,127 @@
      }
     },
     {
-     "text": "",
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0,
+     "click_event": {
+      "action": "run_command",
+      "command": "trigger metiers set 1"
+     },
+     "hover_event": {
+      "action": "show_text",
+      "value": [
+       {
+        "text": "Métiers",
+        "color": "#D69E28",
+        "bold": true
+       }
+      ]
+     }
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0,
+     "click_event": {
+      "action": "run_command",
+      "command": "trigger commerce set 1"
+     },
+     "hover_event": {
+      "action": "show_text",
+      "value": [
+       {
+        "text": "Commerce",
+        "color": "#40A046",
+        "bold": true
+       }
+      ]
+     }
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0,
+     "click_event": {
+      "action": "run_command",
+      "command": "trigger compagnons set 1"
+     },
+     "hover_event": {
+      "action": "show_text",
+      "value": [
+       {
+        "text": "Compagnons",
+        "color": "#A464D6",
+        "bold": true
+       }
+      ]
+     }
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0,
+     "click_event": {
+      "action": "run_command",
+      "command": "trigger bestiaire set 1"
+     },
+     "hover_event": {
+      "action": "show_text",
+      "value": [
+       {
+        "text": "Bestiaire",
+        "color": "#BE2E2E",
+        "bold": true
+       }
+      ]
+     }
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0,
+     "click_event": {
+      "action": "run_command",
+      "command": "trigger commerce set 30"
+     },
+     "hover_event": {
+      "action": "show_text",
+      "value": [
+       {
+        "text": "Mon profil",
+        "color": "#DCBE46",
+        "bold": true
+       }
+      ]
+     }
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0,
+     "click_event": {
+      "action": "run_command",
+      "command": "trigger commerce set 31"
+     },
+     "hover_event": {
+      "action": "show_text",
+      "value": [
+       {
+        "text": "Guide",
+        "color": "#AAAAB0",
+        "bold": true
+       }
+      ]
+     }
+    },
+    {
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -182,7 +302,7 @@
      "font": "minecraft:default"
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -192,7 +312,7 @@
      "font": "minecraft:default"
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -202,7 +322,7 @@
      "font": "minecraft:default"
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -212,7 +332,7 @@
      "font": "minecraft:default"
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -222,166 +342,207 @@
      "font": "minecraft:default"
     },
     {
-     "text": "",
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "\n",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "\n",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
     },
     {
      "text": "Métiers",
-     "color": "gold",
-     "font": "minecraft:default"
+     "color": "#875A00",
+     "font": "minecraft:default",
+     "shadow_color": 0
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
     },
     {
      "text": "Commerce",
-     "color": "green",
-     "font": "minecraft:default"
+     "color": "#2D872D",
+     "font": "minecraft:default",
+     "shadow_color": 0
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
     },
     {
      "text": "Compagnons",
-     "color": "#C878FF",
-     "font": "minecraft:default"
-    },
-    {
-     "text": "",
-     "font": "metiers:arbre",
-     "color": "white",
+     "color": "#693F87",
+     "font": "minecraft:default",
      "shadow_color": 0
     },
     {
-     "text": "\n",
-     "font": "minecraft:default"
-    },
-    {
-     "text": "",
-     "font": "metiers:arbre",
-     "color": "white",
-     "shadow_color": 0
-    },
-    {
-     "text": "niveaux, arbres",
-     "color": "gray",
-     "font": "minecraft:default"
-    },
-    {
-     "text": "",
-     "font": "metiers:arbre",
-     "color": "white",
-     "shadow_color": 0
-    },
-    {
-     "text": "marché, banque",
-     "color": "gray",
-     "font": "minecraft:default"
-    },
-    {
-     "text": "",
-     "font": "metiers:arbre",
-     "color": "white",
-     "shadow_color": 0
-    },
-    {
-     "text": "ils t'accompagnent",
-     "color": "gray",
-     "font": "minecraft:default"
-    },
-    {
-     "text": "",
-     "font": "metiers:arbre",
-     "color": "white",
-     "shadow_color": 0
-    },
-    {
-     "text": "\n",
-     "font": "minecraft:default"
-    },
-    {
-     "text": "",
-     "font": "metiers:arbre",
-     "color": "white",
-     "shadow_color": 0
-    },
-    {
-     "text": "\n",
-     "font": "minecraft:default"
-    },
-    {
-     "text": "",
-     "font": "metiers:arbre",
-     "color": "white",
-     "shadow_color": 0
-    },
-    {
-     "text": "\n",
-     "font": "minecraft:default"
-    },
-    {
-     "text": "",
-     "font": "metiers:arbre",
-     "color": "white",
-     "shadow_color": 0
-    },
-    {
-     "text": "\n",
-     "font": "minecraft:default"
-    },
-    {
-     "text": "",
-     "font": "metiers:arbre",
-     "color": "white",
-     "shadow_color": 0
-    },
-    {
-     "text": "\n",
-     "font": "minecraft:default"
-    },
-    {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
     },
     {
      "text": "Bestiaire",
-     "color": "#D03030",
+     "color": "#871F1F",
+     "font": "minecraft:default",
+     "shadow_color": 0
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "\n",
      "font": "minecraft:default"
     },
     {
-     "text": "",
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "niveaux, arbres",
+     "color": "#6B5640",
+     "font": "minecraft:default",
+     "shadow_color": 0
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "marché, banque",
+     "color": "#6B5640",
+     "font": "minecraft:default",
+     "shadow_color": 0
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "ils te suivent",
+     "color": "#6B5640",
+     "font": "minecraft:default",
+     "shadow_color": 0
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "monstres, primes",
+     "color": "#6B5640",
+     "font": "minecraft:default",
+     "shadow_color": 0
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "\n",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "\n",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "\n",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "\n",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "\n",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
     },
     {
      "text": "Mon profil",
-     "color": "yellow",
-     "font": "minecraft:default"
+     "color": "#8C6A08",
+     "font": "minecraft:default",
+     "shadow_color": 0
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
     },
     {
      "text": "Guide",
-     "color": "white",
-     "font": "minecraft:default"
+     "color": "#3E2A1A",
+     "font": "minecraft:default",
+     "shadow_color": 0
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -391,40 +552,31 @@
      "font": "minecraft:default"
     },
     {
-     "text": "",
-     "font": "metiers:arbre",
-     "color": "white",
-     "shadow_color": 0
-    },
-    {
-     "text": "créatures de la nuit",
-     "color": "gray",
-     "font": "minecraft:default"
-    },
-    {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
     },
     {
      "text": "ton parcours",
-     "color": "gray",
-     "font": "minecraft:default"
+     "color": "#6B5640",
+     "font": "minecraft:default",
+     "shadow_color": 0
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
     },
     {
      "text": "bien démarrer",
-     "color": "gray",
-     "font": "minecraft:default"
+     "color": "#6B5640",
+     "font": "minecraft:default",
+     "shadow_color": 0
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -434,7 +586,7 @@
      "font": "minecraft:default"
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -444,7 +596,7 @@
      "font": "minecraft:default"
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -454,7 +606,7 @@
      "font": "minecraft:default"
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -464,7 +616,17 @@
      "font": "minecraft:default"
     },
     {
-     "text": "",
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "\n",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0

@@ -45,10 +45,65 @@ def _noeud_img(ic, cadre, etat):
     return im
 
 
+# ---------------------------------------------------------------- 26/11/2026 : menus en livre à onglets
+# Les panneaux des packs (et le menu G) deviennent les pages d'un même livre : couverture sombre, coins en laiton,
+# page de parchemin, et une rangée de signets cliquables en haut (un par pack, celui de la page ouverte dépasse).
+# Les libellés passent à l'encre (couleurs assombries, sans ombre) pour rester lisibles sur le parchemin.
+LIVRE_T = 18   # hauteur de la bande des signets (2 lignes de texte : les libellés descendent de 2 lignes)
+LIVRE_ONGLETS = [("item/iron_pickaxe", "Métiers", "trigger metiers set 1", (214, 158, 40)),
+                 ("item/emerald", "Commerce", "trigger commerce set 1", (64, 160, 70)),
+                 ("item/lead", "Compagnons", "trigger compagnons set 1", (164, 100, 214)),
+                 ("item/bone", "Bestiaire", "trigger bestiaire set 1", (190, 46, 46)),
+                 ("item/name_tag", "Mon profil", "trigger commerce set 30", (220, 190, 70)),
+                 ("item/book", "Guide", "trigger commerce set 31", (170, 170, 176))]
+LIVRE_ACTIF = {"metiers": 0, "commerce": 1, "compagnons": 2, "bestiaire": 3, "serveur": None}
+# rangement des icônes par page : (ligne, cases de la page gauche, cases de la page droite), rien sur la reliure
+LIVRE_DISPO = {
+    "metiers": [(5, [1, 2, 3], [4, 5, 6]), (11, [7, 8], [9, 10]), (17, [11, 12, 13], [14, 15, 16])],
+    "serveur": [(5, [1, 2], [3, 4]), (11, [5], [6])],
+    "commerce": [(5, [1, 2], [3, 4]), (11, [5], [6])],
+    "compagnons": [(5, [1, 2], [3, 4]), (11, [5, 6], [7]), (17, [8], [9])],
+    "bestiaire": [(5, [1, 2], [3, 4]), (11, [5, 6], [7, 8]), (17, [9, 10], [11])]}
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "ref_livre.py"), encoding="utf-8").read())   # dessin du livre
+
+
+_NOMMEES = {"black": "000000", "dark_blue": "0000AA", "dark_green": "00AA00", "dark_aqua": "00AAAA", "dark_red": "AA0000",
+            "dark_purple": "AA00AA", "gold": "FFAA00", "gray": "AAAAAA", "dark_gray": "555555", "blue": "5555FF",
+            "green": "55FF55", "aqua": "55FFFF", "red": "FF5555", "light_purple": "FF55FF", "yellow": "FFFF55", "white": "FFFFFF"}
+
+
+def encre(col):
+    """Couleur de texte lisible sur le parchemin : la teinte d'origine, assombrie ; blanc et gris passent en brun."""
+    h = _NOMMEES.get(col, col.lstrip("#"))
+    try:
+        r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+    except ValueError:
+        return "#3E2A1A"
+    if max(r, g, b) - min(r, g, b) < 24:
+        return "#3E2A1A" if max(r, g, b) > 200 else "#6B5640"
+    if r > 200 and g > 200 and b < 140:   # jaune : un or sombre plutôt qu'un kaki
+        return "#8C6A08"
+    k = 135 / max(r, g, b)
+    return "#%02X%02X%02X" % (int(r * k), int(g * k), int(b * k))
+
+
 def panneau(nom, W, H, mix, cases):
     """cases : liste de dicts {x, ligne (ligne du nom sous l'icône), icone, cadre, nom, couleur, info (texte fixe ou None),
     var (True si l'info est variable : $(iK) puis $(pK)), est (largeur estimée de l'info variable)}."""
-    im = _fond_mixte(mix, W, H, "panneau-" + nom)   # blocs mêlés + cadre de pierre noire (ref_arbre.py)
+    livre = nom in LIVRE_ACTIF
+    if livre:   # 26/11/2026 : page du livre, sous la bande des signets ; les icônes sont rangées par page (LIVRE_DISPO)
+        W = max(W, 400)
+        if nom in LIVRE_DISPO:
+            cases = [dict(c) for c in cases]
+            for ligne, gauche, droite in LIVRE_DISPO[nom]:
+                for page, ks in ((0, gauche), (1, droite)):
+                    for k, x in zip(ks, livre_colonnes(W, len(ks), page)):
+                        cases[k - 1]["x"], cases[k - 1]["ligne"] = x, ligne
+        cases = [dict(c, ligne=c["ligne"] + LIVRE_T // 9) for c in cases]
+        H += LIVRE_T + 9   # + une ligne de marge en bas pour les ornements
+        im = _fond_livre(W, H, [(c["x"], 9 * c["ligne"] - 15) for c in cases], "livre-" + nom)
+    else:
+        im = _fond_mixte(mix, W, H, "panneau-" + nom)   # blocs mêlés + cadre de pierre noire (ref_arbre.py)
     cf, af = fond_glyphes(f"pan_{nom}", im)
     noeuds = []
     for k, c in enumerate(cases, 1):
@@ -56,7 +111,15 @@ def panneau(nom, W, H, mix, cases):
         cy = 9 * c["ligne"] - 15
         et = {e: _glyphe(f"pan_{nom}_{k}_{e}", _noeud_img(ic, c.get("cadre", "task"), e), cy - 13) for e in PAN_ETATS}
         noeuds.append({"x": c["x"] - 13, "etats": {e: v[0] for e, v in et.items()}, "adv": et["on"][1]})
-    PANNEAUX[nom] = {"W": W, "H": H, "fond": cf, "adv": af, "cases": cases, "noeuds": noeuds}
+    if livre:
+        # marque-pages : 3 sur chaque page, alignés sur les colonnes de la page
+        xs = livre_colonnes(W, 3, 0) + livre_colonnes(W, 3, 1)
+        for i, (ic, nm, cmd, col) in enumerate(LIVRE_ONGLETS):
+            img = _signet(_tex(ic).resize((16, 16), _Img.NEAREST), col, LIVRE_ACTIF[nom] == i)
+            car, adv = _glyphe(f"pan_{nom}_onglet{i}", img, 0)
+            noeuds.append({"x": xs[i] - SIG_W // 2, "etats": {e: car for e in PAN_ETATS}, "adv": adv, "fixe": "on",
+                           "clic": cmd, "survol": [{"text": nm, "color": "#%02X%02X%02X" % col, "bold": True}]})
+    PANNEAUX[nom] = {"W": W, "H": H, "fond": cf, "adv": af, "cases": cases, "noeuds": noeuds, "livre": livre}
 
 
 def pad(n):
@@ -71,14 +134,17 @@ def panneau_contenu(nom, clics, survols, etats=None):
     W = P["W"]
     comps = [dict(text=P["fond"] + _esp(-P["adv"]), **_FA)]
     for k, n in enumerate(P["noeuds"], 1):
-        e = (etats or {}).get(k)
+        e = n.get("fixe") or (etats or {}).get(k)
         car = n["etats"][e] if e else f"$(a{k})"
         c = dict(text=_esp(n["x"]) + car + _esp(-(n["x"] + n["adv"])), **_FA)
-        if clics.get(k):
-            c["click_event"] = {"action": "run_command", "command": clics[k]}
-        if survols.get(k):
-            c["hover_event"] = {"action": "show_text", "value": survols[k]}
+        if n.get("clic") or clics.get(k):
+            c["click_event"] = {"action": "run_command", "command": n.get("clic") or clics[k]}
+        if n.get("survol") or survols.get(k):
+            c["hover_event"] = {"action": "show_text", "value": n.get("survol") or survols[k]}
         comps.append(c)
+    ink = (lambda col: encre(col)) if P.get("livre") else (lambda col: col)
+    txt = (lambda t_, col: {"text": t_, "color": ink(col), "font": "minecraft:default", "shadow_color": 0}) if P.get("livre") else \
+        (lambda t_, col: {"text": t_, "color": col, "font": "minecraft:default"})
     comps.append(dict(text=_esp(W), **_FA))
     # libellés, ligne par ligne
     nl = max(c["ligne"] + (1 if c.get("info") is not None or c.get("var") else 0) for c in P["cases"]) + 1
@@ -103,7 +169,7 @@ def panneau_contenu(nom, clics, survols, etats=None):
             if kvar:   # texte variable : rattrapage avant et après, choisis par le pack dans « pads » selon sa largeur réelle
                 comps.append(dict(text=f"$({kvar[0]}{kvar[2]})", **_FA))
             for t_, col, _w in parts:
-                comps.append({"text": t_, "color": col, "font": "minecraft:default"})
+                comps.append(txt(t_, col))
             if kvar:
                 comps.append(dict(text=f"$({kvar[1]}{kvar[2]})", **_FA))
             cur = x0 + w_
@@ -145,7 +211,7 @@ panneau("commerce", 400, 136, _MIXC, [{"x": 80 + (i % 3) * 120, "ligne": 5 if i 
 
 _MIXS = ("dark_oak_planks", [("oak_planks", 3), ("stone_bricks", 2), ("mossy_stone_bricks", 1), ("bookshelf", 1)])
 _SC = [("item/iron_pickaxe", "Métiers", "gold", "niveaux, arbres"), ("item/emerald", "Commerce", "green", "marché, banque"),
-       ("item/lead", "Compagnons", "#C878FF", "ils t'accompagnent"), ("item/bone", "Bestiaire", "#D03030", "créatures de la nuit"),
+       ("item/lead", "Compagnons", "#C878FF", "ils te suivent"), ("item/bone", "Bestiaire", "#D03030", "monstres, primes"),
        ("item/name_tag", "Mon profil", "yellow", "ton parcours"), ("item/book", "Guide", "white", "bien démarrer")]
 panneau("serveur", 400, 136, _MIXS, [{"x": 80 + (i % 3) * 120, "ligne": 5 if i < 3 else 11, "icone": ic, "nom": nm, "couleur": col,
                                        "info": inf, "cadre": "goal" if i < 4 else "task"} for i, (ic, nm, col, inf) in enumerate(_SC)])

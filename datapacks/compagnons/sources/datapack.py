@@ -807,7 +807,7 @@ acts = [btn(f'[{IC("lead")},{txt("  Ranger", "gray")}]', 2, 150, "Fait rentrer t
         btn(f'[{IC("compass_00")},{txt("  Suivre / Rester", "aqua")}]', 3, 150, "Il te suit, ou il reste là où il est pour garder la zone."),
         btn(f'[{IC("book")},{txt("  Comment ça marche", "white")}]', 4, 150, "Déblocage, niveaux, capacités, montures, dressage.")]
 w(F + "menu/accueil_b.mcfunction",
-  '$dialog show @s {type:"minecraft:multi_action",title:{text:"Compagnons",color:"#C878FF",bold:true},can_close_with_escape:true,pause:false,'
+  'playsound minecraft:item.book.page_turn player @s ~ ~ ~ 0.7 1\n$dialog show @s {type:"minecraft:multi_action",title:{text:"Compagnons",color:"#C878FF",bold:true},can_close_with_escape:true,pause:false,'
   f'body:[{{type:"minecraft:plain_message",width:400,contents:[{{text:"Compagnon dehors : ",color:"gray"}},{{text:"$(dehors)",color:"#C878FF"}},{{text:"   ·   $(md)   ·   clique sur un compagnon",color:"gray"}}]}},{_corps}],'
   f'actions:[{",".join(acts)}],columns:3,'
   'exit_action:{label:"Fermer",width:200}}')

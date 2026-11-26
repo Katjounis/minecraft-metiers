@@ -35,14 +35,14 @@ def pan_contenu(nom, clics, survols, fixes=None):
     out = []
     for c in _pc.deepcopy(P["contenu"]):
         ce = c.get("click_event")
-        if ce:
+        if ce and ce["command"].startswith("§C"):   # les signets du livre ont leur commande en dur
             k = int(ce["command"][2:])
             if clics.get(k):
                 ce["command"] = clics[k]
             else:
                 del c["click_event"]
         he = c.get("hover_event")
-        if he:
+        if he and isinstance(he["value"], str) and he["value"].startswith("§H"):
             k = int(he["value"][2:])
             if survols.get(k):
                 he["value"] = survols[k]
