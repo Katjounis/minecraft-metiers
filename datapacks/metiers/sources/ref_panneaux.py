@@ -45,10 +45,120 @@ def _noeud_img(ic, cadre, etat):
     return im
 
 
+# ---------------------------------------------------------------- 26/11/2026 : menus en livre à onglets
+# Les panneaux des packs (et le menu G) deviennent les pages d'un même livre : couverture sombre, coins en laiton,
+# page de parchemin, et une rangée de signets cliquables en haut (un par pack, celui de la page ouverte dépasse).
+# Les libellés passent à l'encre (couleurs assombries, sans ombre) pour rester lisibles sur le parchemin.
+LIVRE_T = 18   # hauteur de la bande des signets (2 lignes de texte : les libellés descendent de 2 lignes)
+LIVRE_ONGLETS = [("item/iron_pickaxe", "Métiers", "trigger metiers set 1", (214, 158, 40)),
+                 ("item/emerald", "Commerce", "trigger commerce set 1", (64, 160, 70)),
+                 ("item/lead", "Compagnons", "trigger compagnons set 1", (164, 100, 214)),
+                 ("item/bone", "Bestiaire", "trigger bestiaire set 1", (190, 46, 46)),
+                 ("item/name_tag", "Mon profil", "trigger commerce set 30", (220, 190, 70)),
+                 ("item/book", "Guide", "trigger commerce set 31", (170, 170, 176))]
+LIVRE_ACTIF = {"metiers": 0, "commerce": 1, "compagnons": 2, "bestiaire": 3, "serveur": None}
+_BAYL = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]
+_LAIT = [(255, 236, 160), (236, 196, 104), (206, 160, 70), (166, 120, 44), (118, 82, 28)]
+_SOMB = (30, 22, 14)
+
+
+def _tr(r, v, x, y):
+    i = int(v + (_BAYL[y % 4][x % 4] + .5) / 16)
+    return r[max(0, min(len(r) - 1, i))]
+
+
+def _fond_livre(W, H):
+    """Livre ouvert : couverture (à partir de LIVRE_T), coins en laiton rivetés, page de parchemin, tranche en bas."""
+    im = _Img.new("RGBA", (W, H))
+    px = im.load()
+    T = LIVRE_T
+    for y in range(T, H):
+        for x in range(W):
+            d = min(x, y - T, W - 1 - x, H - 1 - y)
+            if d == 0:
+                c = _SOMB
+            elif d == 1:
+                c = _LAIT[3] if min(x, y - T) == 1 else _LAIT[4]
+            else:
+                c = _tr([(74, 58, 46), (64, 50, 40), (54, 42, 34), (46, 36, 29)], .6 + (y - T) / (H - T) * 2.4, x, y)
+            px[x, y] = c + (255,)
+    for (cx, haut) in ((0, True), (W - 12, True), (0, False), (W - 12, False)):
+        cy = T if haut else H - 12
+        for j in range(12):
+            for i in range(12):
+                ii = i if cx == 0 else 11 - i
+                jj = j if haut else 11 - j
+                if ii + jj > 13:
+                    continue
+                px[cx + i, cy + j] = (_LAIT[1] if ii + jj < 7 else _LAIT[2] if ii + jj < 11 else _LAIT[3]) + (255,)
+        rx, ry = (cx + 3 if cx == 0 else cx + 7), (cy + 3 if haut else cy + 7)
+        for (dx, dy, c) in ((0, 0, _LAIT[0]), (1, 0, _LAIT[2]), (0, 1, _LAIT[2]), (1, 1, _LAIT[4])):
+            px[rx + dx, ry + dy] = c + (255,)
+    P0, P1, SP = T + 7, H - 9, W // 2
+    PAR = [(242, 232, 206), (234, 222, 192), (224, 210, 178), (208, 192, 158), (186, 168, 134)]
+    for y in range(P0, P1):
+        for x in range(9, W - 9):
+            bord = min(x - 9, W - 10 - x, y - P0, P1 - 1 - y)
+            v = .3 + max(0, 5 - abs(x - SP)) * .22 + max(0, 3 - bord) * .45 + (y - P0) / (P1 - P0) * .7
+            px[x, y] = _tr(PAR, v, x, y) + (255,)
+    for k, yy in enumerate((P1, P1 + 1, P1 + 2)):
+        for x in range(11 + k, W - 11 - k):
+            px[x, yy] = ((214, 200, 168) if k % 2 == 0 else (170, 152, 120)) + (255,)
+    return im
+
+
+def _signet(ic, col, actif, TW):
+    """Signet en tissu de la couleur du pack, icône au centre ; l'actif est plus haut et plus vif."""
+    h = LIVRE_T + 4
+    im = _Img.new("RGBA", (TW, h))
+    px = im.load()
+    top = 0 if actif else 4
+    col = col if actif else tuple(int(v * .82) for v in col)
+    fonce = tuple(int(v * .62) for v in col)
+    clair = tuple(min(255, int(v * 1.22)) for v in col)
+    for y in range(top, h):
+        for x in range(TW):
+            if x in (0, TW - 1) or y == top:
+                c = _SOMB
+            elif x == 1 or y == top + 1:
+                c = clair
+            elif x == TW - 2:
+                c = fonce
+            else:
+                c = _tr([clair, col, fonce], .7 + (y - top) / h * 1.6, x, y)
+            px[x, y] = c + (255,)
+    im.alpha_composite(ic, ((TW - 16) // 2, top + 2))
+    return im
+
+
+_NOMMEES = {"black": "000000", "dark_blue": "0000AA", "dark_green": "00AA00", "dark_aqua": "00AAAA", "dark_red": "AA0000",
+            "dark_purple": "AA00AA", "gold": "FFAA00", "gray": "AAAAAA", "dark_gray": "555555", "blue": "5555FF",
+            "green": "55FF55", "aqua": "55FFFF", "red": "FF5555", "light_purple": "FF55FF", "yellow": "FFFF55", "white": "FFFFFF"}
+
+
+def encre(col):
+    """Couleur de texte lisible sur le parchemin : la teinte d'origine, assombrie ; blanc et gris passent en brun."""
+    h = _NOMMEES.get(col, col.lstrip("#"))
+    try:
+        r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+    except ValueError:
+        return "#3E2A1A"
+    if max(r, g, b) - min(r, g, b) < 24:
+        return "#3E2A1A" if max(r, g, b) > 200 else "#6B5640"
+    k = 135 / max(r, g, b)
+    return "#%02X%02X%02X" % (int(r * k), int(g * k), int(b * k))
+
+
 def panneau(nom, W, H, mix, cases):
     """cases : liste de dicts {x, ligne (ligne du nom sous l'icône), icone, cadre, nom, couleur, info (texte fixe ou None),
     var (True si l'info est variable : $(iK) puis $(pK)), est (largeur estimée de l'info variable)}."""
-    im = _fond_mixte(mix, W, H, "panneau-" + nom)   # blocs mêlés + cadre de pierre noire (ref_arbre.py)
+    livre = nom in LIVRE_ACTIF
+    if livre:   # 26/11/2026 : page du livre, sous la bande des signets
+        cases = [dict(c, ligne=c["ligne"] + LIVRE_T // 9) for c in cases]
+        H += LIVRE_T
+        im = _fond_livre(W, H)
+    else:
+        im = _fond_mixte(mix, W, H, "panneau-" + nom)   # blocs mêlés + cadre de pierre noire (ref_arbre.py)
     cf, af = fond_glyphes(f"pan_{nom}", im)
     noeuds = []
     for k, c in enumerate(cases, 1):
@@ -56,7 +166,16 @@ def panneau(nom, W, H, mix, cases):
         cy = 9 * c["ligne"] - 15
         et = {e: _glyphe(f"pan_{nom}_{k}_{e}", _noeud_img(ic, c.get("cadre", "task"), e), cy - 13) for e in PAN_ETATS}
         noeuds.append({"x": c["x"] - 13, "etats": {e: v[0] for e, v in et.items()}, "adv": et["on"][1]})
-    PANNEAUX[nom] = {"W": W, "H": H, "fond": cf, "adv": af, "cases": cases, "noeuds": noeuds}
+    if livre:
+        n_ = len(LIVRE_ONGLETS)
+        TW = min(52, (W - 40) // n_ - 4)
+        x0 = (W - (n_ * (TW + 4) - 4)) // 2
+        for i, (ic, nm, cmd, col) in enumerate(LIVRE_ONGLETS):
+            img = _signet(_tex(ic).resize((16, 16), _Img.NEAREST), col, LIVRE_ACTIF[nom] == i, TW)
+            car, adv = _glyphe(f"pan_{nom}_onglet{i}", img, 0)
+            noeuds.append({"x": x0 + i * (TW + 4), "etats": {e: car for e in PAN_ETATS}, "adv": adv, "fixe": "on",
+                           "clic": cmd, "survol": [{"text": nm, "color": "#%02X%02X%02X" % col, "bold": True}]})
+    PANNEAUX[nom] = {"W": W, "H": H, "fond": cf, "adv": af, "cases": cases, "noeuds": noeuds, "livre": livre}
 
 
 def pad(n):
@@ -71,14 +190,17 @@ def panneau_contenu(nom, clics, survols, etats=None):
     W = P["W"]
     comps = [dict(text=P["fond"] + _esp(-P["adv"]), **_FA)]
     for k, n in enumerate(P["noeuds"], 1):
-        e = (etats or {}).get(k)
+        e = n.get("fixe") or (etats or {}).get(k)
         car = n["etats"][e] if e else f"$(a{k})"
         c = dict(text=_esp(n["x"]) + car + _esp(-(n["x"] + n["adv"])), **_FA)
-        if clics.get(k):
-            c["click_event"] = {"action": "run_command", "command": clics[k]}
-        if survols.get(k):
-            c["hover_event"] = {"action": "show_text", "value": survols[k]}
+        if n.get("clic") or clics.get(k):
+            c["click_event"] = {"action": "run_command", "command": n.get("clic") or clics[k]}
+        if n.get("survol") or survols.get(k):
+            c["hover_event"] = {"action": "show_text", "value": n.get("survol") or survols[k]}
         comps.append(c)
+    ink = (lambda col: encre(col)) if P.get("livre") else (lambda col: col)
+    txt = (lambda t_, col: {"text": t_, "color": ink(col), "font": "minecraft:default", "shadow_color": 0}) if P.get("livre") else \
+        (lambda t_, col: {"text": t_, "color": col, "font": "minecraft:default"})
     comps.append(dict(text=_esp(W), **_FA))
     # libellés, ligne par ligne
     nl = max(c["ligne"] + (1 if c.get("info") is not None or c.get("var") else 0) for c in P["cases"]) + 1
@@ -103,7 +225,7 @@ def panneau_contenu(nom, clics, survols, etats=None):
             if kvar:   # texte variable : rattrapage avant et après, choisis par le pack dans « pads » selon sa largeur réelle
                 comps.append(dict(text=f"$({kvar[0]}{kvar[2]})", **_FA))
             for t_, col, _w in parts:
-                comps.append({"text": t_, "color": col, "font": "minecraft:default"})
+                comps.append(txt(t_, col))
             if kvar:
                 comps.append(dict(text=f"$({kvar[1]}{kvar[2]})", **_FA))
             cur = x0 + w_

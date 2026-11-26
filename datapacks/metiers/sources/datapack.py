@@ -1395,6 +1395,9 @@ MAXDUR = {"iron": 250, "diamond": 1561, "netherite": 2031, "golden": 32, "stone"
 BASE_TOOL = {j: tool_iid(j, 0) for j in jobs}
 
 CAPA_OUTIL = []   # 26/11/2026 : les anciennes capacités de la Forge sont des compétences de l'arbre (comp18.py)
+STYLE_INFOBULLE = {"b": "bucheron", "f": "fermier", "m": "mineur", "c": "chasseur", "p": "pecheur", "e": "eleveur",
+                   "n": "enchanteur", "x": "explorateur", "t": "marchand", "k": "batisseur"}
+
 def outil_give(j, k):
     d = jobs[j]
     if k == 0:
@@ -1424,7 +1427,9 @@ def outil_give(j, k):
              'minecraft:custom_model_data={strings:["$(skin)"]}',
              "minecraft:enchantment_glint_override=$(gl)",
              "minecraft:repair_cost=1000", "!minecraft:repairable", "minecraft:max_stack_size=1",
-             'minecraft:rarity="epic"']
+             'minecraft:rarity="epic"',
+             # 26/11/2026 : infobulle au cadre de la couleur du métier, cadre doré animé au palier 10 (resource pack)
+             f'minecraft:tooltip_style="metiers:{"legendaire" if k == 10 else STYLE_INFOBULLE[j]}"']
     if unb:
         comps.append("minecraft:unbreakable={}")
     if j == "t":   # 26/11/2026 : Dank Null, les filtres (contenu du sac) passent d'un palier à l'autre

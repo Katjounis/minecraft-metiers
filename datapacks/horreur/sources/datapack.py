@@ -992,7 +992,7 @@ d_liste["columns"] = 2
 s = snbt(d_liste).replace("§D", "$(d)").replace("§T", "$(tot)").replace("§CT", "$(ct)").replace("§OK", "$(ok)").replace("§SG", "$(sg)")
 for i in range(1, len(CREATURES) + 1):
     s = s.replace(f"$(i{i})", f"$(v{i})$(x{i})")
-w(F + "ui/liste_m.mcfunction", "$dialog show @s " + s)
+w(F + "ui/liste_m.mcfunction", "playsound minecraft:item.book.page_turn player @s ~ ~ ~ 0.7 1\n$dialog show @s " + s)   # 26/11/2026 : page qui tourne (menus en livre)
 
 RETOUR = bouton({"text": "◀ Retour"}, 1, 120)
 w(F + "ui/classement.mcfunction", "\n".join([

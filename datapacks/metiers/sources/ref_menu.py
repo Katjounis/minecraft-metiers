@@ -95,7 +95,7 @@ _corps = panneau_corps("metiers", _clics, _surv, {i: "on" for i in range(11, 17)
 for k, (j, d) in enumerate(jobs.items(), 1):
     _corps = _corps.replace(f'"$(i{k})"', f'"niv $({j}_l)"')
 w(F + "menu_dialog.mcfunction",
-  '$dialog show @s {type:"minecraft:notice",title:{text:"Mes métiers",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
+  'playsound minecraft:item.book.page_turn player @s ~ ~ ~ 0.7 1\n$dialog show @s {type:"minecraft:notice",title:{text:"Mes métiers",color:"gold",bold:true},can_close_with_escape:true,pause:false,'
   'body:[{type:"minecraft:plain_message",width:400,contents:[{text:"Score total ",color:"gray"},{text:"$(score)",color:"yellow"},'
   '{text:"   ·   Armure : ",color:"gray"},{text:"$(arm)",color:"gold"},{text:"   ·   ",color:"gray"},' + gs("eclat") + ',{text:" $(ecl) éclats",color:"gray"}]},'
   + _corps + '],action:{label:"Fermer",width:200}}')

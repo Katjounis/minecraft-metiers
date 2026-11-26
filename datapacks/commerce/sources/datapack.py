@@ -1141,7 +1141,7 @@ _PAN_C = pan_snbt(pan_corps("commerce", {i: f"trigger commerce set {v}" for i, (
                             {i: [{"text": n + "\n", "color": "green", "bold": True}, {"text": tp, "color": "gray", "bold": False}] for i, (v, n, tp) in enumerate(_AC, 1)},
                             {i: "on" for i in range(1, 7)}))
 w(F + "page/accueil_d.mcfunction",
-  '$dialog show @s {type:"minecraft:notice",title:' + T("Commerce", "green", True) + ',can_close_with_escape:true,pause:false,body:['
+  'playsound minecraft:item.book.page_turn player @s ~ ~ ~ 0.7 1\n$dialog show @s {type:"minecraft:notice",title:' + T("Commerce", "green", True) + ',can_close_with_escape:true,pause:false,body:['
   + f'{{type:"minecraft:plain_message",width:310,contents:{L(SOLDE_TXT, T("\\nVendu : $(tv) " + ECU + "   ·   acheté : $(ta) " + ECU, "gray"), T("\\n$(ev)", "light_purple"), MSG_TXT)}}},'
   + _PAN_C + '],action:{label:"Fermer",width:200}}')
 w(F + "page/plus.mcfunction", dlg(
