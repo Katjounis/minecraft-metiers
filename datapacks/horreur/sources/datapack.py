@@ -748,8 +748,8 @@ function horreur:complet/verif""")
     it, nr, en = RELIQUES[k]
     ench = ",".join(f'"minecraft:{a}":{b}' for a, b in en.items())
     w(F + f"palier/{k}_4.mcfunction", f"""
-tellraw @a [{PREF},{{"selector":"@s","color":"gold"}},{{"text":" a vaincu {PALIERS[3]} fois ","color":"gray"}},{nom_c},{{"text":" et reçoit sa relique : {nr} !","color":"gold"}}]
-give @s minecraft:{it}[minecraft:custom_name={snbt({"text": nr, "color": c["couleur"], "bold": True, "italic": False})},minecraft:lore=[{snbt({"text": "Relique du bestiaire : " + nom, "color": "gray", "italic": False})}],minecraft:rarity="epic",minecraft:enchantments={{{ench}}}] 1
+tellraw @a [{PREF},{{"selector":"@s","color":"gold"}},{{"text":" a vaincu {PALIERS[3]} fois ","color":"gray"}},{nom_c},{{"text":" et reçoit une prime de 5 000 Écus !","color":"gold"}}]
+execute if score @s c.ecus matches -2147483648.. run scoreboard players add @s c.ecus 5000
 playsound minecraft:ui.toast.challenge_complete master @a ~ ~ ~ 1 0.5""")
     w(F + f"palier/{k}_2.mcfunction", f"""
 tellraw @s [{PREF},{{"text":"{PALIERS[1]} victoires contre ","color":"gray"}},{nom_c},{{"text":" : voici ton trophée !","color":"gold"}}]
@@ -808,10 +808,7 @@ for c in CREATURES:
 CPL = ["execute if entity @s[tag=hr.complet] run return 0"] + [f"execute unless score @s hr.k.{k} matches 1.. run return 0" for k in REG] + [
     "tag @s add hr.complet",
     'tellraw @a [{"text":"[Bestiaire] ","color":"dark_red"},{"selector":"@s","color":"gold","bold":true},{"text":" a complété le bestiaire et devient « Chasseur de mythes » !","color":"gold"}]',
-    'give @s minecraft:netherite_sword[minecraft:custom_name={"text":"Lame des mythes","color":"dark_red","bold":true,"italic":false},'
-    'minecraft:lore=[{"text":"Bestiaire complet","color":"gray","italic":false}],minecraft:rarity="epic",'
-    'minecraft:enchantments={"minecraft:smite":5,"minecraft:looting":3,"minecraft:unbreaking":3,"minecraft:mending":1}] 1',
-    "execute if score @s c.ecus matches -2147483648.. run scoreboard players add @s c.ecus 10000",
+    "execute if score @s c.ecus matches -2147483648.. run scoreboard players add @s c.ecus 20000",
     "execute as @a at @s run playsound minecraft:ui.toast.challenge_complete master @s ~ ~ ~ 1 0.6"]
 w(F + "complet/verif.mcfunction", "\n".join(CPL))
 
@@ -992,7 +989,7 @@ for c in CREATURES:
                       msg([{"text": f"✔ {PALIERS[0]} : fiche découverte\n", "color": "green"},
                            {"text": f"§P2 {PALIERS[1]} : trophée (tête de {c['nom']})\n", "color": "§C2"},
                            {"text": f"§P3 {PALIERS[2]} : titre « {c['titre']} »\n", "color": "§C3"},
-                           {"text": f"§P4 {PALIERS[3]} : relique « {RELIQUES[k][1]} »", "color": "§C4"}])],
+                           {"text": f"§P4 {PALIERS[3]} : prime de 5 000 Écus", "color": "§C4"}])],
              "actions": [RETOUR], "exit_action": {"label": {"text": "Fermer"}}}
     fs = snbt(fiche)
     for a, b in (("§N", "$(n)"), ("§P2", "$(p2)"), ("§P3", "$(p3)"), ("§P4", "$(p4)"), ("§C2", "$(c2)"), ("§C3", "$(c3)"), ("§C4", "$(c4)")):

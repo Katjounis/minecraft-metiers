@@ -268,7 +268,7 @@ for t in [
     ("dispenser", "Distributeur", 2.0, 128, ""), ("repeater", "Répéteur", 2.5, 256, ""), ("comparator", "Comparateur", 4.0, 256, ""),
     ("lever", "Levier", 0.10, 512, ""), ("redstone_torch", "Torche de redstone", 1.0, 512, ""), ("redstone_lamp", "Lampe de redstone", 7.0, 128, ""),
     ("bucket", "Seau", 24.0, 64, ""), ("shears", "Cisailles", 16.0, 64, ""), ("fishing_rod", "Canne à pêche", 1.2, 64, "p"),
-    ("bow", "Arc", 1.8, 64, "c"), ("arrow", "Flèche", 0.18, 1024, "c"), ("shield", "Bouclier", 10.0, 64, ""),
+    ("arrow", "Flèche", 0.18, 1024, "c"),
     ("lead", "Laisse", 1.3, 64, "e"), ("name_tag", "Étiquette", 0.60, 32, "t"), ("saddle", "Selle", 14.0, 32, "e"),
     ("cauldron", "Chaudron", 56.0, 32, ""), ("anvil", "Enclume", 240.0, 8, ""),
 ]:
@@ -289,7 +289,6 @@ for t in [
     ("nether_star", "Étoile du Nether", 1500.0, 4, "c"), ("dragon_breath", "Souffle de dragon", 20.0, 32, "c"),
     ("dragon_head", "Tête de dragon", 2000.0, 2, "c"), ("heavy_core", "Noyau lourd", 500.0, 4, "x"),
     ("goat_horn", "Corne de chèvre", 30.0, 16, "e"), ("sniffer_egg", "Oeuf de renifleur", 100.0, 8, "e"),
-    ("trident", "Trident", 400.0, 4, "c"),
     ("enchanted_golden_apple", "Pomme de Notch", 1000.0, 4, ""),
 ]:
     I(15, *t)
@@ -299,8 +298,7 @@ for t in [
 for t in [
     ("enchanted_book", "Livre enchanté", 25.0, 32, "n"), ("experience_bottle", "Fiole d'expérience", 3.0, 256, "n"),
     ("ominous_bottle", "Fiole sinistre", 60.0, 16, "c"), ("netherite_upgrade_smithing_template", "Gabarit d'amélioration netherite", 400.0, 4, "m"),
-    ("diamond_sword", "Épée en diamant", 180.0, 8, "c"), ("diamond_axe", "Hache en diamant", 250.0, 8, "b"),
-    ("diamond_pickaxe", "Pioche en diamant", 250.0, 8, "m"), ("crossbow", "Arbalète", 8.0, 32, "c"),
+    ("diamond_pickaxe", "Pioche en diamant", 250.0, 8, "m"),
     ("tnt", "TNT", 8.0, 64, "m"), ("fire_charge", "Boule de feu", 1.5, 128, "c"), ("firework_rocket", "Fusée", 0.6, 256, "x"),
     ("cobweb", "Toile d'araignée", 0.8, 128, "c"),
 ] + [(f"music_disc_{d}", f"Disque {d}", 150.0, 4, "") for d in ("cat", "blocks", "chirp", "far", "mall", "mellohi", "stal", "strad", "ward", "wait")] + [

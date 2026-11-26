@@ -49,8 +49,8 @@ Réglages du 23/11/2026 (Samuel) : environ une rencontre par nuit et par joueur 
   - 1 kill : la fiche se débloque, avec de l'XP ;
   - 10 kills : un **trophée** (tête décorative, se porte sur la tête) ;
   - 50 kills : un **titre**, annoncé à tout le serveur ;
-  - 100 kills : une **relique** propre à la créature (arme ou armure enchantée).
-- **Bestiaire complet** (les 10 créatures hors boss) : titre « Chasseur de mythes », Lame des mythes et 10 000 Écus.
+  - 100 kills : une prime de 5 000 Écus (plus d'arme ni d'armure depuis le 26/11/2026).
+- **Bestiaire complet** (les 10 créatures hors boss) : titre « Chasseur de mythes », 20 000 Écus.
 - Chaque fiche montre la créature, sa vie, ses dégâts, son XP et sa prime.
 
 ## XP Chasseur (avec Métiers)

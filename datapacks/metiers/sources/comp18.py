@@ -75,7 +75,7 @@ NOUVELLES = {
         ("Tueur de géants", "+5 dégâts sur les boss de métier, le Wither, le Dragon, le Warden et le gardien ancien.", "item/nether_star")],
     "p": [
         ("Prise triple", "5 % de chance de pêcher 2 poissons de plus.", "item/tropical_fish"),
-        ("Marée", "Tuer un noyé : 5 % de chance d'un trident.", "item/trident"),
+        ("Marée", "Tuer un noyé : 10 % de chance d'une coquille de nautile.", "item/nautilus_shell"),
         ("Filet de pêche", "Débloque le Filet (onglet Outil, en Écus) : posé dans l'eau, il pêche seul toutes les 2 min, dans un coffre voisin.", "item/string"),
         ("Cœur de l'océan", "0,5 % de chance de pêcher un cœur de la mer.", "item/heart_of_the_sea"),
         ("Canne grappin", "Ramène ta canne accrochée au sol à plus de 4 blocs : tu es propulsé vers elle.", "item/fishing_rod"),
@@ -201,7 +201,7 @@ for s in _src("c", "c.k."):
     if mob == "wither_skeleton":
         s[4].append(("c9", "chance_05", "give @s minecraft:wither_skeleton_skull 1"))
     if mob == "drowned":
-        s[4].append(("p8", "chance_05", "give @s minecraft:trident 1"))
+        s[4].append(("p8", "chance_10", "give @s minecraft:nautilus_shell 1"))
     if mob in _VIANDE:
         if _VIANDE[mob]:
             s[4].append(("e13", None, f"give @s minecraft:{_VIANDE[mob]} 1"))
