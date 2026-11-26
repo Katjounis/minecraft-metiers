@@ -217,10 +217,12 @@ def clown():
     for x in (-2, -0.7, 0.7, 2):
         R.boite(H, (x, 1.7, 4.2), (0.5, 0.8, 0.3), "uni", U("#f4f0dc", 4))
     # le ballon rouge, au bout de sa ficelle
-    F_ = R.art(B["avbras_g"], (0, -6, 0), nom="ficelle")
-    R.boite(F_, (0, 8, 0), (0.25, 16, 0.25), "uni", U("#e8e8e8", 2))
-    R.boite(F_, (0, 19, 0), (6, 7, 6), "uni", U("#e01818", 14))
-    R.boite(F_, (0, 15.2, 0), (1.2, 1, 1.2), "uni", U("#b01010", 6))
+    # 26/11/2026 : ficelle plus longue et penchée vers l'extérieur, le ballon flotte au-dessus de l'épaule (il était dans la tête)
+    F_ = R.art(B["avbras_g"], (0, -6, 0), (0, 0, 24), nom="ficelle")
+    R.boite(F_, (0, 13, 0), (0.25, 26, 0.25), "uni", U("#e8e8e8", 2))
+    R.boite(F_, (0, 30, 0), (7, 8, 7), "uni", U("#e01818", 14))
+    R.boite(F_, (0, 30.5, 3.6), (2, 2.5, 0.3), "uni", U("#ff7a7a", 6))
+    R.boite(F_, (0, 25.6, 0), (1.4, 1.2, 1.4), "uni", U("#b01010", 6))
     A = {"repos": repos({"tete": {"r": (0, 0, 22)}, "ficelle": {"r": (6, 0, 6)}}, {"tete": {"r": (0, 0, -14)}, "ficelle": {"r": (-4, 0, -6)}}, 22),
          "marche": marche(34, 34, 1.6, 20, 6, extra=lambda s: {"tete": {"r": (0, 0, 12 * s)}, "ficelle": {"r": (8 * s, 0, 0)},
                                                              "bras_g": {"r": (-40, 0, -10)}}),

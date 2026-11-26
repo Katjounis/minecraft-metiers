@@ -1091,9 +1091,9 @@ for c in CREATURES:
         w(F + f"rig/{k}/{an}/t.mcfunction", "\n".join(tl))
         w(F + f"rig/{k}/jouer_{an}.mcfunction", f"scoreboard players set @s hr.an {i}\nscoreboard players set @s hr.af 0\nfunction {NS}:rig/{k}/{an}/k0")
         tick.append(f"execute if score @s hr.an matches {i} run function {NS}:rig/{k}/{an}/t")
-    choix = [f"execute if score @s hr.an matches {ids['attaque']} run return 0",
-             f"execute if predicate {NS}:bouge unless score @s hr.an matches {ids['marche']} run function {NS}:rig/{k}/jouer_marche",
-             f"execute unless predicate {NS}:bouge unless score @s hr.an matches {ids['repos']} run function {NS}:rig/{k}/jouer_repos"]
+    # pendant l'attaque on ne change pas d'animation, mais le compteur doit avancer (sinon elle reste figée)
+    choix = [f"execute unless score @s hr.an matches {ids['attaque']} if predicate {NS}:bouge unless score @s hr.an matches {ids['marche']} run function {NS}:rig/{k}/jouer_marche",
+             f"execute unless score @s hr.an matches {ids['attaque']} unless predicate {NS}:bouge unless score @s hr.an matches {ids['repos']} run function {NS}:rig/{k}/jouer_repos"]
     w(F + f"rig/{k}/tick.mcfunction", "\n".join(choix + tick))
 w(F + "rig/tick.mcfunction", "\n".join(f"execute if entity @s[tag=hr.c.{c['id']}] run return run function {NS}:rig/{c['id']}/tick" for c in CREATURES))
 add_rig = True
