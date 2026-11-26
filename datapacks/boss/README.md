@@ -4,7 +4,7 @@ Datapack pour Minecraft Java 26.x, sans mod. Deux boss de serveur modélisés et
 
 | Boss | Arène | Récompense unique (première victoire) |
 |---|---|---|
-| **Le Grimoire Vivant** | La Bibliothèque Interdite : sommet de tour rond de 29 blocs qui flotte dans le vide violet (dimension `boss:grimoire`) | **Grimoire familier** : petit grimoire à œil ; tenu dans la main secondaire, il donne Force I, Résistance I et Vision nocturne, avec des runes qui tournent autour du joueur |
+| **Le Grimoire Vivant** | La Bibliothèque Interdite : sommet de tour rond de 29 blocs qui flotte dans le vide violet (dimension `boss:grimoire`) | **Grimoire familier** : petit grimoire à œil ; tenu dans la main secondaire, il donne Force II et Résistance II, avec des runes qui tournent autour du joueur |
 | **Le Corbeau-Épouvantail** | Le Champ maudit : blé mort, épouvantails plantés, citrouilles, lune rouge (dimension `boss:corbeau`) | **Cape de plumes noires** : élytres redessinées qui lâchent des plumes en vol |
 
 Pas d'arme ni d'armure, conformément à la règle du serveur. À chaque victoire, tous les inscrits gagnent aussi 15 000 Écus (Commerce), 600 XP Chasseur et 3 éclats de boss (Métiers) et 500 points d'XP. À partir de la deuxième victoire contre un même boss, l'objet unique est remplacé par 6 diamants.
@@ -87,7 +87,7 @@ Le pack ajoute deux dimensions : il faut **redémarrer** le serveur (`lab-reload
 
 ## Version 1.1 (26/11/2026)
 
-Textes à l'écran raccourcis, boss nettement plus durs, Grimoire familier utile (effets en main secondaire, plus petit en main), boss de Métiers habillés.
+Textes à l'écran raccourcis, boss nettement plus durs, Grimoire familier utile (Force II et Résistance II en main secondaire, plus petit en main), boss de Métiers habillés.
 
 ## Version 1.0 (26/11/2026)
 

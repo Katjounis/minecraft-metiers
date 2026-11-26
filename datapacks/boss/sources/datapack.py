@@ -83,7 +83,6 @@ for d, t, bi in (("grimoire", "bibliotheque", "bibliotheque"), ("corbeau", "cham
 wj(f"data/{NS}/predicate/accroupi.json", {"type": "minecraft:entity_properties", "entity": "this", "predicate": {"flags": {"is_sneaking": True}}})
 wj(f"data/{NS}/predicate/au_sol.json", {"type": "minecraft:entity_properties", "entity": "this", "predicate": {"flags": {"is_on_ground": True}}})
 wj(f"data/{NS}/predicate/plane.json", {"type": "minecraft:entity_properties", "entity": "this", "predicate": {"flags": {"is_flying": True}}})
-wj(f"data/{NS}/predicate/vision.json", {"type": "minecraft:entity_properties", "entity": "this", "predicate": {"effects": {"minecraft:night_vision": {"duration": {"min": 220}}}}})
 wj(f"data/{NS}/predicate/monte.json", {"type": "minecraft:entity_properties", "entity": "this", "predicate": {"vehicle": {}}})
 wj(f"data/{NS}/tags/block/passable.json", {"values": ["#minecraft:air", "minecraft:light", "minecraft:short_dry_grass", "minecraft:tall_dry_grass",
                                                      "minecraft:dead_bush", "#minecraft:wool_carpets", "minecraft:candle"]})
@@ -1081,8 +1080,8 @@ CAPE = ('minecraft:elytra[minecraft:item_model="boss:cape_plumes",'
 FAMILIER = ('minecraft:paper[minecraft:item_model="boss:grimoire_encre_racine",minecraft:max_stack_size=1,'
             f'minecraft:custom_name={js({"text": "Grimoire familier", "color": "light_purple", "italic": False})},'
             f'minecraft:lore=[{js({"text": "Arraché au Grimoire Vivant.", "color": "gray", "italic": False})},'
-            f'{js({"text": "Main secondaire : Force I, Résistance I,", "color": "blue", "italic": False})},'
-            f'{js({"text": "Vision nocturne et runes autour de toi.", "color": "blue", "italic": False})}],'
+            f'{js({"text": "Main secondaire : Force II et", "color": "blue", "italic": False})},'
+            f'{js({"text": "Résistance II, runes autour de toi.", "color": "blue", "italic": False})}],'
             'minecraft:rarity="epic",minecraft:enchantment_glint_override=true,minecraft:custom_data={bs_familier:1b}]')
 fn("recompense/donner", [
     "execute if score @s c.ecus matches -2147483648.. run scoreboard players add @s c.ecus 15000",
@@ -1108,8 +1107,7 @@ fn("cape/tick", [
     f"execute as @a if items entity @s weapon.offhand minecraft:paper[minecraft:custom_data~{{bs_familier:1b}}] at @s run function {NS}:cape/runes"])
 fn("cape/runes", ["particle minecraft:dust{color:[0.7,0.4,1.0],scale:0.7} ~ ~1.1 ~ 0.7 0.5 0.7 0 2",
                   "particle minecraft:enchant ~ ~1.6 ~ 0.4 0.3 0.4 0.6 2",
-                  "effect give @s minecraft:strength 3 0 true", "effect give @s minecraft:resistance 3 0 true",
-                  "execute unless predicate boss:vision run effect give @s minecraft:night_vision 15 0 true"])
+                  "effect give @s minecraft:strength 3 1 true", "effect give @s minecraft:resistance 3 1 true"])
 fn("cape/plumes", ["particle minecraft:dust{color:[0.06,0.06,0.09],scale:1.4} ^ ^0.4 ^-0.9 0.35 0.15 0.35 0 3",
                    "particle minecraft:white_ash ^ ^0.4 ^-1.2 0.3 0.2 0.3 0 2"])
 
