@@ -26,6 +26,8 @@ B = "@e[tag=metiers.boss,limit=1]"
 ANN = lambda txt, col="white": f'tellraw @a {PREFIX},{{"text":"{txt}","color":"{col}"}}]'
 
 w(F + "boss/alerte.mcfunction", "\n".join([
+    # 26/11/2026 : pas pendant un evenement du pack Boss (Grimoire, Corbeau) : on retente plus tard
+    "execute if score #etat bs.ev matches 1.. run return run scoreboard players set #cycle m.boss 3000",
     "execute store result score #n m.boss if entity @a[gamemode=!spectator]",
     "execute if score #n m.boss matches ..0 run return run scoreboard players set #cycle m.boss 3000",
     "scoreboard players set #cycle m.boss 0", "scoreboard players set #compte m.boss 240",
