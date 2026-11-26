@@ -1,6 +1,6 @@
 # Détails de l'interface « Forge » : à lancer APRÈS interface_finition.py et AVANT interface_animations.py.
 # Redessine dans la DA pierre et laiton ce qui restait en simple recoloration :
-#   - cœurs (toutes variantes), nourriture et armure, en gardant les silhouettes vanilla au pixel près ;
+#   - cœurs en rubis taillé (toutes variantes), gigots rôtis à papillote, plastrons en laiton (voir hud_icones.py) ;
 #   - infobulles : fond pierre sombre, cadre en laiton avec coins rivetés ;
 #   - onglets, cases à cocher, curseurs, ascenseurs ;
 #   - boutons des interfaces (tailleur de pierre, métier à tisser, balise, livre de recettes),
@@ -291,14 +291,10 @@ def copie_meta(nom):
         sortie[GUI + nom + ".mcmeta"] = open(src, "rb").read()
 
 
-for dossier in ("hud/heart", "hud"):
-    for f in sorted(os.listdir(os.path.join(VAN, dossier))):
-        if not f.endswith(".png"):
-            continue
-        if dossier == "hud" and not f.startswith(("food_", "armor_")):
-            continue
-        nom = f"{dossier}/{f}"
-        png(nom, icone(Image.open(os.path.join(VAN, nom)), nom))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from hud_icones import icones  # cœurs rubis, gigots, plastrons en laiton dessinés à la main
+for nom, im in icones().items():
+    png(nom, im)
 
 png("tooltip/background.png", infobulle_fond())
 png("tooltip/frame.png", infobulle_cadre())
