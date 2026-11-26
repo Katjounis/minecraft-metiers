@@ -198,3 +198,45 @@ def uni(img, x0, y0, w, h, R, o):
 
 
 PEINTRES = {k: v for k, v in globals().items() if callable(v) and k not in ("hexa", "_pal", "_choix")}
+
+
+def cristal(img, x0, y0, w, h, R, o):
+    pal = _pal(o, ["#9fd8f0", "#c8ecfa", "#7cc0e0", "#e8f8ff"])
+    for y in range(h):
+        for x in range(w):
+            v = ((x + y * .5) / max(w, 1) + R.random() * .3) % 1
+            img.set(x0 + x, y0 + y, pal[int(v * len(pal)) % len(pal)])
+    for y in range(0, h, 3):
+        img.set(x0 + w // 3, y0 + y, (255, 255, 255, 255))
+
+
+def lave(img, x0, y0, w, h, R, o):
+    for y in range(h):
+        for x in range(w):
+            n = R.random()
+            img.set(x0 + x, y0 + y, hexa("#ff5a00" if n < .3 else "#ff8a10" if n < .6 else "#ffc23a" if n < .85 else "#fff3a0"))
+
+
+def metal(img, x0, y0, w, h, R, o):
+    pal = _pal(o, ["#4a4d55", "#575b64", "#3d4047", "#62666f"])
+    for y in range(h):
+        for x in range(w):
+            img.set(x0 + x, y0 + y, pal[int(R.random() * len(pal))])
+    for x in range(w):
+        img.set(x0 + x, y0, hexa(o.get("liseré", "#2a2c31")))
+    if w > 4 and h > 4:
+        for cx, cy in ((1, 1), (w - 2, 1), (1, h - 2), (w - 2, h - 2)):
+            img.set(x0 + cx, y0 + cy, hexa(o.get("rivet", "#c89a3a")))
+
+
+def tnt(img, x0, y0, w, h, R, o):
+    for y in range(h):
+        for x in range(w):
+            bande = h // 3 <= y < 2 * h // 3
+            img.set(x0 + x, y0 + y, hexa("#e8e2d0" if bande else ("#b3241c" if R.random() > .2 else "#8e1a14")))
+    if h > 6:
+        for x in range(1, w - 1, 2):
+            img.set(x0 + x, y0 + h // 2, hexa("#202020"))
+
+
+PEINTRES.update({"cristal": cristal, "lave": lave, "metal": metal, "tnt": tnt})

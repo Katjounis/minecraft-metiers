@@ -83,6 +83,7 @@ for d, t, bi in (("grimoire", "bibliotheque", "bibliotheque"), ("corbeau", "cham
 wj(f"data/{NS}/predicate/accroupi.json", {"type": "minecraft:entity_properties", "entity": "this", "predicate": {"flags": {"is_sneaking": True}}})
 wj(f"data/{NS}/predicate/au_sol.json", {"type": "minecraft:entity_properties", "entity": "this", "predicate": {"flags": {"is_on_ground": True}}})
 wj(f"data/{NS}/predicate/plane.json", {"type": "minecraft:entity_properties", "entity": "this", "predicate": {"flags": {"is_flying": True}}})
+wj(f"data/{NS}/predicate/vision.json", {"type": "minecraft:entity_properties", "entity": "this", "predicate": {"effects": {"minecraft:night_vision": {"duration": {"min": 220}}}}})
 wj(f"data/{NS}/predicate/monte.json", {"type": "minecraft:entity_properties", "entity": "this", "predicate": {"vehicle": {}}})
 wj(f"data/{NS}/tags/block/passable.json", {"values": ["#minecraft:air", "minecraft:light", "minecraft:short_dry_grass", "minecraft:tall_dry_grass",
                                                      "minecraft:dead_bush", "#minecraft:wool_carpets", "minecraft:candle"]})
@@ -116,6 +117,7 @@ fn("tick", [
     f"execute if score #tk bs.ev matches 20.. run function {NS}:seconde",
     f"execute if score #etat bs.ev matches 3..4 run function {NS}:combat/tick",
     f"execute if score #m4 bs.ev matches 0 run function {NS}:cape/tick",
+    f"function {NS}:metiers/tick",
 ])
 fn("seconde", [
     "scoreboard players set #tk bs.ev 0",
@@ -123,6 +125,7 @@ fn("seconde", [
     f"execute as @a[scores={{bs.rejoindre=1..}}] at @s run function {NS}:joueur/trigger",
     f"execute as @a[scores={{bs.mort=1..,bs.pv=1..}}] at @s run function {NS}:joueur/mort",
     f"execute as @a at @s run function {NS}:joueur/verifier",
+    f"function {NS}:metiers/seconde",
     f"execute if score #etat bs.ev matches 0 run function {NS}:ev/attente",
     f"execute if score #etat bs.ev matches 1 run function {NS}:ev/preavis",
     f"execute if score #etat bs.ev matches 2 run function {NS}:ev/intro",
@@ -167,8 +170,8 @@ fn("ev/ouvrir", [
     "execute as @a at @s run playsound minecraft:entity.elder_guardian.curse master @s ~ ~ ~ 0.7 0.5",
     "effect give @a[gamemode=!spectator] minecraft:darkness 3 0 true"])
 for k, b in B.items():
-    accroche = ("La Bibliothèque Interdite s'éveille…" if k == 1 else "Une lune rouge se lève…")
-    fn(f"ev/annonce_{k}", titre("@a", accroche, f"{b['nom']} apparaît dans 2 minutes", "dark_purple" if k == 1 else "dark_red", "gray") + [
+    accroche = ("Le Grimoire" if k == 1 else "Lune rouge")
+    fn(f"ev/annonce_{k}", titre("@a", accroche, "Boss dans 2 minutes", "dark_purple" if k == 1 else "dark_red", "gray") + [
         f"dialog show @a {NS}:appel_{b['id']}",
         f"function {NS}:ev/chat_{k}"])
     fn(f"ev/chat_{k}", [
@@ -263,7 +266,7 @@ fn("ev/victoire", [
     f"execute if score #boss bs.ev matches 1 run function {NS}:rig/grimoire/jouer/mort",
     f"execute if score #boss bs.ev matches 2 run function {NS}:rig/corbeau/jouer/mort",
     "execute as @a run function boss:joueur/est_inscrit",
-    *titre("@a[tag=bs.in]", "VICTOIRE !", "Le boss est vaincu. Retour dans 12 secondes.", "gold", "yellow"),
+    *titre("@a[tag=bs.in]", "VICTOIRE !", "Retour dans 12 s", "gold", "yellow"),
     "execute as @a[tag=bs.in] at @s run playsound minecraft:ui.toast.challenge_complete master @s ~ ~ ~ 1 0.8",
     "execute as @a[tag=bs.in] at @s run playsound minecraft:entity.player.levelup master @s ~ ~ ~ 1 0.6",
     f"execute if score #boss bs.ev matches 1 run {dire('@a', {'text': 'Le Grimoire Vivant', 'color': 'light_purple', 'bold': True}, (' est vaincu ! Bravo aux ', 'gray'), {'score': {'name': '#n', 'objective': 'bs.ev'}, 'color': 'yellow'}, (' combattants.', 'gray'))}",
@@ -280,7 +283,7 @@ fn("ev/defaite", [
     "bossbar set boss:combat visible false",
     f"execute if score #duree bs.ev matches 900.. run {dire('@a', ('Le combat a trop duré : le boss s’en va. Il reviendra…', 'gray'))}",
     f"execute if score #duree bs.ev matches ..899 run {dire('@a', ('Tous les combattants sont K.O. : le boss l’emporte cette fois.', 'gray'))}",
-    *titre("@a[tag=bs.joue]", "Défaite…", "Le boss s'en va. Retour dans quelques secondes.", "red", "gray")])
+    *titre("@a[tag=bs.joue]", "Défaite…", "Retour dans quelques secondes", "red", "gray")])
 fn("ev/fin_s", ["scoreboard players remove #fin bs.ev 1",
                 "execute if score #fin bs.ev matches 8 run kill @e[type=minecraft:item_display,tag=bs.os]",
                 f"execute if score #fin bs.ev matches ..0 run function {NS}:ev/cloture"])
@@ -401,7 +404,7 @@ fn("joueur/blesse", [
 fn("joueur/ko", [
     "tag @s remove bs.joue", "tag @s add bs.ko",
     "effect give @s minecraft:instant_health 1 3 true", "effect give @s minecraft:regeneration 10 1 true",
-    *titre("@s", "K.O.", "Tu es renvoyé chez toi, sans rien perdre. Tu auras ta part si tes alliés gagnent.", "red", "gray"),
+    *titre("@s", "K.O.", "Renvoyé chez toi, sans perte", "red", "gray"),
     dire("@a[tag=bs.joue]", {"selector": "@s", "color": "white"}, (" est K.O. !", "red")),
     "playsound minecraft:entity.player.hurt_on_fire master @s ~ ~ ~ 1 0.6",
     f"function {NS}:joueur/retour"])
@@ -539,7 +542,7 @@ def resistance(tag):
 HB_ATTR = '{{id:"minecraft:max_health",base:$(hp)d}},{{id:"minecraft:knockback_resistance",base:1d}}'
 
 # ------------------------------------------------------------------------------------------------ Grimoire
-fn("g/lancer", pv_max(300, 150) + [
+fn("g/lancer", pv_max(500, 250) + [
     f"execute in boss:grimoire positioned 0 {GY + 6} 0 run function {NS}:g/invoquer with storage boss:t",
     *resistance("bs.hb.g"),
     f"execute at @e[tag=bs.hb.g,limit=1] run function {NS}:rig/grimoire/invoquer",
@@ -550,12 +553,10 @@ fn("g/lancer", pv_max(300, 150) + [
     "scoreboard players operation #need bs.g = #n bs.ev",
     "execute if score #need bs.g matches ..1 run scoreboard players set #need bs.g 2",
     "execute if score #need bs.g matches 5.. run scoreboard players set #need bs.g 4",
-    *titre("@a[tag=bs.joue]", "LE GRIMOIRE VIVANT", "Tire-lui dessus quand il flotte, frappe-le quand il descend !", "light_purple", "white"),
+    *titre("@a[tag=bs.joue]", "LE GRIMOIRE", "Enchaîne-le aux pupitres !", "light_purple", "white"),
     "execute as @a[tag=bs.joue] at @s run playsound minecraft:entity.wither.spawn master @s ~ ~ ~ 0.7 1.4",
-    dire("@a[tag=bs.joue]", ("Comment le vaincre : ", "gold"),
-         ("accroupis-toi 3 s près d'un pupitre pour l'activer. Quand ", "white"), {"score": {"name": "#need", "objective": "bs.g"}, "color": "yellow"},
-         (" pupitres brillent, ses chaînes le tirent au sol 10 s : frappe-le ! Le reste du temps, tire à l'arc. ", "white"),
-         ("Esquive les pages : décale-toi quand elles brillent. Ses tentacules éteignent les pupitres : répartissez-vous.", "gray"))])
+    dire("@a[tag=bs.joue]", ("Accroupis-toi 4 s aux pupitres. ", "white"), {"score": {"name": "#need", "objective": "bs.g"}, "color": "yellow"}, (" allumés = il tombe : frappe !", "white")),
+    dire("@a[tag=bs.joue]", ("Arc quand il flotte. Bouge quand ça brille.", "gray"))])
 fn("g/invoquer", "$summon minecraft:husk ~ ~ ~ {Tags:[\"bs.e\",\"bs.hb\",\"bs.hb.g\"],NoAI:1b,NoGravity:1b,Silent:1b,PersistenceRequired:1b,"
    "CanPickUpLoot:0b,DeathLootTable:\"minecraft:empty\",Health:$(hp)f,"
    "CustomName:{text:\"Le Grimoire Vivant\",color:\"light_purple\",bold:true},"
@@ -592,9 +593,13 @@ fn("g/vol", [
     "scoreboard players remove #atk bs.g 1",
     f"execute if score #atk bs.g matches ..0 run function {NS}:g/attaque"])
 fn("g/attaque", [
-    "scoreboard players set #atk bs.g 130",
-    "execute if score #ph bs.g matches 2 run scoreboard players set #atk bs.g 105",
-    "execute if score #ph bs.g matches 3 run scoreboard players set #atk bs.g 80",
+    "scoreboard players set #atk bs.g 95",
+    "execute if score #ph bs.g matches 2 run scoreboard players set #atk bs.g 75",
+    "execute if score #ph bs.g matches 3 run scoreboard players set #atk bs.g 55",
+    # phase 2+ : une flaque d'encre tombe sous un joueur a chaque attaque
+    f'execute if score #ph bs.g matches 2.. as @r[tag=bs.joue] at @s run summon minecraft:marker ~ {GY + 1} ~ {{Tags:["bs.e","bs.fx","bs.encre"]}}',
+    # phase 3 : une tentacule accompagne chaque attaque
+    f"execute if score #ph bs.g matches 3 as @r[tag=bs.joue] at @s run function {NS}:g/at/tent_cible",
     "execute if score #ph bs.g matches 1 store result score #r bs.tmp run random value 1..3",
     "execute if score #ph bs.g matches 2.. store result score #r bs.tmp run random value 1..5",
     f"execute if score #r bs.tmp matches 1 run return run function {NS}:g/at/pages",
@@ -605,8 +610,9 @@ fn("g/attaque", [
 fn("g/at/pages", [
     f"function {NS}:rig/grimoire/jouer/pages",
     "playsound minecraft:item.book.page_turn hostile @a[distance=..48] ~ ~ ~ 3 0.5",
-    barre("@a[tag=bs.joue]", "Les pages brillent : décale-toi !", "light_purple"),
-    *[f'execute in boss:grimoire run summon minecraft:marker 0 {GY + 1.2} 0 {{Tags:["bs.e","bs.fx","bs.ligne","bs.neuf"]}}' for _ in range(3)],
+    barre("@a[tag=bs.joue]", "Les pages brillent : bouge !", "light_purple"),
+    *[f'execute in boss:grimoire run summon minecraft:marker 0 {GY + 1.2} 0 {{Tags:["bs.e","bs.fx","bs.ligne","bs.neuf"]}}' for _ in range(4)],
+    f'execute if score #ph bs.g matches 2.. in boss:grimoire run summon minecraft:marker 0 {GY + 1.2} 0 {{Tags:["bs.e","bs.fx","bs.ligne","bs.neuf"]}}',
     f'execute if score #ph bs.g matches 3 in boss:grimoire run summon minecraft:marker 0 {GY + 1.2} 0 {{Tags:["bs.e","bs.fx","bs.ligne","bs.neuf"]}}',
     f"execute as @e[type=minecraft:marker,tag=bs.neuf] run function {NS}:g/at/ligne_init"])
 fn("g/at/ligne_init", [
@@ -618,14 +624,14 @@ fn("g/at/ligne_init", [
 fn("g/at/ligne_m", f"$tp @s $(x) {GY + 1.2} $(z) $(r) 0")
 fn("g/at/ligne_tick", [
     "scoreboard players add @s bs.k 1",
-    f"execute if score @s bs.k matches ..39 if score #m4 bs.ev matches 0 run function {NS}:g/at/ligne_brille",
-    f"execute if score @s bs.k matches 40 run function {NS}:g/at/ligne_coupe",
-    "execute if score @s bs.k matches 42.. run kill @s"])
+    f"execute if score @s bs.k matches ..29 if score #m4 bs.ev matches 0 run function {NS}:g/at/ligne_brille",
+    f"execute if score @s bs.k matches 30 run function {NS}:g/at/ligne_coupe",
+    "execute if score @s bs.k matches 32.. run kill @s"])
 fn("g/at/ligne_brille", [f"particle minecraft:dust{{color:[0.8,0.55,1.0],scale:1.4}} ^ ^ ^{d} 0.05 0.02 0.05 0 1" for d in range(-14, 15)] +
    [f"particle minecraft:enchant ^ ^0.4 ^{d} 0 0.2 0 0.6 3" for d in range(-14, 15, 4)])
 fn("g/at/ligne_coupe", [f"execute positioned ^ ^ ^{d} run tag @a[tag=bs.joue,distance=..1.4] add bs.t" for d in range(-14, 15)] +
    [f"particle minecraft:sweep_attack ^ ^0.6 ^{d} 0 0 0 0 1" for d in range(-14, 15, 2)] +
-   [f"execute as @a[tag=bs.t] run {blesse(7)}", "tag @a remove bs.t",
+   [f"execute as @a[tag=bs.t] run {blesse(9)}", "tag @a remove bs.t",
     "playsound minecraft:entity.player.attack.sweep hostile @a[distance=..32] ~ ~ ~ 2 0.6"])
 # --- tentacule : sort du sol sous un joueur, s'abat, laisse une flaque d'encre et eteint les pupitres proches
 TENT = RIGS["tentacule"]
@@ -641,6 +647,7 @@ def mat_k(pid, s=1.0, ty=0.0, rx=0.0):
 fn("g/at/tentacule", [
     f"function {NS}:rig/grimoire/jouer/fouet",
     f"execute as @r[tag=bs.joue] at @s run function {NS}:g/at/tent_cible",
+    f"execute if score #ph bs.g matches 2.. as @r[tag=bs.joue] at @s run function {NS}:g/at/tent_cible",
     f"execute if score #ph bs.g matches 3 as @r[tag=bs.joue] at @s run function {NS}:g/at/tent_cible"])
 fn("g/at/tent_cible", [
     f'summon minecraft:marker ~ {GY + 1} ~ {{Tags:["bs.e","bs.fx","bs.frappe"]}}',
@@ -650,23 +657,23 @@ fn("g/at/tent_cible", [
       + f'transformation:{mat_k(pid, 0.01, -1.0)}}}' for i, pid in enumerate(TENT_P)],
     "execute as @e[type=minecraft:item_display,tag=bs.tentd,tag=!bs.tok] at @s facing entity @e[tag=bs.hb.g,limit=1] feet run rotate @s ~ 0",
     "tag @e[type=minecraft:item_display,tag=bs.tentd] add bs.tok",
-    barre("@s", "Le sol se gonfle sous tes pieds : bouge !", "dark_purple"),
+    barre("@s", "Le sol gonfle : bouge !", "dark_purple"),
     "playsound minecraft:entity.warden.emerge hostile @a[distance=..24] ~ ~ ~ 1.2 1.3"])
 for i, pid in enumerate(TENT_P):
     fn(f"g/at/tentd{i}", [
         "scoreboard players add @s bs.k 1",
         f"execute if score @s bs.k matches 2 run data merge entity @s {{start_interpolation:0,interpolation_duration:12,transformation:{mat_k(pid)}}}",
-        f"execute if score @s bs.k matches 30 run data merge entity @s {{start_interpolation:0,interpolation_duration:4,transformation:{mat_k(pid, rx=-80)}}}",
-        f"execute if score @s bs.k matches 46 run data merge entity @s {{start_interpolation:0,interpolation_duration:10,transformation:{mat_k(pid, 0.01, -1.0, -80)}}}",
-        "execute if score @s bs.k matches 58.. run kill @s"])
+        f"execute if score @s bs.k matches 22 run data merge entity @s {{start_interpolation:0,interpolation_duration:4,transformation:{mat_k(pid, rx=-80)}}}",
+        f"execute if score @s bs.k matches 38 run data merge entity @s {{start_interpolation:0,interpolation_duration:10,transformation:{mat_k(pid, 0.01, -1.0, -80)}}}",
+        "execute if score @s bs.k matches 50.. run kill @s"])
 fn("g/at/frappe_tick", [
     "scoreboard players add @s bs.k 1",
-    "execute if score @s bs.k matches ..33 if score #m4 bs.ev matches 0 run particle minecraft:squid_ink ~ ~0.2 ~ 1 0.1 1 0.02 6",
-    *[f"execute if score @s bs.k matches ..33 if score #m4 bs.ev matches 0 run particle minecraft:dust{{color:[0.55,0.2,0.9],scale:1.3}} ~{2.4 * math.cos(a / 6 * math.pi):.2f} ~0.15 ~{2.4 * math.sin(a / 6 * math.pi):.2f} 0 0 0 0 1" for a in range(12)],
-    f"execute if score @s bs.k matches 34 run function {NS}:g/at/frappe_coup",
-    "execute if score @s bs.k matches 36.. run kill @s"])
+    "execute if score @s bs.k matches ..25 if score #m4 bs.ev matches 0 run particle minecraft:squid_ink ~ ~0.2 ~ 1 0.1 1 0.02 6",
+    *[f"execute if score @s bs.k matches ..25 if score #m4 bs.ev matches 0 run particle minecraft:dust{{color:[0.55,0.2,0.9],scale:1.3}} ~{2.4 * math.cos(a / 6 * math.pi):.2f} ~0.15 ~{2.4 * math.sin(a / 6 * math.pi):.2f} 0 0 0 0 1" for a in range(12)],
+    f"execute if score @s bs.k matches 26 run function {NS}:g/at/frappe_coup",
+    "execute if score @s bs.k matches 28.. run kill @s"])
 fn("g/at/frappe_coup", [
-    f"execute as @a[tag=bs.joue,distance=..2.6] run {blesse(9)}",
+    f"execute as @a[tag=bs.joue,distance=..2.8] run {blesse(11)}",
     "effect give @a[tag=bs.joue,distance=..2.6] minecraft:levitation 1 1 true",
     "particle minecraft:explosion ~ ~0.5 ~ 1 0.3 1 0 4", "particle minecraft:squid_ink ~ ~0.5 ~ 1.2 0.4 1.2 0.1 60",
     "playsound minecraft:entity.warden.attack_impact hostile @a[distance=..32] ~ ~ ~ 2 0.8",
@@ -685,39 +692,38 @@ RUNE_SUM = "summon minecraft:item_display ~ ~3 ~ {" + RUNE_D[len('{id:"minecraft
 fn("g/at/runes", [
     f"function {NS}:rig/grimoire/jouer/pages",
     "scoreboard players set #st bs.tmp 0",
-    *[RUNE_SUM for _ in range(4)],
-    f"execute if score #ph bs.g matches 3 run {RUNE_SUM}",
-    f"execute if score #ph bs.g matches 3 run {RUNE_SUM}",
+    *[RUNE_SUM for _ in range(6)],
+    *[f"execute if score #ph bs.g matches 3 run {RUNE_SUM}" for _ in range(4)],
     f"execute as @e[type=minecraft:item_display,tag=bs.rnew] at @s run function {NS}:g/at/rune_init",
     "playsound minecraft:entity.evoker.cast_spell hostile @a[distance=..48] ~ ~ ~ 2 0.7",
-    barre("@a[tag=bs.joue]", "Des runes te prennent pour cible : cours !", "light_purple")])
+    barre("@a[tag=bs.joue]", "Runes en approche : cours !", "light_purple")])
 fn("g/at/rune_init", [
     "tag @s remove bs.rnew", "scoreboard players remove #st bs.tmp 6", "scoreboard players operation @s bs.k = #st bs.tmp",
     "execute facing entity @r[tag=bs.joue] eyes run tp @s ~ ~ ~ ~ ~"])
 fn("g/at/rune_tick", [
     "scoreboard players add @s bs.k 1",
     "execute if score @s bs.k matches ..0 run return run particle minecraft:witch ~ ~ ~ 0.2 0.2 0.2 0 1",
-    "tp @s ^ ^ ^0.45",
+    "tp @s ^ ^ ^0.6",
     "particle minecraft:witch ~ ~ ~ 0.1 0.1 0.1 0 2",
     f"execute positioned ~ ~-1 ~ if entity @a[tag=bs.joue,distance=..1.4] run return run function {NS}:g/at/rune_boum",
     f"execute unless block ~ ~ ~ #{NS}:passable run return run function {NS}:g/at/rune_eclat",
     "execute if score @s bs.k matches 70.. run kill @s"])
-fn("g/at/rune_boum", [f"execute positioned ~ ~-1 ~ as @a[tag=bs.joue,distance=..1.6] run {blesse(5)}",
+fn("g/at/rune_boum", [f"execute positioned ~ ~-1 ~ as @a[tag=bs.joue,distance=..1.6] run {blesse(7)}",
                       f"function {NS}:g/at/rune_eclat"])
 fn("g/at/rune_eclat", ["particle minecraft:dust{color:[0.7,0.4,1.0],scale:2} ~ ~ ~ 0.3 0.3 0.3 0 15",
                        "playsound minecraft:block.amethyst_block.break hostile @a[distance=..16] ~ ~ ~ 1 0.8", "kill @s"])
 # --- livres volants (phase 2+) : sortent des bibliotheques
 MURS = [(round(13 * math.cos(math.radians(a))) + .5, GY + 3, round(13 * math.sin(math.radians(a))) + .5) for a in range(22, 360, 45)]
 fn("g/at/livres", [
-    "scoreboard players operation #nl bs.tmp = #n bs.ev", "scoreboard players operation #nl bs.tmp /= #2 bs.tmp",
-    "scoreboard players add #nl bs.tmp 1", "execute if score #nl bs.tmp matches 5.. run scoreboard players set #nl bs.tmp 4",
+    "scoreboard players operation #nl bs.tmp = #n bs.ev",
+    "scoreboard players add #nl bs.tmp 1", "execute if score #nl bs.tmp matches 7.. run scoreboard players set #nl bs.tmp 6",
     f"execute in boss:grimoire run function {NS}:g/at/livre_un",
-    barre("@a[tag=bs.joue]", "Les bibliothèques s'ouvrent : des livres maudits s'envolent !", "dark_purple")])
+    barre("@a[tag=bs.joue]", "Livres maudits !", "dark_purple")])
 fn("g/at/livre_un", [
     "execute if score #nl bs.tmp matches ..0 run return 0",
     "scoreboard players remove #nl bs.tmp 1",
     "execute store result score #r bs.tmp run random value 0..7",
-    *[f"execute if score #r bs.tmp matches {i} run summon minecraft:vex {x} {y} {z} " + vex(["bs.livre"], "Livre maudit", "dark_purple", 10, 3, LIVRE)
+    *[f"execute if score #r bs.tmp matches {i} run summon minecraft:vex {x} {y} {z} " + vex(["bs.livre"], "Livre maudit", "dark_purple", 14, 4, LIVRE)
       for i, (x, y, z) in enumerate(MURS)],
     "playsound minecraft:item.book.put hostile @a[distance=0..] 0 105 0 2 0.5",
     f"function {NS}:g/at/livre_un"])
@@ -740,14 +746,15 @@ fn("g/pupitre/tick", [
     "particle minecraft:enchant ~ ~1.6 ~ 0.3 0.3 0.3 1 25",
     "playsound minecraft:block.enchantment_table.use block @a[distance=..10] ~ ~ ~ 0.7 1.2",
     *[f"execute if score @s bs.g matches {i + 1} run " + barre("@a[tag=bs.joue,distance=..2.8]", "Scellement " + b, "light_purple") for i, b in enumerate(BARRES)],
-    f"execute if score @s bs.g matches 6.. run function {NS}:g/pupitre/allumer"])
+    f"execute if score @s bs.g matches 8.. run function {NS}:g/pupitre/allumer"])
 fn("g/pupitre/allumer", [
     "tag @s add bs.pu.on", "scoreboard players set @s bs.g 0",
     *[f"execute if score @s bs.k matches {i + 1} run function {NS}:arene/g/ligne_on_{i + 1}" for i in range(4)],
     "playsound minecraft:block.beacon.activate block @a[distance=0..] ~ ~ ~ 2 1.4",
     "particle minecraft:end_rod ~ ~1.5 ~ 0.4 0.6 0.4 0.05 30",
-    barre("@a[tag=bs.joue,distance=..3]", "Pupitre activé ! Tenez-en assez en même temps pour l'enchaîner.", "aqua")])
-fn("g/pupitre/rayon", [f"execute positioned ~ ~1.3 ~ facing entity @e[tag=bs.hb.g,limit=1] eyes run particle minecraft:end_rod ^ ^ ^{d} 0 0 0 0 1" for d in range(1, 15)])
+    barre("@a[tag=bs.joue,distance=..3]", "Pupitre activé !", "aqua")])
+fn("g/pupitre/rayon", ["scoreboard players add @s bs.g 1",
+    f"execute if score @s bs.g matches 30.. run return run function {NS}:g/pupitre/eteindre"] + [f"execute positioned ~ ~1.3 ~ facing entity @e[tag=bs.hb.g,limit=1] eyes run particle minecraft:end_rod ^ ^ ^{d} 0 0 0 0 1" for d in range(1, 15)])
 fn("g/pupitre/eteindre", [
     "tag @s remove bs.pu.on", "scoreboard players set @s bs.g 0",
     *[f"execute if score @s bs.k matches {i + 1} run function {NS}:arene/g/ligne_off_{i + 1}" for i in range(4)],
@@ -755,36 +762,36 @@ fn("g/pupitre/eteindre", [
 fn("g/enchainer", [
     "scoreboard players set #etat bs.g 1", "scoreboard players set #t bs.g 0",
     f"function {NS}:rig/grimoire/jouer/enchaine",
-    *titre("@a[tag=bs.joue]", "ENCHAÎNÉ !", "Ses chaînes le tirent au sol : frappez-le !", "aqua", "white"),
+    *titre("@a[tag=bs.joue]", "ENCHAÎNÉ", "Frappez-le !", "aqua", "white"),
     "execute as @a[tag=bs.joue] at @s run playsound minecraft:block.chain.break master @s ~ ~ ~ 1 0.5",
     "execute as @a[tag=bs.joue] at @s run playsound minecraft:entity.iron_golem.damage master @s ~ ~ ~ 1 0.5"])
 fn("g/enchaine", [
     f"execute if entity @s[y={GY + 1.6},dy=40] run tp @s ~ ~-0.3 ~",
     f"execute if score #m4 bs.ev matches 0 run function {NS}:g/chaines",
-    f"execute if score #t bs.g matches 200.. run function {NS}:g/liberer"])
+    f"execute if score #t bs.g matches 140.. run function {NS}:g/liberer"])
 fn("g/chaines", [f"execute {'if score #pilier bs.g matches 0 ' if i == 0 else ''}positioned {x + .5} {GY + 11} {z + .5} facing entity @s eyes run particle minecraft:dust{{color:[0.5,0.5,0.56],scale:1.3}} ^ ^ ^{d} 0 0 0 0 1"
                  for i, (x, z) in enumerate(arenes.PILIERS) for d in range(1, 13)])
 fn("g/liberer", [
     "scoreboard players set #etat bs.g 2", "scoreboard players set #t bs.g 0",
     f"execute as @e[type=minecraft:marker,tag=bs.pu.on] at @s run function {NS}:g/pupitre/eteindre",
     f"function {NS}:rig/grimoire/jouer/vol",
-    barre("@a[tag=bs.joue]", "Il brise ses chaînes et remonte ! Réactivez les pupitres.", "light_purple"),
+    barre("@a[tag=bs.joue]", "Il se libère : rallumez les pupitres", "light_purple"),
     "playsound minecraft:entity.evoker.prepare_summon hostile @a[distance=..48] ~ ~ ~ 2 0.6"])
 fn("g/remonte", ["tp @s ~ ~0.25 ~", f"execute if entity @s[y={GY + 6},dy=50] run scoreboard players set #etat bs.g 0",
                  f"execute if entity @s[y={GY + 6},dy=50] run scoreboard players set #t bs.g 61"])
 fn("g/phase2", [
     "scoreboard players set #ph bs.g 2", "scoreboard players set #atk bs.g 70", "scoreboard players set #pilier bs.g 1",
     f"execute unless score #etat bs.g matches 1 run function {NS}:rig/grimoire/jouer/rugit",
-    *titre("@a[tag=bs.joue]", "PHASE 2", "Les livres s'envolent ! Gare aux runes.", "light_purple", "white"),
-    barre("@a[tag=bs.joue]", "Un pilier s'effondre : moins d'abris contre les pages.", "gold"),
+    *titre("@a[tag=bs.joue]", "PHASE 2", "Livres et runes !", "light_purple", "white"),
+    barre("@a[tag=bs.joue]", "Un pilier s'effondre", "gold"),
     "execute as @a[tag=bs.joue] at @s run playsound minecraft:entity.ender_dragon.growl master @s ~ ~ ~ 0.8 1.3",
     f"execute in boss:grimoire run function {NS}:arene/g/pilier_tombe",
     "scoreboard players set #nl bs.tmp 2", f"execute in boss:grimoire run function {NS}:g/at/livre_un"])
 fn("g/phase3", [
     "scoreboard players set #ph bs.g 3", "scoreboard players set #atk bs.g 70",
     f"execute unless score #etat bs.g matches 1 run function {NS}:rig/grimoire/jouer/rugit",
-    *titre("@a[tag=bs.joue]", "PHASE 3", "Le sol s'effondre ! Plus que 2 pupitres.", "light_purple", "white"),
-    barre("@a[tag=bs.joue]", "Éloigne-toi du bord : il tombe dans le vide !", "gold"),
+    *titre("@a[tag=bs.joue]", "PHASE 3", "Le sol s'effondre !", "light_purple", "white"),
+    barre("@a[tag=bs.joue]", "Plus que 2 pupitres. Loin du bord !", "gold"),
     "execute as @a[tag=bs.joue] at @s run playsound minecraft:entity.ender_dragon.growl master @s ~ ~ ~ 1 0.9",
     *[f"execute as @e[type=minecraft:marker,tag=bs.pu{i}] run function {NS}:g/pupitre/eteindre" for i in (3, 4)],
     *[f"tag @e[type=minecraft:marker,tag=bs.pu{i}] add bs.pu.mort" for i in (3, 4)],
@@ -793,7 +800,7 @@ fn("g/phase3", [
     "scoreboard players set #bord bs.g 0", "scoreboard players set #bordon bs.g 1"])
 
 # ------------------------------------------------------------------------------------------------ Corbeau
-fn("c/lancer", pv_max(350, 160) + [
+fn("c/lancer", pv_max(600, 250) + [
     f"execute in boss:corbeau positioned 0 {CY + 1} -14 run function {NS}:c/invoquer with storage boss:t",
     *resistance("bs.hb.c"),
     f"execute at @e[tag=bs.hb.c,limit=1] run function {NS}:rig/corbeau/invoquer",
@@ -802,20 +809,18 @@ fn("c/lancer", pv_max(350, 160) + [
     "scoreboard players set #etat bs.c 6", "scoreboard players set #t bs.c -10", "scoreboard players set #atk bs.c 120",
     "scoreboard players set #ph bs.c 1", "scoreboard players set #disp bs.c 0", "scoreboard players set #soin bs.c 0",
     "scoreboard players set #arr bs.c 0",
-    "scoreboard players operation #unite bs.c = #max bs.ev", "scoreboard players operation #unite bs.c /= #60 bs.tmp",
+    "scoreboard players operation #unite bs.c = #max bs.ev", "scoreboard players set #c bs.tmp 40", "scoreboard players operation #unite bs.c /= #c bs.tmp",
     "execute if score #unite bs.c matches ..0 run scoreboard players set #unite bs.c 1",
-    *titre("@a[tag=bs.joue]", "LE CORBEAU-ÉPOUVANTAIL", "Saute ou recule quand sa croix craque !", "dark_red", "white"),
+    *titre("@a[tag=bs.joue]", "LE CORBEAU", "Croix qui craque : saute !", "dark_red", "white"),
     "execute as @a[tag=bs.joue] at @s run playsound minecraft:entity.wither.spawn master @s ~ ~ ~ 0.7 0.6",
-    dire("@a[tag=bs.joue]", ("Comment le vaincre : ", "gold"),
-         ("frappe-le quand il marche. Quand sa tête se tord et que sa croix craque, saute ou recule : il fauche tout autour de lui. ", "white"),
-         ("Sous 60 %, il se disperse en corbeaux qui filent vers un épouvantail : tue-les en vol, sinon il se soigne. ", "white"),
-         ("Sous 30 %, il se crucifie : esquive sa charge sur le côté, puis frappe le sac pendant qu'il est sonné.", "gray"))])
+    dire("@a[tag=bs.joue]", ("Croix qui craque : saute ou recule.", "white")),
+    dire("@a[tag=bs.joue]", ("Phase 2 : tue les corbeaux en vol. Phase 3 : esquive la charge, frappe-le sonné.", "gray"))])
 fn("c/invoquer", "$summon minecraft:zombie ~ ~ ~ {Tags:[\"bs.e\",\"bs.hb\",\"bs.hb.c\"],NoAI:1b,Silent:1b,PersistenceRequired:1b,"
    "CanPickUpLoot:0b,CanBreakDoors:0b,IsBaby:0b,DeathLootTable:\"minecraft:empty\",Health:$(hp)f,Rotation:[0f,0f],"
    "CustomName:{text:\"Le Corbeau-Épouvantail\",color:\"dark_red\",bold:true},"
    "attributes:[{id:\"minecraft:max_health\",base:$(hp)d},{id:\"minecraft:scale\",base:4.5d},{id:\"minecraft:armor\",base:8d},"
-   "{id:\"minecraft:knockback_resistance\",base:1d},{id:\"minecraft:movement_speed\",base:0.17d},{id:\"minecraft:follow_range\",base:48d},"
-   "{id:\"minecraft:attack_damage\",base:5d},{id:\"minecraft:spawn_reinforcements\",base:0d},{id:\"minecraft:step_height\",base:1.5d}],"
+   "{id:\"minecraft:knockback_resistance\",base:1d},{id:\"minecraft:movement_speed\",base:0.22d},{id:\"minecraft:follow_range\",base:48d},"
+   "{id:\"minecraft:attack_damage\",base:7d},{id:\"minecraft:spawn_reinforcements\",base:0d},{id:\"minecraft:step_height\",base:1.5d}],"
    + INVIS + ",equipment:{head:" + VIDE + "},drop_chances:{head:0f}}")
 fn("c/anim_defaut", [
     "execute if score #etat bs.ev matches 4 run return 0",
@@ -857,7 +862,7 @@ fn("c/marche", [
     f"execute if score #ph bs.c matches 2 if score #disp bs.c matches ..0 run return run function {NS}:c/disperser",
     f"execute if score #atk bs.c matches ..0 run function {NS}:c/attaque"])
 fn("c/attaque", [
-    "scoreboard players set #atk bs.c 130", "execute if score #ph bs.c matches 2 run scoreboard players set #atk bs.c 110",
+    "scoreboard players set #atk bs.c 90", "execute if score #ph bs.c matches 2 run scoreboard players set #atk bs.c 70",
     "execute store result score #r bs.tmp run random value 1..4",
     f"execute if score #r bs.tmp matches 1..2 run return run function {NS}:c/at/fauchage",
     f"execute if score #r bs.tmp matches 3 run return run function {NS}:c/at/nuee",
@@ -866,24 +871,25 @@ fn("c/geler", ["data merge entity @s {NoAI:1b}", "scoreboard players set #etat b
                "rotate @s facing entity @p[tag=bs.joue] feet", "execute rotated as @s run rotate @s ~ 0"])
 fn("c/at/fauchage", [f"function {NS}:c/geler", "scoreboard players set #att bs.c 1", f"function {NS}:rig/corbeau/jouer/fauchage",
                      "playsound minecraft:entity.zombie.attack_wooden_door hostile @a[distance=..32] ~ ~ ~ 2 0.5",
-                     barre("@a[tag=bs.joue,distance=..10]", "Sa croix craque : saute ou recule !", "red")])
+                     barre("@a[tag=bs.joue,distance=..10]", "Sa croix craque : saute !", "red")])
 fn("c/at/nuee", [f"function {NS}:c/geler", "scoreboard players set #att bs.c 2", f"function {NS}:rig/corbeau/jouer/nuee",
                  "playsound minecraft:entity.phantom.ambient hostile @a[distance=..32] ~ ~ ~ 2 0.6"])
 CERCLE = [(4.5 * math.cos(a / 8 * math.pi), 4.5 * math.sin(a / 8 * math.pi)) for a in range(16)]
 fn("c/attaque_cours", [
     "execute if score #att bs.c matches 1 if score #t bs.c matches 14 run playsound minecraft:entity.zombie.attack_wooden_door hostile @a[distance=..32] ~ ~ ~ 2 0.4",
     *[f"execute if score #att bs.c matches 1 if score #t bs.c matches 21..32 run particle minecraft:sweep_attack ~{x:.2f} ~1.2 ~{z:.2f} 0 0 0 0 1" for x, z in CERCLE[::2]],
-    f"execute if score #att bs.c matches 1 if score #t bs.c matches 24 as @a[tag=bs.joue,distance=..6.5] if predicate {NS}:au_sol run {blesse(10)}",
+    f"execute if score #att bs.c matches 1 if score #t bs.c matches 24 as @a[tag=bs.joue,distance=..7.5] if predicate {NS}:au_sol run {blesse(12)}",
     "execute if score #att bs.c matches 1 if score #t bs.c matches 24 run playsound minecraft:entity.player.attack.sweep hostile @a[distance=..32] ~ ~ ~ 2 0.5",
     "execute if score #att bs.c matches 2 if score #t bs.c matches 10 run scoreboard players operation #nc bs.tmp = #n bs.ev",
-    "execute if score #att bs.c matches 2 if score #t bs.c matches 10 run scoreboard players add #nc bs.tmp 2",
-    "execute if score #att bs.c matches 2 if score #t bs.c matches 10 if score #nc bs.tmp matches 9.. run scoreboard players set #nc bs.tmp 8",
+    "execute if score #att bs.c matches 2 if score #t bs.c matches 10 run scoreboard players operation #nc bs.tmp += #n bs.ev",
+    "execute if score #att bs.c matches 2 if score #t bs.c matches 10 run scoreboard players add #nc bs.tmp 3",
+    "execute if score #att bs.c matches 2 if score #t bs.c matches 10 if score #nc bs.tmp matches 13.. run scoreboard players set #nc bs.tmp 12",
     f"execute if score #att bs.c matches 2 if score #t bs.c matches 10 positioned ~ ~5 ~ run function {NS}:c/at/corbeau_un",
     "execute if score #att bs.c matches 2 if score #t bs.c matches 10 run particle minecraft:large_smoke ~ ~5 ~ 0.5 0.8 0.5 0.05 30",
     f"execute if score #t bs.c matches 40.. run function {NS}:c/fin_attaque"])
 fn("c/at/corbeau_un", [
     "execute if score #nc bs.tmp matches ..0 run return 0", "scoreboard players remove #nc bs.tmp 1",
-    "summon minecraft:vex ~ ~ ~ " + vex(["bs.oiseau"], "Corbeau", "dark_gray", 4, 3, OISEAU),
+    "summon minecraft:vex ~ ~ ~ " + vex(["bs.oiseau"], "Corbeau", "dark_gray", 6, 4, OISEAU),
     "playsound minecraft:entity.phantom.flap hostile @a[distance=..24] ~ ~ ~ 1 1.4",
     f"function {NS}:c/at/corbeau_un"])
 fn("c/fin_attaque", ["data merge entity @s {NoAI:0b}", "scoreboard players set #etat bs.c 0",
@@ -900,17 +906,17 @@ fn("c/at/regard", [
     "scoreboard players set @a bs.vu 0",
     *[f"execute if score @e[type=minecraft:marker,tag=bs.regarde,limit=1] bs.k matches {i + 1} in boss:corbeau run function {NS}:c/yeux_on_{i + 1}" for i in range(len(arenes.EPOUVANTAILS))],
     f"function {NS}:rig/corbeau/jouer/torsion",
-    barre("@a[tag=bs.vise]", "Un épouvantail te fixe… ne le regarde pas !", "gold"),
+    barre("@a[tag=bs.vise]", "Ne regarde pas l'épouvantail !", "gold"),
     "execute as @a[tag=bs.vise] at @s run playsound minecraft:ambient.cave master @s ~ ~ ~ 1 0.5"])
 fn("c/at/rayon", [f"execute positioned ^ ^ ^{d} if entity @e[type=minecraft:marker,tag=bs.regarde,distance=..1.4] run return 1" for d in range(1, 31)] + ["return 0"])
 fn("c/at/regard_tick", [
     "scoreboard players add #rg bs.c 1",
     f"execute if score #m4 bs.ev matches 0 as @a[tag=bs.vise] at @s anchored eyes if function {NS}:c/at/rayon run scoreboard players add @s bs.vu 4",
     "execute if score #m4 bs.ev matches 0 at @e[type=minecraft:marker,tag=bs.regarde] run particle minecraft:dust{color:[1,0.35,0.1],scale:1} ~ ~ ~ 0.25 0.25 0.25 0 3",
-    f"execute as @a[tag=bs.vise,scores={{bs.vu=40..}}] at @s run function {NS}:c/at/maudit",
+    f"execute as @a[tag=bs.vise,scores={{bs.vu=28..}}] at @s run function {NS}:c/at/maudit",
     f"execute if score #rg bs.c matches 140.. run function {NS}:c/at/regard_fin"])
 fn("c/at/maudit", ["effect give @s minecraft:slowness 6 2", "effect give @s minecraft:darkness 6 0",
-                   barre("@s", "Tu l'as regardé trop longtemps…", "red"),
+                   barre("@s", "Tu l'as trop regardé…", "red"),
                    "playsound minecraft:entity.warden.nearby_closest master @s ~ ~ ~ 1 0.8",
                    "scoreboard players set @s bs.vu 0", "tag @s remove bs.vise"])
 fn("c/at/regard_fin", [
@@ -925,7 +931,7 @@ fn("c/disperser", [
     "playsound minecraft:entity.bat.takeoff hostile @a[distance=..48] ~ ~ ~ 2 0.5",
     "tag @e[type=minecraft:marker,tag=bs.cible] remove bs.cible",
     "tag @e[type=minecraft:marker,tag=bs.epv,sort=random,limit=1] add bs.cible",
-    *titre("@a[tag=bs.joue]", "", "Il se disperse ! Tue les corbeaux avant qu'ils le rejoignent.", "white", "red")])
+    *titre("@a[tag=bs.joue]", "", "Tue les corbeaux !", "white", "red")])
 fn("c/disperse", [
     "execute if score #t bs.c matches ..26 if score #m4 bs.ev matches 0 run particle minecraft:dust{color:[0.05,0.05,0.08],scale:2} ~ ~5 ~ 1.5 3 1.5 0 30",
     "execute if score #t bs.c matches ..26 if score #m4 bs.ev matches 0 run particle minecraft:large_smoke ~ ~5 ~ 1 2 1 0.02 10",
@@ -933,7 +939,7 @@ fn("c/disperse", [
     f"execute if score #t bs.c matches 40.. unless entity @e[tag=bs.frag] run function {NS}:c/reformer"])
 fn("c/fragments", [
     "scoreboard players operation #nf bs.tmp = #n bs.ev", "scoreboard players operation #nf bs.tmp *= #2 bs.tmp",
-    "scoreboard players add #nf bs.tmp 3", "execute if score #nf bs.tmp matches 14.. run scoreboard players set #nf bs.tmp 13",
+    "scoreboard players add #nf bs.tmp 5", "execute if score #nf bs.tmp matches 14.. run scoreboard players set #nf bs.tmp 13",
     "scoreboard players set #soin bs.c 0", "scoreboard players set #arr bs.c 0",
     *[f"execute if score #nf bs.tmp matches {i + 1}.. positioned ~{dx} ~{3 + (i % 4)} ~{dz} run summon minecraft:vex ~ ~ ~ "
       + vex(["bs.frag"], "Corbeau", "dark_gray", 2, 1, OISEAU, ia=False) for i, (dx, dz) in enumerate(OFFS)],
@@ -953,21 +959,21 @@ fn("c/reformer", [
     "execute store result entity @s Health float 1 run scoreboard players get #hp bs.c",
     f"function {NS}:rig/corbeau/jouer/reforme",
     "execute at @e[type=minecraft:marker,tag=bs.cible,limit=1] run particle minecraft:large_smoke ~ ~ ~ 1 2 1 0.05 60",
-    f"execute if score #arr bs.c matches 1.. run title @a[tag=bs.joue] actionbar [{{\"score\":{{\"name\":\"#arr\",\"objective\":\"bs.c\"}},\"color\":\"red\"}},{{\"text\":\" corbeau(x) l'ont rejoint : il se soigne !\",\"color\":\"red\"}}]",
-    f"execute if score #arr bs.c matches 0 run {barre('@a[tag=bs.joue]', 'Aucun corbeau n’est passé : il se reforme sans soin !', 'green')}",
+    f"execute if score #arr bs.c matches 1.. run title @a[tag=bs.joue] actionbar [{{\"score\":{{\"name\":\"#arr\",\"objective\":\"bs.c\"}},\"color\":\"red\"}},{{\"text\":\" corbeau(x) arrivés : il se soigne\",\"color\":\"red\"}}]",
+    f"execute if score #arr bs.c matches 0 run {barre('@a[tag=bs.joue]', 'Aucun corbeau passé : pas de soin', 'green')}",
     "tag @e[type=minecraft:marker,tag=bs.cible] remove bs.cible",
-    "scoreboard players set #etat bs.c 6", "scoreboard players set #t bs.c 18", "scoreboard players set #disp bs.c 500",
+    "scoreboard players set #etat bs.c 6", "scoreboard players set #t bs.c 18", "scoreboard players set #disp bs.c 360",
     "playsound minecraft:entity.zombie.attack_wooden_door hostile @a[distance=..48] ~ ~ ~ 2 0.4"])
 fn("c/phase2", [
     "scoreboard players set #ph bs.c 2", "scoreboard players set #disp bs.c 60", "scoreboard players set #atk bs.c 150",
-    *titre("@a[tag=bs.joue]", "PHASE 2", "Il se disperse en corbeaux : tue-les avant qu'ils le rejoignent !", "dark_red", "white"),
-    barre("@a[tag=bs.joue]", "Reste dans la lumière des citrouilles : la nuit te ronge.", "gold"),
+    *titre("@a[tag=bs.joue]", "PHASE 2", "Tue les corbeaux en vol !", "dark_red", "white"),
+    barre("@a[tag=bs.joue]", "Reste près des citrouilles", "gold"),
     "execute as @a[tag=bs.joue] at @s run playsound minecraft:entity.ravager.roar master @s ~ ~ ~ 1 0.6"])
 fn("c/phase3", [
     "scoreboard players set #ph bs.c 3", "data merge entity @s {NoAI:1b}",
     "scoreboard players set #etat bs.c 8", "scoreboard players set #t bs.c 0",
     f"function {NS}:rig/corbeau/jouer/dispersion",
-    *titre("@a[tag=bs.joue]", "PHASE 3", "Il s'est crucifié ! Esquive sa charge sur le côté, puis frappe le sac.", "dark_red", "white"),
+    *titre("@a[tag=bs.joue]", "PHASE 3", "Esquive, puis frappe-le !", "dark_red", "white"),
     "execute as @a[tag=bs.joue] at @s run playsound minecraft:entity.ender_dragon.growl master @s ~ ~ ~ 1 0.5",
     f"execute as @e[type=minecraft:item_display,tag=bs.lune] run data merge entity @s {{start_interpolation:0,interpolation_duration:80,transformation:{snbt_matrice([[8 * RIGS['lune'].facteurs[list(RIGS['lune'].facteurs)[0]], 0, 0, 0], [0, 8 * RIGS['lune'].facteurs[list(RIGS['lune'].facteurs)[0]], 0, 0], [0, 0, 8 * RIGS['lune'].facteurs[list(RIGS['lune'].facteurs)[0]], 0], [0, 0, 0, 1]])}}}"])
 fn("c/vers_croix", [
@@ -983,11 +989,13 @@ fn("c/crucifie", [
     f"execute if score #pl bs.c matches ..0 run function {NS}:c/plumes",
     f"execute if score #ch bs.c matches ..0 run function {NS}:c/charge_debut"])
 fn("c/plumes", [
-    "scoreboard players set #pl bs.c 90",
+    "scoreboard players set #pl bs.c 65",
+    "scoreboard players operation #nc bs.tmp = #n bs.ev", "scoreboard players add #nc bs.tmp 1",
+    f"execute positioned ~ ~6 ~ run function {NS}:c/at/corbeau_un",
     f'execute as @a[tag=bs.joue] at @s run summon minecraft:marker ~ {CY + 1} ~ {{Tags:["bs.e","bs.fx","bs.plume"]}}',
     *[f"function {NS}:c/plume_hasard" for _ in range(2)],
     "playsound minecraft:entity.phantom.ambient hostile @a[distance=0..] 0 70 0 3 0.5",
-    barre("@a[tag=bs.joue]", "Les plumes tombent : sors des cercles avant le piqué !", "gray")])
+    barre("@a[tag=bs.joue]", "Sors des cercles !", "gray")])
 fn("c/plume_hasard", ["execute store result storage boss:t x int 1 run random value -15..15",
                       "execute store result storage boss:t z int 1 run random value -15..15",
                       f"execute in boss:corbeau run function {NS}:c/plume_m with storage boss:t"])
@@ -999,7 +1007,7 @@ fn("c/plume_tick", [
     "execute if score @s bs.k matches ..39 if score #m4 bs.ev matches 0 run particle minecraft:white_ash ~ ~3 ~ 1.5 2 1.5 0 10",
     f"execute if score @s bs.k matches 40 run function {NS}:c/pique",
     "execute if score @s bs.k matches 42.. run kill @s"])
-fn("c/pique", [f"execute as @a[tag=bs.joue,distance=..2.7] run {blesse(7)}",
+fn("c/pique", [f"execute as @a[tag=bs.joue,distance=..2.9] run {blesse(9)}",
                "particle minecraft:large_smoke ~ ~1 ~ 1 1 1 0.05 30", "particle minecraft:dust{color:[0.05,0.05,0.08],scale:2} ~ ~1 ~ 1 1 1 0 40",
                "playsound minecraft:entity.phantom.bite hostile @a[distance=..24] ~ ~ ~ 2 0.7"])
 fn("c/charge_debut", [
@@ -1007,29 +1015,29 @@ fn("c/charge_debut", [
     "tag @a remove bs.chc", "tag @a remove bs.ch", "tag @r[tag=bs.joue] add bs.chc",
     f"function {NS}:rig/corbeau/jouer/torsion",
     "playsound minecraft:entity.zombie.attack_wooden_door hostile @a[distance=0..] ~ ~ ~ 3 0.4",
-    barre("@a[tag=bs.joue]", "Il se décroche de sa croix : écarte-toi de la ligne rouge !", "red")])
+    barre("@a[tag=bs.joue]", "Évite la ligne rouge !", "red")])
 fn("c/charge", [
     "execute if score #t bs.c matches ..18 facing entity @a[tag=bs.chc,limit=1] feet run rotate @s ~ 0",
     *[f"execute if score #t bs.c matches ..20 if score #m4 bs.ev matches 0 rotated ~ 0 run particle minecraft:dust{{color:[0.9,0.1,0.1],scale:1.3}} ^ ^0.2 ^{d} 0.1 0 0.1 0 1" for d in range(1, 19)],
     f"execute if score #t bs.c matches 20 run function {NS}:rig/corbeau/jouer/charge",
     "execute if score #t bs.c matches 20 run playsound minecraft:entity.ravager.roar hostile @a[distance=0..] ~ ~ ~ 3 0.7",
-    "execute if score #t bs.c matches 21..46 rotated ~ 0 run tp @s ^ ^ ^0.7",
+    "execute if score #t bs.c matches 21..46 rotated ~ 0 run tp @s ^ ^ ^0.85",
     f"execute if score #t bs.c matches 21..46 positioned 0 {CY + 1} 0 unless entity @s[distance=..21] run scoreboard players set #t bs.c 47",
     f"execute if score #t bs.c matches 21..46 as @a[tag=bs.joue,tag=!bs.ch,distance=..2.6] run function {NS}:c/charge_touche",
     f"execute if score #t bs.c matches 47.. run function {NS}:c/sonne_debut"])
-fn("c/charge_touche", ["tag @s add bs.ch", blesse(9), "effect give @s minecraft:levitation 1 1 true"])
+fn("c/charge_touche", ["tag @s add bs.ch", blesse(12), "effect give @s minecraft:levitation 1 1 true"])
 fn("c/sonne_debut", [
     "scoreboard players set #etat bs.c 5", "scoreboard players set #t bs.c 0", "data merge entity @s {Invulnerable:0b}",
     f"function {NS}:rig/corbeau/jouer/sonne",
-    *titre("@a[tag=bs.joue]", "", "Il est sonné : frappe le sac !", "white", "gold"),
+    *titre("@a[tag=bs.joue]", "", "Il est sonné : frappe !", "white", "gold"),
     "playsound minecraft:block.anvil.land hostile @a[distance=0..] ~ ~ ~ 2 0.5"])
 fn("c/sonne", [
-    "execute unless score #t bs.c matches 110.. run return 0",
+    "execute unless score #t bs.c matches 80.. run return 0",
     "particle minecraft:large_smoke ~ ~2 ~ 1 2 1 0.05 50",
     "data merge entity @s {Invulnerable:1b}",
     f"execute in boss:corbeau run tp @s 0 {CY + 1} 0 0 0",
     f"function {NS}:rig/corbeau/jouer/croix",
-    "scoreboard players set #etat bs.c 3", "scoreboard players set #ch bs.c 220", "tag @a remove bs.chc"])
+    "scoreboard players set #etat bs.c 3", "scoreboard players set #ch bs.c 150", "tag @a remove bs.chc"])
 fn("c/effets", [
     f"execute as @e[tag=bs.frag] at @s facing entity @e[type=minecraft:marker,tag=bs.cible,limit=1] feet run tp @s ^ ^ ^0.2 ~ ~",
     f"execute as @e[tag=bs.frag] at @s if entity @e[type=minecraft:marker,tag=bs.cible,distance=..1.6] run function {NS}:c/frag_arrive",
@@ -1038,9 +1046,9 @@ fn("c/effets", [
     f"execute if score #ph bs.c matches 2.. if score #tk bs.ev matches 0 run function {NS}:c/nuit"])
 fn("c/nuit", [
     "execute at @e[type=minecraft:marker,tag=bs.cit] run particle minecraft:dust{color:[1,0.6,0.1],scale:1.2} ~ ~0.3 ~ 3 0 3 0 14",
-    "scoreboard players add #nuit bs.c 1", "execute if score #nuit bs.c matches ..2 run return 0", "scoreboard players set #nuit bs.c 0",
+    "scoreboard players add #nuit bs.c 1", "execute if score #nuit bs.c matches ..1 run return 0", "scoreboard players set #nuit bs.c 0",
     f"execute as @a[tag=bs.joue] at @s unless entity @e[type=minecraft:marker,tag=bs.cit,distance=..6] run function {NS}:c/ronge"])
-fn("c/ronge", [blesse(1), barre("@s", "La nuit te ronge : rapproche-toi d'une citrouille !", "dark_red"),
+fn("c/ronge", [blesse(2), barre("@s", "La nuit te ronge !", "dark_red"),
                "particle minecraft:dust{color:[0.1,0,0],scale:1} ~ ~1 ~ 0.3 0.5 0.3 0 8"])
 
 # ------------------------------------------------------------------------------------------------ sbires (corbeaux, livres)
@@ -1073,7 +1081,8 @@ CAPE = ('minecraft:elytra[minecraft:item_model="boss:cape_plumes",'
 FAMILIER = ('minecraft:paper[minecraft:item_model="boss:grimoire_encre_racine",minecraft:max_stack_size=1,'
             f'minecraft:custom_name={js({"text": "Grimoire familier", "color": "light_purple", "italic": False})},'
             f'minecraft:lore=[{js({"text": "Arraché au Grimoire Vivant.", "color": "gray", "italic": False})},'
-            f'{js({"text": "Dans la main secondaire, des runes tournent autour de toi.", "color": "dark_gray", "italic": True})}],'
+            f'{js({"text": "Main secondaire : Force I, Résistance I,", "color": "blue", "italic": False})},'
+            f'{js({"text": "Vision nocturne et runes autour de toi.", "color": "blue", "italic": False})}],'
             'minecraft:rarity="epic",minecraft:enchantment_glint_override=true,minecraft:custom_data={bs_familier:1b}]')
 fn("recompense/donner", [
     "execute if score @s c.ecus matches -2147483648.. run scoreboard players add @s c.ecus 15000",
@@ -1098,7 +1107,9 @@ fn("cape/tick", [
     f"execute as @a[predicate={NS}:plane] if items entity @s armor.chest minecraft:elytra[minecraft:custom_data~{{bs_cape:1b}}] at @s run function {NS}:cape/plumes",
     f"execute as @a if items entity @s weapon.offhand minecraft:paper[minecraft:custom_data~{{bs_familier:1b}}] at @s run function {NS}:cape/runes"])
 fn("cape/runes", ["particle minecraft:dust{color:[0.7,0.4,1.0],scale:0.7} ~ ~1.1 ~ 0.7 0.5 0.7 0 2",
-                  "particle minecraft:enchant ~ ~1.6 ~ 0.4 0.3 0.4 0.6 2"])
+                  "particle minecraft:enchant ~ ~1.6 ~ 0.4 0.3 0.4 0.6 2",
+                  "effect give @s minecraft:strength 3 0 true", "effect give @s minecraft:resistance 3 0 true",
+                  "execute unless predicate boss:vision run effect give @s minecraft:night_vision 15 0 true"])
 fn("cape/plumes", ["particle minecraft:dust{color:[0.06,0.06,0.09],scale:1.4} ^ ^0.4 ^-0.9 0.35 0.15 0.35 0 3",
                    "particle minecraft:white_ash ^ ^0.4 ^-1.2 0.3 0.2 0.3 0 2"])
 
@@ -1139,14 +1150,18 @@ def ecrire_rp(chemin, obj):
 
 
 ecrire_rp("items/vide.json", {"model": {"type": "minecraft:empty"}})
+# boss de Metiers : armures, casques, armes et parures
+import habits
+habits.ecrire_rp(RP, NS, ecrire_rp)
+habits.ecrire_dp(fn, NS)
 # Grimoire familier tenu en main : positions d'affichage
 import json as _json
 _m = os.path.join(RP, "models", "item", "boss", "grimoire_encre_racine.json")
 _mod = _json.load(open(_m, encoding="utf-8"))
-_mod["display"] = {"thirdperson_righthand": {"rotation": [70, 0, 0], "translation": [0, 3, 1], "scale": [1.1, 1.1, 1.1]},
-                   "thirdperson_lefthand": {"rotation": [70, 0, 0], "translation": [0, 3, 1], "scale": [1.1, 1.1, 1.1]},
-                   "firstperson_righthand": {"rotation": [40, -20, 10], "translation": [1, 4, 0], "scale": [1, 1, 1]},
-                   "firstperson_lefthand": {"rotation": [40, 20, -10], "translation": [1, 4, 0], "scale": [1, 1, 1]},
+_mod["display"] = {"thirdperson_righthand": {"rotation": [70, 0, 0], "translation": [0, 2, 1], "scale": [0.5, 0.5, 0.5]},
+                   "thirdperson_lefthand": {"rotation": [70, 0, 0], "translation": [0, 2, 1], "scale": [0.5, 0.5, 0.5]},
+                   "firstperson_righthand": {"rotation": [30, -30, 10], "translation": [2, 1, 0], "scale": [0.45, 0.45, 0.45]},
+                   "firstperson_lefthand": {"rotation": [30, 30, -10], "translation": [2, 1, 0], "scale": [0.45, 0.45, 0.45]},
                    "gui": {"rotation": [40, 200, 0], "translation": [0, 1, 0], "scale": [1.3, 1.3, 1.3]},
                    "ground": {"rotation": [0, 0, 0], "translation": [0, 2, 0], "scale": [0.8, 0.8, 0.8]},
                    "fixed": {"rotation": [90, 0, 0], "scale": [1.3, 1.3, 1.3]}}

@@ -4,7 +4,7 @@ Datapack pour Minecraft Java 26.x, sans mod. Deux boss de serveur modélisés et
 
 | Boss | Arène | Récompense unique (première victoire) |
 |---|---|---|
-| **Le Grimoire Vivant** | La Bibliothèque Interdite : sommet de tour rond de 29 blocs qui flotte dans le vide violet (dimension `boss:grimoire`) | **Grimoire familier** : petit grimoire à œil, objet cosmétique ; tenu dans la main secondaire, des runes tournent autour du joueur |
+| **Le Grimoire Vivant** | La Bibliothèque Interdite : sommet de tour rond de 29 blocs qui flotte dans le vide violet (dimension `boss:grimoire`) | **Grimoire familier** : petit grimoire à œil ; tenu dans la main secondaire, il donne Force I, Résistance I et Vision nocturne, avec des runes qui tournent autour du joueur |
 | **Le Corbeau-Épouvantail** | Le Champ maudit : blé mort, épouvantails plantés, citrouilles, lune rouge (dimension `boss:corbeau`) | **Cape de plumes noires** : élytres redessinées qui lâchent des plumes en vol |
 
 Pas d'arme ni d'armure, conformément à la règle du serveur. À chaque victoire, tous les inscrits gagnent aussi 15 000 Écus (Commerce), 600 XP Chasseur et 3 éclats de boss (Métiers) et 500 points d'XP. À partir de la deuxième victoire contre un même boss, l'objet unique est remplacé par 6 diamants.
@@ -25,9 +25,9 @@ Déconnexion pendant un combat : à la reconnexion, le joueur reprend le combat 
 
 Un livre ouvert en V, un œil dans la reliure, un éventail de pages à runes, quatre tentacules d'encre et un anneau de runes en orbite. Il flotte à 6 blocs en tournant autour du sceau central.
 
-- **Pupitres de scellement** : un joueur active un pupitre en restant accroupi 3 s à côté (le trait de runes vers le centre devient de l'obsidienne pleureuse, un rayon part vers le livre). Quand assez de pupitres brillent en même temps (2 en solo, autant que de joueurs jusqu'à 4), ses chaînes le tirent au sol 10 s : c'est la fenêtre pour le frapper. Le reste du temps, il faut tirer à l'arc.
-- **Pages tranchantes** : 3 lignes brillent au sol pendant 2 s, puis coupent (7 dégâts).
-- **Tentacule** : le sol se gonfle sous un joueur, une tentacule en sort et s'abat (9 dégâts), laisse une flaque d'encre (lenteur, Wither) et éteint les pupitres proches.
+- **Pupitres de scellement** : un joueur active un pupitre en restant accroupi 4 s à côté (le trait de runes vers le centre devient de l'obsidienne pleureuse, un rayon part vers le livre). Quand assez de pupitres brillent en même temps (2 en solo, autant que de joueurs jusqu'à 4), ses chaînes le tirent au sol 7 s. Un pupitre allumé s'éteint tout seul au bout de 15 s : c'est la fenêtre pour le frapper. Le reste du temps, il faut tirer à l'arc.
+- **Pages tranchantes** : 4 lignes (5 en phase 2, 6 en phase 3) brillent au sol 1,5 s, puis coupent (9 dégâts).
+- **Tentacule** : le sol se gonfle sous un joueur, une tentacule en sort et s'abat (11 dégâts, une tentacule de plus en phase 2 et 3), laisse une flaque d'encre (lenteur, Wither) et éteint les pupitres proches.
 - **Phase 2 (60 %)** : un pilier s'effondre, des livres maudits s'envolent des bibliothèques, rafales de runes qui visent les joueurs.
 - **Phase 3 (30 %)** : le bord du plateau s'écroule bloc par bloc dans le vide, deux pupitres sont détruits.
 
@@ -35,11 +35,24 @@ Un livre ouvert en V, un œil dans la reliure, un éventail de pages à runes, q
 
 Un épouvantail décharné de 9 blocs attaché à sa croix, tête en sac cousu aux yeux rouges, chapeau déchiré, cape de plumes et corbeaux perchés sur la traverse.
 
-- **Fauchage** : sa tête se tord, sa croix craque, puis il tourne sur lui-même (10 dégâts à 6 blocs). On l'esquive en sautant ou en reculant.
-- **Nuée** : sa cage de paille s'ouvre et des corbeaux s'en échappent (2 + 1 par joueur, 8 au plus).
+- **Fauchage** : sa tête se tord, sa croix craque, puis il tourne sur lui-même (12 dégâts à 7,5 blocs). On l'esquive en sautant ou en reculant.
+- **Nuée** : sa cage de paille s'ouvre et des corbeaux s'en échappent (3 + 1 par joueur, 12 au plus).
 - **Regard des épouvantails** : les yeux d'un épouvantail planté s'allument. Le joueur visé qui le regarde plus de 2 s prend Lenteur et Obscurité.
-- **Phase 2 (60 %)** : toutes les 25 s, il se disperse en corbeaux qui filent vers un épouvantail. Chaque corbeau qui arrive lui rend 1/60 de sa vie : il faut les abattre en vol. En plus, la nuit ronge ceux qui s'éloignent à plus de 6 blocs d'une citrouille.
-- **Phase 3 (30 %)** : il se crucifie au centre, invulnérable. Pluie de plumes (cercles au sol puis piqué de corbeaux) et charges en ligne droite annoncées par une ligne rouge. Après sa charge, il reste sonné 5 s : c'est là qu'on le frappe.
+- **Phase 2 (60 %)** : toutes les 18 s, il se disperse en corbeaux qui filent vers un épouvantail. Chaque corbeau qui arrive lui rend 1/40 de sa vie : il faut les abattre en vol. En plus, la nuit ronge ceux qui s'éloignent à plus de 6 blocs d'une citrouille.
+- **Phase 3 (30 %)** : il se crucifie au centre, invulnérable. Pluie de plumes (cercles au sol puis piqué de corbeaux) et charges en ligne droite annoncées par une ligne rouge. Après sa charge, il reste sonné 4 s : c'est là qu'on le frappe.
+
+## Difficulté (version 1.1)
+
+PV : Grimoire 500 + 250 par joueur, Corbeau 600 + 250 par joueur (au-delà de 1 000, Résistance). Attaques plus rapprochées (le Grimoire attaque toutes les 4,5 s puis 2,7 s en phase 3, le Corbeau toutes les 4,5 s puis 3,5 s), flaque d'encre sous un joueur à chaque attaque du Grimoire en phase 2, tentacule en plus à chaque attaque en phase 3, corbeaux pendant la pluie de plumes du Corbeau, nuit qui ronge plus fort (2 dégâts toutes les 2 s).
+
+## Boss de Métiers habillés
+
+Le pack habille aussi les 5 boss de Métiers dès qu'ils apparaissent, sans changer leur IA :
+- Colosse : armure de forge peinte, casque à cornes, marteau de forge géant ;
+- Liche du givre : robe de givre, couronne de pics de glace, bâton à cristal ;
+- Reine arachnide : couronne d'épines et yeux rouges qui brillent, dos hérissé de cristaux et de cocons ;
+- Brasier ancestral : anneau de plaques d'obsidienne veinées de lave qui tourne autour de lui, couronne de feu ;
+- Creeper géant : fagot de TNT dans le dos, noyau de cristal vert sur la tête.
 
 ## Commandes admin
 
@@ -71,6 +84,10 @@ python labo\outils\fusion_rp.py               # verse build/boss_rp dans metiers
 ```
 
 Le pack ajoute deux dimensions : il faut **redémarrer** le serveur (`lab-reload.bat complet` au labo) pour qu'elles existent. Mise en prod : `lab-reload.bat complet` doit afficher « Aucune erreur. », puis commit et push du `metiers_resourcepack.zip`, et le nouveau SHA-1 dans `resource-pack-sha1` du `server.properties`.
+
+## Version 1.1 (26/11/2026)
+
+Textes à l'écran raccourcis, boss nettement plus durs, Grimoire familier utile (effets en main secondaire, plus petit en main), boss de Métiers habillés.
 
 ## Version 1.0 (26/11/2026)
 
