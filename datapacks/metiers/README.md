@@ -153,3 +153,7 @@ Le resource pack recolore toute l'interface vanilla (inventaire, conteneurs, bar
 ## Sac à dos
 
 Le sac s'ouvre en un clic droit : tant qu'il est tenu en main, une barque à coffre en bambou invisible (texture vidée par le resource pack) suit les yeux du joueur. Contrepartie : les vraies barques à coffre en bambou sont invisibles sur le serveur.
+
+Oubli d'une compétence (26/11/2026) : une compétence acquise se désactive au premier clic (cadre rouge). Un clic sur une compétence désactivée ouvre un choix : la réactiver, ou l'oublier pour récupérer ses points (refusé tant qu'une compétence qui en dépend est acquise). Déclencheurs 4000 + 20 x idx + n (oublier) et 4300 + 20 x idx + n (réactiver). Oublier Ailes retire les élytres.
+
+Ordre de build quand les glyphes de la police `metiers:arbre` changent (nouvel état de nœud, nouveau décor...) : les codes des glyphes se décalent, et Commerce, Horreur et Compagnons les relisent (`panneaux.json`, `glyphes.json`, `menu_serveur.json`). Il faut reconstruire Métiers, puis Commerce, puis Métiers une deuxième fois (il relit `menu_serveur.json`), puis Horreur et Compagnons, et enfin `fusion_rp.py`. Sinon le menu G et les écrans d'accueil affichent de mauvais dessins.

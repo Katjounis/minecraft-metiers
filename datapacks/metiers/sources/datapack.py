@@ -2266,7 +2266,7 @@ for _mod in ("ref_base.py", "ref_skills.py", "ref_comp18.py", "ref_objets.py", "
 # et le tag metiers.skoff.XN coupe son effet. Tous les sélecteurs d'effet reçoivent donc « et pas désactivée ».
 import re as _re2
 _SK = _re2.compile(r"tag=metiers\.sk\.([a-z])(\d+)(?=[,\]])")
-_GARDE = _re2.compile(r"(/acheter_\d+|/basculer_\d+|/arbre|/page_dialog|/points|function[/\\]menu|refonte[/\\]migration|desinstaller)")
+_GARDE = _re2.compile(r"(/acheter_\d+|/basculer_\d+|/oublier_\d+|/choix_\d+|/arbre|/page_dialog|/points|function[/\\]menu|refonte[/\\]migration|desinstaller)")
 for _dp, _, _fs in os.walk(ROOT):
     for _fn in _fs:
         if not _fn.endswith(".mcfunction"): continue

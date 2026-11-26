@@ -399,7 +399,7 @@ def arbre_texte(j):
         rq = " + ".join(SKILLS[j][r - 1][0] for r in req) if req else "rien"
         bulle = (f'[{{text:"{_q(nom)}\\n",color:"gold",bold:true}},{{text:"{_q(desc)}\\n\\n",color:"white"}},'
                  f'{{text:"Coût : {cout} points · niveau {slvl(j, k)} · requiert : {_q(rq)}\\n",color:"gray"}},'
-                 '{text:"Clic : acheter, ou activer/désactiver si acquise.",color:"dark_gray"}]')
+                 '{text:"Clic : acheter ; acquise, la désactiver ; désactivée, la réactiver ou l’oublier (points rendus).",color:"dark_gray"}]')
         comps.append('{text:"' + _q(_esp(x)) + f'$(a{k})' + _q(_esp(-(x + adv))) + '",' + F_ +
                      f',click_event:{{action:"run_command",command:"trigger metiers set {TSK(d, k)}"}},'
                      f'hover_event:{{action:"show_text",value:{bulle}}}}}')

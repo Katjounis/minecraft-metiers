@@ -27,6 +27,9 @@ OUTIL_IC = {"b": "item/iron_axe", "f": "item/iron_hoe", "m": "item/iron_pickaxe"
 
 CRP = {"marteau": ("m", 260, 4, 50), "faux": ("f", 220, 3, 50), "arc3": ("c", 300, 5, 60), "lasso": ("e", 140, 1, 40), "parchemin": ("n", 60, 0, 40)}
 COMMUN = {"aimant": 6, "cape": 12}
+# déclencheurs du choix d'une compétence désactivée (26/11/2026) : 4000 + 20 x idx + k (oublier), 4300 + ... (réactiver)
+TOUB = lambda d, k: 4000 + 20 * d["idx"] + k
+TREAC = lambda d, k: 4300 + 20 * d["idx"] + k
 EFFC = [40, 70, 110, 150, 200, 260, 330]
 EFFL = [10, 20, 30, 40, 50, 60, 80]
 CRIS = {"sagesse": (90, 20, "csag", None), "fortune": (160, 40, "cfor", tuple(FORT_KEY)), "echo": (240, 60, "ceco", None)}
@@ -208,7 +211,7 @@ for j, d in jobs.items():
     sbtn = []
     for k, (name, cost, req, desc) in enumerate(sk, 1):
         rq = " + ".join(sk[r - 1][0] for r in req) if req else "rien"
-        tip = (f"{desc}\\nCoût : {cost} points · niveau {slvl(j, k)} · requiert : {rq}\\nUne fois acquise : clic pour l’activer ou la désactiver."
+        tip = (f"{desc}\\nCoût : {cost} points · niveau {slvl(j, k)} · requiert : {rq}\\nUne fois acquise : clic pour la désactiver, puis reclic pour la réactiver ou l’oublier (points rendus)."
                "\\n\\nVert ✔ acquise · jaune disponible · rouge points manquants · gris ✖ niveau trop bas · ○ désactivée")
         sbtn.append(f'{{label:{{text:"$(l{k})",color:"$(c{k})"}},width:130,tooltip:{{text:"{tip}"}},action:{{type:"run_command",command:"trigger metiers set {TSK(d, k)}"}}}}')
     # 25/11/2026 : les compétences posées en arbre cliquable (grille de 3 colonnes, cases vides d'un pixel) :
@@ -283,7 +286,7 @@ for j, d in jobs.items():
       f'can_close_with_escape:true,pause:false,body:[{ent}],actions:[{",".join(prog_btn)}],columns:3,exit_action:{ARBRE}}}')
     for k, (name, cost, req, desc) in enumerate(sk, 1):
         w(F + f"{j}/basculer_{k}.mcfunction", "\n".join([
-            f"execute if entity @s[tag=metiers.skoff.{j}{k}] run return run function {NS}:{j}/activer_{k}",
+            f"execute if entity @s[tag=metiers.skoff.{j}{k}] run return run function {NS}:{j}/choix_{k}",
             f"tag @s add metiers.skoff.{j}{k}", tr(f"{name} est désactivée. Tu la gardes : reclique pour la réactiver.", "gold")]
             + ([f"function {NS}:objets/retirer_elytres"] if (j, k) == ("x", 9) else []) + [
             "playsound minecraft:block.lever.click master @s ~ ~ ~ 1 0.7", f"function {NS}:{j}/arbre"]))
@@ -291,6 +294,31 @@ for j, d in jobs.items():
             f"tag @s remove metiers.skoff.{j}{k}", tr(f"{name} est réactivée.", "green")]
             + ([f"function {NS}:objets/retirer_elytres", f"function {NS}:objets/donner_elytres"] if (j, k) == ("x", 9) else []) + [
             "playsound minecraft:block.lever.click master @s ~ ~ ~ 1 1.2", f"function {NS}:{j}/arbre"]))
+    # 26/11/2026 : compétence désactivée + clic = choix entre la réactiver et l'oublier (ses points reviennent,
+    # recalculés par {j}/points d'après les compétences acquises)
+    for k, (name, cost, req, desc) in enumerate(sk, 1):
+        dep = [(kk, s_[0]) for kk, s_ in enumerate(sk, 1) if k in s_[2]]
+        w(F + f"{j}/choix_{k}.mcfunction",
+          f'dialog show @s {{type:"minecraft:multi_action",title:{{text:"{name}",color:"{d["color"]}",bold:true}},can_close_with_escape:true,pause:false,'
+          f'body:[{{type:"minecraft:plain_message",width:300,contents:[{{text:"Cette compétence est désactivée.\n\n",color:"gray"}},'
+          f'{{text:"Réactiver",color:"green",bold:true}},{{text:" : elle refait effet tout de suite.\n",color:"white"}},'
+          f'{{text:"Oublier",color:"red",bold:true}},{{text:" : tu la perds et tu récupères ses {cost} points pour une autre compétence. Tu pourras la racheter plus tard.",color:"white"}}]}}],'
+          f'actions:[{{label:{{text:"Réactiver",color:"green"}},width:140,action:{{type:"run_command",command:"trigger metiers set {TREAC(d, k)}"}}}},'
+          f'{{label:{{text:"Oublier (+{cost} points)",color:"red"}},width:140,action:{{type:"run_command",command:"trigger metiers set {TOUB(d, k)}"}}}}],columns:2,'
+          f'exit_action:{{label:"Retour",width:140,action:{{type:"run_command",command:"trigger metiers set {20 + d["idx"]}"}}}}}}')
+        O = [f"execute unless entity @s[tag=metiers.sk.{j}{k}] run return run function {NS}:{j}/arbre"]
+        for kk, nn in dep:
+            O.append(f"execute if entity @s[tag=metiers.sk.{j}{kk}] run return run {tr(f'Oublie d’abord {nn}, qui a besoin de {name}.', 'red')}")
+        O += [f"tag @s remove metiers.sk.{j}{k}", f"tag @s remove metiers.skoff.{j}{k}",
+              f"advancement revoke @s only {NS}:{j}/competence_{k}"]
+        if (j, k) == ("x", 9):
+            O.append(f"function {NS}:objets/retirer_elytres")
+        O += [tr(f"{name} est oubliée : {cost} points te sont rendus.", "gold"),
+              "playsound minecraft:entity.item.break master @s ~ ~ ~ 0.8 1.2", f"function {NS}:{j}/arbre"]
+        w(F + f"{j}/oublier_{k}.mcfunction", "\n".join(O))
+        add_lines(F + "trigger.mcfunction", [
+            f"execute if score @s m.trig matches {TREAC(d, k)} if entity @s[tag=metiers.skoff.{j}{k}] run function {NS}:{j}/activer_{k}",
+            f"execute if score @s m.trig matches {TOUB(d, k)} run function {NS}:{j}/oublier_{k}"])
     # bascule du titre de ce métier
     w(F + f"{j}/titre.mcfunction", "\n".join([
         f"execute if score @s m.pref matches {d['idx']} run scoreboard players set @s m.trig 10",
