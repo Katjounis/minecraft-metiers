@@ -63,6 +63,27 @@ Touche G (ou menu Échap) pour ouvrir le menu des métiers, ou `/trigger metiers
 
 Commandes admin : `/function metiers:boss/alerte` (boss suivant de la rotation dans 2 min), `/function metiers:heure/lancer`, `/function metiers:defis/nouveaux`, `/function metiers:defis/semaine`.
 
+## Version 27.6 (27/11/2026)
+
+**12 skins d'outil et d'armure** (`sources/ref_skins2.py`, textures `sources/resourcepack/gen5.py`). Six nouveaux skins, dont quatre légendaires (✦) qui changent la forme des 9 outils de métier : la forme est la même à tous les paliers. Sur l'armure, tous les skins changent seulement les couleurs (une armure portée reste une texture sur le modèle du joueur).
+
+| Skin | Outil | Armure |
+|---|---|---|
+| Sakura | 300 cristaux du métier, 8 éclats, 50 000 Écus | 15 éclats, 80 000 Écus |
+| Céleste | 400 cristaux, 12 éclats, 100 000 Écus | 25 éclats, 150 000 Écus |
+| ✦ Abysses (trident au nautile, ancre) | vaincre 10 fois la Liche, puis 15 éclats et 100 000 Écus | idem |
+| ✦ Sculk (mâchoire de hurleur, côtes) | tuer 5 Wardens, puis 15 éclats et 100 000 Écus | idem |
+| ✦ Dragon de l'End (croc, gueule, ailes) | tuer 3 fois l'Ender Dragon, puis 20 éclats et 150 000 Écus | idem |
+| ✦ Éclipse (soleil en gyroscope, flammes) | 2 étoiles de prestige dans le métier, puis 25 éclats et 250 000 Écus | 5 prestiges au total, puis 25 éclats et 250 000 Écus |
+
+Les Wardens et Ender Dragons comptent à partir de cette version (statistiques `m.kwarden` et `m.kdragon`).
+
+Nouvelle interface : la liste des skins (G, Skins) ouvre une fiche par skin, avec l'aperçu 3D de ton objet à son palier actuel, la description, le prix, ce que tu as (cristaux, éclats, Écus, trophées), l'état (pas encore, achetable, débloqué, équipé) et un bouton Acheter / Équiper / Retirer, plus skin précédent et suivant. Déclencheurs 4300 + i (fiche) et 4320 + i (acheter ou équiper).
+
+**Épée du palier 3** redessinée (« Épine ») : les petites dents posées sur les côtés de la lame sont remplacées par une lame effilée à biseaux avec une gouttière rouge et une garde en cornes, pour la base et tous les skins.
+
+`gen5.py` génère seulement les fichiers neufs (formes, palettes, heaumes, armures portées, sélecteurs d'objets complétés) et les verse directement dans `metiers_resourcepack.zip`.
+
 ## Version 27.5 (27/11/2026)
 
 Fermier allégé (« trop cheaté ») : récolte ramassée revenue aux valeurs d'avant le x2 (blé et betterave 1,5 XP, carotte, patate, verrue et baies 0,5 XP, melon et citrouille 2 XP, canne et cacao 1 XP, cactus 0,5 XP). La poudre d'os ramassée ne rapporte plus rien (elle comptait aussi celle des fermes à squelettes et bouclait avec le composteur). Poudre d'os sur culture à 0,5 XP, et labour, compost et poudre d'os partagent un plafond de 10 XP par minute.

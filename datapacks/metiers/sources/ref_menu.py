@@ -607,7 +607,7 @@ for ti, (t, nom) in enumerate(TGT):
     else:
         I += [f'execute if score @s m.{t}_out matches {k} run data modify storage {NS}:sk model set value "{t}_{k}"' for k in range(11)]
     I += [f'execute if score @s m.skin_{t} matches {i} run data modify storage {NS}:sk skin set value "{sid}"' for i, sid in enumerate(SKIN_IDS, 1)]
-    for i, sn in enumerate(SKIN_NOM, 1):
+    for i, sn in enumerate(SKIN_NOM[:6], 1):
         if t == "a":
             cost_txt = {1: "6 éclats", 2: "6 éclats", 3: "10 éclats", 4: "trophée", 5: "trophée", 6: "prestige"}[i]
         else:
@@ -663,7 +663,7 @@ for ti, (t, nom) in enumerate(TGT):
            f"execute if items entity @s container.* {SEL(t)} run function {NS}:{t}/outil_donner")
     REG2 = (f"execute if score @s m.arm matches 1.. if items entity @s container.* {ASEL} run function {NS}:armure/donner" if t == "a" else
             f"execute if items entity @s weapon.offhand {SEL(t)} run function {NS}:{t}/outil_donner")
-    for i, sn in enumerate(SKIN_NOM, 1):
+    for i, sn in enumerate(SKIN_NOM[:6], 1):
         if t == "a":
             pay = {1: ("score @s m.ecl matches 6..", ["scoreboard players remove @s m.ecl 6"]), 2: ("score @s m.ecl matches 6..", ["scoreboard players remove @s m.ecl 6"]),
                    3: ("score @s m.ecl matches 10..", ["scoreboard players remove @s m.ecl 10"]), 4: ("score @s m.bk2 matches 3..", []),

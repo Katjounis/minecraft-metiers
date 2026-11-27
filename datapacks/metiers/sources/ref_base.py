@@ -33,7 +33,7 @@ OBJ += [f"m.fo_{k}" for k in FKEYS] + [f"m.fcd_{k}" for k in FKEYS]   # objet de
 for j in JL:
     OBJ += [f"m.cr_{j}", f"m.ceff_{j}", f"m.cfor_{j}", f"m.csag_{j}", f"m.ceco_{j}", f"m.skin_{j}"]
 for t in ["a"] + JL:
-    OBJ += [f"m.so_{t}{i}" for i in range(1, 7)]
+    OBJ += [f"m.so_{t}{i}" for i in range(1, len(SKIN_IDS) + 1)]
 LD += [f"scoreboard objectives add {o} dummy" for o in OBJ]
 STATS = {"s.cos": "minecraft.used:minecraft.carrot_on_a_stick", "s.pick": "minecraft.used:minecraft.netherite_pickaxe",
          "s.bow": "minecraft.used:minecraft.bow", "s.jump": "minecraft.custom:minecraft.jump",
