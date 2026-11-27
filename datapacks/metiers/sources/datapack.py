@@ -993,6 +993,7 @@ execute if score @s m.{j}_lvl matches ..{MAXLVL-1} if score @s m.{j}_xp >= @s m.
         G.append(f"execute if score @s c.ecus matches -2147483648.. run scoreboard players add @s c.ecus {ECUS_PAL[k]}")
         G += [f"give @s {it['give']}" for it in items[1:]]
         G += [f'tellraw @a ' + PREFIX + f',{{"selector":"@s","color":"white"}},{{"text":" récupère sa récompense","color":"gray"}},{{"text":" (palier {lv} {d["name"]})","color":"gray"}}]',
+              f'tellraw @s ' + PREFIX + f',{{"text":"Dont +{ECUS_PAL[k]} Écus sur ton compte.","color":"gold"}}]',
               "playsound minecraft:entity.player.levelup master @s ~ ~ ~ 1 0.6",
               "particle minecraft:totem_of_undying ~ ~1 ~ 0.5 1 0.5 0.3 60",
               f"function {NS}:recompenses"]
@@ -2348,6 +2349,9 @@ for _dp, _, _fs in os.walk(ROOT):
             if _n != _t:
                 open(_p, "w", encoding="utf-8").write(_n)
 
+# 27/11/2026 : journal des Écus de Commerce (chaque gain ou dépense annoncé sur c.a_met)
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "metiers", "sources", "journal_ecus.py"), encoding="utf-8").read())
+print("journal des Écus :", miroir_ecus(ROOT, "c.a_met"), "lignes")
 zp = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "metiers.zip")
 if os.path.exists(zp):
     os.remove(zp)

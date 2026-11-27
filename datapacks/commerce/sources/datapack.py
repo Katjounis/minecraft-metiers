@@ -11,7 +11,7 @@ from catalogue import ACHAT, CATEGORIES, ITEMS, RARES
 ROOT = os.path.join(HERE, "..", "build", "commerce_datapack")
 NS = "commerce"
 F = f"data/{NS}/function/"
-VERSION = 16
+VERSION = 17
 if os.path.exists(ROOT):
     shutil.rmtree(ROOT)
 
@@ -125,6 +125,7 @@ LD += ["execute unless score #tableau c.g matches 0..1 run scoreboard players se
        f"execute if score #tableau c.g matches 1 run function {NS}:tableau/on"]
 LD.append(f"function {NS}:prive/load")
 LD.append(f"function {NS}:hud/load")
+LD.append(f"function {NS}:journal/load")
 LD.append(f"function {NS}:stat/load")
 LD.append(f"function {NS}:spawner/load")
 LD += [f"function {NS}:guilde/load", f"function {NS}:banque/load", f"function {NS}:hdv/load", f"function {NS}:boutique/load", "scoreboard objectives add c.gd dummy",
@@ -183,7 +184,9 @@ w(F + "joueur/seconde.mcfunction", [
     f"execute if score @s c.craft matches 1.. unless score @s c.deb matches 1 run function {NS}:debloque",
     f"function {NS}:joueur/paliers",
     f"execute unless score @s c.init2 matches 1 run function {NS}:joueur/evts_init",
-    f"function {NS}:joueur/evts", f"function {NS}:guilde/sync"])
+    f"function {NS}:joueur/evts", f"function {NS}:guilde/sync",
+    # 27/11/2026 : journal des Écus, en dernier (après tous les paiements de la seconde)
+    f"function {NS}:journal/joueur"])
 w(F + "joueur/arrivee.mcfunction", [f"scoreboard players add @s {o} 0" for o in PLAYER_OBJ] + [
     f"recipe give @s {NS}:oeuf", "scoreboard players set @s c.vu 1",
     f"execute unless score @s c.gd matches 1 run function {NS}:serveur/bienvenue"])
@@ -1526,13 +1529,19 @@ w(F + "desinstaller.mcfunction", [f"scoreboard objectives remove {o}" for o in P
 # =====================================================================
 exec(open(os.path.join(HERE, "grafiques.py"), encoding="utf-8").read())
 exec(open(os.path.join(HERE, "spawners.py"), encoding="utf-8").read())
-for _m in ("banque.py", "hdv.py", "boutiques.py", "serveur.py", "guilde.py"):
+for _m in ("banque.py", "hdv.py", "boutiques.py", "serveur.py", "guilde.py", "journal.py"):
     exec(open(os.path.join(HERE, _m), encoding="utf-8").read())
 
 # =====================================================================
 # COFFRES PRIVÉS
 # =====================================================================
 exec(open(os.path.join(HERE, "prive.py"), encoding="utf-8").read())
+
+# =====================================================================
+# JOURNAL DES ÉCUS : chaque paiement de Commerce est annoncé sur c.a_com (historique déjà écrit par Commerce)
+# =====================================================================
+exec(open(os.path.join(HERE, "..", "..", "metiers", "sources", "journal_ecus.py"), encoding="utf-8").read())
+print("journal des Écus :", miroir_ecus(ROOT, "c.a_com"), "lignes")
 
 # =====================================================================
 # ZIP

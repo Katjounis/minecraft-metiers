@@ -1,5 +1,5 @@
 {
- "type": "minecraft:notice",
+ "type": "minecraft:multi_action",
  "title": {
   "text": "Les Couillons",
   "color": "gold",
@@ -634,8 +634,32 @@
    ]
   }
  ],
- "action": {
-  "label": "Fermer",
-  "width": 200
- }
+ "actions": [
+  {
+   "label": [
+    {
+     "text": "⚙ ",
+     "color": "#F7C843"
+    },
+    {
+     "text": "Industrie",
+     "color": "#F7C843",
+     "bold": true
+    }
+   ],
+   "width": 200,
+   "tooltip": {
+    "text": "L'Archipel des usines : ton île, tes machines, la Halle du Marché, la Banque."
+   },
+   "action": {
+    "type": "minecraft:run_command",
+    "command": "trigger industrie set 1"
+   }
+  },
+  {
+   "label": "Fermer",
+   "width": 200
+  }
+ ],
+ "columns": 2
 }

@@ -1193,6 +1193,9 @@ ailes.save(os.path.join(RP, "textures", "entity", "equipment", "wings", "cape_pl
 ecrire_rp("equipment/cape_plumes.json", {"layers": {"wings": [{"texture": "boss:cape_plumes"}]}})
 
 # =============================================================================================== zip
+# 27/11/2026 : journal des Écus de Commerce (chaque gain ou dépense annoncé sur c.a_bos)
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "metiers", "sources", "journal_ecus.py"), encoding="utf-8").read())
+print("journal des Écus :", miroir_ecus(ROOT, "c.a_bos"), "lignes")
 ZIP = os.path.join(ICI, "..", "boss.zip")
 with zipfile.ZipFile(ZIP, "w", zipfile.ZIP_DEFLATED) as z:
     for dp, _, fs in os.walk(ROOT):

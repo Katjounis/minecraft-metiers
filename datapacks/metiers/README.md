@@ -63,6 +63,10 @@ Touche G (ou menu Échap) pour ouvrir le menu des métiers, ou `/trigger metiers
 
 Commandes admin : `/function metiers:boss/alerte` (boss suivant de la rotation dans 2 min), `/function metiers:heure/lancer`, `/function metiers:defis/nouveaux`, `/function metiers:defis/semaine`.
 
+## Journal des Écus (27/11/2026)
+
+Chaque gain ou dépense d'Écus de Métiers est maintenant annoncé à Commerce (`c.a_met`) et inscrit dans l'historique de la banque (paliers, quêtes, étoiles, boss, compétence Marchand, boutiques et skins). Le message de récompense de palier donne le montant en Écus. Le mécanisme commun est `sources/journal_ecus.py`, appelé juste avant le zip.
+
 ## Version 27.7 (27/11/2026)
 
 Écran des skins refait. Chaque bouton montre un petit aperçu de l'objet choisi (armure portée ou outil) avec ce skin, son nom et son prix ; en haut, le skin actuel en grand ; la fiche montre l'aperçu en grand. Les aperçus sont des glyphes de la police `metiers:apercu` rendus depuis les modèles du resource pack (`sources/resourcepack/gen6.py`, moteur `rendu3d.py`), car un menu n'affiche un modèle 3D qu'en 16 px. Grand glyphe du skin i pour la cible n° c (ordre de `TGT`) : U+E000 + 13 c + i, petit : U+E200 + 13 c + i.

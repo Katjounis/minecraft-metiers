@@ -1114,6 +1114,9 @@ add_rig = True
 import resourcepack
 resourcepack.generer()
 n = 0
+# 27/11/2026 : journal des Écus de Commerce (chaque gain ou dépense annoncé sur c.a_hor)
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "metiers", "sources", "journal_ecus.py"), encoding="utf-8").read())
+print("journal des Écus :", miroir_ecus(ROOT, "c.a_hor"), "lignes")
 zp = os.path.join(ICI, "..", "horreur.zip")
 with zipfile.ZipFile(zp, "w", zipfile.ZIP_DEFLATED) as z:
     for dp, _, fs in os.walk(ROOT):

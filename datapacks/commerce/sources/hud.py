@@ -55,7 +55,7 @@ W_COMMA = largeur(virg) + 1
 piece = Image.open(os.path.join(RP, "textures", "font", "ecu.png")).convert("RGBA").copy()
 baisse(piece).save(os.path.join(RP, "textures", "font", "hud_ecu.png"))
 W_COIN = 9
-CONTENU = W_COIN + 3 + 8 * 6 + 2 * 2 + W_COMMA + 12            # pièce, espace, 8 chiffres, 2 séparateurs, virgule, centimes
+CONTENU = W_COIN + 3 + 10 * 6 + 3 * 2 + W_COMMA + 12           # pièce, espace, 10 chiffres, 3 séparateurs, virgule, centimes
 PAD = 5
 BOXW = PAD + CONTENU + 4
 HUD_W = PAD + CONTENU                                          # largeur totale du texte (le cadre est compensé)
@@ -148,8 +148,10 @@ HJ = [
 w(H_ + "joueur.mcfunction", HJ if HUD_SHADER else ["return 0"])
 HM = ["scoreboard players operation @s c.hudv = #hv c.t", "scoreboard players set @s c.hudr 0",
       "scoreboard players operation #n c.t = @s c.ecus",
-      "execute if score #n c.t matches 100000000.. run scoreboard players set #n c.t 99999999"]
-for k in range(8):
+      # 27/11/2026 : 10 chiffres (jusqu'à 2 147 483 647). Avant, le cadre s'arrêtait à 99 999 999 : au-delà, le solde
+      # affiché restait figé et les gains ou les achats semblaient disparaître.
+      "execute if score #n c.t matches ..-1 run scoreboard players set #n c.t 0"]
+for k in range(10):
     HM += [f"scoreboard players operation #d c.t = #n c.t"]
     if k:
         HM += [f"scoreboard players set #p c.t {10 ** k}", "scoreboard players operation #d c.t /= #p c.t"]
@@ -165,6 +167,6 @@ HM += ["title @s times 0 2000000000 0", f"function {NS}:hud/titre with storage {
 w(H_ + "maj.mcfunction", HM)
 TXT = (f'[{{text:"",font:"commerce:hud",color:"#FEFEFD",shadow_color:0,extra:['
        f'{{text:"{CH["box"]}{CH["neg"]}{CH["coin"]}{CH["sp"]}"}},'
-       f'{{text:"$(d7)$(d6){CH["thin"]}$(d5)$(d4)$(d3){CH["thin"]}$(d2)$(d1)$(d0){CH["comma"]}$(c1)$(c0)",color:"#FEC841"}}]}}]')
+       f'{{text:"$(d9){CH["thin"]}$(d8)$(d7)$(d6){CH["thin"]}$(d5)$(d4)$(d3){CH["thin"]}$(d2)$(d1)$(d0){CH["comma"]}$(c1)$(c0)",color:"#FEC841"}}]}}]')
 w(H_ + "titre.mcfunction", "$title @s title " + TXT)
 w(H_ + "cacher.mcfunction", ["title @s clear", "scoreboard players set @s c.hudv -2"])

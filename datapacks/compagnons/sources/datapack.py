@@ -920,6 +920,9 @@ _Im.new("RGBA", (128, 128), (0, 0, 0, 0)).save(os.path.join(RP, "assets", NS, "t
 
 # ---------------------------------------------------------------------------------------------
 n = 0
+# 27/11/2026 : journal des Écus de Commerce (chaque gain ou dépense annoncé sur c.a_cmp)
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "metiers", "sources", "journal_ecus.py"), encoding="utf-8").read())
+print("journal des Écus :", miroir_ecus(ROOT, "c.a_cmp"), "lignes")
 zp = os.path.join(ICI, "..", "compagnons.zip")
 with zipfile.ZipFile(zp, "w", zipfile.ZIP_DEFLATED) as z:
     for dp, _, fs in os.walk(ROOT):
