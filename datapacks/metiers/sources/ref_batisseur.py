@@ -104,7 +104,11 @@ if os.path.exists(_dn):
 # Progrès invisible « placed_block » sans condition : il se déclenche à chaque bloc posé, sa récompense est relancée.
 #  - 1 point (1/20 d'XP) par bloc, 40 points par minute au plus (poser puis casser de la terre ne mène pas loin) ;
 #  - bloc acheté au Commerce (crédit c.kb tenu par Commerce) : +2 XP, 256 blocs par jour de défis au plus.
-wj(f"data/{NS}/advancement/k/pose.json", {"criteria": {"pose": {"trigger": "minecraft:placed_block"}},
+# 27/11/2026 : plus de point pour n'importe quel bloc (graines, torches, terre... rapportaient au Bâtisseur). Le progrès ne
+# se déclenche plus que sur un bloc de construction (tag k_construction), et seul le bonus des blocs du shop y reste.
+wj(f"data/{NS}/tags/block/k_construction.json", {"values": sorted(f"minecraft:{b}" for b in BLOCS_K)})
+wj(f"data/{NS}/advancement/k/pose.json", {"criteria": {"pose": {"trigger": "minecraft:placed_block", "conditions": {
+    "location": {"type": "minecraft:location_check", "predicate": {"block": {"blocks": f"#{NS}:k_construction"}}}}}},
                                           "rewards": {"function": f"{NS}:k/pose"}})
 add_lines(F + "refonte/load.mcfunction", ["scoreboard objectives add m.kcap dummy", "scoreboard objectives add m.kbj dummy",
                                           f"schedule function {NS}:k/minute 60s replace"])
@@ -112,8 +116,6 @@ w(F + "k/minute.mcfunction", "\n".join(["scoreboard players reset * m.kcap", f"s
 w(F + "k/pose.mcfunction", "\n".join([
     f"advancement revoke @s only {NS}:k/pose",
     "scoreboard players add @s m.kcap 0", "scoreboard players add @s m.kbj 0",
-    "execute if score @s m.kcap matches ..39 run scoreboard players add @s m.k_raw 1",
-    "execute if score @s m.kcap matches ..39 run scoreboard players add @s m.kcap 1",
     f"execute if score @s c.kb matches 1.. if score @s m.kbj matches ..255 run function {NS}:k/pose_shop"]))
 w(F + "k/pose_shop.mcfunction", "\n".join([
     "scoreboard players remove @s c.kb 1", "scoreboard players add @s m.kbj 1", "scoreboard players add @s m.k_raw 40",

@@ -43,12 +43,13 @@ ORE_DROP = {"coal": "coal 1", "copper": "raw_copper 2", "iron": "raw_iron 1", "g
             "emerald": "emerald 1", "nether_gold": "gold_nugget 3", "nether_quartz": "quartz 1"}
 # Fermier : 2 points = 1 XP. 26/11/2026 (« vraiment léger ») : tout x2, carottes, patates, verrues et baies x3
 # (blé 3 XP, carotte 1,5 XP par objet ramassé), plus labour, poudre d'os et compost (ref_fermier.py)
-CROPS = {"wheat": 6, "carrot": 3, "potato": 3, "beetroot": 6, "nether_wart": 3, "sweet_berries": 3, "glow_berries": 3}
+# 27/11/2026 (« trop cheaté ») : retour aux valeurs d'avant le x2, carottes, patates, verrues et baies à 0,5 XP
+CROPS = {"wheat": 3, "carrot": 1, "potato": 1, "beetroot": 3, "nether_wart": 1, "sweet_berries": 1, "glow_berries": 1}
 PLANTABLE = ["carrot", "potato", "nether_wart", "sweet_berries", "glow_berries"]
 # bloc cassé : (points, objet posé qui annule le gain, objet donné par Main verte)
-CROP_BLOCKS = {"melon": (8, "melon", "melon_slice"), "pumpkin": (8, "pumpkin", "pumpkin"),
-               "sugar_cane": (4, "sugar_cane", "sugar_cane"), "cocoa": (4, "cocoa_beans", "cocoa_beans"),
-               "cactus": (2, "cactus", "cactus")}
+CROP_BLOCKS = {"melon": (4, "melon", "melon_slice"), "pumpkin": (4, "pumpkin", "pumpkin"),
+               "sugar_cane": (2, "sugar_cane", "sugar_cane"), "cocoa": (2, "cocoa_beans", "cocoa_beans"),
+               "cactus": (1, "cactus", "cactus")}
 BOSSES = {"wither": 800, "ender_dragon": 1200, "warden": 400, "elder_guardian": 180}   # 25.6 : x4
 
 jobs = {
@@ -105,9 +106,8 @@ for c, (x, placed, drop) in CROP_BLOCKS.items():
                              [("f1", "chance_25", f"give @s minecraft:{drop} 2"),
                               ("f5", "chance_02", "give @s minecraft:glistering_melon_slice 1")]))
     jobs["f"]["src"].append((f"minecraft.used:minecraft.{placed}", x, -1, f"f.up.{c}", []))
-# poudre d'os sortie du composteur (ramassée) : 3 XP ; la jeter la retire
-jobs["f"]["src"].append(("minecraft.picked_up:minecraft.bone_meal", 6, 1, "f.pu.bone_meal", []))
-jobs["f"]["src"].append(("minecraft.dropped:minecraft.bone_meal", 6, -1, "f.dr.bone_meal", []))
+# 27/11/2026 : plus d'XP pour la poudre d'os ramassée (elle comptait aussi celle des fermes à squelettes, boucle
+# compost -> poudre -> culture -> compost sans fin)
 # XP selon la créature tuée (mob_kills ne sert plus qu'à la compétence Soif de sang)
 MOBS = {'chicken': 1, 'cow': 1, 'pig': 1, 'sheep': 1, 'rabbit': 1, 'goat': 1, 'mooshroom': 1, 'silverfish': 1, 'slime': 1, 'magma_cube': 1, 'zombie': 3, 'husk': 3, 'zombie_villager': 3, 'spider': 3, 'piglin': 3, 'zombified_piglin': 1, 'drowned': 3, 'skeleton': 4, 'cave_spider': 4, 'vex': 4, 'stray': 5, 'bogged': 5, 'creeper': 5, 'phantom': 6, 'pillager': 6, 'witch': 5, 'enderman': 3, 'blaze': 5, 'guardian': 3, 'hoglin': 7, 'creaking': 8, 'vindicator': 9, 'shulker': 9, 'zoglin': 9, 'ghast': 11, 'wither_skeleton': 11, 'breeze': 11, 'piglin_brute': 13, 'evoker': 15, 'ravager': 21}
 MOBS = {m: (2 * x if x >= 9 else x) for m, x in MOBS.items()}   # 25.6 : mobs rares (9 XP et plus) x2

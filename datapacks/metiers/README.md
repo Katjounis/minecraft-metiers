@@ -63,6 +63,12 @@ Touche G (ou menu Échap) pour ouvrir le menu des métiers, ou `/trigger metiers
 
 Commandes admin : `/function metiers:boss/alerte` (boss suivant de la rotation dans 2 min), `/function metiers:heure/lancer`, `/function metiers:defis/nouveaux`, `/function metiers:defis/semaine`.
 
+## Version 27.5 (27/11/2026)
+
+Fermier allégé (« trop cheaté ») : récolte ramassée revenue aux valeurs d'avant le x2 (blé et betterave 1,5 XP, carotte, patate, verrue et baies 0,5 XP, melon et citrouille 2 XP, canne et cacao 1 XP, cactus 0,5 XP). La poudre d'os ramassée ne rapporte plus rien (elle comptait aussi celle des fermes à squelettes et bouclait avec le composteur). Poudre d'os sur culture à 0,5 XP, et labour, compost et poudre d'os partagent un plafond de 10 XP par minute.
+
+Bâtisseur : seuls les blocs de construction posés rapportent. Le point donné pour n'importe quel bloc posé (graines, torches, terre...) est supprimé, et le progrès `k/pose` (bonus des blocs achetés au Commerce) ne se déclenche plus que sur un bloc du tag `metiers:k_construction`.
+
 ## Version 27.4 (27/11/2026)
 
 **Boss refondus** (`sources/ref_boss2.py`). Le Creeper géant tombait en moins d'une minute à l'épée : ses explosions faisaient des dégâts de type explosion presque annulés par l'armure de métier, ses rejetons avaient un rayon d'explosion nul et rien ne punissait le fait de rester collé à lui. Aucun boss ne casse ni ne pose de bloc : pas d'explosion vanilla, seulement des commandes `damage`, des particules, des markers et des `block_display`.

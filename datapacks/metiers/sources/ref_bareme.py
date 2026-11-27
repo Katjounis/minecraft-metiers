@@ -86,10 +86,10 @@ d_f = DIV["f"]
 PAGES["f"] = [titre("Récolte ramassée (par objet)")] + groupes(
     [(x / d_f, spr("i", c), NOM_CULTURE[c]) for c, x in CROPS.items()]) + [titre("Bloc cassé")] + groupes(
     [(x / d_f, spr(*TEX_CULTURE.get(c, ("b", TEX_BLOC.get(c, c)))), NOM_CULTURE[c]) for c, (x, _, _) in CROP_BLOCKS.items()]) + [
-    titre("Autres travaux")] + case("0,5 XP", spr("i", "iron_hoe"), "Labourer") + case("1 XP", spr("i", "bone_meal"), "Poudre d’os sur culture") + \
-    case("0,5 XP", spr("b", "composter_side"), "Composter") + case("3 XP", spr("i", "bone_meal"), "Poudre d’os du composteur") + [
+    titre("Autres travaux")] + case("0,5 XP", spr("i", "iron_hoe"), "Labourer") + case("0,5 XP", spr("i", "bone_meal"), "Poudre d’os sur culture") + \
+    case("0,5 XP", spr("b", "composter_side"), "Composter") + [
     note("Replanter carottes, patates, verrues et baies est gratuit : seule la graine posée en trop retire de l’XP. "
-         "Labourer et composter : 15 XP par minute au plus à eux deux."), DEFI]
+         "Labourer, composter et la poudre d’os : 10 XP par minute au plus à eux trois."), DEFI]
 # ---------------------------------------------------------------- Mineur
 d_m = DIV["m"]
 # Mineur : deux pages (minerais / pierres) pour ne pas faire défiler
@@ -152,10 +152,9 @@ FAM_K = [("quartz_block", "b", "quartz_block_side", "Quartz (bloc, briques, pili
          ("lantern", "i", "lantern", "Lanterne"), ("oak_planks", "b", "oak_planks", "Planches (12 bois)"),
          ("oak_slab", "b", "oak_planks", "Escaliers, dalles, barrières, trappes"), ("cobblestone", "b", "cobblestone", "Pierre taillée et pavés"),
          ("glass_pane", "b", "glass", "Vitres"), ("ladder", "b", "ladder", "Échelles, chaînes, barreaux")]
-PAGES["k"] = [note("Tout bloc posé rapporte un peu, les blocs de construction beaucoup plus. Casser un bloc de construction retire ce qu’il a rapporté.")] + \
-    [titre("Bonus en plus du bloc posé")] + groupes([(BLOCS_K[b] / d_k, spr(kd, tex), nom) for b, kd, tex, nom in FAM_K]) + \
-    [titre("Tous les blocs")] + groupes([(1 / d_k, spr("b", "dirt"), "n’importe quel bloc posé (terre, sable, roche...), 2 XP par minute au plus"),
-                                        (2, spr("i", "emerald"), "en plus, un bloc acheté au Commerce à 2,5 Écus pièce ou plus (256 par jour au plus)")]) + [DEFI]
+PAGES["k"] = [note("Seuls les blocs de construction posés rapportent. Casser un bloc de construction retire ce qu’il a rapporté.")] + \
+    [titre("Blocs de construction posés")] + groupes([(BLOCS_K[b] / d_k, spr(kd, tex), nom) for b, kd, tex, nom in FAM_K]) + \
+    [titre("Bonus")] + groupes([(2, spr("i", "emerald"), "en plus, un bloc de construction acheté au Commerce à 2,5 Écus pièce ou plus (256 par jour au plus)")]) + [DEFI]
 
 BAREME_INTRO = {"b": "Tout ce qui sort d’un tronc.", "f": "Les cultures, ramassées ou cassées.", "m": "Les minerais et les pierres cassés.",
                 "c": "Chaque créature tuée.", "p": "Chaque prise, avec des multiplicateurs.", "e": "Les naissances et la laine.",

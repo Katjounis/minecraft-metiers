@@ -28,6 +28,9 @@ for nom in ("laboure", "compost"):
     w(F + f"f/{nom}.mcfunction", "\n".join([
         f"advancement revoke @s only {NS}:f/{nom}",
         "scoreboard players add @s m.fcap 0",
-        "execute if score @s m.fcap matches ..29 run scoreboard players add @s m.f_raw 1",
-        "execute if score @s m.fcap matches ..29 run scoreboard players add @s m.fcap 1"]))
-w(F + "f/os.mcfunction", "\n".join([f"advancement revoke @s only {NS}:f/os", "scoreboard players add @s m.f_raw 2"]))
+        "execute if score @s m.fcap matches ..19 run scoreboard players add @s m.f_raw 1",
+        "execute if score @s m.fcap matches ..19 run scoreboard players add @s m.fcap 1"]))
+# 27/11/2026 : poudre d'os sur culture à 0,5 XP et dans le même plafond (20 points, soit 10 XP par minute en tout)
+w(F + "f/os.mcfunction", "\n".join([f"advancement revoke @s only {NS}:f/os", "scoreboard players add @s m.fcap 0",
+    "execute if score @s m.fcap matches ..19 run scoreboard players add @s m.f_raw 1",
+    "execute if score @s m.fcap matches ..19 run scoreboard players add @s m.fcap 1"]))
