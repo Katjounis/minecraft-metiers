@@ -63,6 +63,12 @@ Touche G (ou menu Échap) pour ouvrir le menu des métiers, ou `/trigger metiers
 
 Commandes admin : `/function metiers:boss/alerte` (boss suivant de la rotation dans 2 min), `/function metiers:heure/lancer`, `/function metiers:defis/nouveaux`, `/function metiers:defis/semaine`.
 
+## Version 27.7 (27/11/2026)
+
+Écran des skins refait. Chaque bouton montre un petit aperçu de l'objet choisi (armure portée ou outil) avec ce skin, son nom et son prix ; en haut, le skin actuel en grand ; la fiche montre l'aperçu en grand. Les aperçus sont des glyphes de la police `metiers:apercu` rendus depuis les modèles du resource pack (`sources/resourcepack/gen6.py`, moteur `rendu3d.py`), car un menu n'affiche un modèle 3D qu'en 16 px. Grand glyphe du skin i pour la cible n° c (ordre de `TGT`) : U+E000 + 13 c + i, petit : U+E200 + 13 c + i.
+
+Tous les skins se paient maintenant en éclats de boss et en Écus (plus de cristaux de métier), au même prix pour l'armure et les outils : Givre et Corail 3 éclats et 15 000 Écus, Or royal 5 et 30 000, Ossements (Reine x3) et Magma (Brasier x3) 6 et 40 000, Ombre (un prestige) 8 et 60 000, Sakura 8 et 60 000, Céleste 12 et 100 000, Abysses (Liche x10) et Sculk (5 Wardens) 15 et 120 000, Dragon de l'End (3 Ender Dragons) 20 et 150 000, Éclipse (2 étoiles dans le métier, 5 prestiges pour l'armure) 25 et 250 000. Les skins déjà débloqués restent acquis.
+
 ## Version 27.6 (27/11/2026)
 
 **12 skins d'outil et d'armure** (`sources/ref_skins2.py`, textures `sources/resourcepack/gen5.py`). Six nouveaux skins, dont quatre légendaires (✦) qui changent la forme des 9 outils de métier : la forme est la même à tous les paliers. Sur l'armure : les 12 skins changent aussi les icônes des pièces dans l'inventaire ; les 4 légendaires ont un casque à forme propre (crâne de dragon à cornes et ailes, couronne de côtes de hurleur, couronne-trident à tentacules, soleil noir en auréole) et des motifs peints sur l'armure portée (écailles et veine magenta, veines sculk, vagues et perles, soleil sur la poitrine et liserés d'or).

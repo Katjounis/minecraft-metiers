@@ -21,51 +21,44 @@ DESC = {
     12: "LÉGENDAIRE : change la forme de tes outils (soleil en gyroscope, flammes, croissant de lune). Noir mat et or ardent."}
 LEG = {9, 10, 11, 12}
 
+# 27/11/2026 (après essai en jeu) : tous les skins se paient en Écus et en éclats de boss, plus de cristaux de métier.
+# (éclats, Écus, condition en plus) ; même prix pour l'armure et les outils.
+PRIX = {1: (3, 15000, None), 2: (3, 15000, None), 3: (5, 30000, None),
+        4: (6, 40000, ("m.bk2", 3, "vaincre 3 fois la Reine arachnide")), 5: (6, 40000, ("m.bk4", 3, "vaincre 3 fois le Brasier ancestral")),
+        6: (8, 60000, "p1"), 7: (8, 60000, None), 8: (12, 100000, None),
+        9: (15, 120000, ("m.bk3", 10, "vaincre 10 fois la Liche du givre")), 10: (15, 120000, ("m.kwarden", 5, "tuer 5 Wardens")),
+        11: (20, 150000, ("m.kdragon", 3, "tuer 3 fois l’Ender Dragon")), 12: (25, 250000, "p2")}
+def ecus_txt(u):
+    return f"{u:,}".replace(",", " ")
+def court(i):
+    e, u, _c = PRIX[i]
+    return f"{e} éc. · {u // 1000} k"
 def regle(t, i):
     """(texte du prix, condition « if ... » pour pouvoir l'acheter, commandes de paiement) pour la cible t et le skin i."""
-    arm = t == "a"
-    cr = f"m.cr_{t}"
-    if i in (1, 2):
-        return (("6 éclats", "if score @s m.ecl matches 6..", ["scoreboard players remove @s m.ecl 6"]) if arm else
-                ("120 cristaux du métier", f"if score @s {cr} matches 120..", [f"scoreboard players remove @s {cr} 120"]))
-    if i == 3:
-        return (("10 éclats", "if score @s m.ecl matches 10..", ["scoreboard players remove @s m.ecl 10"]) if arm else
-                ("180 cristaux et 2 éclats", f"if score @s {cr} matches 180.. if score @s m.ecl matches 2..",
-                 [f"scoreboard players remove @s {cr} 180", "scoreboard players remove @s m.ecl 2"]))
-    if i == 4: return ("Trophée : vaincre 3 fois la Reine arachnide", "if score @s m.bk2 matches 3..", [])
-    if i == 5: return ("Trophée : vaincre 3 fois le Brasier ancestral", "if score @s m.bk4 matches 3..", [])
-    if i == 6:
-        return (("Un prestige dans n’importe quel métier", "if score @s m.prtot matches 1..", []) if arm else
-                ("Une étoile de prestige dans ce métier", f"if score @s m.{t}_pr matches 1..", []))
-    ec = lambda n: f"if score @s c.ecus matches {n}.."
-    pe = lambda e, u: [f"scoreboard players remove @s m.ecl {e}", f"scoreboard players remove @s c.ecus {u}"]
-    if i == 7:
-        return (("15 éclats et 80 000 Écus", f"if score @s m.ecl matches 15.. {ec(80000)}", pe(15, 80000)) if arm else
-                ("300 cristaux, 8 éclats et 50 000 Écus", f"if score @s {cr} matches 300.. if score @s m.ecl matches 8.. {ec(50000)}",
-                 [f"scoreboard players remove @s {cr} 300"] + pe(8, 50000)))
-    if i == 8:
-        return (("25 éclats et 150 000 Écus", f"if score @s m.ecl matches 25.. {ec(150000)}", pe(25, 150000)) if arm else
-                ("400 cristaux, 12 éclats et 100 000 Écus", f"if score @s {cr} matches 400.. if score @s m.ecl matches 12.. {ec(100000)}",
-                 [f"scoreboard players remove @s {cr} 400"] + pe(12, 100000)))
-    if i == 9:
-        return ("Vaincre 10 fois la Liche du givre, puis 15 éclats et 100 000 Écus",
-                f"if score @s m.bk3 matches 10.. if score @s m.ecl matches 15.. {ec(100000)}", pe(15, 100000))
-    if i == 10:
-        return ("Tuer 5 Wardens, puis 15 éclats et 100 000 Écus",
-                f"if score @s m.kwarden matches 5.. if score @s m.ecl matches 15.. {ec(100000)}", pe(15, 100000))
-    if i == 11:
-        return ("Tuer 3 fois l’Ender Dragon, puis 20 éclats et 150 000 Écus",
-                f"if score @s m.kdragon matches 3.. if score @s m.ecl matches 20.. {ec(150000)}", pe(20, 150000))
-    return (("5 prestiges au total, puis 25 éclats et 250 000 Écus", f"if score @s m.prtot matches 5.. if score @s m.ecl matches 25.. {ec(250000)}", pe(25, 250000)) if arm else
-            ("2 étoiles de prestige dans ce métier, puis 25 éclats et 250 000 Écus",
-             f"if score @s m.{t}_pr matches 2.. if score @s m.ecl matches 25.. {ec(250000)}", pe(25, 250000)))
+    e, u, c = PRIX[i]
+    txt = f"{e} éclats de boss et {ecus_txt(u)} Écus"
+    cond = f"if score @s m.ecl matches {e}.. if score @s c.ecus matches {u}.."
+    if c == "p1":
+        pre, cc = (("un prestige dans n’importe quel métier", "if score @s m.prtot matches 1..") if t == "a" else
+                   ("une étoile de prestige dans ce métier", f"if score @s m.{t}_pr matches 1.."))
+    elif c == "p2":
+        pre, cc = (("5 prestiges au total", "if score @s m.prtot matches 5..") if t == "a" else
+                   ("2 étoiles de prestige dans ce métier", f"if score @s m.{t}_pr matches 2.."))
+    elif c:
+        pre, cc = c[2], f"if score @s {c[0]} matches {c[1]}.."
+    else:
+        pre, cc = None, ""
+    if pre:
+        txt = f"{pre[0].upper() + pre[1:]}, puis {txt}"
+        cond = f"{cc} {cond}"
+    return (txt, cond, [f"scoreboard players remove @s m.ecl {e}", f"scoreboard players remove @s c.ecus {u}"])
 
 N = len(SKIN_IDS)
-# ---------------------------------------------------------------- achat / équipement des skins 7 à 12 (1 à 6 : ref_menu.py)
+# ---------------------------------------------------------------- achat / équipement des 12 skins (remplace ceux de ref_menu.py)
 for ti, (t, nom) in enumerate(TGT):
     REG = (f"execute if score @s m.arm matches 1.. if items entity @s armor.* {ASEL} run function {NS}:armure/donner" if t == "a" else
            f"execute if items entity @s container.* {SEL(t)} run function {NS}:{t}/outil_donner")
-    for i in range(7, N + 1):
+    for i in range(1, N + 1):
         sn = SKIN_NOM[i - 1]
         prix, cond, pay = regle(t, i)
         A = [f"execute if score @s m.so_{t}{i} matches 1 if score @s m.skin_{t} matches {i} run return run function {NS}:skins/equiper {{t:\"{t}\",i:0}}",
@@ -89,46 +82,48 @@ w(SK2 + "equiper.mcfunction", "\n".join([
 w(SK2 + "fiche_retour.mcfunction", "\n".join(
     [f"execute if score @s m.skf matches {i} run return run function {NS}:skins/fiche_{i}" for i in range(N + 1)]))
 
-# ---------------------------------------------------------------- liste (skins/menu) : un bouton par skin
-LI = []
-for t, _ in TGT:
-    L = []
-    for i in range(7, N + 1):
+# ---------------------------------------------------------------- aperçus : glyphes de la police metiers:apercu (resourcepack/gen6.py)
+# cible n° ti (ordre TGT), skin i (0 = base) : grand U+E000 + 13 ti + i, petit U+E200 + 13 ti + i
+GRAND = lambda ti, i: chr(0xE000 + 13 * ti + i)
+PETIT = lambda ti, i: chr(0xE200 + 13 * ti + i)
+SAUTS = "\\n" * 11   # le grand aperçu (96 px) déborde sous sa ligne : on lui laisse la place
+
+# ---------------------------------------------------------------- liste (skins/menu) : aperçu + nom + prix sur chaque bouton
+for ti, (t, _) in enumerate(TGT):
+    L = [f'data modify storage {NS}:sk g{i} set value "{PETIT(ti, i)}"' for i in range(N + 1)]
+    L += [f'data modify storage {NS}:sk gc set value "{GRAND(ti, 0)}"']
+    L += [f'execute if score @s m.skin_{t} matches {i} run data modify storage {NS}:sk gc set value "{GRAND(ti, i)}"' for i in range(1, N + 1)]
+    for i in range(1, N + 1):
         prix, cond, _p = regle(t, i)
         sn = SKIN_NOM[i - 1]
         L += [f'data modify storage {NS}:sk s{i} set value "{"✦ " if i in LEG else ""}{sn}"', f'data modify storage {NS}:sk k{i} set value "dark_gray"',
               f'execute {cond} run data modify storage {NS}:sk k{i} set value "yellow"',
+              f'data modify storage {NS}:sk p{i} set value "{court(i)}"',
               f'execute if score @s m.so_{t}{i} matches 1 run data modify storage {NS}:sk k{i} set value "green"',
-              f'execute if score @s m.skin_{t} matches {i} run data modify storage {NS}:sk s{i} set value "★ {sn} · équipé"',
-              f'execute if score @s m.skin_{t} matches {i} run data modify storage {NS}:sk k{i} set value "gold"']
+              f'execute if score @s m.so_{t}{i} matches 1 run data modify storage {NS}:sk p{i} set value "à toi"',
+              f'execute if score @s m.skin_{t} matches {i} run data modify storage {NS}:sk s{i} set value "★ {sn}"',
+              f'execute if score @s m.skin_{t} matches {i} run data modify storage {NS}:sk k{i} set value "gold"',
+              f'execute if score @s m.skin_{t} matches {i} run data modify storage {NS}:sk p{i} set value "équipé"']
     add_lines(SK2 + f"infos_{t}.mcfunction", L)
-# les libellés 1 à 6 de ref_menu.py contiennent déjà le prix : on les raccourcit (le prix est sur la fiche)
-for t, _ in TGT:
-    L = []
-    for i in range(1, 7):
-        sn = SKIN_NOM[i - 1]
-        L += [f'data modify storage {NS}:sk s{i} set value "{sn}"',
-              f'execute if score @s m.skin_{t} matches {i} run data modify storage {NS}:sk s{i} set value "★ {sn} · équipé"']
-    add_lines(SK2 + f"infos_{t}.mcfunction", L)
-LBTN = [f'{{label:{{text:"$(s{i})",color:"$(k{i})"}},width:150,tooltip:{{text:"{DESC[i]}\\nClique pour voir l’aperçu et le prix."}},'
+LBTN = [f'{{label:[{{text:"$(g{i}) ",font:"metiers:apercu",color:"white"}},{{text:"$(s{i})",color:"$(k{i})"}},{{text:"  $(p{i})",color:"gray"}}],width:200,'
+        f'tooltip:{{text:"{DESC[i]}\\nPrix : {regle("b", i)[0] if i != 6 and i != 12 else "voir la fiche"}\\nClique pour voir l’aperçu en grand."}},'
         f'action:{{type:"run_command",command:"trigger metiers set {4300 + i}"}}}}' for i in range(1, N + 1)]
 w(SK2 + "menu.mcfunction", "\n".join(["scoreboard players set @s m.skf -1", f"function {NS}:skins/calcul",
                                       f"function {NS}:skins/menu_dialog with storage {NS}:sk"]))
 w(SK2 + "menu_dialog.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Skins d’outil et d’armure",color:"light_purple",bold:true},can_close_with_escape:true,pause:false,'
-  'body:[{type:"minecraft:item",item:{id:"minecraft:paper",components:{"minecraft:item_model":"metiers:$(model)","minecraft:custom_model_data":{strings:["$(skin)"]}}},'
-  'show_decorations:false,show_tooltip:false,width:64,height:64,description:{width:250,contents:[{text:"$(cible)\\n",color:"aqua",bold:true},'
-  '{text:"Choisis un skin pour voir son aperçu et son prix. ",color:"gray",bold:false},{text:"✦ légendaire",color:"light_purple",bold:false},'
-  '{text:" : il change la forme de tes outils.\\n",color:"gray",bold:false},'
-  '{text:"Vert : à toi · jaune : achetable · gris : pas encore.",color:"dark_gray",bold:false}]}}],'
-  '' f'actions:[{{label:[{{text:"Objet : ",color:"gray"}},{{text:"$(cible)",color:"aqua"}},{{text:"  ↻",color:"gray"}}],width:310,'
+  'body:[{type:"minecraft:plain_message",width:400,contents:[{text:"$(cible)",color:"aqua",bold:true},{text:" · skin actuel\\n",color:"gray"},'
+  '{text:"$(gc)",font:"metiers:apercu",color:"white"},{text:"' + SAUTS + '"},'
+  '{text:"Vert : à toi · jaune : achetable · gris : pas encore. ",color:"gray"},{text:"✦ légendaire",color:"light_purple"},'
+  '{text:" : change la forme des outils et du casque.\\nPrix en éclats de boss et en Écus.",color:"gray"}]}],'
+  'actions:[{label:[{text:"Objet : ",color:"gray"},{text:"$(cible)",color:"aqua"},{text:"  ↻",color:"gray"}],width:200,'
   'tooltip:{text:"Passer à l’objet suivant : l’armure ou l’un de tes 9 outils de métier."},action:{type:"run_command",command:"trigger metiers set 421"}},'
-  f'{{label:{{text:"Apparence de base",color:"white"}},width:150,action:{{type:"run_command",command:"trigger metiers set 4300"}}}},'
+  '{label:[{text:"$(g0) ",font:"metiers:apercu",color:"white"},{text:"Apparence de base",color:"white"}],width:200,action:{type:"run_command",command:"trigger metiers set 4300"}},'
   f'{",".join(LBTN)}],columns:2,'
   'exit_action:{label:"Retour",width:200,action:{type:"run_command",command:"trigger metiers set 1"}}}')
 w(SK2 + "cycle.mcfunction", "scoreboard players add @s m.skt 1\nexecute if score @s m.skt matches 10.. run scoreboard players set @s m.skt 0\nfunction metiers:skins/menu")
 
-# ---------------------------------------------------------------- fiche d'un skin : aperçu, prix, état, action
+# ---------------------------------------------------------------- fiche d'un skin : grand aperçu, prix, état, action
 for i in range(N + 1):
     sid = "" if i == 0 else SKIN_IDS[i - 1]
     sn = "Apparence de base" if i == 0 else SKIN_NOM[i - 1]
@@ -136,24 +131,23 @@ for i in range(N + 1):
           f'data modify storage {NS}:sk fs set value "{sid}"', f'data modify storage {NS}:sk fn set value "{("✦ " if i in LEG else "") + sn}"',
           f'data modify storage {NS}:sk fd set value "{DESC.get(i, "Ton objet tel que son palier le dessine, sans skin.")}"',
           f'data modify storage {NS}:sk fl set value "{"Sur l’armure : casque à forme propre et motifs peints sur toute l’armure." if i in LEG else ""}"',
-          f"scoreboard players set #pr m.tmp {max(0, i - 1)}", f"scoreboard players add #pr m.tmp 4300",
+          f"scoreboard players set #pr m.tmp {(i - 1) % (N + 1)}", f"scoreboard players add #pr m.tmp 4300",
           f"scoreboard players set #su m.tmp {(i + 1) % (N + 1)}", "scoreboard players add #su m.tmp 4300",
           f"execute store result storage {NS}:sk fp int 1 run scoreboard players get #pr m.tmp",
           f"execute store result storage {NS}:sk fv int 1 run scoreboard players get #su m.tmp",
           f"data modify storage {NS}:sk fa set value {4320 + i}",
-          "scoreboard players set #cr m.tmp 0", "scoreboard players set #ec m.tmp 0"]
-    FI.append("execute if score @s c.ecus matches -2147483648.. run scoreboard players operation #ec m.tmp = @s c.ecus")
+          "scoreboard players set #ec m.tmp 0",
+          "execute if score @s c.ecus matches -2147483648.. run scoreboard players operation #ec m.tmp = @s c.ecus"]
     for ti, (t, _) in enumerate(TGT):
-        if t != "a":
-            FI.append(f"execute if score @s m.skt matches {ti} run scoreboard players operation #cr m.tmp = @s m.cr_{t}")
+        base = f"execute if score @s m.skt matches {ti}"
+        FI.append(f'{base} run data modify storage {NS}:sk gb set value "{GRAND(ti, i)}"')
         if i == 0:
-            FI += [f'execute if score @s m.skt matches {ti} run data modify storage {NS}:sk fc set value "Gratuit"',
-                   f'execute if score @s m.skt matches {ti} run data modify storage {NS}:sk fe set value "Toujours disponible"',
-                   f'execute if score @s m.skt matches {ti} run data modify storage {NS}:sk fk set value "green"',
-                   f'execute if score @s m.skt matches {ti} run data modify storage {NS}:sk fb set value "Remettre l’apparence de base"']
+            FI += [f'{base} run data modify storage {NS}:sk fc set value "Gratuit"',
+                   f'{base} run data modify storage {NS}:sk fe set value "Toujours disponible"',
+                   f'{base} run data modify storage {NS}:sk fk set value "green"',
+                   f'{base} run data modify storage {NS}:sk fb set value "Remettre l’apparence de base"']
             continue
         prix, cond, _p = regle(t, i)
-        base = f"execute if score @s m.skt matches {ti}"
         FI += [f'{base} run data modify storage {NS}:sk fc set value "{prix}"',
                f'{base} run data modify storage {NS}:sk fe set value "Pas encore débloqué"', f'{base} run data modify storage {NS}:sk fk set value "red"',
                f'{base} run data modify storage {NS}:sk fb set value "Il te manque encore quelque chose"',
@@ -165,10 +159,12 @@ for i in range(N + 1):
                f'{base} if score @s m.skin_{t} matches {i} run data modify storage {NS}:sk fe set value "Équipé"',
                f'{base} if score @s m.skin_{t} matches {i} run data modify storage {NS}:sk fk set value "gold"',
                f'{base} if score @s m.skin_{t} matches {i} run data modify storage {NS}:sk fb set value "Retirer (apparence de base)"']
-    FI += [f"execute store result storage {NS}:sk fcr int 1 run scoreboard players get #cr m.tmp",
-           f"execute store result storage {NS}:sk fec int 1 run scoreboard players get #ec m.tmp",
-           "scoreboard players add @s m.bk3 0", "scoreboard players add @s m.kwarden 0", "scoreboard players add @s m.kdragon 0",
+    FI += [f"execute store result storage {NS}:sk fec int 1 run scoreboard players get #ec m.tmp",
+           "scoreboard players add @s m.bk2 0", "scoreboard players add @s m.bk3 0", "scoreboard players add @s m.bk4 0",
+           "scoreboard players add @s m.kwarden 0", "scoreboard players add @s m.kdragon 0",
+           f"execute store result storage {NS}:sk fre int 1 run scoreboard players get @s m.bk2",
            f"execute store result storage {NS}:sk fli int 1 run scoreboard players get @s m.bk3",
+           f"execute store result storage {NS}:sk fbr int 1 run scoreboard players get @s m.bk4",
            f"execute store result storage {NS}:sk fwa int 1 run scoreboard players get @s m.kwarden",
            f"execute store result storage {NS}:sk fdr int 1 run scoreboard players get @s m.kdragon",
            f"execute store result storage {NS}:sk fpt int 1 run scoreboard players get @s m.prtot",
@@ -176,13 +172,12 @@ for i in range(N + 1):
     w(SK2 + f"fiche_{i}.mcfunction", "\n".join(FI))
 w(SK2 + "fiche_dialog.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"$(fn)",color:"light_purple",bold:true},can_close_with_escape:true,pause:false,'
-  'body:[{type:"minecraft:item",item:{id:"minecraft:paper",components:{"minecraft:item_model":"metiers:$(model)","minecraft:custom_model_data":{strings:["$(fs)"]}}},'
-  'show_decorations:false,show_tooltip:false,width:128,height:128,description:{width:220,contents:['
-  '{text:"$(cible)\\n\\n",color:"aqua",bold:true},{text:"$(fd)\\n",color:"white",bold:false},{text:"$(fl)\\n\\n",color:"gray",bold:false},'
-  '{text:"Prix : ",color:"gold",bold:true},{text:"$(fc)\\n",color:"yellow",bold:false},'
-  '{text:"$(fe)",color:"$(fk)",bold:true}]}},'
-  '{type:"minecraft:plain_message",width:380,contents:[{text:"Tu as : ",color:"gray"},{text:"$(fcr) cristaux · $(ecl) éclats · $(fec) Écus",color:"white"},'
-  '{text:"\\nTrophées : ",color:"gray"},{text:"Liche $(fli)/10 · Wardens $(fwa)/5 · Ender Dragon $(fdr)/3 · prestiges $(fpt)",color:"white"}]}],'
+  'body:[{type:"minecraft:plain_message",width:400,contents:[{text:"$(cible)\\n",color:"aqua",bold:true},'
+  '{text:"$(gb)",font:"metiers:apercu",color:"white"},{text:"' + SAUTS + '"},'
+  '{text:"$(fd)\\n",color:"white"},{text:"$(fl)\\n",color:"gray"},'
+  '{text:"Prix : ",color:"gold",bold:true},{text:"$(fc)\\n",color:"yellow"},{text:"$(fe)",color:"$(fk)",bold:true}]},'
+  '{type:"minecraft:plain_message",width:400,contents:[{text:"Tu as : ",color:"gray"},{text:"$(ecl) éclats de boss · $(fec) Écus",color:"white"},'
+  '{text:"\\nTrophées : ",color:"gray"},{text:"Reine $(fre)/3 · Brasier $(fbr)/3 · Liche $(fli)/10 · Wardens $(fwa)/5 · Ender Dragon $(fdr)/3 · prestiges $(fpt)",color:"white"}]}],'
   'actions:[{label:{text:"$(fb)",color:"$(fk)",bold:true},width:310,action:{type:"run_command",command:"trigger metiers set $(fa)"}},'
   '{label:{text:"◀ Skin précédent",color:"gray"},width:150,action:{type:"run_command",command:"trigger metiers set $(fp)"}},'
   '{label:{text:"Skin suivant ▶",color:"gray"},width:150,action:{type:"run_command",command:"trigger metiers set $(fv)"}}],columns:2,'
