@@ -17,7 +17,7 @@ ROOT = os.path.join(ICI, "..", "build", "industrie_datapack")
 RP = os.path.join(ICI, "..", "build", "industrie_rp")
 NS = "industrie"
 F = f"data/{NS}/function/"
-VERSION = 2
+VERSION = 3
 DIM = f"{NS}:archipel"
 S = "scoreboard players"
 for d in (ROOT, RP):
@@ -58,6 +58,7 @@ def say(txt, col="gray", who="@s"):
 
 
 def btn(label, val, width=150, tip=None):
+    width = min(width, 200)                  # 27/11/2026 : fenêtres trop larges sur les petits écrans
     s_ = f"{{label:{label},width:{width}"
     if tip:
         s_ += f',tooltip:{{text:"{tip}"}}'
@@ -65,12 +66,14 @@ def btn(label, val, width=150, tip=None):
 
 
 def dlg(title, body, actions, cols=2, exit_val=None):
+    cols = min(cols, 3)
     ex = f',exit_action:{{label:{T("Retour", "gray")},width:120,action:{{type:"run_command",command:"trigger industrie set {exit_val}"}}}}' if exit_val else ""
     return (f'dialog show @s {{type:"minecraft:multi_action",title:{title},can_close_with_escape:true,pause:false,'
             f'body:[{",".join(body)}],actions:[{",".join(actions)}],columns:{cols}{ex}}}')
 
 
-def msg(contents, width=360):
+def msg(contents, width=320):
+    width = min(width, 320)
     return f'{{type:"minecraft:plain_message",width:{width},contents:{contents}}}'
 
 
@@ -135,6 +138,8 @@ fn("seconde", [
     f"execute as @a at @s run function {NS}:joueur/seconde",
     f"execute as @a at @s if dimension {DIM} run function {NS}:ile/garde",
     f"execute as @a[tag=ind.adv] at @s unless dimension {DIM} run function {NS}:ile/hors",
+    f"{S} add #bar i.g 1", f"execute if score #bar i.g matches 5.. as @a at @s if dimension {DIM} run function {NS}:ile/barrieres",
+    f"execute if score #bar i.g matches 5.. run {S} set #bar i.g 0",
     f"execute as @a at @s if dimension {DIM} as @e[type=minecraft:item_display,tag=ind.pq,distance=..80] run function {NS}:tube/anim",
     f"function {NS}:evenement/seconde"])
 

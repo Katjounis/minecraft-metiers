@@ -614,3 +614,46 @@ def monument(s):
         m = 8 + i * 0.6
         s.add((m, 8 + i * 8, m), (24 - m, 16 + i * 8, 24 - m), "#2a2436" if i % 2 else OR_, "brique" if i % 2 else "dore")
     s.add((10.5, 56, 10.5), (13.5, 64, 13.5), "#fff0a0", "lueur", rot={"y": 45, "origin": [12, 56, 12]})
+
+def champ(s):
+    """Serre de cultures : champ en planches irriguées (blé, carottes, patates, betteraves, pastèques), silo et moulin."""
+    socle(s, 48, 44, "#3a3226")
+    for i, (c, h, m) in enumerate((("#e0c050", 7, "rayure"), ("#ff9a30", 4, "bruit"), ("#c8a060", 3, "bruit"),
+                                   ("#a8204a", 4, "bruit"), ("#3a9a30", 4, "rayure"))):
+        z = 4 + i * 7.6
+        s.add((4, 4, z), (32, 5.5, z + 6), "#5a3a22", "planches")
+        s.add((4.5, 5.5, z + 2.6), (31.5, 5.9, z + 3.4), "#3fa0e0", "lueur")
+        for k in range(6):
+            x = 6 + k * 4.4
+            s.add((x, 5.5, z + 0.8), (x + 2, 5.5 + h, z + 2.4), c, m)
+            s.add((x + 0.4, 5.5, z + 3.8), (x + 2.4, 5.5 + h * 0.8, z + 5.2), c, m)
+    rond(s, 40, 4, 30, 12, 5, "#d8d0c0", "planches", n=4)                 # silo
+    for y in (10, 18, 26): rond(s, 40, y, y + 1, 12, 5.3, CUIV, "cuivre", n=4)
+    s.add((35, 30, 7), (45, 33, 17), "#a02820", "brique")
+    s.add((36, 4, 26), (44, 22, 34), PLANCHE, "planches")                  # moulin
+    s.add((35.5, 22, 25.5), (44.5, 24, 34.5), "#7a3020", "brique")
+    for k in range(4):
+        s.add((39.4, 6, 25), (40.6, 32, 25.8), "#f0e8d8", "planches", rot={"z": k * 45, "origin": [40, 19, 25]})
+    s.add((38.5, 17.5, 24.4), (41.5, 20.5, 25.2), OR_, "dore")
+
+def usine_spawner(s):
+    """Usine à spawner : cage d'acier sombre autour du spawner, broyeur à lames, tapis de butin et cuves dorées."""
+    socle(s, 44, 44, "#24222a")
+    for (x, z) in ((6, 6), (34, 6), (6, 34), (34, 34)):
+        s.add((x, 4, z), (x + 4, 34, z + 4), "#3a3a44", "metal"); s.add((x - 0.5, 34, z - 0.5), (x + 4.5, 36, z + 4.5), OR_, "dore")
+    for k in range(7):                                                      # barreaux de la cage
+        p = 10 + k * 4
+        s.add((p, 4, 9), (p + 0.8, 34, 9.8), "#2c2c34", "metal"); s.add((p, 4, 34.2), (p + 0.8, 34, 35), "#2c2c34", "metal")
+        s.add((9, 4, p), (9.8, 34, p + 0.8), "#2c2c34", "metal"); s.add((34.2, 4, p), (35, 34, p + 0.8), "#2c2c34", "metal")
+    s.add((6, 34, 6), (38, 36, 38), "#3a3a44", "metal")
+    s.add((16, 18, 16), (28, 30, 28), "#1a1a22", "metal")                   # le spawner
+    s.add((17, 19, 17), (27, 29, 27), "#b040ff", "lueur")
+    s.add((19, 21, 15.6), (25, 27, 28.4), "#ff70ff", "runes"); s.add((15.6, 21, 19), (28.4, 27, 25), "#ff70ff", "runes")
+    rond(s, 22, 4, 10, 22, 7, "#4a4a52", "metal", n=4)                     # broyeur
+    for k in range(4):
+        s.add((14, 10, 21.4), (30, 11.2, 22.6), "#d0d4dc", "metal", rot={"y": k * 45, "origin": [22, 10, 22]})
+    s.add((20, 11, 20), (24, 18, 24), "#ff3040", "lueur")
+    s.add((38, 4, 18), (44, 6, 26), "#3a3a40", "rayure")                    # tapis de butin
+    for i, c in enumerate(("#e8e0d0", "#5a9a40", "#f0f0f0")):
+        s.add((39, 6, 19 + i * 2.4), (41, 7.6, 20.8 + i * 2.4), c, "bruit")
+    rond(s, 4, 4, 16, 40, 3, OR_, "dore", n=3); rond(s, 40, 4, 16, 4, 3, OR_, "dore", n=3)

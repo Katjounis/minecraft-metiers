@@ -82,8 +82,8 @@ for k, m in enumerate(ML):
     lab = f'{d["nom"]}  ·  {fe(d["prix"])}' + (f' + {d["ecl"]} éclats' if d["ecl"] else "")
     tip = f'{RANGS[d["rang"]][0]}. {prod_txt(m, 1)}. {abs(d["kw"])} kW {"fournis" if d["kw"] < 0 else "consommés"}.' + (
         " Tiens un spawner du Commerce en main." if m == "spawner" else "") + (" Demande une étoile du Nether." if d.get("etoile") else "")
-    ok = btn(T(lab, OR if d["rang"] >= 4 else ("aqua" if d["rang"] == 3 else ("green" if d["rang"] == 2 else "white")), True), 100 + k, 300, tip)
-    ko = btn(T(f'{d["nom"]}  ·  rang {RANGS[d["rang"]][0]}', "dark_gray"), 100 + k, 300, tip)
+    ok = btn(T(lab, OR if d["rang"] >= 4 else ("aqua" if d["rang"] == 3 else ("green" if d["rang"] == 2 else "white")), True), 100 + k, 200, tip)
+    ko = btn(T(f'{d["nom"]}  ·  rang {RANGS[d["rang"]][0]}', "dark_gray"), 100 + k, 200, tip)
     CO += [f"execute if score @s i.rang matches {d['rang']}.. run data modify storage {M_} c append value {ok}",
            f"execute unless score @s i.rang matches {d['rang']}.. run data modify storage {M_} c append value {ko}"]
 CO += [f"data modify storage {M_} c append value {x}" for x in NAV] + [f"function {NS}:menu/comptoir_d with storage {M_}"]
@@ -124,8 +124,7 @@ fn("menu/halle", HA)
 fn("menu/halle_d", "$" + dlg(
     T("HALLE DU MARCHÉ", OR, True),
     [msg(L(T("$(nom)", OR, True), T(" : $(cap) objets vendus par heure, commission $(com) %.", "gray"),
-           T("\\nNiveau suivant : $(nx)", "white"), T("\\n\\nTout ce que le Nexus produit part ici et se vend en continu, même hors ligne. "
-                                                   "Chaque produit a son marché : plus tu en vends dans la journée, plus son prix baisse ; il remonte en 24 h.", "gray"),
+           T("\\nNiveau suivant : $(nx)", "white"), T("\\n\\nLe Nexus vend ici en continu, même hors ligne. Plus tu vends un produit dans la journée, plus son prix baisse.", "gray"),
            T("\\n\\nBourse : $(ev)", "yellow"), T("\\n\\nCONTRATS DU JOUR", "light_purple", True), T("\\n1. $(c1)\\n2. $(c2)\\n3. $(c3)", "white")), 400)],
     [btn(T("Livrer le contrat 1", "light_purple"), 511, 140), btn(T("Livrer le contrat 2", "light_purple"), 512, 140), btn(T("Livrer le contrat 3", "light_purple"), 513, 140),
      btn(T("Agrandir la Halle", OR, True), 530, 140)] + NAV, 4))

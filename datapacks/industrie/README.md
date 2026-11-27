@@ -73,6 +73,7 @@ Pour générer : `python sources/datapack.py`, puis `python labo/outils/fusion_r
 
 ## Versions
 
+- v3 (27/11/2026, nuit) : modèles 3D de la serre de cultures et de l'usine à spawner (elles s'affichaient en cube violet et noir), barrières invisibles dans l'emprise des machines et des bâtiments pour ne plus passer au travers (reposées toutes les 5 s, retirées à la revente), dialogues resserrés (Halle, Comptoir). Le menu G revient à l'état d'avant : Industrie est le bouton sous le panneau.
 - v2 (27/11/2026, soir) : clic droit sur les machines et les bâtiments réparé (les données d'interaction étaient effacées avant de lire le joueur), portail « Retour au monde normal » à côté du point d'arrivée, textures qui clignotaient corrigées (faces confondues dans les modèles), Industrie dans le panneau du menu G.
 - v1 (27/11/2026) : première version.
   - Îles, parcelles et 17 machines, dont la serre de cultures et l'usine à spawner.

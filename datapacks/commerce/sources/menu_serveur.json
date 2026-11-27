@@ -1,5 +1,5 @@
 {
- "type": "minecraft:notice",
+ "type": "minecraft:multi_action",
  "title": {
   "text": "Les Couillons",
   "color": "gold",
@@ -16,13 +16,13 @@
    "width": 410,
    "contents": [
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0,
@@ -47,7 +47,7 @@
      }
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0,
@@ -72,7 +72,7 @@
      }
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0,
@@ -97,7 +97,7 @@
      }
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0,
@@ -122,7 +122,7 @@
      }
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0,
@@ -147,32 +147,7 @@
      }
     },
     {
-     "text": "",
-     "font": "metiers:arbre",
-     "color": "white",
-     "shadow_color": 0,
-     "click_event": {
-      "action": "run_command",
-      "command": "trigger industrie set 1"
-     },
-     "hover_event": {
-      "action": "show_text",
-      "value": [
-       {
-        "text": "Industrie\n",
-        "color": "#C08020",
-        "bold": true
-       },
-       {
-        "text": "L'Archipel des usines : ton île, tes machines, la Halle du Marché, la Banque.",
-        "color": "gray",
-        "bold": false
-       }
-      ]
-     }
-    },
-    {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0,
@@ -197,7 +172,7 @@
      }
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0,
@@ -217,7 +192,7 @@
      }
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0,
@@ -237,7 +212,7 @@
      }
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0,
@@ -257,7 +232,7 @@
      }
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0,
@@ -277,7 +252,7 @@
      }
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0,
@@ -297,7 +272,7 @@
      }
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0,
@@ -317,7 +292,7 @@
      }
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -327,7 +302,7 @@
      "font": "minecraft:default"
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -337,7 +312,7 @@
      "font": "minecraft:default"
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -347,7 +322,7 @@
      "font": "minecraft:default"
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -357,7 +332,7 @@
      "font": "minecraft:default"
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -367,7 +342,7 @@
      "font": "minecraft:default"
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -377,7 +352,7 @@
      "font": "minecraft:default"
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -387,7 +362,7 @@
      "font": "minecraft:default"
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -399,7 +374,7 @@
      "shadow_color": 0
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -411,7 +386,7 @@
      "shadow_color": 0
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -423,7 +398,7 @@
      "shadow_color": 0
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -435,7 +410,7 @@
      "shadow_color": 0
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -445,7 +420,7 @@
      "font": "minecraft:default"
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -457,7 +432,7 @@
      "shadow_color": 0
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -469,7 +444,7 @@
      "shadow_color": 0
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -481,7 +456,7 @@
      "shadow_color": 0
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -493,7 +468,7 @@
      "shadow_color": 0
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -503,7 +478,7 @@
      "font": "minecraft:default"
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -513,7 +488,7 @@
      "font": "minecraft:default"
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -523,7 +498,7 @@
      "font": "minecraft:default"
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -533,7 +508,7 @@
      "font": "minecraft:default"
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -543,7 +518,7 @@
      "font": "minecraft:default"
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -555,14 +530,36 @@
      "shadow_color": 0
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
     },
     {
-     "text": "Industrie",
-     "color": "#875A16",
+     "text": "Guide",
+     "color": "#3E2A1A",
+     "font": "minecraft:default",
+     "shadow_color": 0
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "\n",
+     "font": "minecraft:default"
+    },
+    {
+     "text": "",
+     "font": "metiers:arbre",
+     "color": "white",
+     "shadow_color": 0
+    },
+    {
+     "text": "ton parcours",
+     "color": "#6B5640",
      "font": "minecraft:default",
      "shadow_color": 0
     },
@@ -573,8 +570,8 @@
      "shadow_color": 0
     },
     {
-     "text": "Guide",
-     "color": "#3E2A1A",
+     "text": "bien démarrer",
+     "color": "#6B5640",
      "font": "minecraft:default",
      "shadow_color": 0
     },
@@ -589,43 +586,7 @@
      "font": "minecraft:default"
     },
     {
-     "text": "",
-     "font": "metiers:arbre",
-     "color": "white",
-     "shadow_color": 0
-    },
-    {
-     "text": "ton parcours",
-     "color": "#6B5640",
-     "font": "minecraft:default",
-     "shadow_color": 0
-    },
-    {
-     "text": "",
-     "font": "metiers:arbre",
-     "color": "white",
-     "shadow_color": 0
-    },
-    {
-     "text": "ton île, tes usines",
-     "color": "#6B5640",
-     "font": "minecraft:default",
-     "shadow_color": 0
-    },
-    {
-     "text": "",
-     "font": "metiers:arbre",
-     "color": "white",
-     "shadow_color": 0
-    },
-    {
-     "text": "bien démarrer",
-     "color": "#6B5640",
-     "font": "minecraft:default",
-     "shadow_color": 0
-    },
-    {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -635,7 +596,7 @@
      "font": "minecraft:default"
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -645,7 +606,7 @@
      "font": "minecraft:default"
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -655,7 +616,7 @@
      "font": "minecraft:default"
     },
     {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -665,17 +626,7 @@
      "font": "minecraft:default"
     },
     {
-     "text": "",
-     "font": "metiers:arbre",
-     "color": "white",
-     "shadow_color": 0
-    },
-    {
-     "text": "\n",
-     "font": "minecraft:default"
-    },
-    {
-     "text": "",
+     "text": "",
      "font": "metiers:arbre",
      "color": "white",
      "shadow_color": 0
@@ -683,8 +634,32 @@
    ]
   }
  ],
- "action": {
-  "label": "Fermer",
-  "width": 200
- }
+ "actions": [
+  {
+   "label": [
+    {
+     "text": "⚙ ",
+     "color": "#F7C843"
+    },
+    {
+     "text": "Industrie",
+     "color": "#F7C843",
+     "bold": true
+    }
+   ],
+   "width": 200,
+   "tooltip": {
+    "text": "L'Archipel des usines : ton île, tes machines, la Halle du Marché, la Banque."
+   },
+   "action": {
+    "type": "minecraft:run_command",
+    "command": "trigger industrie set 1"
+   }
+  },
+  {
+   "label": "Fermer",
+   "width": 200
+  }
+ ],
+ "columns": 2
 }

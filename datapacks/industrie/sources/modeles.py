@@ -12,6 +12,8 @@ ORS = {"or": V.OR, "diamant": V.DIA, "emeraude": V.EME, "netherite": V.NET}
 SCENES = {
     "carriere": lambda s: V.carriere(s),
     "serre": lambda s: V.serre(s),
+    "cultures": lambda s: V.champ(s),
+    "spawner": lambda s: V.usine_spawner(s),
     "fourneau": lambda s: V.haut_fourneau(s, 0, 0),
     "chaudiere": lambda s: V.chaudiere(s),
     "puits_or": lambda s: V.puits_cristal(s, 0, 0, V.OR),

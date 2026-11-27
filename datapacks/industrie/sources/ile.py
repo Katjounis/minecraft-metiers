@@ -218,3 +218,11 @@ fn("ile/vide", [f"execute unless score @s i.ile matches 0.. run return run funct
                 f"{S} operation #n i.t = @s i.ile", f"function {NS}:ile/tp", say("Rattrapé au-dessus du vide !", "gray")])
 # hors de l'Archipel : on rend le mode survie si on l'avait retiré
 fn("ile/hors", ["tag @s remove ind.adv", "execute if entity @s[gamemode=adventure] run gamemode survival @s"])
+
+# ---------------------------------------------------------------- collisions : barrières invisibles dans l'emprise des machines
+# et des bâtiments (27/11/2026). Un peu plus petites que la zone de clic (entité interaction) pour que le clic droit passe.
+# Posées toutes les 5 s autour des joueurs de l'Archipel, jamais sur un joueur (rien à moins de 4 blocs).
+fn("ile/barrieres", [
+    f"execute as @e[type=minecraft:interaction,tag=ind.mi,distance=..96] at @s unless entity @a[distance=..4] run fill ~-2 ~ ~-2 ~2 ~4 ~2 minecraft:barrier replace minecraft:air",
+    f"execute as @e[type=minecraft:interaction,tag=ind.bi,tag=!ind.ret,distance=..96] at @s if score @s i.mt matches 90..92 unless entity @a[distance=..4] run fill ~-2 ~ ~-2 ~1 ~4 ~1 minecraft:barrier replace minecraft:air",
+    f"execute as @e[type=minecraft:interaction,tag=ind.bi,tag=!ind.ret,distance=..96] at @s if score @s i.mt matches 93 unless entity @a[distance=..3] run fill ~-1 ~ ~-1 ~ ~4 ~ minecraft:barrier replace minecraft:air"])

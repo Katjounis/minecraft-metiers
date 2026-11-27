@@ -60,7 +60,7 @@ LIVRE_ACTIF = {"metiers": 0, "commerce": 1, "compagnons": 2, "bestiaire": 3, "se
 # rangement des icônes par page : (ligne, cases de la page gauche, cases de la page droite), rien sur la reliure
 LIVRE_DISPO = {
     "metiers": [(5, [1, 2, 3], [4, 5, 6]), (11, [7, 8], [9, 10]), (17, [11, 12, 13], [14, 15, 16])],
-    "serveur": [(5, [1, 2], [3, 4]), (11, [5, 6], [7])],
+    "serveur": [(5, [1, 2], [3, 4]), (11, [5], [6])],
     "commerce": [(5, [1, 2], [3, 4]), (11, [5], [6])],
     "compagnons": [(5, [1, 2], [3, 4]), (11, [5, 6], [7]), (17, [8], [9])],
     "bestiaire": [(5, [1, 2], [3, 4]), (11, [5, 6], [7, 8]), (17, [9, 10], [11])],
@@ -227,10 +227,9 @@ panneau("marche", 440, 203, None, [{"x": 0, "ligne": 5, "icone": ic, "nom": nm, 
 _MIXS = ("dark_oak_planks", [("oak_planks", 3), ("stone_bricks", 2), ("mossy_stone_bricks", 1), ("bookshelf", 1)])
 _SC = [("item/iron_pickaxe", "Métiers", "gold", "niveaux, arbres"), ("item/emerald", "Commerce", "green", "marché, banque"),
        ("item/lead", "Compagnons", "#C878FF", "ils te suivent"), ("item/bone", "Bestiaire", "#D03030", "monstres, primes"),
-       ("item/name_tag", "Mon profil", "yellow", "ton parcours"), ("block/furnace_front_on", "Industrie", "#C08020", "ton île, tes usines"),
-       ("item/book", "Guide", "white", "bien démarrer")]
+       ("item/name_tag", "Mon profil", "yellow", "ton parcours"), ("item/book", "Guide", "white", "bien démarrer")]
 panneau("serveur", 400, 136, _MIXS, [{"x": 80 + (i % 3) * 120, "ligne": 5 if i < 3 else 11, "icone": ic, "nom": nm, "couleur": col,
-                                       "info": inf, "cadre": "goal" if i < 4 or nm == "Industrie" else "task"} for i, (ic, nm, col, inf) in enumerate(_SC)])
+                                       "info": inf, "cadre": "goal" if i < 4 else "task"} for i, (ic, nm, col, inf) in enumerate(_SC)])
 
 _MIXK = ("oak_log", [("moss_block", 3), ("podzol_top", 1), ("rooted_dirt", 1), ("mossy_cobblestone", 1)])
 _KC = [("item/bone", "Loup"), ("item/cod", "Chat"), ("item/feather", "Perroquet"), ("item/snowball", "Bonhomme de neige"),
