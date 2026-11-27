@@ -3,7 +3,7 @@ depuis les modèles du resource pack, posée en glyphe de police « metiers:aper
 grand (fiche du skin). Les menus ne savent pas afficher un modèle 3D en grand, une police si.
 
     python gen6.py      après gen5.py : génère, verse dans metiers_resourcepack.zip et affiche le SHA-1
-Glyphe du skin i (0 = base) pour la cible n° c (ordre CIBLES) : grand U+E000 + 13 c + i, petit U+E200 + 13 c + i.
+Glyphe du skin i (0 = base) pour la cible n° c (ordre CIBLES) : grand U+E000 + 13 c + i, petit U+E200 + 13 c + i, moyen U+E400 + 13 c + i.
 """
 import os, io, json, zipfile, hashlib
 from PIL import Image
@@ -81,6 +81,7 @@ def generer():
             n = 13 * ci + i
             prov.append({"type": "bitmap", "file": f"metiers:font/apercu/{nom}.png", "height": 96, "ascent": 8, "chars": [chr(GRAND + n)]})
             prov.append({"type": "bitmap", "file": f"metiers:font/apercu/{nom}.png", "height": 14, "ascent": 11, "chars": [chr(PETIT + n)]})
+            prov.append({"type": "bitmap", "file": f"metiers:font/apercu/{nom}.png", "height": 48, "ascent": 8, "chars": [chr(0xE400 + n)]})
     json.dump({"providers": prov}, open(f"{OUT}/assets/metiers/font/apercu.json", "w", encoding="utf-8"), ensure_ascii=False)
     return len(prov) // 2
 

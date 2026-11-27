@@ -87,12 +87,14 @@ w(SK2 + "fiche_retour.mcfunction", "\n".join(
 GRAND = lambda ti, i: chr(0xE000 + 13 * ti + i)
 PETIT = lambda ti, i: chr(0xE200 + 13 * ti + i)
 SAUTS = "\\n" * 11   # le grand aperçu (96 px) déborde sous sa ligne : on lui laisse la place
+MOYEN = lambda ti, i: chr(0xE400 + 13 * ti + i)   # aperçu moyen (48 px) en tête de la liste
+SAUTS_M = "\\n" * 6
 
 # ---------------------------------------------------------------- liste (skins/menu) : aperçu + nom + prix sur chaque bouton
 for ti, (t, _) in enumerate(TGT):
     L = [f'data modify storage {NS}:sk g{i} set value "{PETIT(ti, i)}"' for i in range(N + 1)]
-    L += [f'data modify storage {NS}:sk gc set value "{GRAND(ti, 0)}"']
-    L += [f'execute if score @s m.skin_{t} matches {i} run data modify storage {NS}:sk gc set value "{GRAND(ti, i)}"' for i in range(1, N + 1)]
+    L += [f'data modify storage {NS}:sk gc set value "{MOYEN(ti, 0)}"']
+    L += [f'execute if score @s m.skin_{t} matches {i} run data modify storage {NS}:sk gc set value "{MOYEN(ti, i)}"' for i in range(1, N + 1)]
     for i in range(1, N + 1):
         prix, cond, _p = regle(t, i)
         sn = SKIN_NOM[i - 1]
@@ -105,20 +107,20 @@ for ti, (t, _) in enumerate(TGT):
               f'execute if score @s m.skin_{t} matches {i} run data modify storage {NS}:sk k{i} set value "gold"',
               f'execute if score @s m.skin_{t} matches {i} run data modify storage {NS}:sk p{i} set value "équipé"']
     add_lines(SK2 + f"infos_{t}.mcfunction", L)
-LBTN = [f'{{label:[{{text:"$(g{i}) ",font:"metiers:apercu",color:"white"}},{{text:"$(s{i})",color:"$(k{i})"}},{{text:"  $(p{i})",color:"gray"}}],width:200,'
+LBTN = [f'{{label:[{{text:""}},{{text:"$(g{i})",font:"metiers:apercu",color:"white"}},{{text:" $(s{i})",color:"$(k{i})"}},{{text:"  $(p{i})",color:"gray"}}],width:200,'
         f'tooltip:{{text:"{DESC[i]}\\nPrix : {regle("b", i)[0] if i != 6 and i != 12 else "voir la fiche"}\\nClique pour voir l’aperçu en grand."}},'
         f'action:{{type:"run_command",command:"trigger metiers set {4300 + i}"}}}}' for i in range(1, N + 1)]
 w(SK2 + "menu.mcfunction", "\n".join(["scoreboard players set @s m.skf -1", f"function {NS}:skins/calcul",
                                       f"function {NS}:skins/menu_dialog with storage {NS}:sk"]))
 w(SK2 + "menu_dialog.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"Skins d’outil et d’armure",color:"light_purple",bold:true},can_close_with_escape:true,pause:false,'
-  'body:[{type:"minecraft:plain_message",width:400,contents:[{text:"$(cible)",color:"aqua",bold:true},{text:" · skin actuel\\n",color:"gray"},'
-  '{text:"$(gc)",font:"metiers:apercu",color:"white"},{text:"' + SAUTS + '"},'
+  'body:[{type:"minecraft:plain_message",width:400,contents:[{text:""},{text:"$(cible)",color:"aqua",bold:true},{text:" · skin actuel\\n",color:"gray"},'
+  '{text:"$(gc)",font:"metiers:apercu",color:"white"},{text:"' + SAUTS_M + '"},'
   '{text:"Vert : à toi · jaune : achetable · gris : pas encore. ",color:"gray"},{text:"✦ légendaire",color:"light_purple"},'
   '{text:" : change la forme des outils et du casque.\\nPrix en éclats de boss et en Écus.",color:"gray"}]}],'
-  'actions:[{label:[{text:"Objet : ",color:"gray"},{text:"$(cible)",color:"aqua"},{text:"  ↻",color:"gray"}],width:200,'
+  'actions:[{label:[{text:""},{text:"Objet : ",color:"gray"},{text:"$(cible)",color:"aqua"},{text:"  ↻",color:"gray"}],width:200,'
   'tooltip:{text:"Passer à l’objet suivant : l’armure ou l’un de tes 9 outils de métier."},action:{type:"run_command",command:"trigger metiers set 421"}},'
-  '{label:[{text:"$(g0) ",font:"metiers:apercu",color:"white"},{text:"Apparence de base",color:"white"}],width:200,action:{type:"run_command",command:"trigger metiers set 4300"}},'
+  '{label:[{text:""},{text:"$(g0)",font:"metiers:apercu",color:"white"},{text:" Apparence de base",color:"white"}],width:200,action:{type:"run_command",command:"trigger metiers set 4300"}},'
   f'{",".join(LBTN)}],columns:2,'
   'exit_action:{label:"Retour",width:200,action:{type:"run_command",command:"trigger metiers set 1"}}}')
 w(SK2 + "cycle.mcfunction", "scoreboard players add @s m.skt 1\nexecute if score @s m.skt matches 10.. run scoreboard players set @s m.skt 0\nfunction metiers:skins/menu")
@@ -172,11 +174,11 @@ for i in range(N + 1):
     w(SK2 + f"fiche_{i}.mcfunction", "\n".join(FI))
 w(SK2 + "fiche_dialog.mcfunction",
   '$dialog show @s {type:"minecraft:multi_action",title:{text:"$(fn)",color:"light_purple",bold:true},can_close_with_escape:true,pause:false,'
-  'body:[{type:"minecraft:plain_message",width:400,contents:[{text:"$(cible)\\n",color:"aqua",bold:true},'
+  'body:[{type:"minecraft:plain_message",width:400,contents:[{text:""},{text:"$(cible)\\n",color:"aqua",bold:true},'
   '{text:"$(gb)",font:"metiers:apercu",color:"white"},{text:"' + SAUTS + '"},'
   '{text:"$(fd)\\n",color:"white"},{text:"$(fl)\\n",color:"gray"},'
   '{text:"Prix : ",color:"gold",bold:true},{text:"$(fc)\\n",color:"yellow"},{text:"$(fe)",color:"$(fk)",bold:true}]},'
-  '{type:"minecraft:plain_message",width:400,contents:[{text:"Tu as : ",color:"gray"},{text:"$(ecl) éclats de boss · $(fec) Écus",color:"white"},'
+  '{type:"minecraft:plain_message",width:400,contents:[{text:""},{text:"Tu as : ",color:"gray"},{text:"$(ecl) éclats de boss · $(fec) Écus",color:"white"},'
   '{text:"\\nTrophées : ",color:"gray"},{text:"Reine $(fre)/3 · Brasier $(fbr)/3 · Liche $(fli)/10 · Wardens $(fwa)/5 · Ender Dragon $(fdr)/3 · prestiges $(fpt)",color:"white"}]}],'
   'actions:[{label:{text:"$(fb)",color:"$(fk)",bold:true},width:310,action:{type:"run_command",command:"trigger metiers set $(fa)"}},'
   '{label:{text:"◀ Skin précédent",color:"gray"},width:150,action:{type:"run_command",command:"trigger metiers set $(fp)"}},'
