@@ -41,7 +41,7 @@ ARB_IC = {
     "n": ["item/enchanted_book", "item/experience_bottle", "item/lapis_lazuli", "item/ender_pearl", "item/blaze_rod", "item/nether_star"],
     "x": ["item/chainmail_boots", "item/sugar", "item/feather", "item/wind_charge", "item/spyglass", "item/map"],
     "t": ["item/emerald", "item/name_tag", "item/ink_sac", "item/goat_horn", "item/bundle", "block/emerald_block"],
-    "k": ["item/stick", "item/iron_boots", "block/scaffolding_side", "item/clock_00", "block/bricks", "item/golden_pickaxe"]}
+    "k": ["item/stick", "item/iron_boots", "block/scaffolding_side", "item/blaze_rod", "block/bricks", "item/blaze_powder"]}
 ARB_ETATS = ("acquise", "dispo", "points", "bloquee", "off")   # off (26/11/2026) : acquise mais désactivée, cadre rouge
 _ASC0 = 7                       # ascent du fond : le haut du dessin à 7 px au-dessus de la ligne de base
 _prov, _code = [], [0xE800]

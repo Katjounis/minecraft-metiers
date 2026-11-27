@@ -63,6 +63,26 @@ Touche G (ou menu Échap) pour ouvrir le menu des métiers, ou `/trigger metiers
 
 Commandes admin : `/function metiers:boss/alerte` (boss suivant de la rotation dans 2 min), `/function metiers:heure/lancer`, `/function metiers:defis/nouveaux`, `/function metiers:defis/semaine`.
 
+## Version 27.4 (27/11/2026)
+
+**Boss refondus** (`sources/ref_boss2.py`). Le Creeper géant tombait en moins d'une minute à l'épée : ses explosions faisaient des dégâts de type explosion presque annulés par l'armure de métier, ses rejetons avaient un rayon d'explosion nul et rien ne punissait le fait de rester collé à lui. Aucun boss ne casse ni ne pose de bloc : pas d'explosion vanilla, seulement des commandes `damage`, des particules, des markers et des `block_display`.
+
+Rang du boss : score de métiers (niveaux et prestige) du meilleur joueur à 64 blocs du point d'apparition, par paliers de 50, de 0 à 20, affiché dans la barre. Le rang fixe les PV (350 + 35 par rang + 220 par joueur en plus, Résistance au-delà de 1 000), l'armure, la robustesse, la cadence d'attaque et les dégâts : petites attaques 3 à 8, moyennes 6 à 14, lourdes 10 à 22. Les attaques sont annoncées par un cercle rouge au sol (1 à 2 s) et passent par le type de dégâts `metiers:boss`, qui ignore l'armure et ses enchantements : on les évite en sortant du cercle, le bouclier et la Résistance marchent toujours. Récompense en plus : rang / 4 éclats et 1 500 Écus par rang.
+
+Chaque boss compte les coups reçus sur 3 s. Au-delà de 5 en solo (+2 par joueur proche), il riposte : contre du Colosse (invulnérable 2 s), morsure de la Reine, repli de la Liche avec piège de givre, combustion du Brasier, fuite de gaz du Creeper.
+
+| Boss | Attaques |
+|---|---|
+| Colosse | Martèlement (cercle sous chaque joueur), onde de choc (sauter pour l'éviter), saut écrasant, forge (zones de lave au sol 10 s) |
+| Reine arachnide | Crachat de venin sur deux joueurs, toiles au sol (lenteur), nid de cave spiders, bond sur le joueur le plus éloigné |
+| Liche du givre | Pics de glace sous chaque joueur, blizzard, drain de vie, clignement dans le dos avec nova |
+| Brasier ancestral | Pluie de braises, nova de feu, météores, couronne de flammes au sol |
+| Creeper géant | Détonations sous les joueurs, mégafusion (8 blocs), mines (TNT en `block_display`, explose au contact), rejetons kamikazes, bond ; aura de gaz au contact ; à 33 %, carapace de TNT (invulnérable 6 s, pluie de mines) |
+
+**Bâtisseur : Baguette du bâtisseur** (`sources/ref_baguette.py`). Achetée 5 000 Écus dans l'onglet Outil avec la compétence 4. Clic droit sur la face d'un bloc : chaque bloc identique de la face (même état) dans un carré autour du bloc visé reçoit une copie devant lui, en prenant les blocs dans l'inventaire (rien en créatif). 3x3, puis 5x5 avec Maître d'œuvre, 7x7 avec Architecte 5 étoiles, un cran de plus avec la synergie Charpentier (9x9 au plus). Elle ne remplit que l'air, l'eau et l'herbe basse, garde l'orientation des blocs et refuse les blocs à contenu, les dalles doubles, les blocs accrochés à un support et ceux qui se dupliqueraient.
+
+Doublons retirés : la Célérité du Bâtisseur (Cadence, Maître d'œuvre, Architecte 5 étoiles) faisait doublon avec le Mineur, et la synergie Charpentier (Célérité II à la hache) avec le Bûcheron. Cadence devient la Baguette du bâtisseur, Maître d'œuvre la baguette en 5x5 (sans Résistance, déjà donnée par Architecte 3 étoiles), Architecte 5 étoiles la baguette en 7x7, Charpentier un cran de baguette en plus. Le bouton des objets du Bâtisseur prend le déclencheur 3494 (3490 est celui de la Forge arcanique).
+
 ## Version 27.3 (26/11/2026)
 
 Correctif : le message de l'arbre est plus large que le dessin (sinon la ligne passait à la ligne et le dessin se coupait en deux), et chaque panneau a assez de lignes pour toute sa hauteur (le bas du cadre était coupé).

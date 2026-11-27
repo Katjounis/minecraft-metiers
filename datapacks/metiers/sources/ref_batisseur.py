@@ -16,15 +16,12 @@ add_lines(F + "bonus.mcfunction", [
     f"execute if entity @s[tag=metiers.sk.k5] run attribute @s minecraft:block_interaction_range modifier add {NS}:k5 2 add_value",
     f"execute if entity @s[tag=metiers.sk.k2] run attribute @s minecraft:fall_damage_multiplier modifier add {NS}:k2 -0.5 add_multiplied_base",
     f"execute if entity @s[tag=metiers.sk.k3] if predicate {NS}:accroupi if block ~ ~-1 ~ #minecraft:air if block ~ ~-2 ~ #minecraft:air run effect give @s minecraft:slow_falling 1 0 true",
-    "execute if entity @s[tag=metiers.sk.k4,tag=!metiers.sk.k6] run effect give @s minecraft:haste 2 0 true",
-    "execute if entity @s[tag=metiers.sk.k6] run effect give @s minecraft:haste 2 1 true",
-    "execute if entity @s[tag=metiers.sk.k6] run effect give @s minecraft:resistance 2 0 true",
-    # Architecte (prestige) : +1, +2, +3 de portée ; Résistance I à 3 étoiles ; Célérité II à 5
+    # Architecte (prestige) : +1, +2, +3 de portée ; Résistance I à 3 étoiles ; baguette 7x7 à 5 (ref_baguette.py)
+    # 27/11/2026 : plus de Célérité chez le Bâtisseur (doublon du Mineur), Cadence et Maître d'œuvre passent sur la baguette
     f"execute if entity @s[tag=metiers.sk.pk5] run attribute @s minecraft:block_interaction_range modifier add {NS}:pk 3 add_value",
     f"execute if entity @s[tag=metiers.sk.pk3,tag=!metiers.sk.pk5] run attribute @s minecraft:block_interaction_range modifier add {NS}:pk 2 add_value",
     f"execute if entity @s[tag=metiers.sk.pk1,tag=!metiers.sk.pk3] run attribute @s minecraft:block_interaction_range modifier add {NS}:pk 1 add_value",
     "execute if entity @s[tag=metiers.sk.pk3] run effect give @s minecraft:resistance 2 0 true",
-    "execute if entity @s[tag=metiers.sk.pk5] run effect give @s minecraft:haste 2 1 true",
     "execute if score @s m.kit matches 1.. run scoreboard players remove @s m.kit 1"])
 
 # ---------------------------------------------------------------- kit de chantier (614)

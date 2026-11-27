@@ -265,9 +265,9 @@ SKILLS = {
         ("Bras long", 3, [], "Tu poses et casses les blocs 1 bloc plus loin."),
         ("Pied sûr", 4, [1], "Dégâts de chute divisés par deux."),
         ("Échafaudeur", 6, [1], "Accroupi dans le vide : chute lente, pour finir une façade sans échafaudage."),
-        ("Cadence", 8, [2], "Célérité I en permanence."),
+        ("Baguette du bâtisseur", 8, [2], "Débloque la Baguette du bâtisseur (onglet Outil, en Écus) : clic droit sur une face, elle la prolonge d'un rang en 3x3 avec les blocs de ton inventaire."),
         ("Grand chantier", 12, [3], "Encore 2 blocs de portée (3 en tout)."),
-        ("Maître d'œuvre", 16, [4, 5], "Célérité II et Résistance I en permanence."),
+        ("Maître d'œuvre", 16, [4, 5], "La Baguette du bâtisseur passe en 5x5."),
     ],
 }
 SKILL_LVL = [5, 20, 20, 45, 45, 70]
@@ -1254,7 +1254,7 @@ ICONS_SK = {"b": ["iron_axe", "apple", "oak_log", "golden_axe", "diamond_axe", "
             "n": ["lapis_lazuli", "bookshelf", "experience_bottle", "enchanting_table", "enchanted_book", "nether_star"],
             "x": ["leather_boots", "rabbit_foot", "ender_eye", "feather", "elytra", "compass"],
             "t": ["emerald", "bell", "diamond", "emerald_block", "map", "totem_of_undying"],
-            "k": ["stone_bricks", "feather", "scaffolding", "iron_pickaxe", "spyglass", "beacon"]}
+            "k": ["stone_bricks", "feather", "scaffolding", "blaze_rod", "spyglass", "beacon"]}
 BG = {"b": "minecraft:block/oak_planks", "f": "minecraft:block/hay_block_side", "m": "minecraft:block/stone",
       "c": "minecraft:block/nether_bricks", "p": "minecraft:block/prismarine_bricks"}
 ROOT_ICON = {"b": "oak_log", "f": "wheat", "m": "iron_ore", "c": "skeleton_skull", "p": "cod",
@@ -1630,7 +1630,7 @@ PCAP = {"b": ("Sève dorée", "chaque bûche a 1 % de chance de donner une pomme
         "n": ("Érudit", "20 % de chance que les niveaux dépensés à la table te soient rendus (35 %, puis 50 %)."),
         "x": ("Pas léger", "Vitesse I, puis plus aucun dégât de chute, puis Vitesse II."),
         "t": ("Négociant", "effet Héros du village I en permanence, puis III, puis V."),
-        "k": ("Architecte", "portée +1 pour poser et casser, puis +2 et Résistance I, puis +3 et Célérité II.")}
+        "k": ("Architecte", "portée +1 pour poser et casser, puis +2 et Résistance I, puis +3 et Baguette du bâtisseur en 7x7.")}
 for j, d in jobs.items():
     w(F + f"{j}/prestige_confirmer.mcfunction", "\n".join([
         f"execute if score @s m.{j}_lvl matches ..99 run return run {tr('Le prestige se débloque au niveau 100 du métier.', 'red')}",
@@ -2317,7 +2317,7 @@ playsound minecraft:ui.toast.in master @s ~ ~ ~ 0.6 1.4
 """)
 
 # REFONTE (v24) : objets, armure 11 paliers, compétences, menus, Forge, skins, boss, défis
-for _mod in ("ref_base.py", "ref_skills.py", "ref_comp18.py", "ref_objets.py", "ref_menu.py", "ref_boss.py", "ref_defis.py", "ref_bareme.py", "ref_prestige.py", "ref_v26.py", "ref_batisseur.py", "ref_fermier.py", "ref_dank.py", "ref_soie.py", "ref_recalcul.py", "ref_recalcul2.py", "ref_paliers.py", "ref_scenes.py", "ref_classement.py", "ref_arbre_ecrire.py"):
+for _mod in ("ref_base.py", "ref_skills.py", "ref_comp18.py", "ref_objets.py", "ref_baguette.py", "ref_menu.py", "ref_boss.py", "ref_defis.py", "ref_bareme.py", "ref_prestige.py", "ref_v26.py", "ref_boss2.py", "ref_batisseur.py", "ref_fermier.py", "ref_dank.py", "ref_soie.py", "ref_recalcul.py", "ref_recalcul2.py", "ref_paliers.py", "ref_scenes.py", "ref_classement.py", "ref_arbre_ecrire.py"):
     exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), _mod), encoding="utf-8").read())
 
 # Compétences désactivables : une compétence achetée garde son tag metiers.sk.XN (achat, prérequis, menus),

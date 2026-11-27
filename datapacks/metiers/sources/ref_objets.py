@@ -27,6 +27,8 @@ OBJETS = {
                   "Pose-la : les animaux adultes à 8 blocs se reproduisent toutes les 5 min (sans XP)."),
     "tente": ("x", 15, "Tente", "armor_stand", "minecraft:white_bed", 5000,
               "Pose-la : elle devient ton point de réapparition. Casse-la pour la reprendre."),
+    "baguette": ("k", 4, "Baguette du bâtisseur", "carrot_on_a_stick", "minecraft:blaze_rod", 5000,
+                 "Clic droit sur une face : elle la prolonge d'un rang (3x3, 5x5 avec Maître d'œuvre) avec les blocs de ton inventaire. Se garde."),
 }
 POSES = [k for k, v in OBJETS.items() if v[3] == "armor_stand"]
 LANCES = [k for k, v in OBJETS.items() if v[3] == "snowball"]
@@ -42,7 +44,7 @@ def obj_item(k, n=1):
     if base == "armor_stand":
         c.append(f'minecraft:entity_data={{id:"minecraft:armor_stand",Tags:["{NS}.obj","{NS}.o_{k}","{NS}.onew"],Invisible:1b,Small:1b,'
                  f'NoBasePlate:1b,DisabledSlots:4144959,equipment:{{head:{{id:"{mod}",count:1}}}}}}')
-    if k in ("lanterne", "arrosoir", "sifflet"):
+    if k in ("lanterne", "arrosoir", "sifflet", "baguette"):
         c.append("minecraft:max_stack_size=1")
     return f"minecraft:{base}[{','.join(c)}] {n}"
 
@@ -80,8 +82,10 @@ for j, lst in OBJ_J.items():
       f'{{text:"\\nChaque objet se débloque avec une compétence de l’arbre. Survole pour son effet.",color:"gray"}}]}}],'
       f'actions:[{",".join(acts)}],columns:1,'
       f'exit_action:{{label:"Retour",width:200,action:{{type:"run_command",command:"trigger metiers set {550 + d["idx"]}"}}}}}}')
-    OBJ_BTN[j] = (3480 + d["idx"], f"Objets de {d['name']}")
-    TRG_O.append(f'execute if score @s m.trig matches {3480 + d["idx"]} run function {NS}:appel {{f:"objets/boutique_{j}"}}')
+    # 27/11/2026 : 3480 + 10 tombait sur 3490 (Forge arcanique) pour le Bâtisseur, d'où 3494
+    _tb = 3494 if d["idx"] == 10 else 3480 + d["idx"]
+    OBJ_BTN[j] = (_tb, f"Objets de {d['name']}")
+    TRG_O.append(f'execute if score @s m.trig matches {_tb} run function {NS}:appel {{f:"objets/boutique_{j}"}}')
 TRG_O += [f'execute if score @s m.trig matches 3490 run function {NS}:appel {{f:"comp/n_forge"}}',
           f'execute if score @s m.trig matches 3492 run function {NS}:appel {{f:"objets/recup_elytres"}}']
 add_lines(F + "trigger.mcfunction", TRG_O)
@@ -92,6 +96,7 @@ _t = open(_p, encoding="utf-8").read().split("\n")
 _t[1:1] = [f"execute if items entity @s weapon.mainhand {OSEL('graine')} run return run function {NS}:objets/graine",
            f"execute if items entity @s weapon.mainhand {OSEL('arrosoir')} run return run function {NS}:objets/arrosoir",
            f"execute if items entity @s weapon.mainhand {OSEL('sifflet')} run return run function {NS}:objets/sifflet",
+           f"execute if items entity @s weapon.mainhand {OSEL('baguette')} run return run function {NS}:baguette/clic",
            # anciens objets de la Forge sur l'outil : Éleveur (lasso) et Enchanteur (parchemin), accroupi
            f'execute if items entity @s weapon.mainhand {SEL("e")} if predicate {NS}:accroupi if entity @s[tag={NS}.sk.e15] run return run function {NS}:forge/lasso',
            f'execute if items entity @s weapon.mainhand {SEL("n")} if predicate {NS}:accroupi if entity @s[tag={NS}.sk.n8] run return run function {NS}:objets/parchemin']

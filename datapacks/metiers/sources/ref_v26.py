@@ -23,7 +23,7 @@ SYN = [  # (id, métier 1, métier 2, nom, effet)
     ("pe", "p", "e", "Ami des bêtes", "Chance I en permanence (meilleur butin)."),
     ("mt", "m", "t", "Négoce", "+5 % sur toutes tes ventes au Commerce."),
     ("fc", "f", "c", "Garde-manger", "Saturation : la faim ne descend plus quand tu es rassasié."),
-    ("kb", "k", "b", "Charpentier", "Célérité II avec une hache en main."),
+    ("kb", "k", "b", "Charpentier", "La Baguette du bâtisseur gagne un cran (jusqu’à 9x9)."),
 ]
 SYT = []
 for sid, a, b, nom, eff in SYN:
@@ -37,7 +37,6 @@ SYT += ["execute if entity @s[tag=metiers.sk.ymx] if predicate {type:\"minecraft
         "execute if entity @s[tag=metiers.sk.ymx] if predicate {type:\"minecraft:location_check\",predicate:{position:{y:{max:0}}}} run effect give @s minecraft:resistance 3 0 true",
         "execute if entity @s[tag=metiers.sk.ype] run effect give @s minecraft:luck infinite 0 true",
         "execute if entity @s[tag=metiers.sk.yfc] run effect give @s minecraft:saturation 1 0 true",
-        "execute if entity @s[tag=metiers.sk.ykb] if items entity @s weapon.mainhand #minecraft:axes run effect give @s minecraft:haste 3 1 true",
         # Négoce : Commerce lit m.syn (1 = +5 % sur les ventes)
         "scoreboard players set @s m.syn 0", "execute if entity @s[tag=metiers.sk.ymt] run scoreboard players set @s m.syn 1"]
 w(F + "synergie/tick.mcfunction", "\n".join(SYT))
