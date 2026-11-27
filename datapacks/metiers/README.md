@@ -65,7 +65,7 @@ Commandes admin : `/function metiers:boss/alerte` (boss suivant de la rotation d
 
 ## Version 27.6 (27/11/2026)
 
-**12 skins d'outil et d'armure** (`sources/ref_skins2.py`, textures `sources/resourcepack/gen5.py`). Six nouveaux skins, dont quatre légendaires (✦) qui changent la forme des 9 outils de métier : la forme est la même à tous les paliers. Sur l'armure, tous les skins changent seulement les couleurs (une armure portée reste une texture sur le modèle du joueur).
+**12 skins d'outil et d'armure** (`sources/ref_skins2.py`, textures `sources/resourcepack/gen5.py`). Six nouveaux skins, dont quatre légendaires (✦) qui changent la forme des 9 outils de métier : la forme est la même à tous les paliers. Sur l'armure : les 12 skins changent aussi les icônes des pièces dans l'inventaire ; les 4 légendaires ont un casque à forme propre (crâne de dragon à cornes et ailes, couronne de côtes de hurleur, couronne-trident à tentacules, soleil noir en auréole) et des motifs peints sur l'armure portée (écailles et veine magenta, veines sculk, vagues et perles, soleil sur la poitrine et liserés d'or).
 
 | Skin | Outil | Armure |
 |---|---|---|

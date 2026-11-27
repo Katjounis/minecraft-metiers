@@ -135,7 +135,7 @@ for i in range(N + 1):
     FI = [f"scoreboard players set @s m.skf {i}", f"function {NS}:skins/calcul",
           f'data modify storage {NS}:sk fs set value "{sid}"', f'data modify storage {NS}:sk fn set value "{("✦ " if i in LEG else "") + sn}"',
           f'data modify storage {NS}:sk fd set value "{DESC.get(i, "Ton objet tel que son palier le dessine, sans skin.")}"',
-          f'data modify storage {NS}:sk fl set value "{"Sur l’armure, un skin légendaire change seulement les couleurs." if i in LEG else ""}"',
+          f'data modify storage {NS}:sk fl set value "{"Sur l’armure : casque à forme propre et motifs peints sur toute l’armure." if i in LEG else ""}"',
           f"scoreboard players set #pr m.tmp {max(0, i - 1)}", f"scoreboard players add #pr m.tmp 4300",
           f"scoreboard players set #su m.tmp {(i + 1) % (N + 1)}", "scoreboard players add #su m.tmp 4300",
           f"execute store result storage {NS}:sk fp int 1 run scoreboard players get #pr m.tmp",

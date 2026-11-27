@@ -289,6 +289,165 @@ def eclipse_m(P):
 PROPRES = {("dragon", "c"): dragon_c, ("dragon", "m"): dragon_m, ("sculk", "c"): sculk_c, ("sculk", "m"): sculk_m,
            ("abysses", "c"): abysses_c, ("abysses", "m"): abysses_m, ("eclipse", "c"): eclipse_c, ("eclipse", "m"): eclipse_m}
 
+
+# ------------------------------------------------------------------ casques légendaires (le heaume est un modèle 3D porté sur la tête)
+def corne(m, x, y, z, sx, segs, mat_fin="edge"):
+    """Chaîne de blocs qui part vers l'arrière et le haut (rotation sur x), symétrique par rapport à x = 8."""
+    cy, cz = y, z
+    for n, (L, th, ang) in enumerate(segs):
+        r = math.radians(ang)
+        ny, nz = cy + math.sin(r) * L, cz + math.cos(r) * L
+        my, mz = (cy + ny) / 2, (cy + nz) / 2
+        my, mz = (cy + ny) / 2, (cz + nz) / 2
+        mat = mat_fin if n == len(segs) - 1 else "plate"
+        mirror(m, (x - th / 2, my - th / 2, mz - L / 2 - 0.1), (x + th / 2, my + th / 2, mz + L / 2 + 0.1), mat, dict(x=-ang, origin=[x, round(my, 3), round(mz, 3)]))
+        cy, cz = ny, nz
+    return cy, cz
+
+def casque_dragon(P):
+    m = Model("lg_dragon_heaume", P); gen.coque(m, "visor")
+    for x0 in (4.2, 9.6):   # yeux
+        m.add((x0, 8.2, -0.2), (x0 + 2.2, 9.4, 0.85), "glow")
+    m.add((6.6, 2.0, -1.6), (9.4, 7.6, 0.9), "plate")          # museau
+    mirror(m, (6.3, 1.2, -1.9), (7.1, 2.6, -0.9), "edge", dict(z=-10, origin=[6.7, 2.0, -1.4]))   # crocs
+    corne(m, 0.2, 12.0, 4.0, 1, [(4.4, 2.0, 65), (4.0, 1.6, 40), (3.4, 1.2, 12), (2.6, 0.8, -20)])
+    for i, (L, pitch) in enumerate(((13.0, -10), (11.5, -28), (9.5, -46))):   # ailes membraneuses sur les côtés
+        y0 = 7.0 + i * 1.4
+        mirror(m, (-0.7, y0, 8.0), (-0.1, y0 + 3.0, 8.0 + L), "trim", dict(x=pitch, y=-40, origin=[-0.4, y0 + 1.5, 8.0]))
+        mirror(m, (-0.9, y0 + 2.6, 8.0), (0.1, y0 + 3.4, 8.0 + L + 0.6), "plate", dict(x=pitch, y=-40, origin=[-0.4, y0 + 1.5, 8.0]))
+    for z in (4.0, 7.0, 10.0, 13.0):   # crête d'écailles
+        m.add((7.3, 16.6, z - 0.9), (8.7, 18.4 - 0.15 * z, z + 0.9), "edge", dict(x=-30, origin=[8, 16.6, z]))
+    return m.build(gen.HEAD_DISPLAY)
+
+def casque_sculk(P):
+    m = Model("lg_sculk_heaume", P); gen.coque(m, "visor")
+    m.add((6.4, 11.0, -0.6), (9.6, 13.6, 0.6), "glow", dict(z=45, origin=[8, 12.3, 0]))
+    for a in (-75, -40, 0, 40, 75):   # couronne de côtes de hurleur qui se recourbent vers l'intérieur
+        ra = math.radians(a); cx, cz = 8 + 6.0 * math.sin(ra), 8 - 6.0 * math.cos(ra)
+        L = 5.0 if a == 0 else 4.2 if abs(a) == 40 else 3.4
+        m.add((cx - 0.6, 15.2, cz - 0.6), (cx + 0.6, 15.2 + L, cz + 0.6), "plate", dict(x=-20, y=-a, origin=[cx, 15.2, cz]))
+        m.add((cx - 0.45, 15.2 + L - 0.4, cz - 0.45), (cx + 0.45, 15.2 + L + 1.8, cz + 0.45), "edge", dict(x=-55, y=-a, origin=[cx, 15.2 + L, cz]))
+    for x in (0.2, 15.0):   # veines lumineuses sur les tempes
+        m.add((x, 3.0, 3.0), (x + 0.8, 3.8, 12.0), "glow"); m.add((x, 6.0, 5.0), (x + 0.8, 6.8, 13.0), "glow")
+    diamond(m, 8, 21.0, 2.4, "glow", zc=8.0)
+    return m.build(gen.HEAD_DISPLAY)
+
+def casque_abysses(P):
+    m = Model("lg_abysses_heaume", P); gen.coque(m, "visor")
+    m.add((7.0, 9.4, -0.8), (9.0, 11.4, 0.4), "glow", dict(z=45, origin=[8, 10.4, -0.2]))     # perle
+    for dx, h in ((-3.6, 4.0), (0, 6.0), (3.6, 4.0)):   # couronne-trident
+        x = 8 + dx
+        m.add((x - 0.6, 15.8, 1.4), (x + 0.6, 15.8 + h, 2.6), "plate")
+        m.add((x - 0.8, 15.8 + h - 0.2, 1.2), (x + 0.8, 15.8 + h + 1.6, 2.8), "edge", dict(z=45, origin=[x, 15.8 + h + 0.7, 2.0]))
+    for x, sx in ((-0.6, 1), (16.6, -1)):   # tentacules qui pendent à l'arrière
+        for i in range(3):
+            z = 10.0 + 2.0 * i
+            m.add((x - 0.5, 0.0 - 1.2 * i, z), (x + 0.5, 6.0, z + 1.0), "cloth", dict(z=8 * sx, origin=[x, 6.0, z + 0.5]))
+            m.add((x - 0.5, -1.6 - 1.2 * i, z), (x + 0.5, 0.0 - 1.2 * i, z + 1.0), "glow", dict(z=8 * sx, origin=[x, 6.0, z + 0.5]))
+    ring_z(m, -0.8, 9.0, 2.2, n=10, th=0.6, zc=8.0); ring_z(m, 16.8, 9.0, 2.2, n=10, th=0.6, zc=8.0)
+    return m.build(gen.HEAD_DISPLAY)
+
+def casque_eclipse(P):
+    m = Model("lg_eclipse_heaume", P); gen.coque(m, "visor")
+    m.add((3.0, 8.4, -0.2), (13.0, 9.2, 0.8), "glow")            # fente lumineuse
+    m.add((0.2, 12.0, 0.2), (15.8, 13.0, 15.8), "trim")
+    zc = 16.8   # soleil noir en auréole derrière la tête
+    m.add((2.0, 4.0, zc - 0.2), (14.0, 16.0, zc + 0.2), "plate")
+    ring_z(m, 8, 10.0, 6.6, n=20, th=0.8, zc=zc)
+    for k in range(12):
+        a = k * 30; r = math.radians(a)
+        seg2d(m, (8 + 7.0 * math.cos(r), 10.0 + 7.0 * math.sin(r)), [(2.2, 1.0, a), (1.6, 0.6, a + 25)], ["trim", "glow"], depth=0.6, zc=zc)
+    return m.build(gen.HEAD_DISPLAY)
+
+CASQUES = {"dragon": casque_dragon, "sculk": casque_sculk, "abysses": casque_abysses, "eclipse": casque_eclipse}
+
+# ------------------------------------------------------------------ armure portée : motifs peints par-dessus la palette (légendaires)
+def _px(im, x, y, c):
+    if 0 <= x < im.shape[1] and 0 <= y < im.shape[0] and im[y, x, 3] > 0:
+        im[y, x, :3] = c
+FACES_CORPS = [(40, 40, 56, 64), (64, 40, 80, 64), (88, 40, 96, 64), (104, 40, 112, 64), (8, 40, 16, 64), (24, 40, 32, 64)]   # torse av/ar, bras av/ar, jambe av/ar
+
+def motif_legendaire(s, im, P, legs=False):
+    a = np.array(im.convert("RGBA")).copy()
+    g = [int(v) for v in P["glow"][0]]; g2 = [int(v) for v in P["glow"][1]]
+    t = [int(v) for v in P["trim"][2]]; d = [int(v) for v in P["metal"][1]]; l = [int(v) for v in P["metal"][3]]
+    rng = np.random.default_rng(7)
+    for (x0, y0, x1, y1) in FACES_CORPS:
+        if s == "dragon":   # écailles en quinconce
+            for y in range(y0, y1, 4):
+                off = 2 if (y // 4) % 2 else 0
+                for x in range(x0 + off, x1, 4):
+                    _px(a, x, y + 2, d); _px(a, x + 1, y + 3, d); _px(a, x + 2, y + 3, d); _px(a, x + 3, y + 2, d); _px(a, x + 1, y + 1, l)
+        elif s == "sculk":   # veines lumineuses en marche aléatoire
+            for _ in range(2):
+                x, y = int(rng.integers(x0, x1)), y0
+                while y < y1:
+                    _px(a, x, y, g); y += 1
+                    x = int(np.clip(x + rng.integers(-1, 2), x0, x1 - 1))
+            for _ in range(3):
+                _px(a, int(rng.integers(x0, x1)), int(rng.integers(y0, y1)), g2)
+        elif s == "abysses":   # vagues et perles
+            for y in range(y0 + 3, y1, 6):
+                for x in range(x0, x1):
+                    _px(a, x, y + int(round(math.sin((x - x0) / 1.6) * 1.2)), g)
+            _px(a, (x0 + x1) // 2, y0 + 1, g2); _px(a, (x0 + x1) // 2 + 1, y0 + 1, g2)
+        elif s == "eclipse":   # liserés d'or sur les bords
+            for y in range(y0, y1):
+                _px(a, x0, y, t); _px(a, x1 - 1, y, t)
+    if s == "eclipse" and not legs:   # soleil sur la poitrine et dans le dos
+        for cx, cy in ((48, 49), (72, 49)):
+            for k in range(28):
+                r = 2 * math.pi * k / 28
+                _px(a, int(round(cx + 5 * math.cos(r))), int(round(cy + 5 * math.sin(r))), g)
+            for k in range(8):
+                r = 2 * math.pi * k / 8
+                for q in (6, 7):
+                    _px(a, int(round(cx + q * math.cos(r))), int(round(cy + q * math.sin(r))), t)
+            for dx in (-1, 0, 1):
+                for dy in (-1, 0, 1):
+                    _px(a, cx + dx, cy + dy, g2)
+    if s == "dragon" and not legs:   # veine magenta au centre du torse et ailes dans le dos
+        for y in range(42, 62):
+            _px(a, 47, y, g); _px(a, 48, y, g)
+        for i in range(8):
+            for x in range(66 + i, 72):
+                _px(a, x, 44 + i, t)
+            for x in range(72, 78 - i):
+                _px(a, x + 1, 44 + i, t)
+    return Image.fromarray(a, "RGBA")
+
+def worn_legendaire(k, s):
+    P = skinP(s, k); tag = f"guilde_{k}_{s}"
+    worn(k, P, tag)
+    for sub, legs in (("humanoid", False), ("humanoid_leggings", True)):
+        f = f"{A}/textures/entity/equipment/{sub}/{tag}.png"
+        motif_legendaire(s, Image.open(f), P, legs).save(f, optimize=True)
+
+# ------------------------------------------------------------------ icônes des pièces d'armure dans l'inventaire, par skin
+def recolor(im, ramp):
+    im = np.array(im.convert("RGBA")).astype(float)
+    lum = (im[..., 0] * .3 + im[..., 1] * .59 + im[..., 2] * .11) / 255
+    out = im.copy()
+    idx = np.clip((lum * (len(ramp) - 1)).round().astype(int), 0, len(ramp) - 1)
+    out[..., :3] = np.array(ramp)[idx]
+    return Image.fromarray(np.clip(out, 0, 255).astype(np.uint8), "RGBA")
+
+def icones_armure(z):
+    os.makedirs(f"{A}/items", exist_ok=True)
+    for piece in ("chestplate", "leggings", "boots"):
+        src = Image.open(io.BytesIO(z.read(f"assets/metiers/textures/item/v2/guilde_{piece}_5.png")))
+        for k in range(11):
+            cases = []
+            for s in TOUS:
+                P = skinP(s, k)
+                ramp = [P["metal"][0], P["metal"][1], P["metal"][2], P["trim"][2], P["metal"][4], P["metal"][5]]
+                n = f"guilde_{piece}_{k}_{s}"
+                recolor(src, ramp).save(f"{A}/textures/item/v2/{n}.png", optimize=True)
+                json.dump({"parent": "minecraft:item/generated", "textures": {"layer0": f"metiers:item/v2/{n}"}}, open(f"{A}/models/item/v2/{n}.json", "w"))
+                cases.append({"when": s, "model": ref(n)})
+            json.dump({"model": {"type": "minecraft:select", "property": "minecraft:custom_model_data", "index": 0, "cases": cases,
+                                 "fallback": ref(f"guilde_{piece}_{k}")}}, open(f"{A}/items/guilde_{piece}_{k}.json", "w"), separators=(",", ":"))
+
 # ------------------------------------------------------------------ écriture
 A = os.path.join(OUT, "assets", "metiers")
 NF = 16
@@ -354,10 +513,14 @@ def generer():
                     save(*(epee_epine(P, f"c_3_{s}") if (j, k) == ("c", 3) else fn(k, P)), f"{j}_{k}_{s}"); n += 1
                     if j == "p":
                         save(*gen2.canne(k, P, cast=True), f"p_{k}_{s}_cast"); n += 1
-            save(*heaume_sk(k, skinP(s, k)), f"heaume_{k}_{s}"); n += 1
-            worn(k, skinP(s, k), f"guilde_{k}_{s}")
-    # 3. formes légendaires : une par outil, la même à tous les paliers
+            if s in LEGENDAIRES:
+                worn_legendaire(k, s)
+            else:
+                save(*heaume_sk(k, skinP(s, k)), f"heaume_{k}_{s}"); n += 1
+                worn(k, skinP(s, k), f"guilde_{k}_{s}")
+    # 3. formes légendaires : une par outil et un casque, les mêmes à tous les paliers
     for s in LEGENDAIRES:
+        save(*CASQUES[s](skinP(s, 8)), f"lg_{s}_heaume"); n += 1
         for j in JOBS:
             if (s, j) in PROPRES:
                 save(*PROPRES[(s, j)](skinP(s, 8)), f"lg_{s}_{j}")
@@ -387,13 +550,15 @@ def items_maj(z):
     for k in range(11):
         p = f"assets/metiers/items/heaume_{k}.json"
         d = json.loads(z.read(p))
-        d["model"]["cases"] = [c for c in d["model"]["cases"] if c["when"] not in NEW] + [{"when": s, "model": ref(f"heaume_{k}_{s}")} for s in NEW]
+        d["model"]["cases"] = [c for c in d["model"]["cases"] if c["when"] not in NEW] + [
+            {"when": s, "model": ref(f"lg_{s}_heaume" if s in LEGENDAIRES else f"heaume_{k}_{s}")} for s in NEW]
         json.dump(d, open(f"{A}/items/heaume_{k}.json", "w"), separators=(",", ":"))
 
 def fusionner():
     with open(ZIP, "rb") as f:
         ancien = zipfile.ZipFile(io.BytesIO(f.read()))
     items_maj(ancien)
+    icones_armure(ancien)
     neufs = {}
     for dp, _, fs in os.walk(OUT):
         for fn in fs:
