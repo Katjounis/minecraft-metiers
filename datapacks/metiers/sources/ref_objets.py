@@ -27,8 +27,6 @@ OBJETS = {
                   "Pose-la : les animaux adultes à 8 blocs se reproduisent toutes les 5 min (sans XP)."),
     "tente": ("x", 15, "Tente", "armor_stand", "minecraft:white_bed", 5000,
               "Pose-la : elle devient ton point de réapparition. Casse-la pour la reprendre."),
-    "baguette": ("k", 4, "Baguette du bâtisseur", "carrot_on_a_stick", "minecraft:blaze_rod", 5000,
-                 "Clic droit sur une face : elle la prolonge d'un rang (3x3, 5x5 avec Maître d'œuvre) avec les blocs de ton inventaire. Se garde."),
 }
 POSES = [k for k, v in OBJETS.items() if v[3] == "armor_stand"]
 LANCES = [k for k, v in OBJETS.items() if v[3] == "snowball"]
@@ -96,7 +94,7 @@ _t = open(_p, encoding="utf-8").read().split("\n")
 _t[1:1] = [f"execute if items entity @s weapon.mainhand {OSEL('graine')} run return run function {NS}:objets/graine",
            f"execute if items entity @s weapon.mainhand {OSEL('arrosoir')} run return run function {NS}:objets/arrosoir",
            f"execute if items entity @s weapon.mainhand {OSEL('sifflet')} run return run function {NS}:objets/sifflet",
-           f"execute if items entity @s weapon.mainhand {OSEL('baguette')} run return run function {NS}:baguette/clic",
+           f"execute if items entity @s weapon.mainhand {SEL('k')} run return run function {NS}:baguette/clic",
            # anciens objets de la Forge sur l'outil : Éleveur (lasso) et Enchanteur (parchemin), accroupi
            f'execute if items entity @s weapon.mainhand {SEL("e")} if predicate {NS}:accroupi if entity @s[tag={NS}.sk.e15] run return run function {NS}:forge/lasso',
            f'execute if items entity @s weapon.mainhand {SEL("n")} if predicate {NS}:accroupi if entity @s[tag={NS}.sk.n8] run return run function {NS}:objets/parchemin']

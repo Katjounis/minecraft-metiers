@@ -265,9 +265,9 @@ SKILLS = {
         ("Bras long", 3, [], "Tu poses et casses les blocs 1 bloc plus loin."),
         ("Pied sûr", 4, [1], "Dégâts de chute divisés par deux."),
         ("Échafaudeur", 6, [1], "Accroupi dans le vide : chute lente, pour finir une façade sans échafaudage."),
-        ("Baguette du bâtisseur", 8, [2], "Débloque la Baguette du bâtisseur (onglet Outil, en Écus) : clic droit sur une face, elle la prolonge d'un rang en 3x3 avec les blocs de ton inventaire."),
+        ("Carrure", 8, [2], "+1 cœur de vie maximum, en permanence."),
         ("Grand chantier", 12, [3], "Encore 2 blocs de portée (3 en tout)."),
-        ("Maître d'œuvre", 16, [4, 5], "La Baguette du bâtisseur passe en 5x5."),
+        ("Maître d'œuvre", 16, [4, 5], "Encore 1 bloc de portée et +1 cœur de vie maximum."),
     ],
 }
 SKILL_LVL = [5, 20, 20, 45, 45, 70]
@@ -300,7 +300,7 @@ TOOL = {"b": ("axe", "Hache", "Hache du Dieu de la Forêt"), "m": ("pickaxe", "P
         "f": ("hoe", "Houe", "Faux du Dieu des Moissons"), "c": ("sword", "Lame", "Lame du Dieu de la Chasse"),
         "p": ("fishing_rod", "Canne", "Canne du Dieu des Mers"), "e": ("carrot_on_a_stick", "Houlette", "Houlette du Dieu des Troupeaux"),
         "n": ("carrot_on_a_stick", "Grimoire", "Grimoire du Dieu des Arcanes"), "x": ("shovel", "Pelle", "Pelle du Dieu Voyageur"),
-        "t": ("bundle", "Dank Null", "Dank Null du Dieu du Commerce"), "k": ("brush", "Truelle", "Truelle du Dieu Bâtisseur")}
+        "t": ("bundle", "Dank Null", "Dank Null du Dieu du Commerce"), "k": ("carrot_on_a_stick", "Baguette", "Baguette du Dieu Bâtisseur")}
 MAT = ["diamond", "diamond", "netherite", "netherite", "netherite", "netherite", "netherite", "netherite", "netherite", "netherite", "netherite"]
 MAIN = [2, 3, 4, 4, 4, 5, 5, 5, 5, 5, 5]
 UNB = [1, 2, 3, 3, 3, None, None, None, None, None, None]
@@ -1254,14 +1254,14 @@ ICONS_SK = {"b": ["iron_axe", "apple", "oak_log", "golden_axe", "diamond_axe", "
             "n": ["lapis_lazuli", "bookshelf", "experience_bottle", "enchanting_table", "enchanted_book", "nether_star"],
             "x": ["leather_boots", "rabbit_foot", "ender_eye", "feather", "elytra", "compass"],
             "t": ["emerald", "bell", "diamond", "emerald_block", "map", "totem_of_undying"],
-            "k": ["stone_bricks", "feather", "scaffolding", "blaze_rod", "spyglass", "beacon"]}
+            "k": ["stone_bricks", "feather", "scaffolding", "golden_apple", "spyglass", "beacon"]}
 BG = {"b": "minecraft:block/oak_planks", "f": "minecraft:block/hay_block_side", "m": "minecraft:block/stone",
       "c": "minecraft:block/nether_bricks", "p": "minecraft:block/prismarine_bricks"}
 ROOT_ICON = {"b": "oak_log", "f": "wheat", "m": "iron_ore", "c": "skeleton_skull", "p": "cod",
              "e": "lead", "n": "enchanting_table", "x": "filled_map", "t": "emerald", "k": "bricks"}
 BG.update({"e": "minecraft:block/hay_block_top", "n": "minecraft:block/bookshelf", "x": "minecraft:block/moss_block",
            "t": "minecraft:block/emerald_block", "k": "minecraft:block/stone_bricks"})
-LVL_FIXE = {"p": "fishing_rod", "e": "shears", "n": "book", "x": "compass", "t": "emerald", "k": "brush"}
+LVL_FIXE = {"p": "fishing_rod", "e": "shears", "n": "book", "x": "compass", "t": "emerald", "k": "blaze_rod"}
 LVL_ICON = ["wooden", "stone", "iron", "iron", "golden", "golden", "diamond", "diamond", "netherite", "netherite"]
 TOOLI = {"b": "axe", "f": "hoe", "m": "pickaxe", "c": "sword"}
 IMP = {"debloque": {"trigger": "minecraft:impossible"}}
@@ -1415,7 +1415,7 @@ def outil_give(j, k):
             {"e": ',{text:"Clic droit : les animaux proches te suivent",color:"light_purple",italic:false}',
              "n": ',{text:"Clic droit : points de téléportation",color:"light_purple",italic:false}',
              "t": f',{{text:"Mets-y 1 bloc : ceux que tu ramasses ensuite sont vendus",color:"light_purple",italic:false}},{{text:"{3 + k} sortes de blocs au plus",color:"light_purple",italic:false}}',
-             "k": f',{{text:"Tenue dans une main : portée +{1 + k // 5} pour poser et casser",color:"#C08850",italic:false}}'}.get(j, "") +
+             "k": f',{{text:"Clic droit sur une face : la prolonge en {[3, 3, 3, 3, 5, 5, 5, 7, 7, 7, 9][k]}x{[3, 3, 3, 3, 5, 5, 5, 7, 7, 7, 9][k]} avec tes blocs",color:"light_purple",italic:false}},{{text:"Tenue dans une main : portée +{1 + k // 5} pour poser et casser",color:"#C08850",italic:false}}'}.get(j, "") +
             # 26.0 : capacités des anciens objets de la Forge, débloquées par palier sur l'outil du métier
             "".join(f',{{text:"{txt_}",color:"aqua",italic:false}}' for jj, kk, txt_ in CAPA_OUTIL if jj == j and k >= kk) + ']')
     comps = [f"minecraft:enchantments={{{e}}}",
@@ -1436,7 +1436,7 @@ def outil_give(j, k):
         comps.append("minecraft:bundle_contents=$(bc)")
     if j == "f":   # 26.0 : la houe récolte au clic droit (détecté par « using_item »), comme l'ancienne Faux
         comps.append('minecraft:consumable={consume_seconds:100000,animation:"none",has_consume_particles:false,sound:"minecraft:intentionally_empty"}')
-    if j == "k":   # truelle : portée de pose et de casse, quelle que soit la main
+    if j == "k":   # baguette (ex-truelle) : portée de pose et de casse, quelle que soit la main
         comps.append(f'minecraft:attribute_modifiers=[{{type:"minecraft:block_interaction_range",id:"metiers:truelle",amount:{1 + k // 5},operation:"add_value",slot:"hand"}}]')
     return f"minecraft:{iid}[{','.join(comps)}] 1"
 
@@ -1630,7 +1630,7 @@ PCAP = {"b": ("Sève dorée", "chaque bûche a 1 % de chance de donner une pomme
         "n": ("Érudit", "20 % de chance que les niveaux dépensés à la table te soient rendus (35 %, puis 50 %)."),
         "x": ("Pas léger", "Vitesse I, puis plus aucun dégât de chute, puis Vitesse II."),
         "t": ("Négociant", "effet Héros du village I en permanence, puis III, puis V."),
-        "k": ("Architecte", "portée +1 pour poser et casser, puis +2 et Résistance I, puis +3 et Baguette du bâtisseur en 7x7.")}
+        "k": ("Architecte", "portée +1 pour poser et casser, puis +2 et Résistance I, puis +3 et +1 cœur de vie maximum.")}
 for j, d in jobs.items():
     w(F + f"{j}/prestige_confirmer.mcfunction", "\n".join([
         f"execute if score @s m.{j}_lvl matches ..99 run return run {tr('Le prestige se débloque au niveau 100 du métier.', 'red')}",

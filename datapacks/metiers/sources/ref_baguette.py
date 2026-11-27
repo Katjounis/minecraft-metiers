@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
-# 27/11/2026 : Baguette du bâtisseur (building wand), objet du Bâtisseur acheté dans l'onglet Outil (ref_objets.py).
+# 27/11/2026 : Baguette du bâtisseur (building wand). C'est l'outil du métier (elle remplace la truelle) : clic droit.
 # Clic droit sur la face d'un bloc : chaque bloc identique de cette face (même bloc, même état) dans un carré centré
 # sur le bloc visé reçoit une copie posée devant lui, tant que l'inventaire en contient. Taille du carré :
-# 3x3 (compétence 4), 5x5 (compétence 6 Maître d'œuvre), 7x7 (Architecte 5 étoiles), un cran de plus avec la synergie
-# Charpentier, 9x9 au plus. Rien n'est cassé : la baguette ne remplit que de l'air, de l'eau ou de l'herbe basse.
+# 3x3, puis 5x5 au palier 4, 7x7 au palier 7, 9x9 au palier 10, un cran de plus avec la synergie Charpentier (9x9 au plus). Rien n'est cassé : la baguette ne remplit que de l'air, de l'eau ou de l'herbe basse.
 # La copie garde l'orientation (clone), l'objet retiré de l'inventaire est celui que donnerait le bloc au Toucher de soie.
 BG = F + "baguette/"
 NB = f"{NS}:baguette/"
@@ -77,11 +76,14 @@ w(BG + "touche.mcfunction", "\n".join([
     f"data modify storage {NS}:bg id set from entity @e[type=minecraft:item_display,tag=metiers.bgloot,limit=1] item.id",
     "kill @e[type=minecraft:item_display,tag=metiers.bgloot]",
     f"execute unless data storage {NS}:bg id run return run title @s actionbar {{\"text\":\"Ce bloc ne se copie pas à la baguette.\",\"color\":\"red\"}}",
-    # taille : 1 = 3x3, 2 = 5x5, 3 = 7x7, +1 Charpentier, 4 au plus
+    # taille selon le palier de l'outil : 3x3, 5x5 (palier 4), 7x7 (7), 9x9 (10) ; +1 avec Charpentier, 9x9 au plus
+    'execute store result score #pal m.tmp run data get entity @s SelectedItem.components."minecraft:custom_data".palier',
     "scoreboard players set #wr m.tmp 1",
-    f"execute if entity @s[tag={NS}.sk.k6] run scoreboard players set #wr m.tmp 2",
-    f"execute if entity @s[tag={NS}.sk.pk5] run scoreboard players set #wr m.tmp 3",
+    "execute if score #pal m.tmp matches 4.. run scoreboard players set #wr m.tmp 2",
+    "execute if score #pal m.tmp matches 7.. run scoreboard players set #wr m.tmp 3",
+    "execute if score #pal m.tmp matches 10.. run scoreboard players set #wr m.tmp 4",
     f"execute if entity @s[tag={NS}.sk.ykb] run scoreboard players add #wr m.tmp 1",
+    "execute if score #wr m.tmp matches 5.. run scoreboard players set #wr m.tmp 4",
     f"function {NB}stock with storage {NS}:bg",
     "execute if entity @s[gamemode=creative] run scoreboard players set #reste m.tmp 9999",
     f"execute if score #reste m.tmp matches ..0 run return run title @s actionbar {{\"text\":\"Il te faut ce bloc dans ton inventaire.\",\"color\":\"red\"}}",
@@ -120,3 +122,14 @@ for nom, n in (("est", (1, 0, 0)), ("ouest", (-1, 0, 0)), ("haut", (0, 1, 0)), (
                  f"unless entity @e[type=!#{NS}:baguette_ignore,dx=0,dy=0,dz=0] "
                  f"run function {NB}pose {{sx:{-t[0]},sy:{-t[1]},sz:{-t[2]}}}")
     w(BG + f"face_{nom}.mcfunction", "\n".join(L))
+
+# ---------------------------------------------------------------- l'ancienne truelle (pinceau) est échangée contre la baguette
+_VT = 'minecraft:brush[minecraft:custom_data~{metiers_outil:"k"}]'
+w(BG + "echange.mcfunction", "\n".join([
+    f"clear @s {_VT}",
+    f"function {NS}:k/outil_donner",
+    "playsound minecraft:block.amethyst_block.chime master @s ~ ~ ~ 1 1.4",
+    tr("Ta truelle devient la Baguette du bâtisseur : clic droit sur la face d’un bloc pour la prolonger avec les blocs de ton inventaire.", "light_purple")]))
+add_lines(F + "refonte/joueur.mcfunction", [
+    f"execute if score #quatre m.timer matches 0 if items entity @s container.* {_VT} run function {NS}:baguette/echange",
+    f"execute if score #quatre m.timer matches 0 if items entity @s weapon.offhand {_VT} run function {NS}:baguette/echange"])

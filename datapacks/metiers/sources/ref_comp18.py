@@ -74,7 +74,9 @@ ATT = [  # (modificateur, attribut, valeur, opération, condition supplémentair
     ("p14", "water_movement_efficiency", 0.5, "add_value", ""),
     ("p15", "submerged_mining_speed", 0.8, "add_value", ""),
     ("p16", "attack_damage", 3, "add_value", "if block ~ ~0.5 ~ minecraft:water"),
-    ("x8a", "jump_strength", 0.1, "add_value", ""), ("x8b", "safe_fall_distance", 2, "add_value", "")]
+    ("x8a", "jump_strength", 0.1, "add_value", ""), ("x8b", "safe_fall_distance", 2, "add_value", ""),
+    # 27/11/2026 : Bâtisseur, Carrure (+1 cœur) et Maître d'œuvre (+1 portée, +1 cœur) à la place de la Célérité
+    ("k4", "max_health", 2, "add_value", ""), ("k6a", "block_interaction_range", 1, "add_value", ""), ("k6b", "max_health", 2, "add_value", "")]
 ATT += [(f"c11r{n}", "attack_damage", 1, "add_value", f"if score @s m.rage matches {n}..") for n in range(1, 6)]
 J_ = []
 for mid, att, val, op, cond in ATT:

@@ -177,6 +177,13 @@ def shape(tool):
         edge = near(head, [(16.5, 7.0), (29.0, 2.5), (24.5, 15.0)], 1.2)
         INLAY[tool] = near(head, [(17.5, 13.5), (26.5, 5.0)], 0.5)
         gem_c = (11, 20)
+    elif tool == "wand":   # 27/11/2026 : baguette du Bâtisseur, manche fin, bague, cristal en losange
+        stroke(hand, line((3.5, 28.5), (18.0, 14.0)), lambda t: 1.15)
+        stroke(head, line((18.0, 14.0), (20.0, 12.0)), lambda t: 1.6)
+        poly(head, [(20.0, 12.0), (22.0, 5.5), (29.0, 3.0), (26.5, 10.0)])
+        edge = near(head, [(22.0, 5.5), (29.0, 3.0), (26.5, 10.0)], 1.2)
+        INLAY[tool] = near(head, [(22.5, 9.5), (27.0, 5.0)], 0.5)
+        gem_c = (6, 26)
     elif tool == "bundle":
         poly(head, [(16 + 10.5 * math.cos(a / 40 * 2 * math.pi), 19.5 + 8.5 * math.sin(a / 40 * 2 * math.pi)) for a in range(40)])
         poly(head, [(12, 12.5), (20, 12.5), (21, 9), (11, 9)])

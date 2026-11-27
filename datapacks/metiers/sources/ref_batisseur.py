@@ -16,8 +16,10 @@ add_lines(F + "bonus.mcfunction", [
     f"execute if entity @s[tag=metiers.sk.k5] run attribute @s minecraft:block_interaction_range modifier add {NS}:k5 2 add_value",
     f"execute if entity @s[tag=metiers.sk.k2] run attribute @s minecraft:fall_damage_multiplier modifier add {NS}:k2 -0.5 add_multiplied_base",
     f"execute if entity @s[tag=metiers.sk.k3] if predicate {NS}:accroupi if block ~ ~-1 ~ #minecraft:air if block ~ ~-2 ~ #minecraft:air run effect give @s minecraft:slow_falling 1 0 true",
-    # Architecte (prestige) : +1, +2, +3 de portée ; Résistance I à 3 étoiles ; baguette 7x7 à 5 (ref_baguette.py)
-    # 27/11/2026 : plus de Célérité chez le Bâtisseur (doublon du Mineur), Cadence et Maître d'œuvre passent sur la baguette
+    # Architecte (prestige) : +1, +2, +3 de portée ; Résistance I à 3 étoiles ; +1 cœur à 5
+    # 27/11/2026 : plus de Célérité chez le Bâtisseur (doublon du Mineur) ; jamais retirer puis remettre la vie max
+    f"execute unless entity @s[tag=metiers.sk.pk5] run attribute @s minecraft:max_health modifier remove {NS}:pk_vie",
+    f"execute if entity @s[tag=metiers.sk.pk5] run attribute @s minecraft:max_health modifier add {NS}:pk_vie 2 add_value",
     f"execute if entity @s[tag=metiers.sk.pk5] run attribute @s minecraft:block_interaction_range modifier add {NS}:pk 3 add_value",
     f"execute if entity @s[tag=metiers.sk.pk3,tag=!metiers.sk.pk5] run attribute @s minecraft:block_interaction_range modifier add {NS}:pk 2 add_value",
     f"execute if entity @s[tag=metiers.sk.pk1,tag=!metiers.sk.pk3] run attribute @s minecraft:block_interaction_range modifier add {NS}:pk 1 add_value",

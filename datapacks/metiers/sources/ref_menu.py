@@ -131,7 +131,7 @@ TDESC = {
     "n": "Grimoire de téléportation : clic droit pour enregistrer un point ou t’y rendre (3 s sans bouger). 1 point au palier 0, 10 au palier 10, recharge de 10 min à 1 min.",
     "x": "Pelle : Efficacité monte à chaque palier. Marcher, courir et découvrir biomes et structures rapporte l’XP.",
     "t": "Dank Null : mets-y un bloc (terre, cobble, granite…), tous ceux que tu ramasses ensuite sont vendus au marché (détruits s’ils ne se vendent pas). 3 sortes au palier 0, 13 au palier 10. Les échanges avec les villageois rapportent l’XP.",
-    "k": "Truelle : tenue dans une main, elle allonge ta portée (+1, +2 au palier 5, +3 au palier 10). Chaque bloc posé rapporte l’XP, surtout les blocs de construction, et +2 XP par bloc acheté au Commerce.",
+    "k": "Baguette : clic droit sur la face d’un bloc, elle la prolonge avec les blocs de ton inventaire (3x3, 5x5 au palier 4, 7x7 au palier 7, 9x9 au palier 10). Tenue dans une main, elle allonge ta portée (+1, +2 au palier 5, +3 au palier 10). Chaque bloc posé rapporte l’XP, surtout les blocs de construction, et +2 XP par bloc acheté au Commerce.",
 }
 FITEM = {"m": "marteau", "f": "faux", "c": "arc3", "e": "lasso", "n": "parchemin"}
 SPECIAL_COURT = {"f": "Saison", "n": "Surpuissance", "x": "Sac à dos", "c": "Mon arc", "p": "Carnet", "b": "Forger l’outil",
