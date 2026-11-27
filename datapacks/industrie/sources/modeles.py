@@ -68,7 +68,10 @@ def exporter(rp, ns="industrie"):
         cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
         T = lambda p: [round((p[0] - cx) * k + 8, 3), round((p[1] - y0) * k - 16, 3), round((p[2] - cz) * k + 8, 3)]
         els = []
-        for e in s.els:
+        for i_, e in enumerate(s.els):
+            # 27/11/2026 : faces confondues qui clignotaient (z-fighting) : chaque boîte est gonflée d'un poil différent
+            g_ = 0.035 * (i_ % 5)
+            e = dict(e, **{"from": [v - g_ for v in e["from"]], "to": [v + g_ for v in e["to"]]})
             el = {"from": T(e["from"]), "to": T(e["to"]), "faces": {f: {"uv": [round(v, 4) for v in d["uv"]], "texture": "#a"} for f, d in e["faces"].items()}}
             r = e.get("rotation")
             if r:

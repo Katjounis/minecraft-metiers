@@ -169,8 +169,8 @@ for k in range(1, len(TUBES)):
 # ---------------------------------------------------------------- clic sur une machine : fiche
 fn("machine/clic", [
     f"{S} operation #co i.t = @s i.own", f"{S} operation #cs i.t = @s i.sid", f"{S} operation #cm i.t = @s i.mt",
-    "data remove entity @s interaction", "data remove entity @s attack",
-    f"execute on target run function {NS}:machine/clic_j"])
+    # 27/11/2026 : « on target » lit le joueur dans les données d'interaction : on les efface APRÈS, sinon aucun clic n'aboutit
+    f"execute on target run function {NS}:machine/clic_j", "data remove entity @s interaction", "data remove entity @s attack"])
 fn("machine/clic_j", [
     f"execute unless score @s m.id = #co i.t run return run " + say("Cette machine appartient à une autre île.", "gray"),
     f"{S} operation @s i.sel = #cs i.t", f"function {NS}:machine/fiche"])

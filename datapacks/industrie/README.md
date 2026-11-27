@@ -73,6 +73,7 @@ Pour générer : `python sources/datapack.py`, puis `python labo/outils/fusion_r
 
 ## Versions
 
+- v2 (27/11/2026, soir) : clic droit sur les machines et les bâtiments réparé (les données d'interaction étaient effacées avant de lire le joueur), portail « Retour au monde normal » à côté du point d'arrivée, textures qui clignotaient corrigées (faces confondues dans les modèles), Industrie dans le panneau du menu G.
 - v1 (27/11/2026) : première version.
   - Îles, parcelles et 17 machines, dont la serre de cultures et l'usine à spawner.
   - Tubes à faisceau, Nexus, Halle du Marché à prix dégressif.

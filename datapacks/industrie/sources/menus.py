@@ -245,8 +245,10 @@ fn("menu/visites_d", '$dialog show @s {type:"minecraft:multi_action",title:' + T
    ',can_close_with_escape:true,pause:false,body:[' + msg(T("Les îles des joueurs connectés. En visite, tu es en mode aventure.", "gray")) + '],actions:$(c),columns:2}')
 
 # ---------------------------------------------------------------- clic sur un bâtiment
-fn("batiment/clic", [f"{S} operation #co i.t = @s i.own", f"{S} operation #cm i.t = @s i.mt", "data remove entity @s interaction", "data remove entity @s attack",
-                     f"execute on target run function {NS}:batiment/clic_j"])
+fn("batiment/clic", [f"{S} operation #co i.t = @s i.own", f"{S} operation #cm i.t = @s i.mt",
+                     f"execute if entity @s[tag=ind.ret] run return run function {NS}:batiment/retour_clic",
+                     f"execute on target run function {NS}:batiment/clic_j", "data remove entity @s interaction", "data remove entity @s attack"])
+fn("batiment/retour_clic", [f"execute on target run function {NS}:ile/retour", "data remove entity @s interaction", "data remove entity @s attack"])
 fn("batiment/clic_j", [f"execute unless score @s m.id = #co i.t run return run " + say("Ce bâtiment appartient à une autre île.", "gray"),
                        f"execute if score #cm i.t matches 90 run return run function {NS}:menu/accueil",
                        f"execute if score #cm i.t matches 91 run return run function {NS}:menu/halle",

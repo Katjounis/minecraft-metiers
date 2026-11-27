@@ -26,20 +26,17 @@ _SV = [("trigger metiers set 1", "Métiers", COUL_PACK["metiers"], "Niveaux, arb
        ("trigger compagnons set 1", "Compagnons", COUL_PACK["compagnons"], "Loup, chat, golem, montures... qui combattent et progressent avec toi."),
        ("trigger bestiaire set 1", "Bestiaire", COUL_PACK["bestiaire"], "Les créatures de la nuit, contrats, classement."),
        ("trigger commerce set 30", "Mon profil", "yellow", "Tout ton parcours sur une page."),
+       ("trigger industrie set 1", "Industrie", "#C08020", "L'Archipel des usines : ton île, tes machines, la Halle du Marché, la Banque."),
        ("trigger commerce set 31", "Guide", "white", "Pour bien démarrer, en 5 pages.")]
 MENU_SERVEUR = {
-    "type": "minecraft:multi_action",
+    "type": "minecraft:notice",
     "title": {"text": "Les Couillons", "color": "gold", "bold": True},
     "external_title": {"text": "Menu du serveur"},
     "can_close_with_escape": True, "pause": False,
     "body": [pan_corps("serveur", {i: c for i, (c, n, col, tp) in enumerate(_SV, 1)},
                        {i: [{"text": n + "\n", "color": col, "bold": True}, {"text": tp, "color": "gray", "bold": False}] for i, (c, n, col, tp) in enumerate(_SV, 1)},
-                       {i: "on" for i in range(1, 7)})],
-    # 27/11/2026 : bouton Industrie sous le panneau (le panneau dessiné n'a que 6 cases)
-    "actions": [{"label": [{"text": "⚙ ", "color": "#F7C843"}, {"text": "Industrie", "color": "#F7C843", "bold": True}], "width": 200,
-                 "tooltip": {"text": "L'Archipel des usines : ton île, tes machines, la Halle du Marché, la Banque."},
-                 "action": {"type": "minecraft:run_command", "command": "trigger industrie set 1"}},
-                {"label": "Fermer", "width": 200}], "columns": 2}
+                       {i: "on" for i in range(1, 8)})],
+    "action": {"label": "Fermer", "width": 200}}
 wj("data/serveur/dialog/menu.json", MENU_SERVEUR)
 wj("data/minecraft/tags/dialog/quick_actions.json", {"values": ["serveur:menu"]})
 wj("data/minecraft/tags/dialog/pause_screen_additions.json", {"values": ["serveur:menu"]})

@@ -52,8 +52,9 @@ def lisere(s, x0, y, z0, x1, z1, col="#e8b830", ep=1.0):
 
 def rond(s, cx, y0, y1, cz, r, col, motif="bruit", n=3):
     """Cylindre approché : n carrés tournés."""
-    for k in range(n):
-        s.add((cx - r, y0, cz - r), (cx + r, y1, cz + r), col, motif, rot={"y": k * 90 / n, "origin": [cx, y0, cz]})
+    for k in range(n):   # copies étagées d'un rien : leurs dessus ne sont plus dans le même plan
+        d = 0.12 * k
+        s.add((cx - r + d * 0.3, y0 + d, cz - r + d * 0.3), (cx + r - d * 0.3, y1 - d, cz + r - d * 0.3), col, motif, rot={"y": k * 90 / n, "origin": [cx, y0, cz]})
 
 def anneau(s, cx, cy, cz, R, col, motif="dore", n=16, ep=1.2, plan="xz", tilt=0):
     for k in range(n):

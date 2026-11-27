@@ -148,7 +148,16 @@ fn("ile/aller", [
     f"execute unless score @s m.id matches 1.. run return run " + say("Métiers doit d'abord t'inscrire (reconnecte-toi).", "red"),
     f"execute unless dimension {DIM} run function {NS}:ile/sauver",
     f"execute unless score @s i.ile matches 0.. run function {NS}:ile/creer",
-    f"{S} operation #n i.t = @s i.ile", f"function {NS}:ile/tp"])
+    f"{S} operation #n i.t = @s i.ile", f"function {NS}:ile/tp",
+    f"execute in {DIM} positioned as @s unless entity @e[type=minecraft:interaction,tag=ind.ret,distance=..24] run function {NS}:ile/portail_retour",
+    'title @s actionbar [{"text":"Retour au monde normal : le portail à côté de toi, ou G puis Industrie, Revenir","color":"#F7C843"}]'])
+# portail de retour au monde normal, à côté du point d'arrivée (posé une fois par île)
+fn("ile/portail_retour", [
+    "setblock ~3 63 ~ minecraft:gold_block", "setblock ~3 64 ~ minecraft:crying_obsidian", "setblock ~3 65 ~ minecraft:crying_obsidian",
+    'summon minecraft:text_display ~3.5 66.4 ~0.5 {Tags:["ind.rett"],billboard:"center",background:1426063360,'
+    'text:[{"text":"⟲ ","color":"#F7C843"},{"text":"Retour au monde normal","color":"white","bold":true},{"text":"\\nclic droit sur l\'obsidienne","color":"gray"}]}',
+    'summon minecraft:interaction ~3.5 64 ~0.5 {Tags:["ind.bi","ind.ret"],width:1.4f,height:2.2f}',
+    "particle minecraft:portal ~3.5 65 ~0.5 0.4 1 0.4 0.2 60"])
 fn("ile/tp", [
     f"function {NS}:ile/centre",
     f"{S} operation #x i.t = #cx i.t", f"{S} operation #z i.t = #cz i.t", f"{S} add #z i.t 7",
