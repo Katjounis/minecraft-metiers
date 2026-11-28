@@ -76,7 +76,7 @@ PAGES = {
 }
 fn("menu/guide", dlg(T("GUIDE DE L'INDUSTRIE", OR, True),
                      [msg(T("Choisis une page. Ton prochain objectif s'affiche en bas de l'écran quand tu es sur ton île.", "gray"), 300)],
-                     [btn(T("La démarche", "green", True), 13, 140), btn(T("Le Nexus", OR), 14, 140), btn(T("Les machines", OR), 15, 140),
+                     [btn(T("Que faire ?", "green", True), 18, 140), btn(T("Revoir la présentation", "white"), 19, 140), btn(T("La démarche", "green"), 13, 140), btn(T("Le Nexus", OR), 14, 140), btn(T("Les machines", OR), 15, 140),
                       btn(T("Halle et contrats", "light_purple"), 16, 140), btn(T("Les rangs", "aqua"), 17, 140), btn(T("Mon industrie", "white"), 1, 140)], 3))
 for v, (titre, lignes) in PAGES.items():
     corps = []

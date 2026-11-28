@@ -59,6 +59,7 @@ Ouvrir le menu avec la touche G puis le bouton **Industrie**, ou avec `/trigger 
 | `sources/economie.py` | Parcelles, contrats, Banque, prêts, Halle, Laboratoire, rangs, Grands Œuvres, parts, évènements |
 | `sources/menus.py` | Aiguillage du déclencheur et dialogues |
 | `sources/guide.py` | Parcours de départ et pages du guide |
+| `sources/cine.py` | Présentation à l'arrivée et page « Que faire ? » |
 | `sources/voxels.py`, `sources/modeles.py` | Bâtiments en voxels et export en modèles d'objet (resource pack, `build/industrie_rp`) |
 | `sources/verifier.py` | Contrôle statique du pack généré |
 
@@ -74,6 +75,7 @@ Pour générer : `python sources/datapack.py`, puis `python labo/outils/fusion_r
 
 ## Versions
 
+- v7 (28/11/2026) : présentation à la première arrivée (titres et bâtiments mis en lumière, 30 s), page « Que faire ? » (objectif, rang actuel, ce que le prochain rang demande et débloque), machines et bâtiments bloqués marqués dans le Comptoir et Mon industrie. Réparations : le Nexus portait le code de la Halle (même étiquette, et le clic ouvrait la Halle), blocs du portail de retour effacés par le chantier.
 - v6 (28/11/2026) : étiquette au-dessus de chaque machine et bâtiment (nom, rôle, « clic droit »), posée aussi sur les îles déjà construites. À l'arrivée, un titre montre le Nexus comme point de départ.
 - v5 (28/11/2026) : parcours de départ en 6 étapes (objectif en bas de l'écran sur l'île, Écus à chaque étape), Guide en pages courtes (démarche, Nexus, machines, Halle et contrats, rangs), menus allégés. Les contrats demandent 1/8 de la saturation au lieu de la moitié, et la Halle met de côté leur quantité au lieu de tout vendre.
 - v4 (28/11/2026) : modèles 3D refaits au format que le jeu accepte partout (un seul axe de rotation, angles par crans de 22,5 degrés, coordonnées dans la boîte -16 à 32). Avant, la plupart s'affichaient en cube violet et noir. Halle réécrite : ce qu'est un contrat, ce que tu as au Nexus pour chacun (vert si livrable, rouge sinon), le rang qui débloque les contrats 2 et 3. Métiers reconstruit : il embarquait encore l'ancien menu G à 7 cases.

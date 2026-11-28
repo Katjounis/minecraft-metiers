@@ -105,7 +105,7 @@ def bat_summon(nom, x, z, ech, code):
             f'brightness:{{sky:15,block:15}},item:{{id:"minecraft:paper",count:1,components:{{"minecraft:item_model":"{NS}:{nom}"}}}},'
             f'transformation:{{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,0f],scale:[{ech}f,{ech}f,{ech}f]}}}}',
             f'summon minecraft:interaction ~{x} ~ ~{z} {{Tags:["ind.bi","ind.nouvb"],width:{round(ech * 2.6, 1)}f,height:{round(ech * 2.4, 1)}f}}',
-            f"{S} set @e[tag=ind.nouvb,distance=..40] i.mt {code}"]
+            f"execute as @e[tag=ind.nouvb,distance=..40] unless score @s i.mt matches -2147483648.. run {S} set @s i.mt {code}"]
 
 
 CENTRE = []
@@ -154,6 +154,7 @@ fn("ile/aller", [
     'title @s times 10 70 20', 'title @s title {"text":"Ton île","color":"#F7C843","bold":true}',
     'title @s subtitle {"text":"Le Nexus devant toi : clic droit pour tout gérer","color":"white"}',
     f"function {NS}:ile/etiquettes",
+    f"execute unless score @s i.cin matches 1.. run return run {S} set @s i.cin 1",
     'title @s actionbar [{"text":"Retour au monde normal : le portail à côté de toi, ou G puis Industrie, Revenir","color":"#F7C843"}]'])
 # portail de retour au monde normal, à côté du point d'arrivée (posé une fois par île)
 fn("ile/portail_retour", [
@@ -271,7 +272,13 @@ for k, m in enumerate(ML):
     ET.append(f"execute as @e[type=minecraft:interaction,tag=ind.mi,distance=..96] if score @s i.mt matches {k} at @s positioned ~ ~{h_lab(m, ECH_M)} ~ "
               f"unless entity @e[type=minecraft:text_display,tag=ind.lab,distance=..2] run function {NS}:ile/etiq_m{k}")
 for code, (titre, role, h) in ROLE_BAT.items():
-    fn(f"ile/etiq_b{code}", [etiquette(titre, role, ["ind.lab", "ind.labb"], 0)])
+    fn(f"ile/etiq_b{code}", [etiquette(titre, role, ["ind.lab", "ind.labb", f"ind.lb{code}"], 0)])
     ET.append(f"execute as @e[type=minecraft:interaction,tag=ind.bi,tag=!ind.ret,distance=..96] if score @s i.mt matches {code} at @s positioned ~ ~{h} ~ "
               f"unless entity @e[type=minecraft:text_display,tag=ind.lab,distance=..2] run function {NS}:ile/etiq_b{code}")
-fn("ile/etiquettes", ET)
+REP = [  # 28/11/2026 : le Nexus des îles déjà créées portait le code de la Halle (et donc son étiquette et son menu)
+    f"execute as @e[type=minecraft:interaction,tag=ind.bi,tag=!ind.ret,distance=..96] at @s if entity @e[type=minecraft:item_display,tag=ind.b_nexus,distance=..5] run {S} set @s i.mt 90",
+    f"execute as @e[type=minecraft:item_display,tag=ind.b_nexus,distance=..96] at @s run kill @e[type=minecraft:text_display,tag=ind.labb,tag=!ind.lb90,distance=..9]",
+    # portail de retour : les blocs avaient été effacés par le chantier de la parcelle
+    "execute as @e[type=minecraft:interaction,tag=ind.ret,distance=..96] at @s run setblock ~ ~-1 ~ minecraft:gold_block keep",
+    "execute as @e[type=minecraft:interaction,tag=ind.ret,distance=..96] at @s run fill ~ ~ ~ ~ ~1 ~ minecraft:crying_obsidian replace minecraft:air"]
+fn("ile/etiquettes", REP + ET)
