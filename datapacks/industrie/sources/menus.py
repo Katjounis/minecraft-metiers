@@ -18,7 +18,7 @@ NAV = nav(("Retour", "white", 1))   # 28/11/2026 : un seul bouton de retour, tro
 TR = [f"{S} operation #v i.t = @s industrie", f"{S} set @s industrie 0",
       f"execute unless score @s i.vu matches 1 run function {NS}:joueur/init",
       f"execute store result score #now i.g run time query gametime"]
-SIMPLE = {21: "ile/bascule", 20: "menu/plus_o", 18: "menu/route", 19: "cine/revoir", 12: "menu/guide", 13: "menu/guide_13", 14: "menu/guide_14", 15: "menu/guide_15", 16: "menu/guide_16", 17: "menu/guide_17",
+SIMPLE = {22: "menu/stats", 21: "ile/bascule", 20: "menu/plus_o", 18: "menu/route", 19: "cine/revoir", 12: "menu/guide", 13: "menu/guide_13", 14: "menu/guide_14", 15: "menu/guide_15", 16: "menu/guide_16", 17: "menu/guide_17",
           1: "menu/accueil", 2: "ile/aller", 3: "ile/retour", 4: "menu/comptoir", 5: "menu/cadastre", 6: "menu/banque", 7: "menu/halle",
           8: "menu/labo", 9: "menu/bureau", 10: "menu/visites", 11: "menu/parts", 301: "machine/ameliorer", 302: "machine/revendre",
           500: "banque/emprunter", 501: "banque/rembourser", 530: "halle/ameliorer", 540: "tube/ameliorer", 550: "banque/acheter",

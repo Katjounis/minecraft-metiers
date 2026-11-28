@@ -17,7 +17,7 @@ ROOT = os.path.join(ICI, "..", "build", "industrie_datapack")
 RP = os.path.join(ICI, "..", "build", "industrie_rp")
 NS = "industrie"
 F = f"data/{NS}/function/"
-VERSION = 10
+VERSION = 11
 DIM = f"{NS}:archipel"
 S = "scoreboard players"
 for d in (ROOT, RP):
@@ -94,7 +94,7 @@ OBJ = ["i.ile", "i.rang", "i.ri", "i.rir", "i.ctr", "i.np", "i.halle", "i.tube",
        "i.tl", "i.th", "i.td", "i.cts", "i.jn", "i.jb", "i.jv", "i.r7", "i.dette", "i.pj", "i.pban", "i.pret",
        "i.sel", "i.pv", "i.ph", "i.fe", "i.pend", "i.gm", "i.rx", "i.ry", "i.rz", "i.rd", "i.vu", "i.own", "i.sid",
        "i.mt", "i.ml", "i.mob", "i.sf", "i.spv", "i.spq", "i.t", "i.g", "i.ph2", "i.tx", "i.tz", "i.off", "i.dem",
-       "i.prev", "i.sdi", "i.tuto", "i.cin"]
+       "i.prev", "i.sdi", "i.tuto", "i.cin"] + [f"i.h{k}" for k in range(12)]
 OBJ += [f"i.b{b}" for b in range(1, 5)] + [f"i.p{k}" for k in range(49)]
 OBJ += [f"i.c{c}{x}" for c in (1, 2, 3) for x in "pqrf"]
 for p in PL:
@@ -375,7 +375,7 @@ EN = EN[:-len(ENTRETIEN)] + [f"{S} set #ent i.t 0"] + EN[-len(ENTRETIEN):] + [
     f"{S} operation @s i.cts += #N i.t",
     f"{S} operation #E i.t = @s i.cts", f"{S} operation #E i.t /= #100 i.g", f"{S} operation @s i.cts %= #100 i.g",
     f"execute if score @s c.ecus matches -2147483648.. run scoreboard players operation @s c.ecus += #E i.t",
-    f"{S} operation @s i.jn += #E i.t", f"{S} operation @s i.jv += #E i.t"]
+    f"{S} operation @s i.jn += #E i.t", f"{S} operation @s i.jv += #E i.t", f"{S} operation @s i.h0 += #E i.t"]
 fn("vente/encaisser", EN)
 
 # heure : saturation qui se détend (x 23/24), frais de garde de la Banque
@@ -383,6 +383,12 @@ HE = []
 for p in PL:
     HE += [f"{S} operation #x i.t = @s i.v_{p}", f"{S} operation #x i.t /= #24 i.g", f"{S} operation @s i.v_{p} -= #x i.t"]
 HE += [f"execute if score @s i.bq matches 1 run function {NS}:banque/garde"]
+# historique des recettes heure par heure (i.h0 = heure en cours, i.h11 = il y a 11 h), pour le graphique du tableau de l'île
+HE += [f"execute if score @s i.h0 matches 1.. run function {NS}:prod/bilan_h"]
+fn("prod/bilan_h", [f"execute store result storage {NS}:t bh.v int 1 run {S} get @s i.h0", f"function {NS}:prod/bilan_h_m with storage {NS}:t bh"])
+fn("prod/bilan_h_m", "$tellraw @s " + L(PREFIX, T("Ta Halle a vendu pour ", "gray"), T("$(v) Écus", "#F7C843", True), T(" cette heure.", "gray"),
+                                         '{text:"  [MON ÎLE]",color:"aqua",click_event:{action:"run_command",command:"/trigger industrie set 22"}}'))
+HE += [f"{S} operation @s i.h{k} = @s i.h{k - 1}" for k in range(11, 0, -1)] + [f"{S} set @s i.h0 0"]
 fn("prod/heure", HE)
 GA = [f"{S} set #fg i.t 0"]
 for p in PL:

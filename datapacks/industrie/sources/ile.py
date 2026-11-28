@@ -226,7 +226,7 @@ fn("ile/hors", ["tag @s remove ind.adv", "execute if entity @s[gamemode=adventur
 # ---------------------------------------------------------------- collisions : barrières invisibles dans l'emprise des machines
 # et des bâtiments (27/11/2026). Un peu plus petites que la zone de clic (entité interaction) pour que le clic droit passe.
 # Posées toutes les 5 s autour des joueurs de l'Archipel, jamais sur un joueur (rien à moins de 4 blocs).
-fn("ile/barrieres", [f"function {NS}:ile/etiquettes",
+fn("ile/barrieres", [f"function {NS}:ile/etiquettes", f"function {NS}:ile/holo",
     f"execute as @e[type=minecraft:interaction,tag=ind.mi,distance=..96] at @s unless entity @a[distance=..4] run fill ~-2 ~ ~-2 ~2 ~4 ~2 minecraft:barrier replace minecraft:air",
     f"execute as @e[type=minecraft:interaction,tag=ind.bi,tag=!ind.ret,distance=..96] at @s if score @s i.mt matches 90..92 unless entity @a[distance=..4] run fill ~-2 ~ ~-2 ~1 ~4 ~1 minecraft:barrier replace minecraft:air",
     f"execute as @e[type=minecraft:interaction,tag=ind.bi,tag=!ind.ret,distance=..96] at @s if score @s i.mt matches 93 unless entity @a[distance=..3] run fill ~-1 ~ ~-1 ~ ~4 ~ minecraft:barrier replace minecraft:air"])
