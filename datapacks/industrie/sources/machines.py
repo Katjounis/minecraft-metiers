@@ -249,6 +249,7 @@ for k, m in enumerate(ML):
 RV += [f"execute if score #cm i.t matches {MI['spawner']} run function {NS}:machine/rv_spawner",
        f"execute if score @s c.ecus matches -2147483648.. run scoreboard players operation @s c.ecus += #rv i.t",
        f"execute as @e[tag=ind.mi,distance=..96] if score @s i.own = #me i.t if score @s i.sid = #sel i.t at @s run fill ~-2 ~ ~-2 ~2 ~4 ~2 minecraft:air replace minecraft:barrier",
+       f"execute as @e[tag=ind.mi,distance=..96] if score @s i.own = #me i.t if score @s i.sid = #sel i.t at @s run kill @e[type=minecraft:text_display,tag=ind.labm,distance=..10]",
        f"execute as @e[tag=ind.m,distance=..96] if score @s i.own = #me i.t if score @s i.sid = #sel i.t run kill @s",
        f"execute as @e[tag=ind.mi,distance=..96] if score @s i.own = #me i.t if score @s i.sid = #sel i.t run kill @s",
        f"execute as @e[tag=ind.tube,distance=..400] if score @s i.own = #me i.t if score @s i.sid = #sel i.t run kill @s",

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import json
 # Îles, parcelles, bâtiments, voyage et protection. Exécuté par datapack.py.
 #
 # Île n : centre (cx, cz) = ((n % 16) x 2048, (n / 16) x 2048), sol en y = 63. Grille de 7 x 7 parcelles de 32 x 32,
@@ -150,6 +151,9 @@ fn("ile/aller", [
     f"execute unless score @s i.ile matches 0.. run function {NS}:ile/creer",
     f"{S} operation #n i.t = @s i.ile", f"function {NS}:ile/tp",
     f"execute in {DIM} positioned as @s unless entity @e[type=minecraft:interaction,tag=ind.ret,distance=..24] run function {NS}:ile/portail_retour",
+    'title @s times 10 70 20', 'title @s title {"text":"Ton île","color":"#F7C843","bold":true}',
+    'title @s subtitle {"text":"Le Nexus devant toi : clic droit pour tout gérer","color":"white"}',
+    f"function {NS}:ile/etiquettes",
     'title @s actionbar [{"text":"Retour au monde normal : le portail à côté de toi, ou G puis Industrie, Revenir","color":"#F7C843"}]'])
 # portail de retour au monde normal, à côté du point d'arrivée (posé une fois par île)
 fn("ile/portail_retour", [
@@ -222,7 +226,52 @@ fn("ile/hors", ["tag @s remove ind.adv", "execute if entity @s[gamemode=adventur
 # ---------------------------------------------------------------- collisions : barrières invisibles dans l'emprise des machines
 # et des bâtiments (27/11/2026). Un peu plus petites que la zone de clic (entité interaction) pour que le clic droit passe.
 # Posées toutes les 5 s autour des joueurs de l'Archipel, jamais sur un joueur (rien à moins de 4 blocs).
-fn("ile/barrieres", [
+fn("ile/barrieres", [f"function {NS}:ile/etiquettes",
     f"execute as @e[type=minecraft:interaction,tag=ind.mi,distance=..96] at @s unless entity @a[distance=..4] run fill ~-2 ~ ~-2 ~2 ~4 ~2 minecraft:barrier replace minecraft:air",
     f"execute as @e[type=minecraft:interaction,tag=ind.bi,tag=!ind.ret,distance=..96] at @s if score @s i.mt matches 90..92 unless entity @a[distance=..4] run fill ~-2 ~ ~-2 ~1 ~4 ~1 minecraft:barrier replace minecraft:air",
     f"execute as @e[type=minecraft:interaction,tag=ind.bi,tag=!ind.ret,distance=..96] at @s if score @s i.mt matches 93 unless entity @a[distance=..3] run fill ~-1 ~ ~-1 ~ ~4 ~ minecraft:barrier replace minecraft:air"])
+
+# ---------------------------------------------------------------- étiquettes (28/11/2026) : nom et rôle au-dessus de chaque machine et bâtiment
+# posées par la passe des 5 s (ile/barrieres) là où il n'y en a pas encore : marche aussi pour les îles déjà construites.
+def etiquette(titre, role, tags, h):
+    return (f'summon minecraft:text_display ~ ~{h} ~ {{Tags:{json.dumps(tags)},billboard:"center",view_range:0.6f,shadow:true,'
+            f'background:1426063360,line_width:220,brightness:{{sky:15,block:15}},'
+            f'text:[{{"text":"{titre}","color":"#F7C843","bold":true}},{{"text":"\\n{role}","color":"white"}},'
+            f'{{"text":"\\nclic droit","color":"gray","italic":true}}]}}')
+
+# hauteur réelle de chaque modèle (unités de modèle, 16 = 1 bloc à l'échelle 1), pour poser l'étiquette juste au-dessus
+import tempfile, sys as _sys
+_sys.path.insert(0, ICI)
+import modeles as _mo
+_HM = {n: v[1] for n, v in _mo.exporter(tempfile.mkdtemp()).items()}
+def h_lab(nom, ech):
+    return round(_HM[nom] / 16 * ech + 1.0, 1)
+ROLE_BAT = {90: ("NEXUS", "Ton entrepôt et ton menu principal", h_lab("nexus", BAT["nexus"][2])),
+            91: ("HALLE DU MARCHÉ", "Vend ton stock, contrats du jour", h_lab("halle", BAT["halle"][2])),
+            92: ("BANQUE", "Garder ou vendre, prêts", h_lab("banque", BAT["banque"][2])),
+            93: ("LABORATOIRE", "Brevets : bonus permanents", h_lab("labo", BAT["labo"][2])),
+            94: ("GRAND ŒUVRE", "Bureau : rangs et Grands Œuvres", h_lab("oeuvre", BAT["oeuvre"][2]))}
+
+
+def role_machine(m):
+    d = MACH[m]
+    if d["kw"] < 0:
+        return f"Énergie : +{-d['kw']} kW pour tes machines"
+    if m == "spawner":
+        return "Tue les créatures de ton spawner, garde le butin"
+    noms = ", ".join(PROD[p][0].lower() for p in d["out"])
+    if d.get("inp"):
+        return f"Transforme {', '.join(PROD[p][0].lower() for p in d['inp'])} en {noms}"
+    return f"Produit : {noms}"
+
+
+ET = []
+for k, m in enumerate(ML):
+    fn(f"ile/etiq_m{k}", [etiquette(MACH[m]["nom"].upper(), role_machine(m), ["ind.lab", "ind.labm"], 0)])
+    ET.append(f"execute as @e[type=minecraft:interaction,tag=ind.mi,distance=..96] if score @s i.mt matches {k} at @s positioned ~ ~{h_lab(m, ECH_M)} ~ "
+              f"unless entity @e[type=minecraft:text_display,tag=ind.lab,distance=..2] run function {NS}:ile/etiq_m{k}")
+for code, (titre, role, h) in ROLE_BAT.items():
+    fn(f"ile/etiq_b{code}", [etiquette(titre, role, ["ind.lab", "ind.labb"], 0)])
+    ET.append(f"execute as @e[type=minecraft:interaction,tag=ind.bi,tag=!ind.ret,distance=..96] if score @s i.mt matches {code} at @s positioned ~ ~{h} ~ "
+              f"unless entity @e[type=minecraft:text_display,tag=ind.lab,distance=..2] run function {NS}:ile/etiq_b{code}")
+fn("ile/etiquettes", ET)
