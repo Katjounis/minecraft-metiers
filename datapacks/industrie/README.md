@@ -58,6 +58,7 @@ Ouvrir le menu avec la touche G puis le bouton **Industrie**, ou avec `/trigger 
 | `sources/machines.py` | Achat, pose, tubes, fiche, amélioration, revente |
 | `sources/economie.py` | Parcelles, contrats, Banque, prêts, Halle, Laboratoire, rangs, Grands Œuvres, parts, évènements |
 | `sources/menus.py` | Aiguillage du déclencheur et dialogues |
+| `sources/guide.py` | Parcours de départ et pages du guide |
 | `sources/voxels.py`, `sources/modeles.py` | Bâtiments en voxels et export en modèles d'objet (resource pack, `build/industrie_rp`) |
 | `sources/verifier.py` | Contrôle statique du pack généré |
 
@@ -73,6 +74,7 @@ Pour générer : `python sources/datapack.py`, puis `python labo/outils/fusion_r
 
 ## Versions
 
+- v5 (28/11/2026) : parcours de départ en 6 étapes (objectif en bas de l'écran sur l'île, Écus à chaque étape), Guide en pages courtes (démarche, Nexus, machines, Halle et contrats, rangs), menus allégés. Les contrats demandent 1/8 de la saturation au lieu de la moitié, et la Halle met de côté leur quantité au lieu de tout vendre.
 - v4 (28/11/2026) : modèles 3D refaits au format que le jeu accepte partout (un seul axe de rotation, angles par crans de 22,5 degrés, coordonnées dans la boîte -16 à 32). Avant, la plupart s'affichaient en cube violet et noir. Halle réécrite : ce qu'est un contrat, ce que tu as au Nexus pour chacun (vert si livrable, rouge sinon), le rang qui débloque les contrats 2 et 3. Métiers reconstruit : il embarquait encore l'ancien menu G à 7 cases.
 - v3 (27/11/2026, nuit) : modèles 3D de la serre de cultures et de l'usine à spawner (elles s'affichaient en cube violet et noir), barrières invisibles dans l'emprise des machines et des bâtiments pour ne plus passer au travers (reposées toutes les 5 s, retirées à la revente), dialogues resserrés (Halle, Comptoir). Le menu G revient à l'état d'avant : Industrie est le bouton sous le panneau.
 - v2 (27/11/2026, soir) : clic droit sur les machines et les bâtiments réparé (les données d'interaction étaient effacées avant de lire le joueur), portail « Retour au monde normal » à côté du point d'arrivée, textures qui clignotaient corrigées (faces confondues dans les modèles), Industrie dans le panneau du menu G.

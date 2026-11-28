@@ -191,7 +191,7 @@ for k, m in enumerate(ML):
                   f'{{nom:"{d["nom"]}",niv:"{l}",prod:"{prod_txt(m, l)}",kw:"{abs(d["kw"]) * (LV_KW[l - 1] if d["kw"] > 0 else LV_PROD[l - 1] // 10) // 10} kW",'
                   f'up:"{up}",rv:"{fe(rv)}",np:"{prod_txt(m, l + 1) if l < 5 else ""}"}}')
 FI += [f"function {NS}:machine/fiche_d with storage {NS}:f m"]
-fn("machine/fiche", FI)
+fn("machine/fiche", FI + [f"function {NS}:tuto/fiche"])
 fn("machine/lire", [f"{S} operation #cm i.t = @s i.mt", f"{S} operation #cl i.t = @s i.ml", f"{S} operation #cmob i.t = @s i.mob"])
 fn("machine/fiche_d", "$" + dlg(
     T("$(nom)", "#F7C843", True),

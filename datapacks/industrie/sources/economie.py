@@ -31,7 +31,7 @@ for idx in range(49):
     fn(f"parcelle/acheter_{idx}", P)
 
 # ---------------------------------------------------------------- contrats de Guilde (tirés chaque jour)
-CQ = {p: PROD[p][3] // 2 for p in PL}                                       # volume : la moitié de la saturation du jour
+CQ = {p: PROD[p][3] // 8 for p in PL}                                       # volume : 1/8 de la saturation (28/11/2026 : 1/2 était hors de portée au début)
 CR = {p: CQ[p] * PROD[p][2] * 3 // 200 for p in PL}                         # paiement : 1,5 x le prix de base, sans dégressif
 TI = [f"{S} set #nc i.t 0"] + [f"execute if score @s i.rang matches {r} run {S} set #nc i.t {CONTRATS_JOUR[r]}" for r in range(1, 6)]
 TI += [f"{S} set @s i.c{c}p 0" for c in (1, 2, 3)] + [f"{S} set @s i.c{c}f 0" for c in (1, 2, 3)]
@@ -52,6 +52,8 @@ fn("contrat/tirer_m", ["$execute store result score @s i.c$(c)p run data get sto
 for c in (1, 2, 3):
     LV = [f"execute unless score @s i.c{c}p matches 1.. run return run " + say("Pas de contrat ici aujourd'hui.", "gray"),
           f"execute if score @s i.c{c}f matches 1 run return run " + say("Contrat déjà livré.", "gray"), f"{S} set #ok i.t 0"]
+    LV += [f"execute if score @s i.c{c}p matches {k + 1} run {S} set @s i.c{c}q {CQ[p]}" for k, p in enumerate(PL)]
+    LV += [f"execute if score @s i.c{c}p matches {k + 1} run {S} set @s i.c{c}r {CR[p]}" for k, p in enumerate(PL)]
     for k, p in enumerate(PL):
         LV += [f"execute if score @s i.c{c}p matches {k + 1} if score @s i.s_{p} >= @s i.c{c}q run {S} set #ok i.t {k + 1}"]
     LV += [f"execute if score #ok i.t matches 0 run return run " + say("Pas assez de marchandise au Nexus pour ce contrat.", "red")]

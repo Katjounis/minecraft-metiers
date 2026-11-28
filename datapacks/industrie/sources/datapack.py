@@ -17,7 +17,7 @@ ROOT = os.path.join(ICI, "..", "build", "industrie_datapack")
 RP = os.path.join(ICI, "..", "build", "industrie_rp")
 NS = "industrie"
 F = f"data/{NS}/function/"
-VERSION = 4
+VERSION = 5
 DIM = f"{NS}:archipel"
 S = "scoreboard players"
 for d in (ROOT, RP):
@@ -94,7 +94,7 @@ OBJ = ["i.ile", "i.rang", "i.ri", "i.rir", "i.ctr", "i.np", "i.halle", "i.tube",
        "i.tl", "i.th", "i.td", "i.cts", "i.jn", "i.jb", "i.jv", "i.r7", "i.dette", "i.pj", "i.pban", "i.pret",
        "i.sel", "i.pv", "i.ph", "i.fe", "i.pend", "i.gm", "i.rx", "i.ry", "i.rz", "i.rd", "i.vu", "i.own", "i.sid",
        "i.mt", "i.ml", "i.mob", "i.sf", "i.spv", "i.spq", "i.t", "i.g", "i.ph2", "i.tx", "i.tz", "i.off", "i.dem",
-       "i.prev", "i.sdi"]
+       "i.prev", "i.sdi", "i.tuto"]
 OBJ += [f"i.b{b}" for b in range(1, 5)] + [f"i.p{k}" for k in range(49)]
 OBJ += [f"i.c{c}{x}" for c in (1, 2, 3) for x in "pqrf"]
 for p in PL:
@@ -136,6 +136,7 @@ fn("seconde", [
     f"{S} set #sec i.g 0",
     "execute store result score #now i.g run time query gametime",
     f"execute as @a at @s run function {NS}:joueur/seconde",
+    f"execute as @a[scores={{i.ile=0..}}] unless score @s i.tuto matches {7}.. at @s run function {NS}:tuto/verif",
     f"execute as @a at @s if dimension {DIM} run function {NS}:ile/garde",
     f"execute as @a[tag=ind.adv] at @s unless dimension {DIM} run function {NS}:ile/hors",
     f"{S} add #bar i.g 1", f"execute if score #bar i.g matches 5.. as @a at @s if dimension {DIM} run function {NS}:ile/barrieres",
@@ -310,6 +311,8 @@ for idx, p in enumerate(PL):
     L_ = [f"{S} operation #q i.t = @s i.s_{p}",
           # réserve (ordre 4) : on garde x_ objets
           f"execute if score @s i.o_{p} matches 4 run {S} operation #q i.t -= @s i.x_{p}",
+          # contrats du jour non livrés : la Halle met de côté leur quantité (28/11/2026)
+          *[f"execute if score @s i.c{c}p matches {idx + 1} unless score @s i.c{c}f matches 1 run {S} operation #q i.t -= @s i.c{c}q" for c in (1, 2, 3)],
           f"execute if score #q i.t matches ..0 run return 0",
           # saturation effective
           f"{S} set #S i.t {S0}", f"{S} operation #S i.t *= #sb i.t", f"{S} operation #S i.t /= #100 i.g",
@@ -407,6 +410,7 @@ exec(open(os.path.join(ICI, "ile.py"), encoding="utf-8").read())
 exec(open(os.path.join(ICI, "machines.py"), encoding="utf-8").read())
 exec(open(os.path.join(ICI, "economie.py"), encoding="utf-8").read())
 exec(open(os.path.join(ICI, "menus.py"), encoding="utf-8").read())
+exec(open(os.path.join(ICI, "guide.py"), encoding="utf-8").read())
 
 # ------------------------------------------------------------------ resource pack : modèles des bâtiments
 import modeles

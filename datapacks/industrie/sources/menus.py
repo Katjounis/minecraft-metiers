@@ -18,7 +18,8 @@ NAV = nav(("Mon industrie", "white", 1), ("Halle", OR, 7), ("Banque", "aqua", 6)
 TR = [f"{S} operation #v i.t = @s industrie", f"{S} set @s industrie 0",
       f"execute unless score @s i.vu matches 1 run function {NS}:joueur/init",
       f"execute store result score #now i.g run time query gametime"]
-SIMPLE = {1: "menu/accueil", 2: "ile/aller", 3: "ile/retour", 4: "menu/comptoir", 5: "menu/cadastre", 6: "menu/banque", 7: "menu/halle",
+SIMPLE = {12: "menu/guide", 13: "menu/guide_13", 14: "menu/guide_14", 15: "menu/guide_15", 16: "menu/guide_16", 17: "menu/guide_17",
+          1: "menu/accueil", 2: "ile/aller", 3: "ile/retour", 4: "menu/comptoir", 5: "menu/cadastre", 6: "menu/banque", 7: "menu/halle",
           8: "menu/labo", 9: "menu/bureau", 10: "menu/visites", 11: "menu/parts", 301: "machine/ameliorer", 302: "machine/revendre",
           500: "banque/emprunter", 501: "banque/rembourser", 530: "halle/ameliorer", 540: "tube/ameliorer", 550: "banque/acheter",
           570: "rang/passer", 571: "oeuvre/elever", 580: "parts/vendre", 582: "parts/racheter", 583: "parts/retirer"}
@@ -56,24 +57,23 @@ AC = [f"execute unless score @s i.ile matches 0.. run return run function {NS}:m
       f'data modify storage {M_} rang set value "Atelier"'] + [
       f'execute if score @s i.rang matches {r} run data modify storage {M_} rang set value "{RANGS[r][0]}"' for r in range(2, 6)] + [
       f'data modify storage {M_} ev set from storage {NS}:g ev', f'execute unless data storage {NS}:g ev run data modify storage {M_} ev set value "Marché calme."',
-      f"function {NS}:menu/accueil_d with storage {M_}"]
+      f"function {NS}:tuto/objectif", f"function {NS}:menu/accueil_d with storage {M_}"]
 fn("menu/accueil", AC)
 fn("menu/accueil_d", "$" + dlg(
-    L(T("EMPIRE INDUSTRIEL", OR, True), T("   rang $(rang)", "white")),
-    [msg(L(T("Recettes du jour : ", "gray"), T("$(jn) Écus", OR, True), T("   ·   moyenne : $(r7) / jour", "gray"),
-           T("\\nRéputation : ", "gray"), T("$(ri)", "light_purple", True), T("   ·   contrats livrés : $(ctr)", "gray"),
-           T("\\nÉnergie : ", "gray"), T("$(off) kW fournis pour $(dem) kW demandés ($(fep) % de production)", "aqua"),
-           T("\\nMachines : $(nm)   ·   parcelles : $(np) / 49   ·   Grands Œuvres : $(go) / 8", "gray"),
-           T("\\nNexus : $(st) objets", "white"), T("\\n\\nBourse : $(ev)", "yellow")), 400)],
-    [btn(T("Aller sur mon île", "green", True), 2, 150), btn(T("Revenir", "white"), 3, 120), btn(T("Comptoir des machines", OR, True), 4, 160),
-     btn(T("Cadastre", "white"), 5, 120), btn(T("Halle du Marché", OR), 7, 150), btn(T("Banque", "aqua"), 6, 120),
-     btn(T("Laboratoire", "light_purple"), 8, 120), btn(T("Bureau de l'île", "light_purple"), 9, 140), btn(T("Parts d'île", "light_purple"), 11, 120),
-     btn(T("Visiter une île", "gray"), 10, 140)], 3))
+    L(T("MON INDUSTRIE", OR, True), T("   rang $(rang)", "white")),
+    [msg(L(T("Objectif : ", "green", True), T("$(obj)", "white")), 300),
+     msg(L(T("Aujourd'hui : ", "gray"), T("$(jn) Écus", OR, True), T("   ·   réputation $(ri)", "light_purple"),
+           T("\\nNexus : $(st) objets en stock   ·   $(nm) machines", "white"),
+           T("\\nÉnergie : $(fep) %", "aqua"), T(" ($(off) kW pour $(dem) kW demandés)", "gray"),
+           T("\\nBourse : $(ev)", "yellow")), 300)],
+    [btn(T("Guide", "green", True), 12, 120), btn(T("Aller sur mon île", "green"), 2, 140), btn(T("Revenir", "white"), 3, 120),
+     btn(T("Comptoir des machines", OR, True), 4, 160), btn(T("Halle du Marché", OR), 7, 150), btn(T("Cadastre", "white"), 5, 120),
+     btn(T("Bureau de l'île", "light_purple"), 9, 140), btn(T("Banque", "aqua"), 6, 120), btn(T("Laboratoire", "light_purple"), 8, 120),
+     btn(T("Parts d'île", "light_purple"), 11, 120), btn(T("Visiter une île", "gray"), 10, 140)], 3))
 fn("menu/bienvenue", dlg(T("L'ARCHIPEL DES USINES", OR, True),
-                         [msg(L(T("Chaque joueur reçoit une île dans l'Archipel. Pose des machines, relie-les au Nexus par des tubes à faisceau, "
-                                  "vends ta production à la Halle du Marché et monte d'Atelier à Empire.\\n\\n", "gray"),
-                                T("Ta première île est offerte, avec une Carrière automatique déjà en marche.", OR)), 360)],
-                         [btn(T("Créer mon île et y aller", "green", True), 2, 220)], 1))
+                         [msg(L(T("Tu reçois une île avec une Carrière déjà en marche. Tes machines produisent, la Halle vend, tu gagnes des Écus.\\n\\n", "white"),
+                                T("Un parcours de 6 étapes te guide, avec des Écus à chaque étape.", "green")), 300)],
+                         [btn(T("Créer mon île et y aller", "green", True), 2, 200), btn(T("Lire le guide", "white"), 12, 140)], 2))
 
 # ---------------------------------------------------------------- comptoir des machines (4)
 CO = [f'data modify storage {M_} c set value []']
@@ -117,10 +117,12 @@ HA = [val("hl", "i.halle")] + [f'execute if score @s i.halle matches {k} run dat
 for c in (1, 2, 3):
     r_ = next(r for r in range(1, 6) if CONTRATS_JOUR[r] >= c)
     HA += [f'data modify storage {M_} h.c{c} set value "Débloqué au rang {RANGS[r_][0]}."', f'data modify storage {M_} h.k{c} set value "dark_gray"',
-           f'data modify storage {M_} h.b{c} set value "Contrat {c} : rang {RANGS[r_][0]}"', f'data modify storage {M_} h.e{c} set value ""', f'data modify storage {M_} h.n{c} set value "-"']
+           f'data modify storage {M_} h.b{c} set value "Contrat {c} : rang {RANGS[r_][0]}"', f'data modify storage {M_} h.e{c} set value ""', f'data modify storage {M_} h.n{c} set value ""', f'data modify storage {M_} h.t{c} set value ""']
     for k, p in enumerate(PL):
+        HA += [f"execute if score @s i.c{c}p matches {k + 1} run {S} set @s i.c{c}q {CQ[p]}", f"execute if score @s i.c{c}p matches {k + 1} run {S} set @s i.c{c}r {CR[p]}"]
         HA += [f'execute if score @s i.c{c}p matches {k + 1} run data modify storage {M_} h.c{c} set value "{mille(CQ[p])} {PROD[p][0].lower()}, payé {mille(CR[p])} Écus"',
                f"execute if score @s i.c{c}p matches {k + 1} store result storage {M_} h.n{c} int 1 run {S} get @s i.s_{p}",
+               f'execute if score @s i.c{c}p matches {k + 1} run data modify storage {M_} h.t{c} set value "  · tu as "',
                f"execute if score @s i.c{c}p matches {k + 1} if score @s i.s_{p} >= @s i.c{c}q run data modify storage {M_} h.k{c} set value \"green\"",
                f"execute if score @s i.c{c}p matches {k + 1} unless score @s i.s_{p} >= @s i.c{c}q run data modify storage {M_} h.k{c} set value \"red\""]
     HA += [f"execute if score @s i.c{c}p matches 1.. run data modify storage {M_} h.b{c} set value \"Livrer le contrat {c}\"",
@@ -130,21 +132,20 @@ for c in (1, 2, 3):
 HA += [f'data modify storage {M_} h.ev set from storage {NS}:g ev', f'execute unless data storage {NS}:g ev run data modify storage {M_} h.ev set value "Marché calme."',
        f"{S} operation #x i.t = @s i.rang", f"{S} set #y i.t 200", f"{S} operation #x i.t *= #y i.t", f"execute store result storage {M_} h.rep int 1 run {S} get #x i.t",
        f"function {NS}:menu/halle_d with storage {M_} h"]
+HA = [f"function {NS}:tuto/halle"] + HA
 fn("menu/halle", HA)
 fn("menu/halle_d", "$" + dlg(
     T("HALLE DU MARCHÉ", OR, True),
-    [msg(L(T("$(nom)", OR, True), T(" : elle vend toute seule le stock de ton Nexus, même quand tu es déconnecté. Jusqu'à $(cap) objets par heure, $(com) % de commission.", "gray"),
-           T("\\nPlus un produit est vendu dans la journée, plus son prix baisse : varie tes productions.", "gray"),
-           T("\\nAgrandir : $(nx)", "white"),
-           T("\\n\\nBourse : $(ev)", "yellow")), 320),
-     msg(L(T("CONTRATS DU JOUR", "light_purple", True),
-           T("\\nUne commande de la Guilde : tu livres d'un coup la quantité demandée, prise dans le stock de ton Nexus. "
-             "Payé 1,5 fois le prix de base sans baisse, plus $(rep) de réputation pour monter de rang. Nouveaux contrats chaque jour.", "gray")), 320),
-     msg(L(T("1. ", "white"), T("$(c1)", "white"), T("$(e1)", "gray"), T("\\n    au Nexus : ", "gray"), T("$(n1)", "$(k1)"),
-           T("\\n2. ", "white"), T("$(c2)", "white"), T("$(e2)", "gray"), T("\\n    au Nexus : ", "gray"), T("$(n2)", "$(k2)"),
-           T("\\n3. ", "white"), T("$(c3)", "white"), T("$(e3)", "gray"), T("\\n    au Nexus : ", "gray"), T("$(n3)", "$(k3)")), 320)],
+    [msg(L(T("$(nom)", OR, True), T(" vend ton stock toute seule : $(cap) objets par heure, $(com) % de commission.", "gray"),
+           T("\\nBourse : $(ev)", "yellow")), 300),
+     msg(L(T("CONTRATS DU JOUR", "light_purple", True), T("  (livre d'un coup, payé 1,5 fois, + $(rep) réputation)", "gray"),
+           T("\\n1. $(c1)$(e1)", "white"), T("$(t1)", "gray"), T("$(n1)", "$(k1)"),
+           T("\\n2. $(c2)$(e2)", "white"), T("$(t2)", "gray"), T("$(n2)", "$(k2)"),
+           T("\\n3. $(c3)$(e3)", "white"), T("$(t3)", "gray"), T("$(n3)", "$(k3)"),
+           T("\\nLa Halle met de côté ce qu'il faut. Vert : livrable.", "gray")), 300),
+     msg(L(T("Agrandir : $(nx)", "gray")), 300)],
     [btn(T("$(b1)", "$(k1)"), 511, 140), btn(T("$(b2)", "$(k2)"), 512, 140), btn(T("$(b3)", "$(k3)"), 513, 140),
-     btn(T("Agrandir la Halle", OR, True), 530, 140)] + NAV, 3))
+     btn(T("Agrandir la Halle", OR, True), 530, 140), btn(T("Guide", "green"), 16, 140), btn(T("Mon industrie", "white"), 1, 140)], 3))
 
 # ---------------------------------------------------------------- Banque (6)
 BQ = [f"execute unless score @s i.bq matches 1 run return run function {NS}:menu/banque_offre",
