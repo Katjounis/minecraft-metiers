@@ -76,6 +76,7 @@ Pour générer : `python sources/datapack.py`, puis `python labo/outils/fusion_r
 
 ## Versions
 
+- v12 (28/11/2026) : flux continu dans les tubes (un objet tous les 2 blocs qui avancent ensemble, plus de saut en boucle), codes couleur par famille de production (verre des tubes, étiquettes, Comptoir, barres du tableau : minerais gris, agriculture vert, métallurgie orange, énergie rouge, cristaux bleu clair, ateliers violet, créatures rose), clic droit sur un emplacement libre pour y construire (étiquette « Emplacement libre », la machine achetée dans la minute y est posée). Changer de palier de tube reconstruit les tubes.
 - v11 (28/11/2026) : tableau de l'île en graphiques (histogramme des recettes des 12 dernières heures, barres de production par machine, énergie fournie contre demandée, « ce qui freine tes revenus »), panneau vivant au-dessus du Nexus (mis à jour toutes les 5 s), bilan des ventes dans le chat chaque heure.
 - v10 (28/11/2026) : Halle réparée (le dialogue partait avant sa liste de boutons, rien ne s'affichait), clic sur le Nexus : tableau de l'île (barre d'énergie, recettes, production de chaque type de machine). Plus aucun titre à l'écran : la présentation passe par la barre d'action, le titre reste à l'encadré des Écus du Commerce (il disparaissait ou laissait un sous-titre fixe).
 - v9 (28/11/2026) : bouton « Aller sur mon île / Revenir au monde normal » remis en tête de Mon industrie, tubes qui se rejoignent dans les coins, paquet animé en 3 temps (apparaît, glisse, disparaît), étiquettes de machine avec la production par heure.

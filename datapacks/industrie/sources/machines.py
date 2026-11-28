@@ -58,7 +58,11 @@ for k, m in enumerate(ML):
               'execute store result score #spq i.t run data get entity @s SelectedItem.components."minecraft:custom_data".commerce_sp.q',
               f"{S} remove #mob i.t 1", f"execute unless score #mob i.t matches 0..{len(MOBS) - 1} run return run " + say("Spawner inconnu.", "red")]
     A += [f"{S} operation #me i.t = @s m.id", f"{S} operation #own i.t = @s m.id",
-          f"execute as @e[type=minecraft:marker,tag=ind.slot,tag=!ind.occ,distance=..48] if score @s i.own = #me i.t run tag @s add ind.cand",
+          f"execute store result score #now i.t run time query gametime", f"{S} operation #now i.t -= @s i.pst", f"{S} operation #ps i.t = @s i.psl",
+          f"execute unless score #now i.t matches 0..1200 run {S} set #ps i.t -1",
+          f"execute if score #ps i.t matches 0.. as @e[type=minecraft:marker,tag=ind.slot,tag=!ind.occ,distance=..48] if score @s i.own = #me i.t if score @s i.sid = #ps i.t run tag @s add ind.cand",
+          f"execute unless entity @e[type=minecraft:marker,tag=ind.cand] as @e[type=minecraft:marker,tag=ind.slot,tag=!ind.occ,distance=..48] if score @s i.own = #me i.t run tag @s add ind.cand",
+          f"{S} set @s i.psl -1",
           f"execute unless entity @e[type=minecraft:marker,tag=ind.cand] run return run " + say("Aucun emplacement libre à moins de 48 blocs : achète une parcelle (Cadastre) ou rapproche-toi.", "red"),
           # paiement
           f"execute if score @s c.ecus matches -2147483648.. run scoreboard players operation @s c.ecus -= #prix i.t"]
@@ -80,14 +84,15 @@ for k, m in enumerate(ML):
           say(f"{d['nom']} posée et reliée au Nexus. Clic droit dessus pour sa fiche.", "green")]
     fn(f"machine/acheter_{k}", A)
 
-fn("machine/poser_ici", [f"{S} operation #psid i.t = @s i.sid", "tag @s add ind.occ", f"function {NS}:machine/visuel_ici"])
+fn("machine/poser_ici", [f"{S} operation #psid i.t = @s i.sid", "tag @s add ind.occ",
+                          "kill @e[type=minecraft:interaction,tag=ind.si,distance=..1]", "kill @e[type=minecraft:text_display,tag=ind.sl,distance=..3]", f"function {NS}:machine/visuel_ici"])
 # entités d'une machine à la position de l'emplacement (y = 64) : #pm type, #pl niveau, #psid, #own (ou @s ici le joueur), #mob, #sf...
 V_ = []
 for k, m in enumerate(ML):
     V_.append(f'execute if score #pm i.t matches {k} run summon minecraft:item_display ~ ~{round(1.5 * ECH_M, 2)} ~ {{Tags:["ind.m","ind.nouvm"],'
               f'item_display:"none",view_range:3f,brightness:{{sky:15,block:15}},item:{{id:"minecraft:paper",count:1,components:{{"minecraft:item_model":"{NS}:{m}"}}}},'
               f'transformation:{{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,0f],scale:[{ECH_M}f,{ECH_M}f,{ECH_M}f]}}}}')
-V_ += ['summon minecraft:interaction ~ ~ ~ {Tags:["ind.mi","ind.nouvm","ind.t3"],width:6.5f,height:7f}',
+V_ += ['summon minecraft:interaction ~ ~ ~ {Tags:["ind.mi","ind.nouvm","ind.t4"],width:6.5f,height:7f}',
        f"{S} operation @e[tag=ind.nouvm,distance=..9] i.own = #own i.t", f"{S} operation @e[tag=ind.nouvm,distance=..9] i.sid = #psid i.t",
        f"{S} operation @e[tag=ind.nouvm,distance=..9] i.mt = #pm i.t", f"{S} operation @e[tag=ind.nouvm,distance=..9] i.ml = #pl i.t",
        f"{S} operation @e[tag=ind.nouvm,distance=..9] i.mob = #mob i.t", f"{S} operation @e[tag=ind.nouvm,distance=..9] i.sf = #sf i.t",
@@ -120,8 +125,8 @@ fn("tube/poser", [
     f"execute store result storage {NS}:t tb.hx float 0.5 run {S} get #ax i.t", f"execute store result storage {NS}:t tb.hz float 0.5 run {S} get #az i.t",
     f"{S} operation #a6 i.t = #ax i.t", f"{S} operation #a6 i.t *= #10 i.g", f"{S} add #a6 i.t 6", f"execute store result storage {NS}:t tb.ax6 float 0.1 run {S} get #a6 i.t",
     f"{S} operation #a6 i.t = #az i.t", f"{S} operation #a6 i.t *= #10 i.g", f"{S} add #a6 i.t 6", f"execute store result storage {NS}:t tb.az6 float 0.1 run {S} get #a6 i.t",
-    f'data modify storage {NS}:t tb.verre set value "{TUBE_BLOC[0][0]}"', f'data modify storage {NS}:t tb.coeur set value "{TUBE_BLOC[0][1]}"',
-    *[f'execute if score #tt i.t matches {k} run data modify storage {NS}:t tb.verre set value "{v}"' for k, (v, _) in enumerate(TUBE_BLOC) if k],
+    f'data modify storage {NS}:t tb.coeur set value "{TUBE_BLOC[0][1]}"',
+    *[f'execute if score #pm i.t matches {k} run data modify storage {NS}:t tb.verre set value "{FAMILLES[FAM[m]][2]}"' for k, m in enumerate(ML)],
     *[f'execute if score #tt i.t matches {k} run data modify storage {NS}:t tb.coeur set value "{c}"' for k, (_, c) in enumerate(TUBE_BLOC) if k],
     *[f'execute if score #pm i.t matches {k} run data modify storage {NS}:t tb.it set value "minecraft:{PAQUET[m]}"' for k, m in enumerate(ML)],
     f"execute if score #ax i.t matches 1.. run function {NS}:tube/branche_x with storage {NS}:t tb",
@@ -135,23 +140,35 @@ def _seg(pos, scale, trans, nom, lum):
 fn("tube/branche_x", [
     _seg(f"$(x1).5 {TY} $(sz).5", "[$(ax6)f,0.6f,0.6f]", "[$(hx)f,0f,0f]", "verre", False),
     _seg(f"$(x1).5 {TY} $(sz).5", "[$(ax6)f,0.22f,0.22f]", "[$(hx)f,0f,0f]", "coeur", True),
-    f'$execute in {DIM} run summon minecraft:item_display $(sx).5 {TY} $(sz).5 {{Tags:["ind.tube","ind.pq","ind.nt"],view_range:3f,brightness:{{sky:15,block:15}},item:{{id:"$(it)",count:1}},transformation:{{{TR},translation:[0f,0f,0f],scale:[0.4f,0.4f,0.4f]}}}}',
-    f"$scoreboard players set @e[tag=ind.nt] i.tx $(lx)", f"{S} set @e[tag=ind.nt] i.tz 0", f"function {NS}:tube/marquer"])
+    f"$execute if score #lx i.t matches 1.. in {DIM} positioned $(sx).5 {TY} $(sz).5 run function {NS}:tube/pq_xp with storage {NS}:t tb",
+    f"$execute if score #lx i.t matches ..-1 in {DIM} positioned $(sx).5 {TY} $(sz).5 run function {NS}:tube/pq_xm with storage {NS}:t tb",
+    f"function {NS}:tube/marquer"])
 fn("tube/branche_z", [
     _seg(f"$(cx).5 {TY} $(z1).5", "[0.6f,0.6f,$(az6)f]", "[0f,0f,$(hz)f]", "verre", False),
     _seg(f"$(cx).5 {TY} $(z1).5", "[0.22f,0.22f,$(az6)f]", "[0f,0f,$(hz)f]", "coeur", True),
-    f'$execute in {DIM} run summon minecraft:item_display $(cx).5 {TY} $(sz).5 {{Tags:["ind.tube","ind.pq","ind.nt"],view_range:3f,brightness:{{sky:15,block:15}},item:{{id:"$(it)",count:1}},transformation:{{{TR},translation:[0f,0f,0f],scale:[0.4f,0.4f,0.4f]}}}}',
-    f"{S} set @e[tag=ind.nt] i.tx 0", f"$scoreboard players set @e[tag=ind.nt] i.tz $(lz)", f"function {NS}:tube/marquer"])
+    f"$execute if score #lz i.t matches 1.. in {DIM} positioned $(cx).5 {TY} $(sz).5 run function {NS}:tube/pq_zp with storage {NS}:t tb",
+    f"$execute if score #lz i.t matches ..-1 in {DIM} positioned $(cx).5 {TY} $(sz).5 run function {NS}:tube/pq_zm with storage {NS}:t tb",
+    f"function {NS}:tube/marquer"])
+
+# train de paquets : un objet tous les 2 blocs ; chaque seconde ils avancent de 2 blocs puis reviennent d'un coup à leur place,
+# où le suivant les remplace : on voit un flux continu (28/11/2026, avant : un seul objet qui sautait en boucle)
+PAS_DIR = {"xp": "~2 ~ ~", "xm": "~-2 ~ ~", "zp": "~ ~ ~2", "zm": "~ ~ ~-2"}
+for d_, pas in PAS_DIR.items():
+    k_ = "#ax" if d_[0] == "x" else "#az"
+    fn(f"tube/pq_{d_}", [f"{S} operation #k i.t = {k_} i.t", f"{S} operation #k i.t /= #2 i.g", f"function {NS}:tube/pq_{d_}_r with storage {NS}:t tb"])
+    fn(f"tube/pq_{d_}_r", [
+        f'$summon minecraft:item_display ~ ~ ~ {{Tags:["ind.tube","ind.pq","ind.nt","ind.d_{d_}"],view_range:3f,brightness:{{sky:15,block:15}},'
+        f'item:{{id:"$(it)",count:1}},transformation:{{{TR},translation:[0f,0f,0f],scale:[0.35f,0.35f,0.35f]}}}}',
+        f"{S} remove #k i.t 1", f"execute if score #k i.t matches 1.. positioned {pas} run function {NS}:tube/pq_{d_}_r with storage {NS}:t tb"])
 fn("tube/marquer", [f"{S} operation @e[tag=ind.nt] i.own = #own i.t", f"{S} operation @e[tag=ind.nt] i.sid = #psid i.t", "tag @e[tag=ind.nt] remove ind.nt"])
 # animation : un pas par seconde (aller en 1 s, puis retour instantané au départ)
-fn("tube/anim", [
-    f"{S} add @s i.ph2 1", f"execute if score @s i.ph2 matches 3.. run {S} set @s i.ph2 0",
-    "execute if score @s i.ph2 matches 0 run data merge entity @s {start_interpolation:0,interpolation_duration:0,transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,0f],scale:[0f,0f,0f]}}",
-    "execute if score @s i.ph2 matches 1 run data merge entity @s {start_interpolation:0,interpolation_duration:2,transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,0f],scale:[0.4f,0.4f,0.4f]}}",
-    f"execute if score @s i.ph2 matches 2 store result storage {NS}:t an.x float 1 run {S} get @s i.tx",
-    f"execute if score @s i.ph2 matches 2 store result storage {NS}:t an.z float 1 run {S} get @s i.tz",
-    f"execute if score @s i.ph2 matches 2 run function {NS}:tube/anim_m with storage {NS}:t an"])
-fn("tube/anim_m", "$data merge entity @s {start_interpolation:0,interpolation_duration:36,transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[$(x)f,0f,$(z)f],scale:[0.4f,0.4f,0.4f]}}")
+fn("tube/anim", ["data merge entity @s {start_interpolation:0,interpolation_duration:0,transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,0f],scale:[0.35f,0.35f,0.35f]}}"])
+fn("tube/go", [f"execute as @a at @s if dimension {DIM} as @e[type=minecraft:item_display,tag=ind.pq,distance=..80] run function {NS}:tube/go_un"])
+fn("tube/go_un", [
+    "execute if entity @s[tag=ind.d_xp] run return run data merge entity @s {start_interpolation:0,interpolation_duration:19,transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[2f,0f,0f],scale:[0.35f,0.35f,0.35f]}}",
+    "execute if entity @s[tag=ind.d_xm] run return run data merge entity @s {start_interpolation:0,interpolation_duration:19,transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[-2f,0f,0f],scale:[0.35f,0.35f,0.35f]}}",
+    "execute if entity @s[tag=ind.d_zp] run return run data merge entity @s {start_interpolation:0,interpolation_duration:19,transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,2f],scale:[0.35f,0.35f,0.35f]}}",
+    "execute if entity @s[tag=ind.d_zm] run return run data merge entity @s {start_interpolation:0,interpolation_duration:19,transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,-2f],scale:[0.35f,0.35f,0.35f]}}"])
 
 # ---------------------------------------------------------------- tubes : nouveau palier pour toute l'île (540)
 TU = [f"{S} operation #tn i.t = @s i.tube", f"{S} add #tn i.t 1",
@@ -167,7 +184,7 @@ TU += [f"{S} operation #prix i.t *= #nbm i.t", f"{S} operation #ecl i.t *= #nbm 
        f"execute unless score @s m.ecl >= #ecl i.t run return run " + say("Pas assez d'éclats de boss.", "red"),
        f"execute if score @s c.ecus matches -2147483648.. run scoreboard players operation @s c.ecus -= #prix i.t", f"{S} operation @s m.ecl -= #ecl i.t",
        f"{S} operation @s i.tube = #tn i.t", f"{S} operation #me i.t = @s m.id",
-       *[f'execute if score #tn i.t matches {k} as @e[type=minecraft:block_display,tag=ind.tube,distance=..400] if score @s i.own = #me i.t run function {NS}:tube/teinte_{k}' for k in range(1, len(TUBES))],
+       f"execute as @e[type=minecraft:interaction,tag=ind.mi,distance=..400] if score @s i.own = #me i.t run tag @s remove ind.t4",
        "playsound minecraft:block.beacon.power_select master @s ~ ~ ~ 1 1.2", say("Tous tes tubes sont remplacés : le débit par machine augmente.", "green")]
 fn("tube/ameliorer", TU)
 for k in range(1, len(TUBES)):
@@ -282,4 +299,4 @@ fn("tube/refaire", [
     f"execute as @e[tag=ind.tube,distance=..400] if score @s i.own = #me i.t if score @s i.sid = #sel i.t run kill @s",
     f"{S} operation #pm i.t = @s i.mt", f"{S} operation #own i.t = @s i.own", f"{S} operation #psid i.t = @s i.sid", f"{S} set #tt i.t 0",
     f"execute as @a if score @s m.id = #me i.t run {S} operation #tt i.t = @s i.tube",
-    "tag @s add ind.t3", f"function {NS}:tube/poser"])
+    "tag @s add ind.t4", f"function {NS}:tube/poser"])

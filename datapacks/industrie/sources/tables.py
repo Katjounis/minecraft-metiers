@@ -123,3 +123,15 @@ PAQUET = {"carriere": "cobblestone", "serre": "sugar_cane", "cultures": "wheat",
           "puits_or": "gold_ingot", "fonderie": "iron_block", "distill": "potion", "spawner": "bone", "lave": "magma_block",
           "puits_dia": "diamond", "puits_eme": "emerald", "atelier": "clock", "puits_net": "netherite_ingot", "joaillerie": "amethyst_shard",
           "coeur": "nether_star", "forge": "totem_of_undying"}
+
+# 28/11/2026 : familles de production, une couleur chacune (verre des tubes, étiquettes, barres du tableau)
+FAMILLES = {"min": ("Minerais", "#c8c8d0", "minecraft:light_gray_stained_glass"),
+            "agr": ("Agriculture", "#7ad050", "minecraft:lime_stained_glass"),
+            "met": ("Métallurgie", "#ff9a40", "minecraft:orange_stained_glass"),
+            "ene": ("Énergie", "#ff5a3a", "minecraft:red_stained_glass"),
+            "cri": ("Cristaux", "#5ff0e6", "minecraft:light_blue_stained_glass"),
+            "ate": ("Ateliers", "#b878ff", "minecraft:purple_stained_glass"),
+            "cre": ("Créatures", "#ff70d0", "minecraft:magenta_stained_glass")}
+FAM = {"carriere": "min", "serre": "agr", "cultures": "agr", "fourneau": "met", "fonderie": "met", "chaudiere": "ene", "lave": "ene",
+       "coeur": "ene", "puits_or": "cri", "puits_dia": "cri", "puits_eme": "cri", "puits_net": "cri", "distill": "ate", "atelier": "ate",
+       "joaillerie": "ate", "forge": "ate", "spawner": "cre"}

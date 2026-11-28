@@ -47,7 +47,7 @@ ST.append(ap("\\n\\nPRODUCTION PAR MACHINE", OR))
 ST.append(ap("  (Écus par heure au prix de base)", "gray"))
 COUL = ["#f7c843", "#5ff0e6", "#3ee070", "#ff7a3a", "#b878ff", "#ff5a6a", "#e6e6ea", "#c8754a"]
 for i, (k, m) in enumerate(VM):
-    c = COUL[i % len(COUL)]
+    c = FAMILLES[FAM[m]][1]
     L_ = [ap("\\n", "white")]
     for b in range(1, NB_L + 1):
         L_ += [f"{S} operation #u i.t = #mx i.t", f"{S} set #y i.t {b}", f"{S} operation #u i.t *= #y i.t",

@@ -17,7 +17,7 @@ ROOT = os.path.join(ICI, "..", "build", "industrie_datapack")
 RP = os.path.join(ICI, "..", "build", "industrie_rp")
 NS = "industrie"
 F = f"data/{NS}/function/"
-VERSION = 11
+VERSION = 12
 DIM = f"{NS}:archipel"
 S = "scoreboard players"
 for d in (ROOT, RP):
@@ -94,7 +94,7 @@ OBJ = ["i.ile", "i.rang", "i.ri", "i.rir", "i.ctr", "i.np", "i.halle", "i.tube",
        "i.tl", "i.th", "i.td", "i.cts", "i.jn", "i.jb", "i.jv", "i.r7", "i.dette", "i.pj", "i.pban", "i.pret",
        "i.sel", "i.pv", "i.ph", "i.fe", "i.pend", "i.gm", "i.rx", "i.ry", "i.rz", "i.rd", "i.vu", "i.own", "i.sid",
        "i.mt", "i.ml", "i.mob", "i.sf", "i.spv", "i.spq", "i.t", "i.g", "i.ph2", "i.tx", "i.tz", "i.off", "i.dem",
-       "i.prev", "i.sdi", "i.tuto", "i.cin"] + [f"i.h{k}" for k in range(12)]
+       "i.prev", "i.sdi", "i.tuto", "i.cin", "i.psl", "i.pst"] + [f"i.h{k}" for k in range(12)]
 OBJ += [f"i.b{b}" for b in range(1, 5)] + [f"i.p{k}" for k in range(49)]
 OBJ += [f"i.c{c}{x}" for c in (1, 2, 3) for x in "pqrf"]
 for p in PL:
@@ -131,6 +131,7 @@ fn("tick", [
     f"execute as @a[scores={{industrie=..-1}}] at @s run function {NS}:saisie",
     f"execute as @e[type=minecraft:interaction,tag=ind.mi] at @s if data entity @s interaction run function {NS}:machine/clic",
     f"execute as @e[type=minecraft:interaction,tag=ind.bi] at @s if data entity @s interaction run function {NS}:batiment/clic",
+    f"execute as @e[type=minecraft:interaction,tag=ind.si] at @s if data entity @s interaction run function {NS}:emplacement/clic",
     "scoreboard players add #sec i.g 1",
     f"execute if score #sec i.g matches 20.. run function {NS}:seconde"])
 fn("seconde", [
@@ -144,6 +145,7 @@ fn("seconde", [
     f"{S} add #bar i.g 1", f"execute if score #bar i.g matches 5.. as @a at @s if dimension {DIM} run function {NS}:ile/barrieres",
     f"execute if score #bar i.g matches 5.. run {S} set #bar i.g 0",
     f"execute as @a at @s if dimension {DIM} as @e[type=minecraft:item_display,tag=ind.pq,distance=..80] run function {NS}:tube/anim",
+    f"schedule function {NS}:tube/go 1t replace",
     f"function {NS}:evenement/seconde"])
 
 # ------------------------------------------------------------------ joueur : horloges, production

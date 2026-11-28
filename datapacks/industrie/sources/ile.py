@@ -233,10 +233,10 @@ fn("ile/barrieres", [f"function {NS}:ile/etiquettes", f"function {NS}:ile/holo",
 
 # ---------------------------------------------------------------- étiquettes (28/11/2026) : nom et rôle au-dessus de chaque machine et bâtiment
 # posées par la passe des 5 s (ile/barrieres) là où il n'y en a pas encore : marche aussi pour les îles déjà construites.
-def etiquette(titre, role, tags, h):
+def etiquette(titre, role, tags, h, col="#F7C843"):
     return (f'summon minecraft:text_display ~ ~{h} ~ {{Tags:{json.dumps(tags)},billboard:"center",view_range:0.6f,shadow:true,'
             f'background:1426063360,line_width:200,transformation:{{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,0f],scale:[0.55f,0.55f,0.55f]}},brightness:{{sky:15,block:15}},'
-            f'text:[{{"text":"{titre}","color":"#F7C843","bold":true}},{{"text":"\\n{role}","color":"white"}},'
+            f'text:[{{"text":"{titre}","color":"{col}","bold":true}},{{"text":"\\n{role}","color":"white"}},'
             f'{{"text":"\\nclic droit","color":"gray","italic":true}}]}}')
 
 # hauteur réelle de chaque modèle (unités de modèle, 16 = 1 bloc à l'échelle 1), pour poser l'étiquette juste au-dessus
@@ -267,7 +267,7 @@ def role_machine(m):
 
 ET = []
 for k, m in enumerate(ML):
-    fn(f"ile/etiq_m{k}", [etiquette(MACH[m]["nom"].upper(), role_machine(m), ["ind.lab", "ind.labm", "ind.lv2"], 0)])
+    fn(f"ile/etiq_m{k}", [etiquette(MACH[m]["nom"].upper(), FAMILLES[FAM[m]][0] + "  ·  " + role_machine(m), ["ind.lab", "ind.labm", "ind.lv3"], 0, FAMILLES[FAM[m]][1])])
     ET.append(f"execute as @e[type=minecraft:interaction,tag=ind.mi,distance=..96] if score @s i.mt matches {k} at @s positioned ~ ~{h_lab(m, ECH_M)} ~ "
               f"unless entity @e[type=minecraft:text_display,tag=ind.lab,distance=..2] run function {NS}:ile/etiq_m{k}")
 for code, (titre, role, h) in ROLE_BAT.items():
@@ -280,8 +280,19 @@ REP = [  # 28/11/2026 : le Nexus des îles déjà créées portait le code de la
     # portail de retour : les blocs avaient été effacés par le chantier de la parcelle
     "execute as @e[type=minecraft:interaction,tag=ind.ret,distance=..96] at @s run setblock ~ ~-1 ~ minecraft:gold_block keep",
     "execute as @e[type=minecraft:interaction,tag=ind.ret,distance=..96] at @s run fill ~ ~ ~ ~ ~1 ~ minecraft:crying_obsidian replace minecraft:air"]
-REP += ["kill @e[type=minecraft:text_display,tag=ind.labm,tag=!ind.lv2,distance=..96]",
+REP += ["kill @e[type=minecraft:text_display,tag=ind.labm,tag=!ind.lv3,distance=..96]",
         "execute as @e[type=minecraft:text_display,tag=ind.rett,distance=..96] run data merge entity @s {transformation:{scale:[0.55f,0.55f,0.55f]}}",
         "execute as @e[type=minecraft:text_display,tag=ind.lab,distance=..96] run data merge entity @s {transformation:{scale:[0.55f,0.55f,0.55f]}}",
-        f"execute as @e[type=minecraft:interaction,tag=ind.mi,tag=!ind.t3,distance=..96] at @s run function {NS}:tube/refaire"]
+        f"execute as @e[type=minecraft:interaction,tag=ind.mi,tag=!ind.t4,distance=..96] at @s run function {NS}:tube/refaire"]
+# emplacements libres : point de clic (construire ici) et petite étiquette ; retirés quand l'emplacement est pris
+REP += [f"execute as @e[type=minecraft:marker,tag=ind.slot,tag=!ind.occ,distance=..96] at @s unless entity @e[type=minecraft:interaction,tag=ind.si,distance=..1] run function {NS}:ile/slot_poser",
+        "execute as @e[type=minecraft:marker,tag=ind.slot,tag=ind.occ,distance=..96] at @s run kill @e[type=minecraft:interaction,tag=ind.si,distance=..1]",
+        "execute as @e[type=minecraft:marker,tag=ind.slot,tag=ind.occ,distance=..96] at @s run kill @e[type=minecraft:text_display,tag=ind.sl,distance=..3]"]
+fn("ile/slot_poser", [
+    'summon minecraft:interaction ~ ~ ~ {Tags:["ind.si","ind.nsi"],width:3f,height:1.2f}',
+    f"{S} operation @e[type=minecraft:interaction,tag=ind.nsi,distance=..1] i.own = @s i.own", f"{S} operation @e[type=minecraft:interaction,tag=ind.nsi,distance=..1] i.sid = @s i.sid",
+    "tag @e[type=minecraft:interaction,tag=ind.nsi] remove ind.nsi",
+    'summon minecraft:text_display ~ ~1.6 ~ {Tags:["ind.sl"],billboard:"center",view_range:0.4f,shadow:true,background:1426063360,'
+    'transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,0f],scale:[0.5f,0.5f,0.5f]},'
+    'text:[{"text":"EMPLACEMENT LIBRE","color":"#4cd964","bold":true},{"text":"\\nclic droit : construire ici","color":"white"}]}'])
 fn("ile/etiquettes", REP + ET)

@@ -83,14 +83,14 @@ for k, m in enumerate(ML):
     lab = f'{d["nom"]}  ·  {fe(d["prix"])}' + (f' + {d["ecl"]} éclats' if d["ecl"] else "")
     tip = f'{RANGS[d["rang"]][0]}. {prod_txt(m, 1)}. {abs(d["kw"])} kW {"fournis" if d["kw"] < 0 else "consommés"}.' + (
         " Tiens un spawner du Commerce en main." if m == "spawner" else "") + (" Demande une étoile du Nether." if d.get("etoile") else "")
-    ok = btn(T(lab, OR if d["rang"] >= 4 else ("aqua" if d["rang"] == 3 else ("green" if d["rang"] == 2 else "white")), True), 100 + k, 200, tip)
+    ok = btn(T(lab, FAMILLES[FAM[m]][1], True), 100 + k, 200, FAMILLES[FAM[m]][0] + ". " + tip)   # couleur = famille de production
     ko = btn(L(T("BLOQUÉ ", "red", True), T(f'{d["nom"]} : rang {RANGS[d["rang"]][0]}', "dark_gray")), 100 + k, 200, "Débloqué au rang " + RANGS[d["rang"]][0] + ". " + tip)
     CO += [f"execute if score @s i.rang matches {d['rang']}.. run data modify storage {M_} c append value {ok}",
            f"execute if score @s i.rang matches {d['rang'] - 1} run data modify storage {M_} c append value {ko}"]   # seulement le rang suivant
 CO += [f"data modify storage {M_} c append value {x}" for x in NAV] + [f"function {NS}:menu/comptoir_d with storage {M_}"]
 fn("menu/comptoir", CO)
 fn("menu/comptoir_d", '$dialog show @s {type:"minecraft:multi_action",title:' + T("COMPTOIR DES MACHINES", OR, True) +
-   ',can_close_with_escape:true,pause:false,body:[' + msg(T("Achat posé sur l'emplacement libre le plus proche de toi (sur ton île). Survole une machine pour ses détails.", "gray")) +
+   ',can_close_with_escape:true,pause:false,body:[' + msg(T("La machine se pose sur l'emplacement que tu as cliqué, sinon sur le plus proche. Couleur = famille (même couleur que son tube). Survole pour les détails.", "gray")) +
    '],actions:$(c),columns:2}')
 
 # ---------------------------------------------------------------- cadastre (5) : grille 7 x 7
@@ -290,3 +290,12 @@ fn("menu/plus_o", [
       f'execute if score @s i.rang matches 4.. run data modify storage {M_} lp set value "Parts d\'île"', f'execute if score @s i.rang matches 4.. run data modify storage {M_} kp set value "light_purple"',
       f"function {NS}:menu/plus with storage {M_}"])
 fn("ile/bascule", [f"execute at @s if dimension {DIM} run return run function {NS}:ile/retour", f"function {NS}:ile/aller"])
+
+# clic droit sur un emplacement libre (28/11/2026) : on retient l'emplacement 60 s et on ouvre le Comptoir
+fn("emplacement/clic", [f"{S} operation #co i.t = @s i.own", f"{S} operation #cs i.t = @s i.sid",
+                        f"execute on target run function {NS}:emplacement/clic_j", "data remove entity @s interaction", "data remove entity @s attack"])
+fn("emplacement/clic_j", [f"execute unless score @s m.id = #co i.t run return run " + say("Cet emplacement appartient à une autre île.", "gray"),
+                          f"{S} operation @s i.psl = #cs i.t", f"execute store result score @s i.pst run time query gametime",
+                          "playsound minecraft:block.note_block.pling master @s ~ ~ ~ 0.6 1.6",
+                          'title @s actionbar [{"text":"Emplacement choisi : ","color":"#4cd964"},{"text":"la machine achetée dans la minute sera posée ici","color":"white"}]',
+                          f"function {NS}:menu/comptoir"])
