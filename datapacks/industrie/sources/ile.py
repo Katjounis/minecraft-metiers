@@ -141,25 +141,24 @@ def poser_bat(nom, cle=None, old="aucun"):
     x, z, ech, code = BAT[cle or nom]
     return [f'data modify storage {NS}:t b set value {{nom:"{nom}",old:"{old}",dx:{x},dz:{z},h:{round(1.5 * ech, 2)},ech:{ech},code:{code},'
             f'lw:{round(ech * 2.6, 1)},lh:{round(ech * 2.4, 1)}}}',
-            f"execute if dimension {DIM} run function {NS}:batiment/poser"]
+            f"execute at @s if dimension {DIM} run function {NS}:batiment/poser"]
 
 
 # ---------------------------------------------------------------- voyage
 fn("ile/aller", [
     f"execute unless score @s m.id matches 1.. run return run " + say("Métiers doit d'abord t'inscrire (reconnecte-toi).", "red"),
-    f"execute unless dimension {DIM} run function {NS}:ile/sauver",
+    f"execute at @s unless dimension {DIM} run function {NS}:ile/sauver",
     f"execute unless score @s i.ile matches 0.. run function {NS}:ile/creer",
     f"{S} operation #n i.t = @s i.ile", f"function {NS}:ile/tp",
     f"execute in {DIM} positioned as @s unless entity @e[type=minecraft:interaction,tag=ind.ret,distance=..24] run function {NS}:ile/portail_retour",
-    'title @s times 10 70 20', 'title @s title {"text":"Ton île","color":"#F7C843","bold":true}',
-    'title @s subtitle {"text":"Le Nexus devant toi : clic droit pour tout gérer","color":"white"}',
+    'title @s times 10 70 20', 'title @s subtitle [{"text":"Ton île : ","color":"#F7C843","bold":true},{"text":"clic droit sur le Nexus","color":"white"}]', 'title @s title ""',
     f"function {NS}:ile/etiquettes",
     f"execute unless score @s i.cin matches 1.. run return run {S} set @s i.cin 1",
     'title @s actionbar [{"text":"Retour au monde normal : le portail à côté de toi, ou G puis Industrie, Revenir","color":"#F7C843"}]'])
 # portail de retour au monde normal, à côté du point d'arrivée (posé une fois par île)
 fn("ile/portail_retour", [
     "setblock ~3 63 ~ minecraft:gold_block", "setblock ~3 64 ~ minecraft:crying_obsidian", "setblock ~3 65 ~ minecraft:crying_obsidian",
-    'summon minecraft:text_display ~3.5 66.4 ~0.5 {Tags:["ind.rett"],billboard:"center",background:1426063360,'
+    'summon minecraft:text_display ~3.5 66.4 ~0.5 {Tags:["ind.rett"],billboard:"center",background:1426063360,transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,0f],scale:[0.55f,0.55f,0.55f]},'
     'text:[{"text":"⟲ ","color":"#F7C843"},{"text":"Retour au monde normal","color":"white","bold":true},{"text":"\\nclic droit sur l\'obsidienne","color":"gray"}]}',
     'summon minecraft:interaction ~3.5 64 ~0.5 {Tags:["ind.bi","ind.ret"],width:1.4f,height:2.2f}',
     "particle minecraft:portal ~3.5 65 ~0.5 0.4 1 0.4 0.2 60"])
@@ -177,7 +176,7 @@ fn("ile/sauver", [
     f"execute if dimension minecraft:the_nether run {S} set @s i.rd 1", f"execute if dimension minecraft:the_end run {S} set @s i.rd 2",
     f"{S} set @s i.gm 0", f"execute if entity @s[gamemode=adventure] run {S} set @s i.gm 2"])
 fn("ile/retour", [
-    f"execute unless dimension {DIM} run return run " + say("Tu n'es pas dans l'Archipel.", "gray"),
+    f"execute at @s unless dimension {DIM} run return run " + say("Tu n'es pas dans l'Archipel.", "gray"),
     "tag @s remove ind.adv", f"execute if score @s i.gm matches 0 if entity @s[gamemode=adventure] run gamemode survival @s",
     f"execute unless score @s i.ry matches -2147483648.. run return run execute in minecraft:overworld run spreadplayers 0 0 0 1 false @s",
     "execute store result storage industrie:r x double 0.1 run scoreboard players get @s i.rx",
@@ -191,7 +190,7 @@ fn("ile/retour_m", "$execute in $(d) run tp @s $(x) $(y) $(z)")
 # visite de l'île d'un autre joueur : 8000 + numéro d'île
 fn("ile/visiter", [
     f"{S} operation #n i.t = #v i.t", f"{S} remove #n i.t 8000",
-    f"execute unless dimension {DIM} run function {NS}:ile/sauver",
+    f"execute at @s unless dimension {DIM} run function {NS}:ile/sauver",
     f"function {NS}:ile/tp", say("Tu visites une île : regarde, mais ne touche à rien (mode aventure).", "gray")])
 
 # ---------------------------------------------------------------- garde : mode de jeu selon la parcelle, chute dans le vide
@@ -236,7 +235,7 @@ fn("ile/barrieres", [f"function {NS}:ile/etiquettes",
 # posées par la passe des 5 s (ile/barrieres) là où il n'y en a pas encore : marche aussi pour les îles déjà construites.
 def etiquette(titre, role, tags, h):
     return (f'summon minecraft:text_display ~ ~{h} ~ {{Tags:{json.dumps(tags)},billboard:"center",view_range:0.6f,shadow:true,'
-            f'background:1426063360,line_width:220,brightness:{{sky:15,block:15}},'
+            f'background:1426063360,line_width:200,transformation:{{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,0f],scale:[0.55f,0.55f,0.55f]}},brightness:{{sky:15,block:15}},'
             f'text:[{{"text":"{titre}","color":"#F7C843","bold":true}},{{"text":"\\n{role}","color":"white"}},'
             f'{{"text":"\\nclic droit","color":"gray","italic":true}}]}}')
 
@@ -281,4 +280,7 @@ REP = [  # 28/11/2026 : le Nexus des îles déjà créées portait le code de la
     # portail de retour : les blocs avaient été effacés par le chantier de la parcelle
     "execute as @e[type=minecraft:interaction,tag=ind.ret,distance=..96] at @s run setblock ~ ~-1 ~ minecraft:gold_block keep",
     "execute as @e[type=minecraft:interaction,tag=ind.ret,distance=..96] at @s run fill ~ ~ ~ ~ ~1 ~ minecraft:crying_obsidian replace minecraft:air"]
+REP += ["execute as @e[type=minecraft:text_display,tag=ind.rett,distance=..96] run data merge entity @s {transformation:{scale:[0.55f,0.55f,0.55f]}}",
+        "execute as @e[type=minecraft:text_display,tag=ind.lab,distance=..96] run data merge entity @s {transformation:{scale:[0.55f,0.55f,0.55f]}}",
+        f"execute as @e[type=minecraft:interaction,tag=ind.mi,tag=!ind.t2,distance=..96] at @s run function {NS}:tube/refaire"]
 fn("ile/etiquettes", REP + ET)

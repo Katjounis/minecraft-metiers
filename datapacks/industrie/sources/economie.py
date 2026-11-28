@@ -216,7 +216,7 @@ for n in range(1, len(OEUVRES) + 1):
     x, z, _, code = BAT["oeuvre"]
     ech = round(0.9 + 0.3 * n, 2)
     OE.append(f'execute if score @s i.go matches {n} run data modify storage {NS}:t b set value {{nom:"oeuvre",old:"oeuvre",dx:{x},dz:{z},h:{round(1.5 * ech, 2)},ech:{ech},code:{code},lw:{round(ech * 1.2, 1)},lh:{round(ech * 3, 1)}}}')
-OE += [f"execute if dimension {DIM} run function {NS}:batiment/poser",
+OE += [f"execute at @s if dimension {DIM} run function {NS}:batiment/poser",
        *[f'execute if score @s i.go matches {n} run tellraw @a [{{text:"✦ ",color:"gold"}},{{selector:"@s",color:"white"}},{{text:" élève {nom} sur son île : +8 % de production.",color:"#F7C843"}}]' for n, (nom, _) in enumerate(OEUVRES, 1)],
        "playsound minecraft:block.end_portal.spawn master @s ~ ~ ~ 0.5 1.2", f"function {NS}:menu/bureau"]
 fn("oeuvre/elever", OE)

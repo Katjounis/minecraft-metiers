@@ -24,7 +24,7 @@ for k, (obj, cond, gain) in enumerate(ETAPES, 1):
         V += [f"execute if score @s i.tuto matches {k} if score @s i.np matches 2.. run function {NS}:tuto/fini_{k}"]
     elif cond == "rang":
         V += [f"execute if score @s i.tuto matches {k} if score @s i.rang matches 2.. run function {NS}:tuto/fini_{k}"]
-    V += [f"execute if score @s i.tuto matches {k} if dimension {DIM} run title @s actionbar "
+    V += [f"execute if score @s i.tuto matches {k} at @s if dimension {DIM} run title @s actionbar "
           + L(T(f"Étape {k}/{N_ET} : ", OR, True), T(obj, "white"))]
 fn("tuto/verif", V)
 fn("tuto/debut", [f"{S} set @s i.tuto 1",

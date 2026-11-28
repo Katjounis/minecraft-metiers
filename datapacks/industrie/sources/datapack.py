@@ -17,7 +17,7 @@ ROOT = os.path.join(ICI, "..", "build", "industrie_datapack")
 RP = os.path.join(ICI, "..", "build", "industrie_rp")
 NS = "industrie"
 F = f"data/{NS}/function/"
-VERSION = 7
+VERSION = 8
 DIM = f"{NS}:archipel"
 S = "scoreboard players"
 for d in (ROOT, RP):
@@ -69,7 +69,7 @@ def dlg(title, body, actions, cols=2, exit_val=None):
     cols = min(cols, 3)
     ex = f',exit_action:{{label:{T("Retour", "gray")},width:120,action:{{type:"run_command",command:"trigger industrie set {exit_val}"}}}}' if exit_val else ""
     return (f'dialog show @s {{type:"minecraft:multi_action",title:{title},can_close_with_escape:true,pause:false,'
-            f'body:[{",".join(body)}],actions:[{",".join(actions)}],columns:{cols}{ex}}}')
+            f'body:[{",".join(body)}],actions:' + ("$(a)" if actions == ["ACTIONS"] else f'[{",".join(actions)}]') + f',columns:{cols}{ex}}}')
 
 
 def msg(contents, width=320):
@@ -128,8 +128,8 @@ fn("tick", [
     "scoreboard players enable @a industrie",
     f"execute as @a[scores={{industrie=1..}}] at @s run function {NS}:trigger",
     f"execute as @a[scores={{industrie=..-1}}] at @s run function {NS}:saisie",
-    f"execute as @e[type=minecraft:interaction,tag=ind.mi] if data entity @s interaction run function {NS}:machine/clic",
-    f"execute as @e[type=minecraft:interaction,tag=ind.bi] if data entity @s interaction run function {NS}:batiment/clic",
+    f"execute as @e[type=minecraft:interaction,tag=ind.mi] at @s if data entity @s interaction run function {NS}:machine/clic",
+    f"execute as @e[type=minecraft:interaction,tag=ind.bi] at @s if data entity @s interaction run function {NS}:batiment/clic",
     "scoreboard players add #sec i.g 1",
     f"execute if score #sec i.g matches 20.. run function {NS}:seconde"])
 fn("seconde", [

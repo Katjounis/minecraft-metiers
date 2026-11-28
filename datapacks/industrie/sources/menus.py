@@ -12,13 +12,13 @@ def nav(*items):
     return [btn(T(t, c), v, 120) for t, c, v in items]
 
 
-NAV = nav(("Mon industrie", "white", 1), ("Halle", OR, 7), ("Banque", "aqua", 6), ("Bureau", "light_purple", 9))
+NAV = nav(("Retour", "white", 1))   # 28/11/2026 : un seul bouton de retour, trop de boutons partout
 
 # ---------------------------------------------------------------- aiguillage
 TR = [f"{S} operation #v i.t = @s industrie", f"{S} set @s industrie 0",
       f"execute unless score @s i.vu matches 1 run function {NS}:joueur/init",
       f"execute store result score #now i.g run time query gametime"]
-SIMPLE = {18: "menu/route", 19: "cine/revoir", 12: "menu/guide", 13: "menu/guide_13", 14: "menu/guide_14", 15: "menu/guide_15", 16: "menu/guide_16", 17: "menu/guide_17",
+SIMPLE = {20: "menu/plus_o", 18: "menu/route", 19: "cine/revoir", 12: "menu/guide", 13: "menu/guide_13", 14: "menu/guide_14", 15: "menu/guide_15", 16: "menu/guide_16", 17: "menu/guide_17",
           1: "menu/accueil", 2: "ile/aller", 3: "ile/retour", 4: "menu/comptoir", 5: "menu/cadastre", 6: "menu/banque", 7: "menu/halle",
           8: "menu/labo", 9: "menu/bureau", 10: "menu/visites", 11: "menu/parts", 301: "machine/ameliorer", 302: "machine/revendre",
           500: "banque/emprunter", 501: "banque/rembourser", 530: "halle/ameliorer", 540: "tube/ameliorer", 550: "banque/acheter",
@@ -57,25 +57,19 @@ AC = [f"execute unless score @s i.ile matches 0.. run return run function {NS}:m
       f'data modify storage {M_} rang set value "Atelier"'] + [
       f'execute if score @s i.rang matches {r} run data modify storage {M_} rang set value "{RANGS[r][0]}"' for r in range(2, 6)] + [
       f'data modify storage {M_} ev set from storage {NS}:g ev', f'execute unless data storage {NS}:g ev run data modify storage {M_} ev set value "Marché calme."',
-      f'data modify storage {M_} lb set value "Banque (bloqué)"', f'data modify storage {M_} kb set value "dark_gray"',
-      f'execute if score @s i.rang matches 2.. run data modify storage {M_} lb set value "Banque"', f'execute if score @s i.rang matches 2.. run data modify storage {M_} kb set value "aqua"',
-      f'data modify storage {M_} ll set value "Laboratoire (bloqué)"', f'data modify storage {M_} kl set value "dark_gray"',
-      f'execute if score @s i.rang matches 2.. run data modify storage {M_} ll set value "Laboratoire"', f'execute if score @s i.rang matches 2.. run data modify storage {M_} kl set value "light_purple"',
-      f'data modify storage {M_} lp set value "Parts d\'île (bloqué)"', f'data modify storage {M_} kp set value "dark_gray"',
-      f'execute if score @s i.rang matches 4.. run data modify storage {M_} lp set value "Parts d\'île"', f'execute if score @s i.rang matches 4.. run data modify storage {M_} kp set value "light_purple"',
       f"function {NS}:tuto/objectif", f"function {NS}:menu/accueil_d with storage {M_}"]
 fn("menu/accueil", AC)
 fn("menu/accueil_d", "$" + dlg(
-    L(T("MON INDUSTRIE", OR, True), T("   rang $(rang)", "white")),
-    [msg(L(T("Objectif : ", "green", True), T("$(obj)", "white")), 300),
-     msg(L(T("Aujourd'hui : ", "gray"), T("$(jn) Écus", OR, True), T("   ·   réputation $(ri)", "light_purple"),
-           T("\\nNexus : $(st) objets en stock   ·   $(nm) machines", "white"),
-           T("\\nÉnergie : $(fep) %", "aqua"), T(" ($(off) kW pour $(dem) kW demandés)", "gray"),
-           T("\\nBourse : $(ev)", "yellow")), 300)],
-    [btn(T("Que faire ?", "green", True), 18, 140), btn(T("Guide", "green"), 12, 120), btn(T("Aller sur mon île", "green"), 2, 140),
-     btn(T("Comptoir des machines", OR, True), 4, 160), btn(T("Halle du Marché", OR), 7, 150), btn(T("Cadastre", "white"), 5, 120),
-     btn(T("Bureau (rangs)", "light_purple"), 9, 140), btn(T("$(lb)", "$(kb)"), 6, 140), btn(T("$(ll)", "$(kl)"), 8, 140),
-     btn(T("$(lp)", "$(kp)"), 11, 140), btn(T("Visiter une île", "gray"), 10, 140), btn(T("Revenir au monde", "white"), 3, 140)], 3))
+    L(T("MON INDUSTRIE", OR, True), T("  ·  $(rang)", "white")),
+    [msg(L(T("À faire : ", "green", True), T("$(obj)", "white"),
+           T("\\n\\nAujourd'hui : $(jn) Écus  ·  Nexus : $(st) objets  ·  Énergie : $(fep) %", "gray")), 300)],
+    [btn(T("Que faire ?", "green", True), 18, 200), btn(T("Acheter une machine", OR, True), 4, 200),
+     btn(T("Vendre et contrats", OR), 7, 200), btn(T("Autres menus", "gray"), 20, 200)], 1))
+fn("menu/plus", ["$" + dlg(T("AUTRES MENUS", OR, True), [],
+    [btn(T("Cadastre (parcelles)", "white"), 5, 160), btn(T("Bureau (rangs)", "light_purple"), 9, 160),
+     btn(T("$(lb)", "$(kb)"), 6, 160), btn(T("$(ll)", "$(kl)"), 8, 160), btn(T("$(lp)", "$(kp)"), 11, 160),
+     btn(T("Visiter une île", "gray"), 10, 160), btn(T("Guide", "green"), 12, 160), btn(T("Revenir au monde", "white"), 3, 160),
+     btn(T("Retour", "white"), 1, 160)], 2)])
 fn("menu/bienvenue", dlg(T("L'ARCHIPEL DES USINES", OR, True),
                          [msg(L(T("Tu reçois une île avec une Carrière déjà en marche. Tes machines produisent, la Halle vend, tu gagnes des Écus.\\n\\n", "white"),
                                 T("Un parcours de 6 étapes te guide, avec des Écus à chaque étape.", "green")), 300)],
@@ -91,7 +85,7 @@ for k, m in enumerate(ML):
     ok = btn(T(lab, OR if d["rang"] >= 4 else ("aqua" if d["rang"] == 3 else ("green" if d["rang"] == 2 else "white")), True), 100 + k, 200, tip)
     ko = btn(L(T("BLOQUÉ ", "red", True), T(f'{d["nom"]} : rang {RANGS[d["rang"]][0]}', "dark_gray")), 100 + k, 200, "Débloqué au rang " + RANGS[d["rang"]][0] + ". " + tip)
     CO += [f"execute if score @s i.rang matches {d['rang']}.. run data modify storage {M_} c append value {ok}",
-           f"execute unless score @s i.rang matches {d['rang']}.. run data modify storage {M_} c append value {ko}"]
+           f"execute if score @s i.rang matches {d['rang'] - 1} run data modify storage {M_} c append value {ko}"]   # seulement le rang suivant
 CO += [f"data modify storage {M_} c append value {x}" for x in NAV] + [f"function {NS}:menu/comptoir_d with storage {M_}"]
 fn("menu/comptoir", CO)
 fn("menu/comptoir_d", '$dialog show @s {type:"minecraft:multi_action",title:' + T("COMPTOIR DES MACHINES", OR, True) +
@@ -138,6 +132,11 @@ for c in (1, 2, 3):
 HA += [f'data modify storage {M_} h.ev set from storage {NS}:g ev', f'execute unless data storage {NS}:g ev run data modify storage {M_} h.ev set value "Marché calme."',
        f"{S} operation #x i.t = @s i.rang", f"{S} set #y i.t 200", f"{S} operation #x i.t *= #y i.t", f"execute store result storage {M_} h.rep int 1 run {S} get #x i.t",
        f"function {NS}:menu/halle_d with storage {M_} h"]
+HA += [f"data modify storage {M_} h.a set value []"]
+for c in (1, 2, 3):
+    HA += [f"execute if score @s i.c{c}p matches 1.. unless score @s i.c{c}f matches 1 run function {NS}:menu/halle_bt{c} with storage {M_} h"]
+    fn(f"menu/halle_bt{c}", "$" + f"data modify storage {M_} h.a append value " + btn(T(f"$(b{c})", f"$(k{c})", True), 510 + c, 150))
+HA += [f"data modify storage {M_} h.a append value " + btn(T("Agrandir la Halle", OR), 530, 150), f"data modify storage {M_} h.a append value " + btn(T("Retour", "white"), 1, 150)]
 HA = [f"function {NS}:tuto/halle"] + HA
 fn("menu/halle", HA)
 fn("menu/halle_d", "$" + dlg(
@@ -150,8 +149,7 @@ fn("menu/halle_d", "$" + dlg(
            T("\\n3. $(c3)$(e3)", "white"), T("$(t3)", "gray"), T("$(n3)", "$(k3)"),
            T("\\nLa Halle met de côté ce qu'il faut. Vert : livrable.", "gray")), 300),
      msg(L(T("Agrandir : $(nx)", "gray")), 300)],
-    [btn(T("$(b1)", "$(k1)"), 511, 140), btn(T("$(b2)", "$(k2)"), 512, 140), btn(T("$(b3)", "$(k3)"), 513, 140),
-     btn(T("Agrandir la Halle", OR, True), 530, 140), btn(T("Guide", "green"), 16, 140), btn(T("Mon industrie", "white"), 1, 140)], 3))
+    ["ACTIONS"], 2))
 
 # ---------------------------------------------------------------- Banque (6)
 BQ = [f"execute unless score @s i.bq matches 1 run return run function {NS}:menu/banque_offre",
@@ -280,3 +278,12 @@ fn("batiment/clic_j", [f"execute unless score @s m.id = #co i.t run return run "
                        f"execute if score #cm i.t matches 94 run return run function {NS}:menu/bureau"])
 
 fn("version", say(f"Industrie version {VERSION} : îles, {len(ML)} machines, tubes à faisceau, Halle du Marché, Banque, Laboratoire, rangs, Grands Œuvres, parts d'île.", OR))
+
+fn("menu/plus_o", [
+      f'data modify storage {M_} lb set value "Banque (bloqué)"', f'data modify storage {M_} kb set value "dark_gray"',
+      f'execute if score @s i.rang matches 2.. run data modify storage {M_} lb set value "Banque"', f'execute if score @s i.rang matches 2.. run data modify storage {M_} kb set value "aqua"',
+      f'data modify storage {M_} ll set value "Laboratoire (bloqué)"', f'data modify storage {M_} kl set value "dark_gray"',
+      f'execute if score @s i.rang matches 2.. run data modify storage {M_} ll set value "Laboratoire"', f'execute if score @s i.rang matches 2.. run data modify storage {M_} kl set value "light_purple"',
+      f'data modify storage {M_} lp set value "Parts d\'île (bloqué)"', f'data modify storage {M_} kp set value "dark_gray"',
+      f'execute if score @s i.rang matches 4.. run data modify storage {M_} lp set value "Parts d\'île"', f'execute if score @s i.rang matches 4.. run data modify storage {M_} kp set value "light_purple"',
+      f"function {NS}:menu/plus with storage {M_}"])

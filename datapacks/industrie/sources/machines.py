@@ -30,7 +30,7 @@ def prod_txt(m, l):
 
 
 # ---------------------------------------------------------------- position sur sa propre île (#ok = 1)
-fn("ile/position", [f"{S} set #ok i.t 0", f"execute unless dimension {DIM} run return 0",
+fn("ile/position", [f"{S} set #ok i.t 0", f"execute at @s unless dimension {DIM} run return 0",
                     "execute store result score #px i.t run data get entity @s Pos[0]", "execute store result score #pz i.t run data get entity @s Pos[2]",
                     f"{S} operation #a i.t = #px i.t", f"{S} add #a i.t 1024", f"{S} operation #b i.t = #pz i.t", f"{S} add #b i.t 1024",
                     f"execute if score #a i.t matches 0.. if score #b i.t matches 0.. run function {NS}:ile/garde_calc"])
@@ -87,7 +87,7 @@ for k, m in enumerate(ML):
     V_.append(f'execute if score #pm i.t matches {k} run summon minecraft:item_display ~ ~{round(1.5 * ECH_M, 2)} ~ {{Tags:["ind.m","ind.nouvm"],'
               f'item_display:"none",view_range:3f,brightness:{{sky:15,block:15}},item:{{id:"minecraft:paper",count:1,components:{{"minecraft:item_model":"{NS}:{m}"}}}},'
               f'transformation:{{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,0f],scale:[{ECH_M}f,{ECH_M}f,{ECH_M}f]}}}}')
-V_ += ['summon minecraft:interaction ~ ~ ~ {Tags:["ind.mi","ind.nouvm"],width:6.5f,height:7f}',
+V_ += ['summon minecraft:interaction ~ ~ ~ {Tags:["ind.mi","ind.nouvm","ind.t2"],width:6.5f,height:7f}',
        f"{S} operation @e[tag=ind.nouvm,distance=..9] i.own = #own i.t", f"{S} operation @e[tag=ind.nouvm,distance=..9] i.sid = #psid i.t",
        f"{S} operation @e[tag=ind.nouvm,distance=..9] i.mt = #pm i.t", f"{S} operation @e[tag=ind.nouvm,distance=..9] i.ml = #pl i.t",
        f"{S} operation @e[tag=ind.nouvm,distance=..9] i.mob = #mob i.t", f"{S} operation @e[tag=ind.nouvm,distance=..9] i.sf = #sf i.t",
@@ -101,7 +101,7 @@ fn("machine/visuel_ici", V_)
 # deux branches : en x jusqu'à l'axe du Nexus, puis en z jusqu'au Nexus. Chaque branche : verre teinté, cœur lumineux,
 # un paquet qui glisse (animé par tube/anim).
 fn("tube/poser", [
-    "execute store result score #sx i.t run data get entity @s Pos[0]" if False else "summon minecraft:marker ~ ~ ~ {Tags:[\"ind.pos\"]}",
+    "summon minecraft:marker ~ ~ ~ {Tags:[\"ind.pos\"]}",
     "execute store result score #sx i.t run data get entity @e[type=minecraft:marker,tag=ind.pos,limit=1] Pos[0]",
     "execute store result score #sz i.t run data get entity @e[type=minecraft:marker,tag=ind.pos,limit=1] Pos[2]",
     "kill @e[type=minecraft:marker,tag=ind.pos]",
@@ -117,6 +117,7 @@ fn("tube/poser", [
     f"{S} operation #lz i.t = #cz i.t", f"{S} operation #lz i.t -= #sz i.t",
     f"{S} operation #az i.t = #lz i.t", f"execute if score #az i.t matches ..-1 run {S} operation #az i.t *= #-1 i.g",
     *[f"execute store result storage {NS}:t tb.{v} int 1 run {S} get #{v} i.t" for v in ("sx", "sz", "cx", "cz", "x1", "z1", "lx", "lz", "ax", "az", "own", "psid")],
+    f"execute store result storage {NS}:t tb.hx float 0.5 run {S} get #ax i.t", f"execute store result storage {NS}:t tb.hz float 0.5 run {S} get #az i.t",
     f'data modify storage {NS}:t tb.verre set value "{TUBE_BLOC[0][0]}"', f'data modify storage {NS}:t tb.coeur set value "{TUBE_BLOC[0][1]}"',
     *[f'execute if score #tt i.t matches {k} run data modify storage {NS}:t tb.verre set value "{v}"' for k, (v, _) in enumerate(TUBE_BLOC) if k],
     *[f'execute if score #tt i.t matches {k} run data modify storage {NS}:t tb.coeur set value "{c}"' for k, (_, c) in enumerate(TUBE_BLOC) if k],
@@ -124,15 +125,20 @@ fn("tube/poser", [
     f"execute if score #ax i.t matches 1.. run function {NS}:tube/branche_x with storage {NS}:t tb",
     f"execute if score #az i.t matches 1.. run function {NS}:tube/branche_z with storage {NS}:t tb"])
 TR = "left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f]"
+TY = 69   # 28/11/2026 : 73 était trop haut pour être vu
+def _seg(pos, scale, trans, nom, lum):
+    return (f'$execute in {DIM} run summon minecraft:item_display {pos} {{Tags:["ind.tube","ind.nt"],view_range:3f,item_display:"none",'
+            + ('brightness:{sky:15,block:15},' if lum else '')
+            + f'item:{{id:"$({nom})",count:1}},transformation:{{{TR},translation:{trans},scale:{scale}}}}}')
 fn("tube/branche_x", [
-    f'$summon minecraft:block_display $(x1) 73 $(sz) {{Tags:["ind.tube","ind.nt"],view_range:2f,block_state:{{Name:"$(verre)"}},transformation:{{{TR},translation:[0f,-0.3f,0.2f],scale:[$(ax)f,0.6f,0.6f]}}}}',
-    f'$summon minecraft:block_display $(x1) 73 $(sz) {{Tags:["ind.tube","ind.nt"],view_range:2f,brightness:{{sky:15,block:15}},block_state:{{Name:"$(coeur)"}},transformation:{{{TR},translation:[0f,-0.1f,0.4f],scale:[$(ax)f,0.2f,0.2f]}}}}',
-    f'$summon minecraft:item_display $(sx).5 73 $(sz).5 {{Tags:["ind.tube","ind.pq","ind.nt"],view_range:2f,brightness:{{sky:15,block:15}},item:{{id:"$(it)",count:1}},transformation:{{{TR},translation:[0f,0f,0f],scale:[0.35f,0.35f,0.35f]}}}}',
+    _seg(f"$(x1) {TY} $(sz).5", "[$(ax)f,0.6f,0.6f]", "[$(hx)f,0f,0f]", "verre", False),
+    _seg(f"$(x1) {TY} $(sz).5", "[$(ax)f,0.22f,0.22f]", "[$(hx)f,0f,0f]", "coeur", True),
+    f'$execute in {DIM} run summon minecraft:item_display $(sx).5 {TY} $(sz).5 {{Tags:["ind.tube","ind.pq","ind.nt"],view_range:3f,brightness:{{sky:15,block:15}},item:{{id:"$(it)",count:1}},transformation:{{{TR},translation:[0f,0f,0f],scale:[0.4f,0.4f,0.4f]}}}}',
     f"$scoreboard players set @e[tag=ind.nt] i.tx $(lx)", f"{S} set @e[tag=ind.nt] i.tz 0", f"function {NS}:tube/marquer"])
 fn("tube/branche_z", [
-    f'$summon minecraft:block_display $(cx) 73 $(z1) {{Tags:["ind.tube","ind.nt"],view_range:2f,block_state:{{Name:"$(verre)"}},transformation:{{{TR},translation:[0.2f,-0.3f,0f],scale:[0.6f,0.6f,$(az)f]}}}}',
-    f'$summon minecraft:block_display $(cx) 73 $(z1) {{Tags:["ind.tube","ind.nt"],view_range:2f,brightness:{{sky:15,block:15}},block_state:{{Name:"$(coeur)"}},transformation:{{{TR},translation:[0.4f,-0.1f,0f],scale:[0.2f,0.2f,$(az)f]}}}}',
-    f'$summon minecraft:item_display $(cx).5 73 $(sz).5 {{Tags:["ind.tube","ind.pq","ind.nt"],view_range:2f,brightness:{{sky:15,block:15}},item:{{id:"$(it)",count:1}},transformation:{{{TR},translation:[0f,0f,0f],scale:[0.35f,0.35f,0.35f]}}}}',
+    _seg(f"$(cx).5 {TY} $(z1)", "[0.6f,0.6f,$(az)f]", "[0f,0f,$(hz)f]", "verre", False),
+    _seg(f"$(cx).5 {TY} $(z1)", "[0.22f,0.22f,$(az)f]", "[0f,0f,$(hz)f]", "coeur", True),
+    f'$execute in {DIM} run summon minecraft:item_display $(cx).5 {TY} $(sz).5 {{Tags:["ind.tube","ind.pq","ind.nt"],view_range:3f,brightness:{{sky:15,block:15}},item:{{id:"$(it)",count:1}},transformation:{{{TR},translation:[0f,0f,0f],scale:[0.4f,0.4f,0.4f]}}}}',
     f"{S} set @e[tag=ind.nt] i.tx 0", f"$scoreboard players set @e[tag=ind.nt] i.tz $(lz)", f"function {NS}:tube/marquer"])
 fn("tube/marquer", [f"{S} operation @e[tag=ind.nt] i.own = #own i.t", f"{S} operation @e[tag=ind.nt] i.sid = #psid i.t", "tag @e[tag=ind.nt] remove ind.nt"])
 # animation : un pas par seconde (aller en 1 s, puis retour instantané au départ)
@@ -266,3 +272,11 @@ fn("machine/rv_spawner", [
     f"data modify storage {NS}:t sp.p set value 0", f"data modify storage {NS}:t sp.c set value 0",
     f"function commerce:spawner/donner with storage {NS}:t sp", say("Le spawner te revient, avec ses améliorations de vitesse et de quantité.", "light_purple")])
 fn("machine/rv_sp_lire", [f"{S} operation #sf i.t = @s i.sf", f"{S} operation #spv i.t = @s i.spv", f"{S} operation #spq i.t = @s i.spq"])
+
+# 28/11/2026 : tubes refaits pour les machines déjà posées (tag ind.t2 = tube de la nouvelle forme)
+fn("tube/refaire", [
+    f"{S} operation #me i.t = @s i.own", f"{S} operation #sel i.t = @s i.sid",
+    f"execute as @e[tag=ind.tube,distance=..400] if score @s i.own = #me i.t if score @s i.sid = #sel i.t run kill @s",
+    f"{S} operation #pm i.t = @s i.mt", f"{S} operation #own i.t = @s i.own", f"{S} operation #psid i.t = @s i.sid", f"{S} set #tt i.t 0",
+    f"execute as @a if score @s m.id = #me i.t run {S} operation #tt i.t = @s i.tube",
+    "tag @s add ind.t2", f"function {NS}:tube/poser"])

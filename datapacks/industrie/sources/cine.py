@@ -5,7 +5,7 @@ TIT = 'title @s times 8 90 12'
 
 
 def titre(a, b):
-    return [TIT, 'title @s title {"text":"' + a + '","color":"#F7C843","bold":true}', 'title @s subtitle {"text":"' + b + '","color":"white"}',
+    return [TIT, 'title @s subtitle [{"text":"' + a + ' : ","color":"#F7C843","bold":true},{"text":"' + b + '","color":"white"}]', 'title @s title ""',
             "playsound minecraft:block.note_block.chime master @s ~ ~ ~ 0.8 1.2"]
 
 
@@ -15,13 +15,13 @@ def lueur(tag):
 
 
 ETAPES_CINE = {
-    2: titre("Bienvenue sur ton île", "Visite express : 30 secondes"),
-    6: titre("Le Nexus", "Ton entrepôt. Clic droit dessus : tous les menus") + lueur("ind.b_nexus"),
-    12: titre("Les machines", "Elles produisent toutes seules, même hors ligne") + lueur("ind.m"),
-    18: titre("Les tubes lumineux", "Ils envoient toute la production au Nexus")
+    2: titre("Ton île", "visite en 30 secondes"),
+    6: titre("Le Nexus", "ton entrepôt, clic droit = menu") + lueur("ind.b_nexus"),
+    12: titre("Les machines", "elles produisent seules") + lueur("ind.m"),
+    18: titre("Les tubes", "ils amènent tout au Nexus")
         + ["execute at @e[type=minecraft:item_display,tag=ind.b_nexus,distance=..96,limit=1,sort=nearest] run particle minecraft:electric_spark ~ ~2 ~ 6 1 6 0.1 200 force @s"],
-    24: titre("La Halle du Marché", "Elle vend ton stock : tu gagnes des Écus") + lueur("ind.b_echoppe") + lueur("ind.b_halle"),
-    30: titre("Ton but", "Des Écus, puis des machines, des parcelles et des rangs"),
+    24: titre("La Halle", "elle vend, tu gagnes des Écus") + lueur("ind.b_echoppe") + lueur("ind.b_halle"),
+    30: titre("Ton but", "plus de machines, monter de rang"),
     36: ["execute as @e[type=minecraft:item_display,distance=..96] run data merge entity @s {Glowing:0b}", f"{S} set @s i.cin 39",
          f"function {NS}:menu/route"],
 }
@@ -31,7 +31,7 @@ for t_, cmds in ETAPES_CINE.items():
     P_.append(f"execute if score @s i.cin matches {t_} run function {NS}:cine/e{t_}")
 P_.append(f"execute if score @s i.cin matches 39.. run {S} set @s i.cin 40")
 fn("cine/pas", P_)
-fn("cine/revoir", [f"execute unless dimension {DIM} run function {NS}:ile/aller", f"{S} set @s i.cin 1"])
+fn("cine/revoir", [f"execute at @s unless dimension {DIM} run function {NS}:ile/aller", f"{S} set @s i.cin 1"])
 
 # ---------------------------------------------------------------- « Que faire ? » : où tu en es, ce que le prochain rang demande et débloque
 VICT = {None: "", "boss": ", un boss de Métiers vaincu", "wither": ", 3 Wither vaincus", "dragon": ", l'Ender Dragon vaincu"}
@@ -66,6 +66,5 @@ for r in range(1, 6):
     else:
         corps += [T("\\n\\nTu es au sommet. Il reste les Grands Œuvres.", "aqua")]
     fn(f"menu/route_{r}", "$" + dlg(T("QUE FAIRE ?", OR, True), [msg(L(*corps), 300)],
-                                    [btn(T("Mon industrie", "white"), 1, 130), btn(T("Bureau (passer de rang)", "light_purple"), 9, 170),
-                                     btn(T("Comptoir des machines", OR), 4, 160), btn(T("Guide", "green"), 12, 120)], 2))
+                                    [btn(T("Retour", "white"), 1, 130), btn(T("Passer de rang", "light_purple"), 9, 150)], 2))
 fn("menu/route", [f"function {NS}:tuto/objectif"] + [f"execute if score @s i.rang matches {r} run return run function {NS}:menu/route_{r} with storage {M_}" for r in range(1, 6)])
