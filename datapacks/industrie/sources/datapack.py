@@ -17,7 +17,7 @@ ROOT = os.path.join(ICI, "..", "build", "industrie_datapack")
 RP = os.path.join(ICI, "..", "build", "industrie_rp")
 NS = "industrie"
 F = f"data/{NS}/function/"
-VERSION = 9
+VERSION = 10
 DIM = f"{NS}:archipel"
 S = "scoreboard players"
 for d in (ROOT, RP):
@@ -122,6 +122,7 @@ LD += [f"{S} set #zero_0 i.g 0", f"{S} set #zero_2 i.g 1", f"{S} add #uid i.g 0"
        f"execute unless data storage {NS}:parts offres run data modify storage {NS}:parts offres set value []",
        f"execute unless data storage {NS}:parts h run data modify storage {NS}:parts h set value []",
        f"execute unless data storage {NS}:file l run data modify storage {NS}:file l set value []"]
+LD += ["title @a clear", "execute if score #hud c.g matches 1.. run scoreboard players set @a c.hudv -1"]   # 28/11/2026 : efface les titres laissés par Industrie, l'encadré des Écus revient
 fn("load", LD)
 
 fn("tick", [
@@ -413,6 +414,7 @@ exec(open(os.path.join(ICI, "economie.py"), encoding="utf-8").read())
 exec(open(os.path.join(ICI, "menus.py"), encoding="utf-8").read())
 exec(open(os.path.join(ICI, "guide.py"), encoding="utf-8").read())
 exec(open(os.path.join(ICI, "cine.py"), encoding="utf-8").read())
+exec(open(os.path.join(ICI, "stats.py"), encoding="utf-8").read())
 
 # ------------------------------------------------------------------ resource pack : modèles des bâtiments
 import modeles

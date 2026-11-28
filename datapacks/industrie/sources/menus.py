@@ -138,7 +138,8 @@ for c in (1, 2, 3):
     HA += [f"execute if score @s i.c{c}p matches 1.. unless score @s i.c{c}f matches 1 run function {NS}:menu/halle_bt{c} with storage {M_} h"]
     fn(f"menu/halle_bt{c}", "$" + f"data modify storage {M_} h.a append value " + btn(T(f"$(b{c})", f"$(k{c})", True), 510 + c, 150))
 HA += [f"data modify storage {M_} h.a append value " + btn(T("Agrandir la Halle", OR), 530, 150), f"data modify storage {M_} h.a append value " + btn(T("Retour", "white"), 1, 150)]
-HA = [f"function {NS}:tuto/halle"] + HA
+# 28/11/2026 : le dialogue était appelé avant que la liste des boutons existe (plus rien ne s'affichait)
+HA = [f"function {NS}:tuto/halle"] + [x for x in HA if "menu/halle_d with" not in x] + [f"function {NS}:menu/halle_d with storage {M_} h"]
 fn("menu/halle", HA)
 fn("menu/halle_d", "$" + dlg(
     T("HALLE DU MARCHÉ", OR, True),
@@ -272,7 +273,7 @@ fn("batiment/clic", [f"{S} operation #co i.t = @s i.own", f"{S} operation #cm i.
                      f"execute on target run function {NS}:batiment/clic_j", "data remove entity @s interaction", "data remove entity @s attack"])
 fn("batiment/retour_clic", [f"execute on target run function {NS}:ile/retour", "data remove entity @s interaction", "data remove entity @s attack"])
 fn("batiment/clic_j", [f"execute unless score @s m.id = #co i.t run return run " + say("Ce bâtiment appartient à une autre île.", "gray"),
-                       f"execute if score #cm i.t matches 90 run return run function {NS}:menu/accueil",
+                       f"execute if score #cm i.t matches 90 run return run function {NS}:menu/stats",
                        f"execute if score #cm i.t matches 91 run return run function {NS}:menu/halle",
                        f"execute if score #cm i.t matches 92 run return run function {NS}:menu/banque",
                        f"execute if score #cm i.t matches 93 run return run function {NS}:menu/labo",

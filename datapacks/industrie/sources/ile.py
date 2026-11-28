@@ -151,7 +151,7 @@ fn("ile/aller", [
     f"execute unless score @s i.ile matches 0.. run function {NS}:ile/creer",
     f"{S} operation #n i.t = @s i.ile", f"function {NS}:ile/tp",
     f"execute in {DIM} positioned as @s unless entity @e[type=minecraft:interaction,tag=ind.ret,distance=..24] run function {NS}:ile/portail_retour",
-    'title @s times 10 70 20', 'title @s subtitle [{"text":"Ton île : ","color":"#F7C843","bold":true},{"text":"clic droit sur le Nexus","color":"white"}]', 'title @s title ""',
+    
     f"function {NS}:ile/etiquettes",
     f"execute unless score @s i.cin matches 1.. run return run {S} set @s i.cin 1",
     'title @s actionbar [{"text":"Retour au monde normal : le portail à côté de toi, ou G puis Industrie, Revenir","color":"#F7C843"}]'])

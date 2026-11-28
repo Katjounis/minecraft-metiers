@@ -60,6 +60,7 @@ Ouvrir le menu avec la touche G puis le bouton **Industrie**, ou avec `/trigger 
 | `sources/menus.py` | Aiguillage du déclencheur et dialogues |
 | `sources/guide.py` | Parcours de départ et pages du guide |
 | `sources/cine.py` | Présentation à l'arrivée et page « Que faire ? » |
+| `sources/stats.py` | Tableau de l'île (clic sur le Nexus) |
 | `sources/voxels.py`, `sources/modeles.py` | Bâtiments en voxels et export en modèles d'objet (resource pack, `build/industrie_rp`) |
 | `sources/verifier.py` | Contrôle statique du pack généré |
 
@@ -75,6 +76,7 @@ Pour générer : `python sources/datapack.py`, puis `python labo/outils/fusion_r
 
 ## Versions
 
+- v10 (28/11/2026) : Halle réparée (le dialogue partait avant sa liste de boutons, rien ne s'affichait), clic sur le Nexus : tableau de l'île (barre d'énergie, recettes, production de chaque type de machine). Plus aucun titre à l'écran : la présentation passe par la barre d'action, le titre reste à l'encadré des Écus du Commerce (il disparaissait ou laissait un sous-titre fixe).
 - v9 (28/11/2026) : bouton « Aller sur mon île / Revenir au monde normal » remis en tête de Mon industrie, tubes qui se rejoignent dans les coins, paquet animé en 3 temps (apparaît, glisse, disparaît), étiquettes de machine avec la production par heure.
 - v8 (28/11/2026) : menus simplifiés (Mon industrie : 4 boutons, le reste dans « Autres menus », un seul bouton Retour partout, Halle sans boutons inutiles, Comptoir limité au rang suivant). Clics réparés hors de l'emplacement de spawn (portail de retour, fiches). Tubes refaits en item_display à y = 69, reconstruits sur les îles existantes. Étiquettes et titres plus petits.
 - v7 (28/11/2026) : présentation à la première arrivée (titres et bâtiments mis en lumière, 30 s), page « Que faire ? » (objectif, rang actuel, ce que le prochain rang demande et débloque), machines et bâtiments bloqués marqués dans le Comptoir et Mon industrie. Réparations : le Nexus portait le code de la Halle (même étiquette, et le clic ouvrait la Halle), blocs du portail de retour effacés par le chantier.

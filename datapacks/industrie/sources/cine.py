@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 # Présentation à la première arrivée sur l'île (28/11/2026) et page « Que faire ? » (feuille de route par rang).
 # i.cin : 0 jamais vue, 1 à 39 en cours (une étape par seconde, appelée par seconde), 40 vue.
-TIT = 'title @s times 8 90 12'
+# 28/11/2026 : barre d'action et plus de titre : le titre est réservé à l'encadré des Écus du Commerce
 
 
 def titre(a, b):
-    return [TIT, 'title @s subtitle [{"text":"' + a + ' : ","color":"#F7C843","bold":true},{"text":"' + b + '","color":"white"}]', 'title @s title ""',
+    return ['title @s actionbar [{"text":"' + a + ' : ","color":"#F7C843","bold":true},{"text":"' + b + '","color":"white"}]',
             "playsound minecraft:block.note_block.chime master @s ~ ~ ~ 0.8 1.2"]
 
 
