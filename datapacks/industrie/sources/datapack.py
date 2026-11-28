@@ -17,7 +17,7 @@ ROOT = os.path.join(ICI, "..", "build", "industrie_datapack")
 RP = os.path.join(ICI, "..", "build", "industrie_rp")
 NS = "industrie"
 F = f"data/{NS}/function/"
-VERSION = 13
+VERSION = 14
 DIM = f"{NS}:archipel"
 S = "scoreboard players"
 for d in (ROOT, RP):
@@ -102,7 +102,7 @@ for p in PL:
 for m in ML:
     OBJ += [f"i.q_{m}", f"i.n_{m}", f"i.k_{m}", f"i.ac_{m}"]
 OBJ += [f"i.qs{k}" for k in range(len(MOBS))]
-CONST = sorted({-1, 0, 8, 50, 2, 10, 20, 24, 23, 32, 60, 100, 1000, 10000, 1200, 72000, 1728000, 2048, 16, 7, 4, 3, 5, 150, 125, 110, 1, 1000000, 1000000000})
+CONST = sorted({-1, 0, 8, 50, 200, 2, 10, 20, 24, 23, 32, 60, 100, 1000, 10000, 1200, 72000, 1728000, 2048, 16, 7, 4, 3, 5, 150, 125, 110, 1, 1000000, 1000000000})
 
 wj("pack.mcmeta", {"pack": {"description": "Industrie : îles, machines, tubes, Halle du Marché, Banque", "min_format": 84, "max_format": 200}})
 wj("data/minecraft/tags/function/load.json", {"values": [f"{NS}:load"]})

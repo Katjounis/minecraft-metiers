@@ -107,9 +107,9 @@ fn("menu/stats_d", "$" + dlg(T("MON ÎLE", OR, True),
 H_HOLO = round(h_lab("nexus", BAT["nexus"][2]) + 1.4 - 1.5 * BAT["nexus"][2], 1)
 fn("ile/holo", [f"{S} operation #me i.t = @s m.id", val("jn", "i.jn"), val("h1", "i.h1"), val("h0", "i.h0"),
                 f"{S} operation #x i.t = @s i.fe", f"{S} operation #x i.t /= #10 i.g", f"execute store result storage {M_} fep int 1 run {S} get #x i.t",
-                f"execute as @e[type=minecraft:item_display,tag=ind.b_nexus,distance=..96] if score @s i.own = #me i.t at @s positioned ~ ~{H_HOLO} ~ run function {NS}:ile/holo_m with storage {M_}"])
-fn("ile/holo_m", [
-    'execute unless entity @e[type=minecraft:text_display,tag=ind.holo,distance=..1.5] run summon minecraft:text_display ~ ~ ~ {Tags:["ind.holo"],billboard:"center",'
+                f"execute as @e[type=minecraft:item_display,tag=ind.b_nexus,distance=..96] if score @s i.own = #me i.t at @s positioned ~ ~0.1 ~4 run function {NS}:ile/holo_m with storage {M_}"])
+fn("ile/holo_m", ["kill @e[type=minecraft:text_display,tag=ind.holo,tag=!ind.hv2,distance=..12]",
+    'execute unless entity @e[type=minecraft:text_display,tag=ind.holo,distance=..1.5] run summon minecraft:text_display ~ ~ ~ {Tags:["ind.holo","ind.hv2"],billboard:"center",'
     'view_range:0.8f,shadow:true,background:1426063360,line_width:220,transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,0f],scale:[0.6f,0.6f,0.6f]}}',
     '$data merge entity @e[type=minecraft:text_display,tag=ind.holo,distance=..1.5,limit=1] {text:[{"text":"Aujourd\'hui : ","color":"gray"},{"text":"$(jn) Écus","color":"#F7C843","bold":true},'
     '{"text":"\\nCette heure : ","color":"gray"},{"text":"$(h0)","color":"#4cd964"},{"text":"   heure passée : $(h1)","color":"gray"},'

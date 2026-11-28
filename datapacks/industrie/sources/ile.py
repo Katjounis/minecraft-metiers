@@ -267,12 +267,14 @@ def role_machine(m):
 
 ET = []
 for k, m in enumerate(ML):
-    fn(f"ile/etiq_m{k}", [etiquette(MACH[m]["nom"].upper(), FAMILLES[FAM[m]][0] + "  ·  " + role_machine(m), ["ind.lab", "ind.labm", "ind.lv3"], 0, FAMILLES[FAM[m]][1])])
-    ET.append(f"execute as @e[type=minecraft:interaction,tag=ind.mi,distance=..96] if score @s i.mt matches {k} at @s positioned ~ ~{h_lab(m, ECH_M)} ~ "
+    fn(f"ile/etiq_m{k}", [etiquette(MACH[m]["nom"].upper(), FAMILLES[FAM[m]][0] + "  ·  " + role_machine(m), ["ind.lab", "ind.labm", "ind.lv4"], 0, FAMILLES[FAM[m]][1])])
+    # 28/11/2026 (v14) : étiquette devant la machine, côté Nexus, à hauteur des yeux (plus au-dessus : elle gênait la vue)
+    ET.append(f"execute as @e[type=minecraft:interaction,tag=ind.mi,distance=..96] if score @s i.mt matches {k} at @s facing entity @e[type=minecraft:item_display,tag=ind.b_nexus,limit=1,sort=nearest] feet rotated ~ 0 positioned ^ ^ ^4.2 positioned ~ ~2.2 ~ "
               f"unless entity @e[type=minecraft:text_display,tag=ind.lab,distance=..2] run function {NS}:ile/etiq_m{k}")
 for code, (titre, role, h) in ROLE_BAT.items():
-    fn(f"ile/etiq_b{code}", [etiquette(titre, role, ["ind.lab", "ind.labb", f"ind.lb{code}"], 0)])
-    ET.append(f"execute as @e[type=minecraft:interaction,tag=ind.bi,tag=!ind.ret,distance=..96] if score @s i.mt matches {code} at @s positioned ~ ~{h} ~ "
+    fn(f"ile/etiq_b{code}", [etiquette(titre, role, ["ind.lab", "ind.labb", f"ind.lb{code}", "ind.lv4"], 0)])
+    _pos = "positioned ~ ~1.9 ~4" if code == 90 else f"facing entity @e[type=minecraft:item_display,tag=ind.b_nexus,limit=1,sort=nearest] feet rotated ~ 0 positioned ^ ^ ^{round(1.6 * BAT[{91: 'halle', 92: 'banque', 93: 'labo', 94: 'oeuvre'}[code]][2] + 0.9, 1)} positioned ~ ~2.2 ~"
+    ET.append(f"execute as @e[type=minecraft:interaction,tag=ind.bi,tag=!ind.ret,distance=..96] if score @s i.mt matches {code} at @s {_pos} "
               f"unless entity @e[type=minecraft:text_display,tag=ind.lab,distance=..2] run function {NS}:ile/etiq_b{code}")
 REP = [  # 28/11/2026 : le Nexus des îles déjà créées portait le code de la Halle (et donc son étiquette et son menu)
     f"execute as @e[type=minecraft:interaction,tag=ind.bi,tag=!ind.ret,distance=..96] at @s if entity @e[type=minecraft:item_display,tag=ind.b_nexus,distance=..5] run {S} set @s i.mt 90",
@@ -280,10 +282,10 @@ REP = [  # 28/11/2026 : le Nexus des îles déjà créées portait le code de la
     # portail de retour : les blocs avaient été effacés par le chantier de la parcelle
     "execute as @e[type=minecraft:interaction,tag=ind.ret,distance=..96] at @s run setblock ~ ~-1 ~ minecraft:gold_block keep",
     "execute as @e[type=minecraft:interaction,tag=ind.ret,distance=..96] at @s run fill ~ ~ ~ ~ ~1 ~ minecraft:crying_obsidian replace minecraft:air"]
-REP += ["kill @e[type=minecraft:text_display,tag=ind.labm,tag=!ind.lv3,distance=..96]",
+REP += ["kill @e[type=minecraft:text_display,tag=ind.lab,tag=!ind.lv4,distance=..96]",
         "execute as @e[type=minecraft:text_display,tag=ind.rett,distance=..96] run data merge entity @s {transformation:{scale:[0.55f,0.55f,0.55f]}}",
         "execute as @e[type=minecraft:text_display,tag=ind.lab,distance=..96] run data merge entity @s {transformation:{scale:[0.55f,0.55f,0.55f]}}",
-        f"execute as @e[type=minecraft:interaction,tag=ind.mi,tag=!ind.t5,distance=..96] at @s run function {NS}:tube/refaire"]
+        f"execute as @e[type=minecraft:interaction,tag=ind.mi,tag=!ind.t6,distance=..96] at @s run function {NS}:tube/refaire"]
 # emplacements libres : point de clic (construire ici) et petite étiquette ; retirés quand l'emplacement est pris
 REP += [f"execute as @e[type=minecraft:marker,tag=ind.slot,tag=!ind.occ,distance=..96] at @s unless entity @e[type=minecraft:interaction,tag=ind.si,distance=..1] run function {NS}:ile/slot_poser",
         "execute as @e[type=minecraft:marker,tag=ind.slot,tag=ind.occ,distance=..96] at @s run kill @e[type=minecraft:interaction,tag=ind.si,distance=..1]",
