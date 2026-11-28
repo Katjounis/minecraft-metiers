@@ -87,7 +87,7 @@ for k, m in enumerate(ML):
     V_.append(f'execute if score #pm i.t matches {k} run summon minecraft:item_display ~ ~{round(1.5 * ECH_M, 2)} ~ {{Tags:["ind.m","ind.nouvm"],'
               f'item_display:"none",view_range:3f,brightness:{{sky:15,block:15}},item:{{id:"minecraft:paper",count:1,components:{{"minecraft:item_model":"{NS}:{m}"}}}},'
               f'transformation:{{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,0f],scale:[{ECH_M}f,{ECH_M}f,{ECH_M}f]}}}}')
-V_ += ['summon minecraft:interaction ~ ~ ~ {Tags:["ind.mi","ind.nouvm","ind.t2"],width:6.5f,height:7f}',
+V_ += ['summon minecraft:interaction ~ ~ ~ {Tags:["ind.mi","ind.nouvm","ind.t3"],width:6.5f,height:7f}',
        f"{S} operation @e[tag=ind.nouvm,distance=..9] i.own = #own i.t", f"{S} operation @e[tag=ind.nouvm,distance=..9] i.sid = #psid i.t",
        f"{S} operation @e[tag=ind.nouvm,distance=..9] i.mt = #pm i.t", f"{S} operation @e[tag=ind.nouvm,distance=..9] i.ml = #pl i.t",
        f"{S} operation @e[tag=ind.nouvm,distance=..9] i.mob = #mob i.t", f"{S} operation @e[tag=ind.nouvm,distance=..9] i.sf = #sf i.t",
@@ -118,6 +118,8 @@ fn("tube/poser", [
     f"{S} operation #az i.t = #lz i.t", f"execute if score #az i.t matches ..-1 run {S} operation #az i.t *= #-1 i.g",
     *[f"execute store result storage {NS}:t tb.{v} int 1 run {S} get #{v} i.t" for v in ("sx", "sz", "cx", "cz", "x1", "z1", "lx", "lz", "ax", "az", "own", "psid")],
     f"execute store result storage {NS}:t tb.hx float 0.5 run {S} get #ax i.t", f"execute store result storage {NS}:t tb.hz float 0.5 run {S} get #az i.t",
+    f"{S} operation #a6 i.t = #ax i.t", f"{S} operation #a6 i.t *= #10 i.g", f"{S} add #a6 i.t 6", f"execute store result storage {NS}:t tb.ax6 float 0.1 run {S} get #a6 i.t",
+    f"{S} operation #a6 i.t = #az i.t", f"{S} operation #a6 i.t *= #10 i.g", f"{S} add #a6 i.t 6", f"execute store result storage {NS}:t tb.az6 float 0.1 run {S} get #a6 i.t",
     f'data modify storage {NS}:t tb.verre set value "{TUBE_BLOC[0][0]}"', f'data modify storage {NS}:t tb.coeur set value "{TUBE_BLOC[0][1]}"',
     *[f'execute if score #tt i.t matches {k} run data modify storage {NS}:t tb.verre set value "{v}"' for k, (v, _) in enumerate(TUBE_BLOC) if k],
     *[f'execute if score #tt i.t matches {k} run data modify storage {NS}:t tb.coeur set value "{c}"' for k, (_, c) in enumerate(TUBE_BLOC) if k],
@@ -131,24 +133,25 @@ def _seg(pos, scale, trans, nom, lum):
             + ('brightness:{sky:15,block:15},' if lum else '')
             + f'item:{{id:"$({nom})",count:1}},transformation:{{{TR},translation:{trans},scale:{scale}}}}}')
 fn("tube/branche_x", [
-    _seg(f"$(x1) {TY} $(sz).5", "[$(ax)f,0.6f,0.6f]", "[$(hx)f,0f,0f]", "verre", False),
-    _seg(f"$(x1) {TY} $(sz).5", "[$(ax)f,0.22f,0.22f]", "[$(hx)f,0f,0f]", "coeur", True),
+    _seg(f"$(x1).5 {TY} $(sz).5", "[$(ax6)f,0.6f,0.6f]", "[$(hx)f,0f,0f]", "verre", False),
+    _seg(f"$(x1).5 {TY} $(sz).5", "[$(ax6)f,0.22f,0.22f]", "[$(hx)f,0f,0f]", "coeur", True),
     f'$execute in {DIM} run summon minecraft:item_display $(sx).5 {TY} $(sz).5 {{Tags:["ind.tube","ind.pq","ind.nt"],view_range:3f,brightness:{{sky:15,block:15}},item:{{id:"$(it)",count:1}},transformation:{{{TR},translation:[0f,0f,0f],scale:[0.4f,0.4f,0.4f]}}}}',
     f"$scoreboard players set @e[tag=ind.nt] i.tx $(lx)", f"{S} set @e[tag=ind.nt] i.tz 0", f"function {NS}:tube/marquer"])
 fn("tube/branche_z", [
-    _seg(f"$(cx).5 {TY} $(z1)", "[0.6f,0.6f,$(az)f]", "[0f,0f,$(hz)f]", "verre", False),
-    _seg(f"$(cx).5 {TY} $(z1)", "[0.22f,0.22f,$(az)f]", "[0f,0f,$(hz)f]", "coeur", True),
+    _seg(f"$(cx).5 {TY} $(z1).5", "[0.6f,0.6f,$(az6)f]", "[0f,0f,$(hz)f]", "verre", False),
+    _seg(f"$(cx).5 {TY} $(z1).5", "[0.22f,0.22f,$(az6)f]", "[0f,0f,$(hz)f]", "coeur", True),
     f'$execute in {DIM} run summon minecraft:item_display $(cx).5 {TY} $(sz).5 {{Tags:["ind.tube","ind.pq","ind.nt"],view_range:3f,brightness:{{sky:15,block:15}},item:{{id:"$(it)",count:1}},transformation:{{{TR},translation:[0f,0f,0f],scale:[0.4f,0.4f,0.4f]}}}}',
     f"{S} set @e[tag=ind.nt] i.tx 0", f"$scoreboard players set @e[tag=ind.nt] i.tz $(lz)", f"function {NS}:tube/marquer"])
 fn("tube/marquer", [f"{S} operation @e[tag=ind.nt] i.own = #own i.t", f"{S} operation @e[tag=ind.nt] i.sid = #psid i.t", "tag @e[tag=ind.nt] remove ind.nt"])
 # animation : un pas par seconde (aller en 1 s, puis retour instantané au départ)
 fn("tube/anim", [
-    f"{S} add @s i.ph2 1", f"execute if score @s i.ph2 matches 2.. run {S} set @s i.ph2 0",
-    f"execute if score @s i.ph2 matches 0 run data merge entity @s {{start_interpolation:0,interpolation_duration:0,transformation:{{translation:[0f,0f,0f]}}}}",
-    f"execute if score @s i.ph2 matches 1 store result storage {NS}:t an.x float 1 run {S} get @s i.tx",
-    f"execute if score @s i.ph2 matches 1 store result storage {NS}:t an.z float 1 run {S} get @s i.tz",
-    f"execute if score @s i.ph2 matches 1 run function {NS}:tube/anim_m with storage {NS}:t an"])
-fn("tube/anim_m", "$data merge entity @s {start_interpolation:0,interpolation_duration:38,transformation:{translation:[$(x)f,0f,$(z)f]}}")
+    f"{S} add @s i.ph2 1", f"execute if score @s i.ph2 matches 3.. run {S} set @s i.ph2 0",
+    "execute if score @s i.ph2 matches 0 run data merge entity @s {start_interpolation:0,interpolation_duration:0,transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,0f],scale:[0f,0f,0f]}}",
+    "execute if score @s i.ph2 matches 1 run data merge entity @s {start_interpolation:0,interpolation_duration:2,transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,0f],scale:[0.4f,0.4f,0.4f]}}",
+    f"execute if score @s i.ph2 matches 2 store result storage {NS}:t an.x float 1 run {S} get @s i.tx",
+    f"execute if score @s i.ph2 matches 2 store result storage {NS}:t an.z float 1 run {S} get @s i.tz",
+    f"execute if score @s i.ph2 matches 2 run function {NS}:tube/anim_m with storage {NS}:t an"])
+fn("tube/anim_m", "$data merge entity @s {start_interpolation:0,interpolation_duration:36,transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[$(x)f,0f,$(z)f],scale:[0.4f,0.4f,0.4f]}}")
 
 # ---------------------------------------------------------------- tubes : nouveau palier pour toute l'île (540)
 TU = [f"{S} operation #tn i.t = @s i.tube", f"{S} add #tn i.t 1",
@@ -279,4 +282,4 @@ fn("tube/refaire", [
     f"execute as @e[tag=ind.tube,distance=..400] if score @s i.own = #me i.t if score @s i.sid = #sel i.t run kill @s",
     f"{S} operation #pm i.t = @s i.mt", f"{S} operation #own i.t = @s i.own", f"{S} operation #psid i.t = @s i.sid", f"{S} set #tt i.t 0",
     f"execute as @a if score @s m.id = #me i.t run {S} operation #tt i.t = @s i.tube",
-    "tag @s add ind.t2", f"function {NS}:tube/poser"])
+    "tag @s add ind.t3", f"function {NS}:tube/poser"])

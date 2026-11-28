@@ -17,7 +17,7 @@ ROOT = os.path.join(ICI, "..", "build", "industrie_datapack")
 RP = os.path.join(ICI, "..", "build", "industrie_rp")
 NS = "industrie"
 F = f"data/{NS}/function/"
-VERSION = 8
+VERSION = 9
 DIM = f"{NS}:archipel"
 S = "scoreboard players"
 for d in (ROOT, RP):

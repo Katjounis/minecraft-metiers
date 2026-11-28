@@ -256,18 +256,18 @@ ROLE_BAT = {90: ("NEXUS", "Ton entrepôt et ton menu principal", h_lab("nexus", 
 def role_machine(m):
     d = MACH[m]
     if d["kw"] < 0:
-        return f"Énergie : +{-d['kw']} kW pour tes machines"
+        return f"Énergie : +{-d['kw']} kW\\npour tes machines"
     if m == "spawner":
         return "Tue les créatures de ton spawner, garde le butin"
-    noms = ", ".join(PROD[p][0].lower() for p in d["out"])
+    noms = ", ".join(f"{mille(q)} {PROD[p][0].lower()}" for p, q in d["out"].items())
     if d.get("inp"):
-        return f"Transforme {', '.join(PROD[p][0].lower() for p in d['inp'])} en {noms}"
-    return f"Produit : {noms}"
+        return f"Transforme {', '.join(PROD[p][0].lower() for p in d['inp'])}\\nen {noms} par heure"
+    return f"Produit par heure :\\n{noms}"
 
 
 ET = []
 for k, m in enumerate(ML):
-    fn(f"ile/etiq_m{k}", [etiquette(MACH[m]["nom"].upper(), role_machine(m), ["ind.lab", "ind.labm"], 0)])
+    fn(f"ile/etiq_m{k}", [etiquette(MACH[m]["nom"].upper(), role_machine(m), ["ind.lab", "ind.labm", "ind.lv2"], 0)])
     ET.append(f"execute as @e[type=minecraft:interaction,tag=ind.mi,distance=..96] if score @s i.mt matches {k} at @s positioned ~ ~{h_lab(m, ECH_M)} ~ "
               f"unless entity @e[type=minecraft:text_display,tag=ind.lab,distance=..2] run function {NS}:ile/etiq_m{k}")
 for code, (titre, role, h) in ROLE_BAT.items():
@@ -280,7 +280,8 @@ REP = [  # 28/11/2026 : le Nexus des îles déjà créées portait le code de la
     # portail de retour : les blocs avaient été effacés par le chantier de la parcelle
     "execute as @e[type=minecraft:interaction,tag=ind.ret,distance=..96] at @s run setblock ~ ~-1 ~ minecraft:gold_block keep",
     "execute as @e[type=minecraft:interaction,tag=ind.ret,distance=..96] at @s run fill ~ ~ ~ ~ ~1 ~ minecraft:crying_obsidian replace minecraft:air"]
-REP += ["execute as @e[type=minecraft:text_display,tag=ind.rett,distance=..96] run data merge entity @s {transformation:{scale:[0.55f,0.55f,0.55f]}}",
+REP += ["kill @e[type=minecraft:text_display,tag=ind.labm,tag=!ind.lv2,distance=..96]",
+        "execute as @e[type=minecraft:text_display,tag=ind.rett,distance=..96] run data merge entity @s {transformation:{scale:[0.55f,0.55f,0.55f]}}",
         "execute as @e[type=minecraft:text_display,tag=ind.lab,distance=..96] run data merge entity @s {transformation:{scale:[0.55f,0.55f,0.55f]}}",
-        f"execute as @e[type=minecraft:interaction,tag=ind.mi,tag=!ind.t2,distance=..96] at @s run function {NS}:tube/refaire"]
+        f"execute as @e[type=minecraft:interaction,tag=ind.mi,tag=!ind.t3,distance=..96] at @s run function {NS}:tube/refaire"]
 fn("ile/etiquettes", REP + ET)

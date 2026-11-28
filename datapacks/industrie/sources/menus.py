@@ -18,7 +18,7 @@ NAV = nav(("Retour", "white", 1))   # 28/11/2026 : un seul bouton de retour, tro
 TR = [f"{S} operation #v i.t = @s industrie", f"{S} set @s industrie 0",
       f"execute unless score @s i.vu matches 1 run function {NS}:joueur/init",
       f"execute store result score #now i.g run time query gametime"]
-SIMPLE = {20: "menu/plus_o", 18: "menu/route", 19: "cine/revoir", 12: "menu/guide", 13: "menu/guide_13", 14: "menu/guide_14", 15: "menu/guide_15", 16: "menu/guide_16", 17: "menu/guide_17",
+SIMPLE = {21: "ile/bascule", 20: "menu/plus_o", 18: "menu/route", 19: "cine/revoir", 12: "menu/guide", 13: "menu/guide_13", 14: "menu/guide_14", 15: "menu/guide_15", 16: "menu/guide_16", 17: "menu/guide_17",
           1: "menu/accueil", 2: "ile/aller", 3: "ile/retour", 4: "menu/comptoir", 5: "menu/cadastre", 6: "menu/banque", 7: "menu/halle",
           8: "menu/labo", 9: "menu/bureau", 10: "menu/visites", 11: "menu/parts", 301: "machine/ameliorer", 302: "machine/revendre",
           500: "banque/emprunter", 501: "banque/rembourser", 530: "halle/ameliorer", 540: "tube/ameliorer", 550: "banque/acheter",
@@ -57,13 +57,14 @@ AC = [f"execute unless score @s i.ile matches 0.. run return run function {NS}:m
       f'data modify storage {M_} rang set value "Atelier"'] + [
       f'execute if score @s i.rang matches {r} run data modify storage {M_} rang set value "{RANGS[r][0]}"' for r in range(2, 6)] + [
       f'data modify storage {M_} ev set from storage {NS}:g ev', f'execute unless data storage {NS}:g ev run data modify storage {M_} ev set value "Marché calme."',
+      f'data modify storage {M_} va set value "Aller sur mon île"', f'execute at @s if dimension {DIM} run data modify storage {M_} va set value "Revenir au monde normal"',
       f"function {NS}:tuto/objectif", f"function {NS}:menu/accueil_d with storage {M_}"]
 fn("menu/accueil", AC)
 fn("menu/accueil_d", "$" + dlg(
     L(T("MON INDUSTRIE", OR, True), T("  ·  $(rang)", "white")),
     [msg(L(T("À faire : ", "green", True), T("$(obj)", "white"),
            T("\\n\\nAujourd'hui : $(jn) Écus  ·  Nexus : $(st) objets  ·  Énergie : $(fep) %", "gray")), 300)],
-    [btn(T("Que faire ?", "green", True), 18, 200), btn(T("Acheter une machine", OR, True), 4, 200),
+    [btn(T("$(va)", "green", True), 21, 200), btn(T("Que faire ?", "green", True), 18, 200), btn(T("Acheter une machine", OR, True), 4, 200),
      btn(T("Vendre et contrats", OR), 7, 200), btn(T("Autres menus", "gray"), 20, 200)], 1))
 fn("menu/plus", ["$" + dlg(T("AUTRES MENUS", OR, True), [],
     [btn(T("Cadastre (parcelles)", "white"), 5, 160), btn(T("Bureau (rangs)", "light_purple"), 9, 160),
@@ -287,3 +288,4 @@ fn("menu/plus_o", [
       f'data modify storage {M_} lp set value "Parts d\'île (bloqué)"', f'data modify storage {M_} kp set value "dark_gray"',
       f'execute if score @s i.rang matches 4.. run data modify storage {M_} lp set value "Parts d\'île"', f'execute if score @s i.rang matches 4.. run data modify storage {M_} kp set value "light_purple"',
       f"function {NS}:menu/plus with storage {M_}"])
+fn("ile/bascule", [f"execute at @s if dimension {DIM} run return run function {NS}:ile/retour", f"function {NS}:ile/aller"])
