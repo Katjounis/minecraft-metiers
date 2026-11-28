@@ -16,61 +16,64 @@ ST = [val("jn", "i.jn"), val("r7", "i.r7"),
       f"execute store result storage {M_} st int 1 run {S} get #x i.t",
       f"data modify storage {M_} l set value [{{text:\"\"}}]"]
 
-# ---- 1. recettes des 12 dernières heures : histogramme 12 colonnes x 6 lignes
+# ---- 1. recettes des 12 dernières heures : courbe en une ligne (▁▂▃▄▅▆▇█), l'heure en cours en vert
+SPARK = "▁▂▃▄▅▆▇█"
 ST += [f"{S} operation #mx i.t = @s i.h0"] + [f"execute if score @s i.h{k} > #mx i.t run {S} operation #mx i.t = @s i.h{k}" for k in range(1, 12)]
 ST += [f"execute if score #mx i.t matches ..0 run {S} set #mx i.t 1", f"execute store result storage {M_} mx int 1 run {S} get #mx i.t",
-       ap("RECETTES PAR HEURE", OR), f"function {NS}:stats/titre_h with storage {M_}"]
-fn("stats/titre_h", "$" + ap("   (max $(mx) Écus)\\n", "gray"))
-COUL_H = ["#3a3a3a"]
-for r in range(6, 0, -1):
-    ST += [f"{S} operation #u i.t = #mx i.t", f"{S} set #y i.t {r}", f"{S} operation #u i.t *= #y i.t"]
-    for k in range(11, -1, -1):
-        ST += [f"{S} operation #t i.t = @s i.h{k}", f"{S} operation #t i.t *= #6 i.g",
-               f"execute if score #t i.t >= #u i.t run " + ap(PLEIN, "#4cd964" if k == 0 else OR),
-               f"execute unless score #t i.t >= #u i.t run " + ap(VIDE, "#2b2b2b")]
-    ST.append(ap("\\n", "white"))
-ST.append(ap("il y a 12 h" + " " * 14 + "maintenant", "dark_gray"))
+       f"{S} operation #m1 i.t = #mx i.t", f"{S} remove #m1 i.t 1",
+       ap("RECETTES, 12 DERNIÈRES HEURES\\n", OR)]
+for k in range(11, -1, -1):
+    col = "#4cd964" if k == 0 else OR
+    ST += [f"{S} operation #t i.t = @s i.h{k}", f"{S} operation #t i.t *= #8 i.g", f"{S} operation #t i.t += #m1 i.t", f"{S} operation #t i.t /= #mx i.t",
+           f"execute if score #t i.t matches ..0 run " + ap(SPARK[0], "#3a3a3a")]
+    ST += [f"execute if score #t i.t matches {n} run " + ap(SPARK[n - 1], col) for n in range(1, 9)]
+ST += [f"function {NS}:stats/titre_h with storage {M_}"]
+fn("stats/titre_h", "$" + ap("\\nmeilleure heure : $(mx) Écus", "gray"))
 
-# ---- 2. production par machine en Écus par heure (prix de base), barres horizontales
+# ---- 2. production par type de machine (Écus par heure au prix de base) : nom en couleur de famille, fine barre dessous
+NB = 40
 ST += [f"{S} set #mx i.t 1"]
 VM = []
 for k, m in enumerate(ML):
     d = MACH[m]
     if d["kw"] < 0 or m == "spawner" or not d.get("out"):
         continue
-    v = sum(q * PROD[p][2] for p, q in d["out"].items())          # centièmes d'Écu par heure pour 100 % de niveau
+    v = sum(q * PROD[p][2] for p, q in d["out"].items())
     fn(f"stats/v_{k}", [f"{S} operation #v{k} i.t = @s i.q_{m}", f"{S} set #y i.t {max(1, v // 10000)}", f"{S} operation #v{k} i.t *= #y i.t",
                         f"execute if score #v{k} i.t > #mx i.t run {S} operation #mx i.t = #v{k} i.t"])
     ST += [f"{S} set #v{k} i.t 0", f"execute if score @s i.n_{m} matches 1.. run function {NS}:stats/v_{k}"]
     VM.append((k, m))
-ST.append(ap("\\n\\nPRODUCTION PAR MACHINE", OR))
-ST.append(ap("  (Écus par heure au prix de base)", "gray"))
-COUL = ["#f7c843", "#5ff0e6", "#3ee070", "#ff7a3a", "#b878ff", "#ff5a6a", "#e6e6ea", "#c8754a"]
-for i, (k, m) in enumerate(VM):
+ST.append(ap("\\n\\nPRODUCTION (Écus par heure)", OR))
+
+
+def barre(score, mx, col, n=NB, fond="#3a3a3a"):
+    out = []
+    for b in range(1, n + 1):
+        out += [f"{S} operation #u i.t = {mx}", f"{S} set #y i.t {b}", f"{S} operation #u i.t *= #y i.t",
+                f"{S} operation #t i.t = {score}", f"{S} set #y i.t {n}", f"{S} operation #t i.t *= #y i.t",
+                f"execute if score #t i.t >= #u i.t run " + ap("|", col), f"execute unless score #t i.t >= #u i.t run " + ap("|", fond)]
+    return out
+
+
+for k, m in VM:
     c = FAMILLES[FAM[m]][1]
-    L_ = [ap("\\n", "white")]
-    for b in range(1, NB_L + 1):
-        L_ += [f"{S} operation #u i.t = #mx i.t", f"{S} set #y i.t {b}", f"{S} operation #u i.t *= #y i.t",
-               f"{S} operation #t i.t = #v{k} i.t", f"{S} set #y i.t {NB_L}", f"{S} operation #t i.t *= #y i.t",
-               f"execute if score #t i.t >= #u i.t run " + ap(PLEIN, c), f"execute unless score #t i.t >= #u i.t run " + ap(VIDE, "#2b2b2b")]
-    L_ += [val("n", f"i.n_{m}"), f"execute store result storage {M_} v int 1 run {S} get #v{k} i.t", f"function {NS}:stats/b_{k}_m with storage {M_}"]
+    L_ = [val("n", f"i.n_{m}"), f"execute store result storage {M_} v int 1 run {S} get #v{k} i.t", f"function {NS}:stats/b_{k}_m with storage {M_}"]
+    L_ += barre(f"#v{k} i.t", "#mx i.t", c)
     fn(f"stats/b_{k}", L_)
-    fn(f"stats/b_{k}_m", "$" + ap(f" {NOM_COURT[m]} x$(n) : $(v)", "white"))
+    fn(f"stats/b_{k}_m", "$" + ap(f"\\n{COURT[m]} x$(n)  ·  $(v)\\n", c))
     ST.append(f"execute if score @s i.n_{m} matches 1.. run function {NS}:stats/b_{k}")
 
-# ---- 3. énergie : fournie contre demandée
-ST += [ap("\\n\\nÉNERGIE", "aqua"), f"function {NS}:stats/energie"]
+# ---- 3. énergie : une barre, bleu = couvert, rouge = ce qui manque
+ST += [f"function {NS}:stats/energie"]
 EG = [f"{S} operation #mx i.t = @s i.off", f"execute if score @s i.dem > #mx i.t run {S} operation #mx i.t = @s i.dem",
-      f"execute if score #mx i.t matches ..0 run {S} set #mx i.t 1"]
-for nom, sc, col in (("fournie", "i.off", "#5ff0e6"), ("demandée", "i.dem", "#ff7a3a")):
-    EG.append(ap("\\n", "white"))
-    for b in range(1, NB_L + 1):
-        EG += [f"{S} operation #u i.t = #mx i.t", f"{S} set #y i.t {b}", f"{S} operation #u i.t *= #y i.t",
-               f"{S} operation #t i.t = @s {sc}", f"{S} set #y i.t {NB_L}", f"{S} operation #t i.t *= #y i.t",
-               f"execute if score #t i.t >= #u i.t run " + ap(PLEIN, col), f"execute unless score #t i.t >= #u i.t run " + ap(VIDE, "#2b2b2b")]
-    EG += [f"{S} operation #x i.t = @s {sc}", f"{S} operation #x i.t /= #10 i.g", f"execute store result storage {M_} v int 1 run {S} get #x i.t",
-           f"function {NS}:stats/e_{sc[2:]}_m with storage {M_}"]
-    fn(f"stats/e_{sc[2:]}_m", "$" + ap(f" {nom} : $(v) kW", "white"))
+      f"execute if score #mx i.t matches ..0 run {S} set #mx i.t 1",
+      f"{S} operation #x i.t = @s i.off", f"{S} operation #x i.t /= #10 i.g", f"execute store result storage {M_} eo int 1 run {S} get #x i.t",
+      f"{S} operation #x i.t = @s i.dem", f"{S} operation #x i.t /= #10 i.g", f"execute store result storage {M_} ed int 1 run {S} get #x i.t",
+      f"function {NS}:stats/e_titre with storage {M_}"]
+fn("stats/e_titre", "$" + ap("\\n\\nÉNERGIE  $(eo) kW fournis / $(ed) kW demandés\\n", "aqua"))
+EG += [f"{S} operation #ec i.t = @s i.off", f"execute if score @s i.dem < #ec i.t run {S} operation #ec i.t = @s i.dem"]
+EG += barre("#ec i.t", "#mx i.t", "#5ff0e6", fond="#ff5a3a")
+EG += [f"execute if score @s i.dem <= @s i.off run " + ap("\\n(tout est couvert : la barre rouge serait ce qui manque)", "dark_gray")]
 fn("stats/energie", EG)
 
 # ---- 4. ce qui freine tes revenus
@@ -84,18 +87,18 @@ for m in ML:
                f"{S} operation #po i.t += #x i.t"]
 fn("stats/conseils", PO + cap + [
     f"execute store result storage {M_} po int 1 run {S} get #po i.t", f"execute store result storage {M_} cap int 1 run {S} get #cap i.t",
-    ap("\\n\\nCE QUI FREINE TES REVENUS", "red"), f"{S} set #ok i.t 0",
+    ap("\\n\\nÀ AMÉLIORER", "red"), f"{S} set #ok i.t 0",
     f"execute if score @s i.fe matches ..999 run {S} set #ok i.t 1",
-    f"execute if score @s i.fe matches ..999 run " + ap("\\nÉnergie insuffisante : toutes tes machines tournent moins vite. Achète une Chaudière à charbon (+150 kW).", "white"),
+    f"execute if score @s i.fe matches ..999 run " + ap("\\n• Énergie trop faible : ajoute une Chaudière (+150 kW).", "white"),
     f"execute if score #po i.t > #cap i.t run {S} set #ok i.t 1",
     f"execute if score #po i.t > #cap i.t run function {NS}:stats/cons_halle with storage {M_}",
-    f"execute if score #ok i.t matches 0 run " + ap("\\nRien : tout tourne à plein.", "green")])
-fn("stats/cons_halle", "$" + ap("\\nHalle saturée : tu produis $(po) objets par heure, elle n'en vend que $(cap). Le reste s'entasse au Nexus : agrandis la Halle (Vendre et contrats).", "white"))
+    f"execute if score #ok i.t matches 0 run " + ap("\\n• Rien, tout tourne à plein.", "green")])
+fn("stats/cons_halle", "$" + ap("\\n• Halle pleine : $(po) objets/h produits, $(cap) vendus. Agrandis-la.", "white"))
 ST.append(f"function {NS}:stats/conseils")
 ST.append(f"function {NS}:menu/stats_d with storage {M_}")
 fn("menu/stats", ST)
 fn("menu/stats_d", "$" + dlg(T("MON ÎLE", OR, True),
-    [msg(L(T("Aujourd'hui : ", "gray"), T("$(jn) Écus", OR, True), T("   ·   moyenne $(r7) / jour   ·   Nexus $(st) objets", "gray")), 320),
+    [msg(L(T("Aujourd'hui : ", "gray"), T("$(jn) Écus", OR, True), T("  ·  Nexus : $(st) objets", "gray")), 320),
      '{type:"minecraft:plain_message",width:320,contents:$(l)}'],
     [btn(T("Menu de l'industrie", "green", True), 1, 150), btn(T("Vendre et contrats", OR), 7, 150),
      btn(T("Acheter une machine", OR), 4, 150), btn(T("Actualiser", "aqua"), 22, 150)], 2))

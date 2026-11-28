@@ -80,17 +80,17 @@ fn("menu/bienvenue", dlg(T("L'ARCHIPEL DES USINES", OR, True),
 CO = [f'data modify storage {M_} c set value []']
 for k, m in enumerate(ML):
     d = MACH[m]
-    lab = f'{d["nom"]}  ·  {fe(d["prix"])}' + (f' + {d["ecl"]} éclats' if d["ecl"] else "")
+    lab = f'{COURT[m]}  {fe(d["prix"])}' + (f' +{d["ecl"]}é' if d["ecl"] else "")
     tip = f'{RANGS[d["rang"]][0]}. {prod_txt(m, 1)}. {abs(d["kw"])} kW {"fournis" if d["kw"] < 0 else "consommés"}.' + (
         " Tiens un spawner du Commerce en main." if m == "spawner" else "") + (" Demande une étoile du Nether." if d.get("etoile") else "")
-    ok = btn(T(lab, FAMILLES[FAM[m]][1], True), 100 + k, 200, FAMILLES[FAM[m]][0] + ". " + tip)   # couleur = famille de production
-    ko = btn(L(T("BLOQUÉ ", "red", True), T(f'{d["nom"]} : rang {RANGS[d["rang"]][0]}', "dark_gray")), 100 + k, 200, "Débloqué au rang " + RANGS[d["rang"]][0] + ". " + tip)
+    ok = btn(T(lab, FAMILLES[FAM[m]][1]), 100 + k, 200, d["nom"] + " (" + FAMILLES[FAM[m]][0] + "). " + tip)   # couleur = famille de production
+    ko = btn(L(T("✖ ", "red"), T(f'{COURT[m]}  {RANGS[d["rang"]][0]}', "dark_gray")), 100 + k, 200, d["nom"] + " : débloqué au rang " + RANGS[d["rang"]][0] + ". " + tip)
     CO += [f"execute if score @s i.rang matches {d['rang']}.. run data modify storage {M_} c append value {ok}",
            f"execute if score @s i.rang matches {d['rang'] - 1} run data modify storage {M_} c append value {ko}"]   # seulement le rang suivant
 CO += [f"data modify storage {M_} c append value {x}" for x in NAV] + [f"function {NS}:menu/comptoir_d with storage {M_}"]
 fn("menu/comptoir", CO)
 fn("menu/comptoir_d", '$dialog show @s {type:"minecraft:multi_action",title:' + T("COMPTOIR DES MACHINES", OR, True) +
-   ',can_close_with_escape:true,pause:false,body:[' + msg(T("La machine se pose sur l'emplacement que tu as cliqué, sinon sur le plus proche. Couleur = famille (même couleur que son tube). Survole pour les détails.", "gray")) +
+   ',can_close_with_escape:true,pause:false,body:[' + msg(T("Clique d'abord une dalle libre : la machine s'y pose. Couleur = famille, comme son tube. ✖ = rang suivant.", "gray")) +
    '],actions:$(c),columns:2}')
 
 # ---------------------------------------------------------------- cadastre (5) : grille 7 x 7
@@ -100,7 +100,7 @@ for idx in range(49):
     ring = max(abs(i - 3), abs(j - 3))
     prix = ANNEAUX[ring][1]
     lab_ok = btn(T("■", "green", True), 200 + idx, 40, "À toi")
-    lab_lib = btn(T(fe(prix).replace(" M", "M").replace(" ", ""), OR), 200 + idx, 40, f"Anneau {ring} : {mille(prix)} Écus" + (" + 5 éclats" if ring == 3 else "") + ". Doit toucher une de tes parcelles.")
+    lab_lib = btn(T((f"{prix // 1000}k" if prix < 1_000_000 else fe(prix).replace(" M", "M").replace(" ", "")), OR), 200 + idx, 40, f"Anneau {ring} : {mille(prix)} Écus" + (" + 5 éclats" if ring == 3 else "") + ". Doit toucher une de tes parcelles.")
     CA += [f"execute if score @s i.p{idx} matches 1 run data modify storage {M_} c append value {lab_ok}",
            f"execute unless score @s i.p{idx} matches 1 run data modify storage {M_} c append value {lab_lib}"]
 CA += [val("np", "i.np"), f"{S} set #x i.t 0"] + [f"execute if score @s i.rang matches {r} run {S} set #x i.t {PARC_MAX[r]}" for r in range(1, 6)] + [
@@ -177,7 +177,7 @@ fn("menu/banque_d", '$dialog show @s {type:"minecraft:multi_action",title:' + T(
 fn("menu/banque_offre", dlg(T("BANQUE DE L'ARCHIPEL", "aqua", True),
                             [msg(L(T(f"Au rang Manufacture, la Banque ({mille(BANQUE_PRIX)} Écus) te laisse choisir produit par produit ce que tu gardes, "
                                      "vends à un prix plancher, étales ou réserves, et ouvre les prêts industriels.", "gray")), 360)],
-                            [btn(T(f"Construire la Banque ({fe(BANQUE_PRIX)})", "aqua", True), 550, 220)] + NAV, 2))
+                            [btn(T(f"Construire ({fe(BANQUE_PRIX)})", "aqua", True), 550, 200)] + NAV, 2))
 # fiche d'un produit
 for k, p in enumerate(PL):
     nom, item, p0, S0 = PROD[p]

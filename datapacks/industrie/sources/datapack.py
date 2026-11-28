@@ -17,7 +17,7 @@ ROOT = os.path.join(ICI, "..", "build", "industrie_datapack")
 RP = os.path.join(ICI, "..", "build", "industrie_rp")
 NS = "industrie"
 F = f"data/{NS}/function/"
-VERSION = 12
+VERSION = 13
 DIM = f"{NS}:archipel"
 S = "scoreboard players"
 for d in (ROOT, RP):
@@ -102,7 +102,7 @@ for p in PL:
 for m in ML:
     OBJ += [f"i.q_{m}", f"i.n_{m}", f"i.k_{m}", f"i.ac_{m}"]
 OBJ += [f"i.qs{k}" for k in range(len(MOBS))]
-CONST = sorted({-1, 2, 10, 20, 24, 23, 32, 60, 100, 1000, 10000, 1200, 72000, 1728000, 2048, 16, 7, 4, 3, 5, 150, 125, 110, 1, 1000000, 1000000000})
+CONST = sorted({-1, 0, 8, 50, 2, 10, 20, 24, 23, 32, 60, 100, 1000, 10000, 1200, 72000, 1728000, 2048, 16, 7, 4, 3, 5, 150, 125, 110, 1, 1000000, 1000000000})
 
 wj("pack.mcmeta", {"pack": {"description": "Industrie : îles, machines, tubes, Halle du Marché, Banque", "min_format": 84, "max_format": 200}})
 wj("data/minecraft/tags/function/load.json", {"values": [f"{NS}:load"]})
@@ -144,8 +144,8 @@ fn("seconde", [
     f"execute as @a[tag=ind.adv] at @s unless dimension {DIM} run function {NS}:ile/hors",
     f"{S} add #bar i.g 1", f"execute if score #bar i.g matches 5.. as @a at @s if dimension {DIM} run function {NS}:ile/barrieres",
     f"execute if score #bar i.g matches 5.. run {S} set #bar i.g 0",
-    f"execute as @a at @s if dimension {DIM} as @e[type=minecraft:item_display,tag=ind.pq,distance=..80] run function {NS}:tube/anim",
-    f"schedule function {NS}:tube/go 1t replace",
+    f"execute as @e[type=minecraft:item_display,tag=ind.pq] run function {NS}:tube/vieillir",
+    f"{S} add #pqt i.g 1", f"execute if score #pqt i.g matches 2.. run function {NS}:tube/flux",
     f"function {NS}:evenement/seconde"])
 
 # ------------------------------------------------------------------ joueur : horloges, production
@@ -317,6 +317,12 @@ for idx, p in enumerate(PL):
           f"execute if score @s i.o_{p} matches 4 run {S} operation #q i.t -= @s i.x_{p}",
           # contrats du jour non livrés : la Halle met de côté leur quantité (28/11/2026)
           *[f"execute if score @s i.c{c}p matches {idx + 1} unless score @s i.c{c}f matches 1 run {S} operation #q i.t -= @s i.c{c}q" for c in (1, 2, 3)],
+          # 28/11/2026 : une heure de consommation des chaudières et des ateliers reste au Nexus
+          *([f"{S} operation #x i.t = @s i.q_chaudiere", f"{S} set #y i.t {MACH['chaudiere']['charbon']}", f"{S} operation #x i.t *= #y i.t",
+             f"{S} operation #x i.t /= #100 i.g", f"{S} operation #q i.t -= #x i.t"] if p == "charbon" else []),
+          *[x for m_ in ATELIERS if p in MACH[m_]["inp"] for x in (
+             f"{S} operation #x i.t = @s i.q_{m_}", f"{S} set #y i.t {list(MACH[m_]['out'].values())[0] * MACH[m_]['inp'][p]}",
+             f"{S} operation #x i.t *= #y i.t", f"{S} operation #x i.t /= #100 i.g", f"{S} operation #q i.t -= #x i.t")],
           f"execute if score #q i.t matches ..0 run return 0",
           # saturation effective
           f"{S} set #S i.t {S0}", f"{S} operation #S i.t *= #sb i.t", f"{S} operation #S i.t /= #100 i.g",
@@ -442,3 +448,4 @@ with zipfile.ZipFile(zp, "w", zipfile.ZIP_DEFLATED) as z:
             zi.compress_type = zipfile.ZIP_DEFLATED
             z.writestr(zi, open(full, "rb").read())
 print("industrie :", sum(len(f_) for _, _, f_ in os.walk(ROOT)), "fichiers, modèles :", len(META))
+

@@ -135,3 +135,9 @@ FAMILLES = {"min": ("Minerais", "#c8c8d0", "minecraft:light_gray_stained_glass")
 FAM = {"carriere": "min", "serre": "agr", "cultures": "agr", "fourneau": "met", "fonderie": "met", "chaudiere": "ene", "lave": "ene",
        "coeur": "ene", "puits_or": "cri", "puits_dia": "cri", "puits_eme": "cri", "puits_net": "cri", "distill": "ate", "atelier": "ate",
        "joaillerie": "ate", "forge": "ate", "spawner": "cre"}
+
+# noms courts pour les boutons (un bouton fait 200 px : au-delà le texte défile)
+COURT = {"carriere": "Carrière", "serre": "Serre hydro", "cultures": "Serre cultures", "fourneau": "Haut-fourneau", "chaudiere": "Chaudière",
+         "puits_or": "Puits d'or", "fonderie": "Fonderie", "distill": "Distillerie", "spawner": "Usine spawner", "lave": "Centrale lave",
+         "puits_dia": "Puits diamant", "puits_eme": "Puits émeraude", "atelier": "Atelier méca", "puits_net": "Puits netherite",
+         "joaillerie": "Joaillerie", "coeur": "Cœur stellaire", "forge": "Forge reliques"}

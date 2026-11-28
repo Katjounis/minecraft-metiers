@@ -283,7 +283,7 @@ REP = [  # 28/11/2026 : le Nexus des îles déjà créées portait le code de la
 REP += ["kill @e[type=minecraft:text_display,tag=ind.labm,tag=!ind.lv3,distance=..96]",
         "execute as @e[type=minecraft:text_display,tag=ind.rett,distance=..96] run data merge entity @s {transformation:{scale:[0.55f,0.55f,0.55f]}}",
         "execute as @e[type=minecraft:text_display,tag=ind.lab,distance=..96] run data merge entity @s {transformation:{scale:[0.55f,0.55f,0.55f]}}",
-        f"execute as @e[type=minecraft:interaction,tag=ind.mi,tag=!ind.t4,distance=..96] at @s run function {NS}:tube/refaire"]
+        f"execute as @e[type=minecraft:interaction,tag=ind.mi,tag=!ind.t5,distance=..96] at @s run function {NS}:tube/refaire"]
 # emplacements libres : point de clic (construire ici) et petite étiquette ; retirés quand l'emplacement est pris
 REP += [f"execute as @e[type=minecraft:marker,tag=ind.slot,tag=!ind.occ,distance=..96] at @s unless entity @e[type=minecraft:interaction,tag=ind.si,distance=..1] run function {NS}:ile/slot_poser",
         "execute as @e[type=minecraft:marker,tag=ind.slot,tag=ind.occ,distance=..96] at @s run kill @e[type=minecraft:interaction,tag=ind.si,distance=..1]",
