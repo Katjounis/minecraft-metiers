@@ -54,6 +54,36 @@ def _coins(e):
     return pts
 
 
+def _borne(p):
+    """28/11/2026 : le jeu refuse tout le modèle (cube violet et noir) si une coordonnée sort de -16..32."""
+    return [min(32.0, max(-16.0, v)) for v in p]
+
+
+def _rotation_sure(frm, to, r):
+    """28/11/2026 : le jeu n'accepte qu'un axe et un angle parmi -45, -22.5, 0, 22.5, 45 (format axis/angle).
+    Les multiples de 90 degrés sont appliqués directement à la boîte, le reste est arrondi au cran de 22,5 le plus proche.
+    Renvoie (from, to, None ou (axe, angle, origine))."""
+    if not r:
+        return frm, to, None
+    axes = [(ax, r[ax]) for ax in ("x", "y", "z") if r.get(ax)]
+    if not axes:
+        return frm, to, None
+    ax, a = max(axes, key=lambda t: abs(t[1]))      # un seul axe : on garde la rotation principale
+    o = r["origin"]
+    q = round(a / 90.0); reste = a - 90 * q
+    cran = max(-45.0, min(45.0, round(reste / 22.5) * 22.5))
+    if q % 4:
+        i, j = {"x": (1, 2), "y": (0, 2), "z": (0, 1)}[ax]
+        coins = [[x, y, z] for x in (frm[0], to[0]) for y in (frm[1], to[1]) for z in (frm[2], to[2])]
+        for _ in range(q % 4):
+            for p in coins:
+                u, v = p[i] - o[i], p[j] - o[j]
+                p[i], p[j] = o[i] - v, o[j] + u
+        frm = [min(p[n] for p in coins) for n in range(3)]
+        to = [max(p[n] for p in coins) for n in range(3)]
+    return frm, to, ((ax, cran, o) if cran else None)
+
+
 def exporter(rp, ns="industrie"):
     """Écrit modèles, textures et définitions d'objet. Renvoie {nom: (largeur, hauteur) en unités de modèle}."""
     meta = {}
@@ -66,7 +96,7 @@ def exporter(rp, ns="industrie"):
         x0, x1 = min(p[0] for p in pts), max(p[0] for p in pts)
         y0, y1 = min(p[1] for p in pts), max(p[1] for p in pts)
         z0, z1 = min(p[2] for p in pts), max(p[2] for p in pts)
-        k = 47.0 / max(x1 - x0, y1 - y0, z1 - z0)
+        k = 46.0 / max(x1 - x0, y1 - y0, z1 - z0)
         cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
         T = lambda p: [round((p[0] - cx) * k + 8, 3), round((p[1] - y0) * k - 16, 3), round((p[2] - cz) * k + 8, 3)]
         els = []
@@ -74,12 +104,10 @@ def exporter(rp, ns="industrie"):
             # 27/11/2026 : faces confondues qui clignotaient (z-fighting) : chaque boîte est gonflée d'un poil différent
             g_ = 0.035 * (i_ % 5)
             e = dict(e, **{"from": [v - g_ for v in e["from"]], "to": [v + g_ for v in e["to"]]})
-            el = {"from": T(e["from"]), "to": T(e["to"]), "faces": {f: {"uv": [round(v, 4) for v in d["uv"]], "texture": "#a"} for f, d in e["faces"].items()}}
-            r = e.get("rotation")
-            if r:
-                rr = {ax: r[ax] for ax in ("x", "y", "z") if r.get(ax)}
-                if rr:
-                    rr["origin"] = T(r["origin"]); el["rotation"] = rr
+            frm, to, rot = _rotation_sure(e["from"], e["to"], e.get("rotation"))
+            el = {"from": _borne(T(frm)), "to": _borne(T(to)), "faces": {f: {"uv": [round(v, 4) for v in d["uv"]], "texture": "#a"} for f, d in e["faces"].items()}}
+            if rot:
+                el["rotation"] = {"angle": rot[1], "axis": rot[0], "origin": T(rot[2])}
             els.append(el)
         tex = f"{ns}:block/{nom}"
         mdl = {"textures": {"a": tex, "particle": tex}, "elements": els,

@@ -113,21 +113,38 @@ fn("menu/cadastre_d", '$dialog show @s {type:"minecraft:multi_action",title:' + 
 HA = [val("hl", "i.halle")] + [f'execute if score @s i.halle matches {k} run data modify storage {M_} h set value {{nom:"{h[0]}",cap:"{mille(h[4])}",com:"{h[5]}",'
                                 f'nx:"{(HALLE[k + 1][0] + " : " + mille(HALLE[k + 1][2]) + " Écus" + (f" + {HALLE[k + 1][3]} éclats" if HALLE[k + 1][3] else "") + ", rang " + RANGS[HALLE[k + 1][1]][0]) if k + 1 < len(HALLE) else "niveau maximal"}"}}'
                                 for k, h in enumerate(HALLE)]
+# 28/11/2026 : Halle réécrite pour qu'on comprenne ce qu'est un contrat et ce qu'il faut faire
 for c in (1, 2, 3):
-    HA += [f'data modify storage {M_} h.c{c} set value "Aucun contrat (ton rang en donne moins)."']
+    r_ = next(r for r in range(1, 6) if CONTRATS_JOUR[r] >= c)
+    HA += [f'data modify storage {M_} h.c{c} set value "Débloqué au rang {RANGS[r_][0]}."', f'data modify storage {M_} h.k{c} set value "dark_gray"',
+           f'data modify storage {M_} h.b{c} set value "Contrat {c} : rang {RANGS[r_][0]}"', f'data modify storage {M_} h.e{c} set value ""', f'data modify storage {M_} h.n{c} set value "-"']
     for k, p in enumerate(PL):
-        HA += [f'execute if score @s i.c{c}p matches {k + 1} run data modify storage {M_} h.c{c} set value "Livrer {mille(CQ[p])} {PROD[p][0].lower()} : {mille(CR[p])} Écus"']
-    HA += [f'execute if score @s i.c{c}f matches 1 run data modify storage {M_} h.c{c} set value "Livré."']
+        HA += [f'execute if score @s i.c{c}p matches {k + 1} run data modify storage {M_} h.c{c} set value "{mille(CQ[p])} {PROD[p][0].lower()}, payé {mille(CR[p])} Écus"',
+               f"execute if score @s i.c{c}p matches {k + 1} store result storage {M_} h.n{c} int 1 run {S} get @s i.s_{p}",
+               f"execute if score @s i.c{c}p matches {k + 1} if score @s i.s_{p} >= @s i.c{c}q run data modify storage {M_} h.k{c} set value \"green\"",
+               f"execute if score @s i.c{c}p matches {k + 1} unless score @s i.s_{p} >= @s i.c{c}q run data modify storage {M_} h.k{c} set value \"red\""]
+    HA += [f"execute if score @s i.c{c}p matches 1.. run data modify storage {M_} h.b{c} set value \"Livrer le contrat {c}\"",
+           f'execute if score @s i.c{c}f matches 1 run data modify storage {M_} h.e{c} set value "  (livré)"',
+           f'execute if score @s i.c{c}f matches 1 run data modify storage {M_} h.k{c} set value "gray"',
+           f'execute if score @s i.c{c}f matches 1 run data modify storage {M_} h.b{c} set value "Contrat {c} livré"']
 HA += [f'data modify storage {M_} h.ev set from storage {NS}:g ev', f'execute unless data storage {NS}:g ev run data modify storage {M_} h.ev set value "Marché calme."',
+       f"{S} operation #x i.t = @s i.rang", f"{S} set #y i.t 200", f"{S} operation #x i.t *= #y i.t", f"execute store result storage {M_} h.rep int 1 run {S} get #x i.t",
        f"function {NS}:menu/halle_d with storage {M_} h"]
 fn("menu/halle", HA)
 fn("menu/halle_d", "$" + dlg(
     T("HALLE DU MARCHÉ", OR, True),
-    [msg(L(T("$(nom)", OR, True), T(" : $(cap) objets vendus par heure, commission $(com) %.", "gray"),
-           T("\\nNiveau suivant : $(nx)", "white"), T("\\n\\nLe Nexus vend ici en continu, même hors ligne. Plus tu vends un produit dans la journée, plus son prix baisse.", "gray"),
-           T("\\n\\nBourse : $(ev)", "yellow"), T("\\n\\nCONTRATS DU JOUR", "light_purple", True), T("\\n1. $(c1)\\n2. $(c2)\\n3. $(c3)", "white")), 400)],
-    [btn(T("Livrer le contrat 1", "light_purple"), 511, 140), btn(T("Livrer le contrat 2", "light_purple"), 512, 140), btn(T("Livrer le contrat 3", "light_purple"), 513, 140),
-     btn(T("Agrandir la Halle", OR, True), 530, 140)] + NAV, 4))
+    [msg(L(T("$(nom)", OR, True), T(" : elle vend toute seule le stock de ton Nexus, même quand tu es déconnecté. Jusqu'à $(cap) objets par heure, $(com) % de commission.", "gray"),
+           T("\\nPlus un produit est vendu dans la journée, plus son prix baisse : varie tes productions.", "gray"),
+           T("\\nAgrandir : $(nx)", "white"),
+           T("\\n\\nBourse : $(ev)", "yellow")), 320),
+     msg(L(T("CONTRATS DU JOUR", "light_purple", True),
+           T("\\nUne commande de la Guilde : tu livres d'un coup la quantité demandée, prise dans le stock de ton Nexus. "
+             "Payé 1,5 fois le prix de base sans baisse, plus $(rep) de réputation pour monter de rang. Nouveaux contrats chaque jour.", "gray")), 320),
+     msg(L(T("1. ", "white"), T("$(c1)", "white"), T("$(e1)", "gray"), T("\\n    au Nexus : ", "gray"), T("$(n1)", "$(k1)"),
+           T("\\n2. ", "white"), T("$(c2)", "white"), T("$(e2)", "gray"), T("\\n    au Nexus : ", "gray"), T("$(n2)", "$(k2)"),
+           T("\\n3. ", "white"), T("$(c3)", "white"), T("$(e3)", "gray"), T("\\n    au Nexus : ", "gray"), T("$(n3)", "$(k3)")), 320)],
+    [btn(T("$(b1)", "$(k1)"), 511, 140), btn(T("$(b2)", "$(k2)"), 512, 140), btn(T("$(b3)", "$(k3)"), 513, 140),
+     btn(T("Agrandir la Halle", OR, True), 530, 140)] + NAV, 3))
 
 # ---------------------------------------------------------------- Banque (6)
 BQ = [f"execute unless score @s i.bq matches 1 run return run function {NS}:menu/banque_offre",
